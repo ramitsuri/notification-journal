@@ -3,7 +3,13 @@
     <string name="add_new_journal_content">Add</string>
     <string name="button_text_upload_all">Upload</string>
     <string name="button_text_refresh">Refresh</string>
+    <string name="button_text_restart">Restart</string>
+    <string name="button_text_delete">Delete All</string>
+    <string name="button_text_set_server">Set Server</string>
+    <string name="button_text_server_set">Server Set</string>
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="add_entry_content_description">Add</string>
+    <string name="menu_content_description">Menu</string>
 </resources>

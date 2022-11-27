@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.ZoneId
 
 class MainViewModel(
     private val journalEntryDao: JournalEntryDao,
@@ -85,6 +87,34 @@ class MainViewModel(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 journalEntryDao.delete(listOf(journalEntry))
+                _state.update {
+                    it.copy(journalEntries = journalEntryDao.getAll())
+                }
+            }
+        }
+    }
+
+    fun delete() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                journalEntryDao.deleteAll()
+                _state.update {
+                    it.copy(journalEntries = journalEntryDao.getAll())
+                }
+            }
+        }
+    }
+
+    fun add(text: String) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val journalEntry = JournalEntry(
+                    id = 0,
+                    entryTime = Instant.now(),
+                    timeZone = ZoneId.systemDefault(),
+                    text = text
+                )
+                journalEntryDao.insert(journalEntry)
                 _state.update {
                     it.copy(journalEntries = journalEntryDao.getAll())
                 }
