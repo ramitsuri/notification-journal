@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">NotificationJournal</string>
+    <string name="add_new_journal_content">Add</string>
+    <string name="button_text_upload_all">Upload</string>
+    <string name="button_text_refresh">Refresh</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+</resources>
