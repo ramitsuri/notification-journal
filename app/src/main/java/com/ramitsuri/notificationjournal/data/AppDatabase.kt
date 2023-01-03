@@ -12,6 +12,7 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.Update
 import com.ramitsuri.notificationjournal.utils.DatabaseConverters
 import java.time.Instant
 import java.time.ZoneId
@@ -50,13 +51,16 @@ interface JournalEntryDao {
     suspend fun getAll(): List<JournalEntry>
 
     @Query("DELETE FROM journalentry")
-    fun deleteAll()
+    suspend fun deleteAll()
 
     @Delete
-    fun delete(journalEntries: List<JournalEntry>)
+    suspend fun delete(journalEntries: List<JournalEntry>)
 
     @Insert
     suspend fun insert(journalEntry: JournalEntry)
+
+    @Update(entity = JournalEntry::class)
+    suspend fun update(journalEntryUpdate: JournalEntryUpdate)
 }
 
 @Entity
@@ -65,4 +69,9 @@ data class JournalEntry(
     @ColumnInfo(name = "entry_time") val entryTime: Instant,
     @ColumnInfo(name = "time_zone") val timeZone: ZoneId,
     @ColumnInfo(name = "text") val text: String
+)
+
+data class JournalEntryUpdate(
+    val id: Int,
+    val text: String
 )

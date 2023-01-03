@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,12 +26,14 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -58,10 +61,16 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.view.WindowCompat
@@ -88,12 +97,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             NotificationJournalTheme {
                 var showDialog by rememberSaveable { mutableStateOf(false) }
+                var initialDialogText by rememberSaveable { mutableStateOf("") }
+                var journalEntryId by rememberSaveable { mutableStateOf(-1) }
+                val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
                 if (showDialog) {
-                    AddEntryDialog(
+                    AddEditEntryDialog(
+                        initialText = initialDialogText,
                         onPositiveClick = { value ->
                             showDialog = !showDialog
-                            viewModel.add(value)
+                            if (journalEntryId == -1) {
+                                viewModel.add(value)
+                            } else {
+                                viewModel.edit(journalEntryId, value)
+                            }
                         },
                         onNegativeClick = {
                             showDialog = !showDialog
@@ -104,6 +121,8 @@ class MainActivity : ComponentActivity() {
                     FloatingActionButton(
                         onClick = {
                             showDialog = true
+                            journalEntryId = -1
+                            initialDialogText = ""
                         },
                         modifier = Modifier.navigationBarsPadding()
                     ) {
@@ -131,11 +150,40 @@ class MainActivity : ComponentActivity() {
                                 Toast.makeText(
                                     this@MainActivity, viewState.error, Toast.LENGTH_LONG
                                 ).show()
+                                viewModel.onErrorAcknowledged()
                             }
 
                             MoreMenu(viewState.serverText, viewModel::setApiUrl)
 
-                            List(viewState.journalEntries)
+                            if (viewState.journalEntries.isEmpty()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .navigationBarsPadding()
+                                        .padding(bottom = 64.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "No items",
+                                        style = MaterialTheme.typography.displaySmall
+                                    )
+                                }
+                            } else {
+                                List(viewState.journalEntries,
+                                    onCopyRequested = { item ->
+                                        clipboardManager.setText(AnnotatedString(item.text))
+                                    },
+                                    onEditRequested = { item ->
+                                        journalEntryId = item.id
+                                        initialDialogText = item.text
+                                        showDialog = true
+                                    },
+                                    onDeleteRequested = { item ->
+                                        viewModel.delete(item)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -241,10 +289,20 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun List(items: List<JournalEntry>) {
+    fun List(
+        items: List<JournalEntry>,
+        onCopyRequested: (JournalEntry) -> Unit,
+        onEditRequested: (JournalEntry) -> Unit,
+        onDeleteRequested: (JournalEntry) -> Unit
+    ) {
         LazyColumn {
             items(items, key = { it.id }) {
-                ListItem(item = it)
+                ListItem(
+                    item = it,
+                    onCopyRequested = onCopyRequested,
+                    onDeleteRequested = onDeleteRequested,
+                    onEditRequested = onEditRequested
+                )
                 Divider()
             }
             item {
@@ -254,10 +312,18 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun ListItem(item: JournalEntry) {
+    fun ListItem(
+        item: JournalEntry,
+        onCopyRequested: (JournalEntry) -> Unit,
+        onEditRequested: (JournalEntry) -> Unit,
+        onDeleteRequested: (JournalEntry) -> Unit
+    ) {
         Row(
             horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable {
+                onCopyRequested(item)
+            }
         ) {
             Column(
                 modifier = Modifier
@@ -275,10 +341,19 @@ class MainActivity : ComponentActivity() {
             }
             Spacer(modifier = Modifier.width(8.dp))
             FilledTonalIconButton(
-                onClick = { viewModel.delete(item) }) {
+                onClick = { onDeleteRequested(item) }) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
                     contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            FilledTonalIconButton(
+                onClick = { onEditRequested(item) }) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Edit",
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             }
@@ -328,15 +403,17 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
     @Composable
-    private fun AddEntryDialog(
+    private fun AddEditEntryDialog(
+        initialText: String,
         onPositiveClick: (String) -> Unit,
         onNegativeClick: () -> Unit
     ) {
-        var text by rememberSaveable { mutableStateOf("") }
+        var text by remember { mutableStateOf(TextFieldValue(initialText)) }
 
         val focusRequester = remember { FocusRequester() }
         val showKeyboard by remember { mutableStateOf(true) }
         val keyboard = LocalSoftwareKeyboardController.current
+        val focusManager = LocalFocusManager.current
 
         Dialog(onDismissRequest = { }) {
             Card(modifier = Modifier.height(320.dp)) {
@@ -351,7 +428,14 @@ class MainActivity : ComponentActivity() {
                     OutlinedTextField(
                         value = text,
                         onValueChange = { text = it },
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = {
+                            focusManager.clearFocus()
+                            onPositiveClick(text.text)
+                        }),
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
@@ -369,7 +453,7 @@ class MainActivity : ComponentActivity() {
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         TextButton(onClick = {
-                            onPositiveClick(text)
+                            onPositiveClick(text.text)
                         }) {
                             Text(text = stringResource(id = R.string.ok))
                         }

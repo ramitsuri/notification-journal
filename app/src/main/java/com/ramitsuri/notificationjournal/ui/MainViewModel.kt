@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.data.JournalEntry
 import com.ramitsuri.notificationjournal.data.JournalEntryDao
+import com.ramitsuri.notificationjournal.data.JournalEntryUpdate
 import com.ramitsuri.notificationjournal.network.Api
 import com.ramitsuri.notificationjournal.utils.Constants
 import com.ramitsuri.notificationjournal.utils.KeyValueStore
@@ -49,14 +50,7 @@ class MainViewModel(
     }
 
     fun getAll() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val entries = journalEntryDao.getAll()
-                _state.update {
-                    it.copy(journalEntries = entries)
-                }
-            }
-        }
+        runOperationAndRefresh {  }
     }
 
     fun upload() {
@@ -84,41 +78,38 @@ class MainViewModel(
     }
 
     fun delete(journalEntry: JournalEntry) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                journalEntryDao.delete(listOf(journalEntry))
-                _state.update {
-                    it.copy(journalEntries = journalEntryDao.getAll())
-                }
-            }
+        runOperationAndRefresh {
+            journalEntryDao.delete(listOf(journalEntry))
         }
     }
 
     fun delete() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                journalEntryDao.deleteAll()
-                _state.update {
-                    it.copy(journalEntries = journalEntryDao.getAll())
-                }
-            }
+        runOperationAndRefresh {
+            journalEntryDao.deleteAll()
         }
     }
 
     fun add(text: String) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val journalEntry = JournalEntry(
+        runOperationAndRefresh {
+            journalEntryDao.insert(
+                JournalEntry(
                     id = 0,
                     entryTime = Instant.now(),
                     timeZone = ZoneId.systemDefault(),
                     text = text
                 )
-                journalEntryDao.insert(journalEntry)
-                _state.update {
-                    it.copy(journalEntries = journalEntryDao.getAll())
-                }
-            }
+            )
+        }
+    }
+
+    fun edit(id: Int, text: String) {
+        runOperationAndRefresh {
+            journalEntryDao.update(
+                JournalEntryUpdate(
+                    id = id,
+                    text = text
+                )
+            )
         }
     }
 
@@ -126,6 +117,21 @@ class MainViewModel(
         keyValueStore.putString(Constants.PREF_KEY_API_URL, url)
         _state.update {
             it.copy(serverText = url)
+        }
+    }
+
+    fun onErrorAcknowledged() {
+        _state.update {
+            it.copy(error = null)
+        }
+    }
+
+    private fun runOperationAndRefresh(operation: suspend () -> Unit) {
+        viewModelScope.launch {
+            operation()
+            _state.update {
+                it.copy(journalEntries = journalEntryDao.getAll())
+            }
         }
     }
 
