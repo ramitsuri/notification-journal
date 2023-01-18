@@ -4,9 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.data.JournalEntry
-import com.ramitsuri.notificationjournal.data.JournalEntryDao
-import com.ramitsuri.notificationjournal.data.JournalEntryUpdate
-import com.ramitsuri.notificationjournal.network.Api
+import com.ramitsuri.notificationjournal.repository.JournalRepository
 import com.ramitsuri.notificationjournal.utils.Constants
 import com.ramitsuri.notificationjournal.utils.KeyValueStore
 import kotlinx.coroutines.Dispatchers
@@ -15,24 +13,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.ZoneId
 
 class MainViewModel(
-    private val journalEntryDao: JournalEntryDao,
     private val keyValueStore: KeyValueStore,
-    private val api: Api
+    private val repository: JournalRepository
 ) : ViewModel() {
 
     class Factory(
-        private val dao: JournalEntryDao,
         private val keyValueStore: KeyValueStore,
-        private val api: Api
+        private val repository: JournalRepository
     ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MainViewModel(dao, keyValueStore, api) as T
+            return MainViewModel(keyValueStore, repository) as T
         }
     }
 
@@ -50,28 +44,23 @@ class MainViewModel(
     }
 
     fun getAll() {
-        runOperationAndRefresh {  }
+        runOperationAndRefresh { }
     }
 
     fun upload() {
-        if (_state.value.journalEntries.isEmpty()) {
-            return
-        }
         _state.update {
             it.copy(loading = true)
         }
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val error = try {
-                    api.sendData(_state.value.journalEntries)
-                    null
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    e.message
-                }
+                val error = repository.upload()
                 _state.update {
-                    it.copy(loading = false, error = error)
+                    if (error != null) {
+                        it.copy(loading = false, error = error)
+                    } else {
+                        it.copy(loading = false, journalEntries = repository.get())
+                    }
                 }
             }
         }
@@ -79,37 +68,27 @@ class MainViewModel(
 
     fun delete(journalEntry: JournalEntry) {
         runOperationAndRefresh {
-            journalEntryDao.delete(listOf(journalEntry))
+            repository.delete(journalEntry)
         }
     }
 
     fun delete() {
         runOperationAndRefresh {
-            journalEntryDao.deleteAll()
+            repository.delete()
         }
     }
 
     fun add(text: String) {
         runOperationAndRefresh {
-            journalEntryDao.insert(
-                JournalEntry(
-                    id = 0,
-                    entryTime = Instant.now(),
-                    timeZone = ZoneId.systemDefault(),
-                    text = text
-                )
+            repository.insert(
+                text = text
             )
         }
     }
 
     fun edit(id: Int, text: String) {
         runOperationAndRefresh {
-            journalEntryDao.update(
-                JournalEntryUpdate(
-                    id = id,
-                    text = text
-                )
-            )
+            repository.edit(id, text)
         }
     }
 
@@ -130,7 +109,7 @@ class MainViewModel(
         viewModelScope.launch {
             operation()
             _state.update {
-                it.copy(journalEntries = journalEntryDao.getAll())
+                it.copy(journalEntries = repository.get())
             }
         }
     }

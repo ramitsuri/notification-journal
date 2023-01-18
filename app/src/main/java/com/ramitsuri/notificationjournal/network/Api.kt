@@ -5,7 +5,9 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
@@ -17,7 +19,7 @@ import java.time.format.DateTimeFormatter
 
 interface Api {
     @POST("/")
-    suspend fun sendData(@Body entries: List<JournalEntry>)
+    suspend fun sendData(@Body entries: List<JournalEntry>): Response<ResponseBody>
 }
 
 fun <T> buildApi(baseUrl: String, apiClass: Class<T>): T {

@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
@@ -64,11 +63,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -413,7 +410,6 @@ class MainActivity : ComponentActivity() {
         val focusRequester = remember { FocusRequester() }
         val showKeyboard by remember { mutableStateOf(true) }
         val keyboard = LocalSoftwareKeyboardController.current
-        val focusManager = LocalFocusManager.current
 
         Dialog(onDismissRequest = { }) {
             Card(modifier = Modifier.height(320.dp)) {
@@ -429,13 +425,8 @@ class MainActivity : ComponentActivity() {
                         value = text,
                         onValueChange = { text = it },
                         keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Sentences,
-                            imeAction = ImeAction.Done
+                            capitalization = KeyboardCapitalization.Sentences
                         ),
-                        keyboardActions = KeyboardActions(onDone = {
-                            focusManager.clearFocus()
-                            onPositiveClick(text.text)
-                        }),
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
