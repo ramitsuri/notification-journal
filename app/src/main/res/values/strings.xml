@@ -5,7 +5,7 @@
     <string name="button_text_upload_all">Upload</string>
     <string name="button_text_refresh">Refresh</string>
     <string name="button_text_restart">Restart</string>
-    <string name="button_text_delete">Delete All</string>
+    <string name="button_text_sort_order">Reverse Sort</string>
     <string name="button_text_set_server">Set Server</string>
     <string name="button_text_server_set">Server Set</string>
 
@@ -13,4 +13,7 @@
     <string name="cancel">Cancel</string>
     <string name="add_entry_content_description">Add</string>
     <string name="menu_content_description">Menu</string>
+
+    <string name="alert">Alert!</string>
+    <string name="delete_warning_message">The entry will be deleted</string>
 </resources>

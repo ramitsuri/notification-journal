@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.repository
 import com.ramitsuri.notificationjournal.data.JournalEntry
 import com.ramitsuri.notificationjournal.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.data.JournalEntryUpdate
+import com.ramitsuri.notificationjournal.model.SortOrder
 import com.ramitsuri.notificationjournal.network.Api
 import okhttp3.internal.http.HTTP_OK
 import java.time.Instant
@@ -12,8 +13,12 @@ class JournalRepository(
     private val api: Api,
     private val dao: JournalEntryDao
 ) {
-    suspend fun get(): List<JournalEntry> {
-        return dao.getAll()
+    suspend fun get(order: SortOrder): List<JournalEntry> {
+        return when (order) {
+            SortOrder.ASC -> dao.getAllAsc()
+
+            SortOrder.DESC -> dao.getAllDesc()
+        }
     }
 
     suspend fun edit(id: Int, text: String) {
@@ -36,16 +41,12 @@ class JournalRepository(
         )
     }
 
-    suspend fun delete() {
-        dao.deleteAll()
-    }
-
     suspend fun delete(entry: JournalEntry) {
         dao.delete(listOf(entry))
     }
 
     suspend fun upload(): String? {
-        val entries = get()
+        val entries = get(SortOrder.ASC)
         if (entries.isEmpty()) {
             return null
         }

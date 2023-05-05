@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -96,6 +97,7 @@ class MainActivity : ComponentActivity() {
                 var showDialog by rememberSaveable { mutableStateOf(false) }
                 var initialDialogText by rememberSaveable { mutableStateOf("") }
                 var journalEntryId by rememberSaveable { mutableStateOf(-1) }
+                var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
                 val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
                 if (showDialog) {
@@ -113,6 +115,36 @@ class MainActivity : ComponentActivity() {
                             showDialog = !showDialog
                         }
                     )
+                }
+
+                if (journalEntryForDelete != null) {
+                    AlertDialog(
+                        onDismissRequest = { journalEntryForDelete = null },
+                        title = {
+                            Text(text = stringResource(id = R.string.alert))
+                        },
+                        text = {
+                            Text(stringResource(id = R.string.delete_warning_message))
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    journalEntryForDelete?.let { forDeletion ->
+                                        viewModel.delete(forDeletion)
+                                    }
+                                    journalEntryForDelete = null
+                                }) {
+                                Text(stringResource(id = R.string.ok))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    journalEntryForDelete = null
+                                }) {
+                                Text(stringResource(id = R.string.cancel))
+                            }
+                        })
                 }
                 Scaffold(floatingActionButton = {
                     FloatingActionButton(
@@ -177,7 +209,7 @@ class MainActivity : ComponentActivity() {
                                         showDialog = true
                                     },
                                     onDeleteRequested = { item ->
-                                        viewModel.delete(item)
+                                        journalEntryForDelete = item
                                     }
                                 )
                             }
@@ -274,10 +306,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     DropdownMenuItem(
-                        text = { Text(stringResource(id = JournalMenuItem.DELETE_ALL.textResId)) },
+                        text = { Text(stringResource(id = JournalMenuItem.REVERSE_SORT.textResId)) },
                         onClick = {
                             expanded = false
-                            viewModel.delete()
+                            viewModel.reverseSortOrder()
                         }
                     )
                 }
@@ -485,5 +517,5 @@ enum class JournalMenuItem(val id: Int, @StringRes val textResId: Int) {
     SET_SERVER(3, R.string.button_text_set_server),
     SERVER_SET(3, R.string.button_text_server_set),
     RESTART(4, R.string.button_text_restart),
-    DELETE_ALL(5, R.string.button_text_delete)
+    REVERSE_SORT(5, R.string.button_text_sort_order)
 }

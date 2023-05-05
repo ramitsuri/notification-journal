@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.data.JournalEntry
 import com.ramitsuri.notificationjournal.repository.JournalRepository
+import com.ramitsuri.notificationjournal.model.SortOrder
 import com.ramitsuri.notificationjournal.utils.Constants
 import com.ramitsuri.notificationjournal.utils.KeyValueStore
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +60,7 @@ class MainViewModel(
                     if (error != null) {
                         it.copy(loading = false, error = error)
                     } else {
-                        it.copy(loading = false, journalEntries = repository.get())
+                        it.copy(loading = false, journalEntries = repository.get(getSortOrder()))
                     }
                 }
             }
@@ -69,12 +70,6 @@ class MainViewModel(
     fun delete(journalEntry: JournalEntry) {
         runOperationAndRefresh {
             repository.delete(journalEntry)
-        }
-    }
-
-    fun delete() {
-        runOperationAndRefresh {
-            repository.delete()
         }
     }
 
@@ -99,6 +94,26 @@ class MainViewModel(
         }
     }
 
+    fun reverseSortOrder() {
+        val currentSortOrder = getSortOrder()
+        val newSortOrder = if (currentSortOrder == SortOrder.ASC) {
+            SortOrder.DESC
+        } else {
+            SortOrder.ASC
+        }
+        setSortOrder(newSortOrder)
+        runOperationAndRefresh {  }
+    }
+
+    private fun setSortOrder(sortOrder: SortOrder) {
+        keyValueStore.putInt(Constants.PREF_KEY_SORT_ORDER, sortOrder.key)
+    }
+
+    private fun getSortOrder(): SortOrder {
+        val preferredSortOrderKey = keyValueStore.getInt(Constants.PREF_KEY_SORT_ORDER, 0)
+        return SortOrder.fromKey(preferredSortOrderKey)
+    }
+
     fun onErrorAcknowledged() {
         _state.update {
             it.copy(error = null)
@@ -109,7 +124,7 @@ class MainViewModel(
         viewModelScope.launch {
             operation()
             _state.update {
-                it.copy(journalEntries = repository.get())
+                it.copy(journalEntries = repository.get(getSortOrder()))
             }
         }
     }

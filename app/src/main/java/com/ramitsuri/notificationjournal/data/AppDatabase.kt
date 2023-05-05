@@ -47,8 +47,11 @@ abstract class AppDatabase : RoomDatabase() {
 
 @Dao
 interface JournalEntryDao {
-    @Query("SELECT * FROM journalentry")
-    suspend fun getAll(): List<JournalEntry>
+    @Query("SELECT * FROM journalentry ORDER BY entry_time ASC ")
+    suspend fun getAllAsc(): List<JournalEntry>
+
+    @Query("SELECT * FROM journalentry ORDER BY entry_time DESC ")
+    suspend fun getAllDesc(): List<JournalEntry>
 
     @Query("DELETE FROM journalentry")
     suspend fun deleteAll()
