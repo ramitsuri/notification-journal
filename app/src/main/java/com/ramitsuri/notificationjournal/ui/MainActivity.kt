@@ -35,17 +35,11 @@ class MainActivity : ComponentActivity() {
                     onDeleteRequested = viewModel::delete,
                     onErrorAcknowledged = viewModel::onErrorAcknowledged,
                     setApiUrlRequested = viewModel::setApiUrl,
-                    getAllRequested = viewModel::getAll,
                     uploadRequested = viewModel::upload,
                     reverseSortOrderRequested = viewModel::reverseSortOrder,
                 )
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.getAll()
     }
 
     private fun showNotification() {
@@ -70,7 +64,6 @@ fun Context.shutdown() {
 
 enum class JournalMenuItem(@StringRes val textResId: Int) {
     UPLOAD(R.string.button_text_upload_all),
-    REFRESH(R.string.button_text_refresh),
     SET_SERVER(R.string.button_text_set_server),
     SERVER_SET(R.string.button_text_server_set),
     RESTART(R.string.button_text_restart),

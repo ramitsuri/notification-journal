@@ -9,6 +9,7 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -31,6 +32,8 @@ class MainViewModel(
         }
     }
 
+    private var collectionJob: Job? = null
+
     private val _state = MutableStateFlow(
         ViewState(
             journalEntries = listOf(),
@@ -41,11 +44,7 @@ class MainViewModel(
     val state: StateFlow<ViewState> = _state
 
     init {
-        getAll()
-    }
-
-    fun getAll() {
-        runOperationAndRefresh { }
+        restartCollection()
     }
 
     fun upload() {
@@ -56,11 +55,9 @@ class MainViewModel(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val error = repository.upload()
-                _state.update {
-                    if (error != null) {
+                if (error != null) {
+                    _state.update {
                         it.copy(loading = false, error = error)
-                    } else {
-                        it.copy(loading = false, journalEntries = repository.get(getSortOrder()))
                     }
                 }
             }
@@ -68,13 +65,13 @@ class MainViewModel(
     }
 
     fun delete(journalEntry: JournalEntry) {
-        runOperationAndRefresh {
+        viewModelScope.launch {
             repository.delete(journalEntry)
         }
     }
 
     fun add(text: String) {
-        runOperationAndRefresh {
+        viewModelScope.launch {
             repository.insert(
                 text = text
             )
@@ -82,7 +79,7 @@ class MainViewModel(
     }
 
     fun edit(id: Int, text: String) {
-        runOperationAndRefresh {
+        viewModelScope.launch {
             repository.edit(id, text)
         }
     }
@@ -102,7 +99,7 @@ class MainViewModel(
             SortOrder.ASC
         }
         setSortOrder(newSortOrder)
-        runOperationAndRefresh { }
+        restartCollection()
     }
 
     private fun setSortOrder(sortOrder: SortOrder) {
@@ -120,11 +117,13 @@ class MainViewModel(
         }
     }
 
-    private fun runOperationAndRefresh(operation: suspend () -> Unit) {
-        viewModelScope.launch {
-            operation()
-            _state.update {
-                it.copy(journalEntries = repository.get(getSortOrder()))
+    private fun restartCollection() {
+        collectionJob?.cancel()
+        collectionJob = viewModelScope.launch {
+            repository.getFlow(getSortOrder()).collect { entries ->
+                _state.update {
+                    it.copy(journalEntries = entries)
+                }
             }
         }
     }

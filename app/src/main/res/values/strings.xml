@@ -3,7 +3,6 @@
     <string name="add_new_journal_content">Add</string>
     <string name="upload_journal_content">Upload</string>
     <string name="button_text_upload_all">Upload</string>
-    <string name="button_text_refresh">Refresh</string>
     <string name="button_text_restart">Restart</string>
     <string name="button_text_sort_order">Reverse Sort</string>
     <string name="button_text_set_server">Set Server</string>

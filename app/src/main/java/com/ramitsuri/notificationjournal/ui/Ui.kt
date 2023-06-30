@@ -74,7 +74,6 @@ fun AppUi(
     onDeleteRequested: (JournalEntry) -> Unit,
     onErrorAcknowledged: () -> Unit,
     setApiUrlRequested: (String) -> Unit,
-    getAllRequested: () -> Unit,
     uploadRequested: () -> Unit,
     reverseSortOrderRequested: () -> Unit
 ) {
@@ -166,7 +165,6 @@ fun AppUi(
                 MoreMenu(
                     serverText = state.serverText,
                     onUrlSet = setApiUrlRequested,
-                    getAll = getAllRequested,
                     upload = uploadRequested,
                     reverseSortOrder = reverseSortOrderRequested
                 )
@@ -210,7 +208,6 @@ fun AppUi(
 fun MoreMenu(
     serverText: String,
     onUrlSet: (String) -> Unit,
-    getAll: () -> Unit,
     upload: () -> Unit,
     reverseSortOrder: () -> Unit
 ) {
@@ -252,14 +249,6 @@ fun MoreMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
             ) {
-
-                DropdownMenuItem(
-                    text = { Text(stringResource(id = JournalMenuItem.REFRESH.textResId)) },
-                    onClick = {
-                        expanded = false
-                        getAll()
-                    }
-                )
 
                 DropdownMenuItem(
                     text = { Text(stringResource(id = JournalMenuItem.UPLOAD.textResId)) },

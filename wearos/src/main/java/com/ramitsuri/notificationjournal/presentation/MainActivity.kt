@@ -53,11 +53,6 @@ class MainActivity : ComponentActivity() {
         launcher.launchInputActivity()
     }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.refresh()
-    }
-
     companion object {
         const val EXTRA_KEY = "ADD_JOURNAL_ENTRY_KEY"
         const val ADD = "ADD_JOURNAL_ENTRY"

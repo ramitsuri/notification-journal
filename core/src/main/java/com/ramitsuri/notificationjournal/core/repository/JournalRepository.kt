@@ -5,6 +5,8 @@ import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryUpdate
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.network.Api
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import okhttp3.internal.http.HTTP_OK
 import java.time.Instant
 import java.time.ZoneId
@@ -13,11 +15,13 @@ class JournalRepository(
     private val api: Api,
     private val dao: JournalEntryDao
 ) {
-    suspend fun get(order: SortOrder): List<JournalEntry> {
-        return when (order) {
-            SortOrder.ASC -> dao.getAllAsc()
+    fun getFlow(order: SortOrder): Flow<List<JournalEntry>> {
+        return dao.getAllFlow().map { list ->
+            when (order) {
+                SortOrder.ASC -> list.sortedBy { it.entryTime }
 
-            SortOrder.DESC -> dao.getAllDesc()
+                SortOrder.DESC -> list.sortedByDescending { it.entryTime }
+            }
         }
     }
 
@@ -46,7 +50,7 @@ class JournalRepository(
     }
 
     suspend fun upload(): String? {
-        val entries = get(SortOrder.ASC)
+        val entries = dao.getAll()
         if (entries.isEmpty()) {
             return null
         }

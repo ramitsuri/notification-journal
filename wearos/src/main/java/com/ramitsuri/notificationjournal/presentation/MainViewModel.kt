@@ -40,11 +40,13 @@ class MainViewModel(
     val state: StateFlow<ViewState> = _state
 
     init {
-        refresh()
-    }
-
-    fun refresh() {
-        runOperationAndRefresh { }
+        viewModelScope.launch {
+            dao.getAllFlow().collect { entries ->
+                _state.update {
+                    it.copy(journalEntries = entries)
+                }
+            }
+        }
     }
 
     fun add(value: String) {
@@ -61,15 +63,13 @@ class MainViewModel(
                 timeZone = timeZone,
                 text = value
             )
-            runOperationAndRefresh {
-                dao.insert(entry)
-            }
+            dao.insert(entry)
         }
     }
 
     fun sync() {
         longLivingCoroutineScope.launch {
-            val onDeviceEntries = dao.getAllAsc()
+            val onDeviceEntries = dao.getAll()
             onDeviceEntries.forEach { journalEntry ->
                 val posted = dataSharingClient.postJournalEntry(
                     journalEntry.text,
@@ -77,19 +77,8 @@ class MainViewModel(
                     journalEntry.timeZone
                 )
                 if (posted) {
-                    runOperationAndRefresh {
-                        dao.delete(listOf(journalEntry))
-                    }
+                    dao.delete(listOf(journalEntry))
                 }
-            }
-        }
-    }
-
-    private fun runOperationAndRefresh(operation: suspend () -> Unit) {
-        viewModelScope.launch {
-            operation()
-            _state.update {
-                it.copy(journalEntries = dao.getAllAsc())
             }
         }
     }
