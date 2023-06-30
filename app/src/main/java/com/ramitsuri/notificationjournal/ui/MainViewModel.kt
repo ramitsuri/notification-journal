@@ -3,11 +3,11 @@ package com.ramitsuri.notificationjournal.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.ramitsuri.notificationjournal.data.JournalEntry
-import com.ramitsuri.notificationjournal.repository.JournalRepository
-import com.ramitsuri.notificationjournal.model.SortOrder
-import com.ramitsuri.notificationjournal.utils.Constants
-import com.ramitsuri.notificationjournal.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.data.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.SortOrder
+import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,7 +102,7 @@ class MainViewModel(
             SortOrder.ASC
         }
         setSortOrder(newSortOrder)
-        runOperationAndRefresh {  }
+        runOperationAndRefresh { }
     }
 
     private fun setSortOrder(sortOrder: SortOrder) {

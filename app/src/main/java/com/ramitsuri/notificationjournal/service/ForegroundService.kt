@@ -8,10 +8,10 @@ import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.R
+import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
+import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.ramitsuri.notificationjournal.ui.MainActivity
-import com.ramitsuri.notificationjournal.utils.Constants
-import com.ramitsuri.notificationjournal.utils.NotificationChannelType
-import com.ramitsuri.notificationjournal.utils.NotificationInfo
 
 class ForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? {

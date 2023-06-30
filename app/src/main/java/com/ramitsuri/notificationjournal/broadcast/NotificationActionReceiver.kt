@@ -7,11 +7,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.core.app.RemoteInput
 import com.ramitsuri.notificationjournal.MainApplication
-import com.ramitsuri.notificationjournal.data.AppDatabase
-import com.ramitsuri.notificationjournal.data.JournalEntry
-import com.ramitsuri.notificationjournal.utils.Constants
-import com.ramitsuri.notificationjournal.utils.Constants.ACTION_JOURNAL
-import com.ramitsuri.notificationjournal.utils.Constants.ACTION_UPLOAD
+import com.ramitsuri.notificationjournal.core.data.AppDatabase
+import com.ramitsuri.notificationjournal.core.data.JournalEntry
+import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_JOURNAL
+import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_UPLOAD
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,6 +33,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     (context.applicationContext as MainApplication).showJournalNotification()
                 }
             }
+
             ACTION_UPLOAD -> {
                 upload(context)
             }
@@ -48,10 +49,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
             timeZone = ZoneId.systemDefault(),
             text = text
         )
-        val database = AppDatabase.getInstance(context = context)
+        val dao = AppDatabase.getDao(context = context)
         CoroutineScope(SupervisorJob()).launch {
             withContext(Dispatchers.IO) {
-                database.journalEntryDao().insert(journalEntry)
+                dao.insert(journalEntry)
             }
         }
     }

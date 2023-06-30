@@ -3,21 +3,21 @@ package com.ramitsuri.notificationjournal
 import android.app.Application
 import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
-import com.ramitsuri.notificationjournal.data.AppDatabase
-import com.ramitsuri.notificationjournal.network.Api
-import com.ramitsuri.notificationjournal.network.buildApi
-import com.ramitsuri.notificationjournal.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.data.AppDatabase
+import com.ramitsuri.notificationjournal.core.network.Api
+import com.ramitsuri.notificationjournal.core.network.buildApi
+import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
+import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
+import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
+import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
 import com.ramitsuri.notificationjournal.ui.MainActivity
 import com.ramitsuri.notificationjournal.ui.MainViewModel
-import com.ramitsuri.notificationjournal.utils.Constants
-import com.ramitsuri.notificationjournal.utils.KeyValueStore
-import com.ramitsuri.notificationjournal.utils.NotificationActionInfo
-import com.ramitsuri.notificationjournal.utils.NotificationChannelInfo
-import com.ramitsuri.notificationjournal.utils.NotificationChannelType
-import com.ramitsuri.notificationjournal.utils.NotificationHandler
-import com.ramitsuri.notificationjournal.utils.NotificationInfo
-import com.ramitsuri.notificationjournal.utils.PrefsKeyValueStore
-import com.ramitsuri.notificationjournal.utils.SystemNotificationHandler
 
 class MainApplication : Application() {
 
@@ -92,7 +92,7 @@ class MainApplication : Application() {
     fun getRepository(): JournalRepository {
         return JournalRepository(
             api = getApi(),
-            dao = AppDatabase.getInstance(applicationContext).journalEntryDao()
+            dao = AppDatabase.getDao(applicationContext)
         )
     }
 

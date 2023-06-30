@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Notification Journal</string>
+    <string name="tile_label">Notification Journal</string>
+    <plurals name="journal_entries_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+
+</resources>
