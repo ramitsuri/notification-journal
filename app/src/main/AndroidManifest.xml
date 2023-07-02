@@ -61,7 +61,7 @@
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data
                     android:host="*"
-                    android:pathPrefix="/entry"
+                    android:pathPattern="/journal/.*"
                     android:scheme="wear" />
             </intent-filter>
         </service>

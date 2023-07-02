@@ -13,7 +13,7 @@ object Constants {
     const val DEFAULT_API_URL = "http://example.com"
 
     object DataSharing {
-        const val JOURNAL_ENTRY_ROUTE = "/entry"
+        const val JOURNAL_ENTRY_ROUTE = "/journal"
         const val JOURNAL_ENTRY_VALUE = "journal_entry_value"
         const val JOURNAL_ENTRY_TIME = "journal_entry_time"
         const val JOURNAL_ENTRY_TIME_ZONE = "journal_entry_time_zone"

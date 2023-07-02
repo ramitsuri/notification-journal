@@ -20,7 +20,8 @@ class DataLayerListenerService : WearableListenerService() {
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         dataEvents.forEach { dataEvent ->
-            if (dataEvent.dataItem.uri.path == Constants.DataSharing.JOURNAL_ENTRY_ROUTE) {
+            val path = dataEvent.dataItem.uri.path ?: ""
+            if (path.startsWith(Constants.DataSharing.JOURNAL_ENTRY_ROUTE)) {
                 val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
                 val journalEntryText = dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_VALUE)
                 if (journalEntryText != null) {

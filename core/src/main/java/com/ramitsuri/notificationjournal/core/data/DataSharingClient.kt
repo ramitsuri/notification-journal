@@ -16,19 +16,20 @@ interface DataSharingClient {
 class DataSharingClientImpl(
     private val dataClient: DataClient
 ) : DataSharingClient {
-
     @SuppressLint("VisibleForTests")
     override suspend fun postJournalEntry(
         value: String,
         time: Instant,
-        timeZone: ZoneId
+        timeZoneId: ZoneId
     ): Boolean {
         return try {
-            val request = PutDataMapRequest.create(Constants.DataSharing.JOURNAL_ENTRY_ROUTE)
+            val id = System.currentTimeMillis()
+            val path = "${Constants.DataSharing.JOURNAL_ENTRY_ROUTE}/$id"
+            val request = PutDataMapRequest.create(path)
                 .apply {
                     dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_VALUE, value)
                     dataMap.putLong(Constants.DataSharing.JOURNAL_ENTRY_TIME, time.toEpochMilli())
-                    dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_TIME_ZONE, timeZone.id)
+                    dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_TIME_ZONE, timeZoneId.id)
                 }
                 .asPutDataRequest()
                 .setUrgent()
