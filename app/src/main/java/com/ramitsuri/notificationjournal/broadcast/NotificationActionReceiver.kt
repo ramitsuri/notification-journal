@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
+import android.util.Log
 import androidx.core.app.RemoteInput
 import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
@@ -63,9 +63,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 (context.applicationContext as? MainApplication)?.getRepository()?.upload()
                     ?: return@launch
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, error, Toast.LENGTH_LONG).show()
-            }
+            Log.d(TAG, "Failed to upload: $error")
         }
+    }
+
+    companion object {
+        private const val TAG = "NotificationActionReceiver"
     }
 }

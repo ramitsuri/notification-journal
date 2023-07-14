@@ -29,15 +29,21 @@ class MainActivity : ComponentActivity() {
             WearApp(
                 viewState = viewState,
                 onAddRequested = viewModel::add,
-                onSyncRequested = viewModel::sync,
+                onTransferRequested = viewModel::transferLocallySaved,
+                onUploadRequested = viewModel::triggerUpload
             )
         }
+        // From tile
         when (intent.extras?.getString(EXTRA_KEY)) {
             ADD -> {
                 launchForInput { entry ->
                     viewModel.add(entry)
                     finish()
                 }
+            }
+
+            UPLOAD -> {
+                viewModel.triggerUpload()
             }
 
             else -> {
@@ -54,8 +60,9 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        const val EXTRA_KEY = "ADD_JOURNAL_ENTRY_KEY"
+        const val EXTRA_KEY = "EXTRA_KEY"
         const val ADD = "ADD_JOURNAL_ENTRY"
+        const val UPLOAD = "UPLOAD"
     }
 }
 

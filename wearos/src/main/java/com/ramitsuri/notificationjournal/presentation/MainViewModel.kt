@@ -50,24 +50,17 @@ class MainViewModel(
     }
 
     fun add(value: String) {
+        val entries = value.split(". ")
         longLivingCoroutineScope.launch {
             val time = Instant.now()
             val timeZone = ZoneId.systemDefault()
-            val posted = dataSharingClient.postJournalEntry(value, time, timeZone)
-            if (posted) { // Shared with phone client, so no need to save to local db
-                return@launch
+            for (entry in entries) {
+                postToClient(value = entry, time, timeZone)
             }
-            val entry = JournalEntry(
-                id = 0,
-                entryTime = time,
-                timeZone = timeZone,
-                text = value
-            )
-            dao.insert(entry)
         }
     }
 
-    fun sync() {
+    fun transferLocallySaved() {
         longLivingCoroutineScope.launch {
             val onDeviceEntries = dao.getAll()
             onDeviceEntries.forEach { journalEntry ->
@@ -81,6 +74,26 @@ class MainViewModel(
                 }
             }
         }
+    }
+
+    fun triggerUpload() {
+        longLivingCoroutineScope.launch {
+            dataSharingClient.requestUpload()
+        }
+    }
+
+    private suspend fun postToClient(value: String, time: Instant, timeZone: ZoneId) {
+        val posted = dataSharingClient.postJournalEntry(value, time, timeZone)
+        if (posted) { // Shared with phone client, so no need to save to local db
+            return
+        }
+        val entry = JournalEntry(
+            id = 0,
+            entryTime = time,
+            timeZone = timeZone,
+            text = value
+        )
+        dao.insert(entry)
     }
 }
 

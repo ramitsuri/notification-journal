@@ -29,7 +29,16 @@ class TileRenderer(context: Context) :
             .setContent(
                 MultiButtonLayout.Builder()
                     .addButtonContent(
-                        iconButton(launchActivityClickable())
+                        iconButton(
+                            icon = Icon.ADD,
+                            launchActivityClickable(action = MainActivity.ADD)
+                        )
+                    )
+                    .addButtonContent(
+                        iconButton(
+                            icon = Icon.UPLOAD,
+                            launchActivityClickable(action = MainActivity.UPLOAD)
+                        )
                     )
                     .build()
             )
@@ -41,16 +50,18 @@ class TileRenderer(context: Context) :
         deviceParameters: DeviceParametersBuilders.DeviceParameters,
         resourceIds: MutableList<String>
     ) {
-        addIdToImageMapping(ICON_ID, drawableResToImageResource(ICON_RES_ID))
+        for (icon in Icon.values()) {
+            addIdToImageMapping(icon.id, drawableResToImageResource(icon.resId))
+        }
     }
 
-    private fun launchActivityClickable(): ModifiersBuilders.Clickable {
+    private fun launchActivityClickable(action: String): ModifiersBuilders.Clickable {
         val activity = ActionBuilders.AndroidActivity.Builder()
             .setPackageName(PACKAGE)
             .setClassName(ACTIVITY)
             .addKeyToExtraMapping(
                 MainActivity.EXTRA_KEY,
-                ActionBuilders.stringExtra(MainActivity.ADD)
+                ActionBuilders.stringExtra(action)
             )
             .build()
 
@@ -63,17 +74,25 @@ class TileRenderer(context: Context) :
             .build()
     }
 
-    private fun iconButton(clickable: ModifiersBuilders.Clickable) =
+    private fun iconButton(icon: Icon, clickable: ModifiersBuilders.Clickable) =
         Button.Builder(context, clickable)
-            .setIconContent(ICON_ID)
+            .setIconContent(icon.id)
             .setButtonColors(ButtonColors.secondaryButtonColors(theme))
             .build()
 
-    @Suppress("MayBeConstant")
     companion object {
-        private const val ICON_ID = "icon"
         private const val ACTIVITY = "com.ramitsuri.notificationjournal.presentation.MainActivity"
         private const val PACKAGE = "com.ramitsuri.notificationjournal"
-        private val ICON_RES_ID = R.drawable.ic_add
     }
+}
+
+enum class Icon(val id: String, val resId: Int) {
+    ADD(
+        id = "icon_add",
+        resId = R.drawable.ic_add
+    ),
+    UPLOAD(
+        id = "icon_upload",
+        resId = R.drawable.ic_upload
+    )
 }

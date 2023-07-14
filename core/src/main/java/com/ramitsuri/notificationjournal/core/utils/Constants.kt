@@ -17,5 +17,6 @@ object Constants {
         const val JOURNAL_ENTRY_VALUE = "journal_entry_value"
         const val JOURNAL_ENTRY_TIME = "journal_entry_time"
         const val JOURNAL_ENTRY_TIME_ZONE = "journal_entry_time_zone"
+        const val REQUEST_UPLOAD_ROUTE = "/upload"
     }
 }

@@ -6,4 +6,8 @@
         <item quantity="other">%d entries</item>
     </plurals>
 
+    <string name="add_new">Add</string>
+    <string name="transfer_to_phone">Transfer</string>
+    <string name="upload">Upload</string>
+
 </resources>

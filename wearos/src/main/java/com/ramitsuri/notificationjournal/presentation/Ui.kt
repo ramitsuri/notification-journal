@@ -2,67 +2,87 @@ package com.ramitsuri.notificationjournal.presentation
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Done
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.PositionIndicator
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.TimeText
+import androidx.wear.compose.material.Vignette
+import androidx.wear.compose.material.VignettePosition
+import androidx.wear.compose.material.scrollAway
 import com.ramitsuri.notificationjournal.R
+import com.ramitsuri.notificationjournal.core.data.JournalEntry
 import com.ramitsuri.notificationjournal.presentation.theme.NotificationJournalTheme
+import java.time.Instant
+import java.time.ZoneId
 
 @Composable
 fun WearApp(
     viewState: ViewState,
     onAddRequested: (String) -> Unit,
-    onSyncRequested: () -> Unit
+    onUploadRequested: () -> Unit,
+    onTransferRequested: () -> Unit
 ) {
     NotificationJournalTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val iconModifier = Modifier
-                .size(16.dp)
-                .wrapContentSize(align = Alignment.Center)
-            val showOnDeviceEntries = viewState.journalEntries.isNotEmpty()
-            if (showOnDeviceEntries) {
-                val count = viewState.journalEntries.size
-                Text(
-                    text = pluralStringResource(
-                        id = R.plurals.journal_entries_count,
-                        count = count,
-                        count
-                    )
+        val listState = rememberScalingLazyListState()
+        Scaffold(
+            timeText = {
+                TimeText(modifier = Modifier.scrollAway(listState))
+            },
+            vignette = {
+                Vignette(vignettePosition = VignettePosition.TopAndBottom)
+            },
+            positionIndicator = {
+                PositionIndicator(
+                    scalingLazyListState = listState
                 )
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            ScalingLazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                autoCentering = AutoCenteringParams(itemIndex = 0),
+                state = listState
             ) {
-                AddButton(onAddRequested = onAddRequested, iconModifier = iconModifier)
+                val showOnDeviceEntries = viewState.journalEntries.isNotEmpty()
                 if (showOnDeviceEntries) {
-                    SyncButton(onSyncRequested = { onSyncRequested() }, iconModifier = iconModifier)
+                    val count = viewState.journalEntries.size
+                    item {
+                        Text(
+                            text = pluralStringResource(
+                                id = R.plurals.journal_entries_count,
+                                count = count,
+                                count
+                            )
+                        )
+                    }
+                }
+                item { AddButton(onAddRequested) }
+                item { Spacer(modifier = Modifier.height(8.dp)) }
+                item { RequestUploadFromPhoneButton(onUploadRequested) }
+                if (showOnDeviceEntries) {
+                    item { TransferToPhoneButton(onTransferRequested) }
                 }
             }
         }
@@ -70,44 +90,82 @@ fun WearApp(
 }
 
 @Composable
-fun AddButton(onAddRequested: (String) -> Unit, iconModifier: Modifier) {
+fun AddButton(onAddRequested: (String) -> Unit) {
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             it.processResult(onAddRequested)
         }
     Button(
-        modifier = Modifier.size(ButtonDefaults.LargeButtonSize),
+        modifier = Modifier
+            .size(ButtonDefaults.LargeButtonSize),
         onClick = {
             launcher.launchInputActivity()
         },
     ) {
+        val iconModifier = Modifier
+            .size(16.dp)
+            .wrapContentSize(align = Alignment.Center)
         Icon(
             imageVector = Icons.Rounded.Add,
-            contentDescription = "",
+            contentDescription = stringResource(id = R.string.add_new),
             modifier = iconModifier
         )
     }
 }
 
 @Composable
-fun SyncButton(
-    onSyncRequested: () -> Unit,
-    iconModifier: Modifier
-) {
+fun TransferToPhoneButton(onTransferRequested: () -> Unit) {
     Button(
-        modifier = Modifier.size(ButtonDefaults.LargeButtonSize),
-        onClick = { onSyncRequested() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        onClick = { onTransferRequested() },
     ) {
-        Icon(
-            imageVector = Icons.Rounded.Done,
-            contentDescription = "",
-            modifier = iconModifier
-        )
+        Text(text = stringResource(id = R.string.transfer_to_phone))
+    }
+}
+
+@Composable
+fun RequestUploadFromPhoneButton(onUploadRequested: () -> Unit) {
+    Button(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        onClick = { onUploadRequested() },
+    ) {
+        Text(text = stringResource(id = R.string.upload))
     }
 }
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp(viewState = ViewState(), { }, { })
+    WearApp(viewState = ViewState(), { }, { }, { })
+}
+
+@Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
+@Composable
+fun JournalEntriesPresentPreview() {
+    WearApp(viewState = ViewState(
+        journalEntries = listOf(
+            JournalEntry(
+                id = 0,
+                entryTime = Instant.now(),
+                timeZone = ZoneId.systemDefault(),
+                text = "Text1"
+            ),
+            JournalEntry(
+                id = 0,
+                entryTime = Instant.now(),
+                timeZone = ZoneId.systemDefault(),
+                text = "Text2"
+            ),
+            JournalEntry(
+                id = 0,
+                entryTime = Instant.now(),
+                timeZone = ZoneId.systemDefault(),
+                text = "Text3"
+            )
+        )
+    ), { }, { }, { })
 }
