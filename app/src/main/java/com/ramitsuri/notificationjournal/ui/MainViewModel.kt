@@ -1,5 +1,7 @@
 package com.ramitsuri.notificationjournal.ui
 
+import android.util.Log
+import android.webkit.URLUtil
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jsoup.Jsoup
 
 class MainViewModel(
     private val keyValueStore: KeyValueStore,
@@ -45,6 +48,13 @@ class MainViewModel(
 
     init {
         restartCollection()
+    }
+
+    fun setReceivedText(text: String?) {
+        _state.update {
+            it.copy(receivedText = text)
+        }
+        loadAdditionalDataIfUrl(text)
     }
 
     fun upload() {
@@ -117,6 +127,12 @@ class MainViewModel(
         }
     }
 
+    fun resetReceivedText() {
+        _state.update {
+            it.copy(receivedText = null, suggestedTextFromReceivedText = null)
+        }
+    }
+
     private fun restartCollection() {
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
@@ -128,11 +144,67 @@ class MainViewModel(
         }
     }
 
+    private fun loadAdditionalDataIfUrl(url: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (url == null) {
+                Log.d(TAG, "receivedText null")
+                return@launch
+            }
+            if (!(URLUtil.isHttpUrl(url) || URLUtil.isHttpsUrl(url))) {
+                Log.d(TAG, "receivedText not url")
+                return@launch
+            }
+            try {
+                val response = Jsoup.connect(url)
+                    .ignoreContentType(true)
+                    .userAgent("Mozilla")
+                    .referrer("http://www.google.com")
+                    .timeout(10000)
+                    .followRedirects(true)
+                    .execute()
+
+                val doc = response.parse()
+
+                val ogTags = doc.select("meta[property^=og:]")
+                if (ogTags.isEmpty()) {
+                    Log.d(TAG, "Tags empty")
+                    return@launch
+                }
+                ogTags.forEach { tag ->
+                    when (tag.attr("property")) {
+                        "og:title" -> {
+                            val pageTitle = tag.attr("content")
+                            Log.d(TAG, "Page title: $pageTitle")
+                            if (!pageTitle.isNullOrEmpty()) {
+                                _state.update {
+                                    it.copy(suggestedTextFromReceivedText = pageTitle)
+                                }
+                                return@launch
+                            }
+                        }
+
+                        else -> {
+                            // Do nothing
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     private fun getApiUrl() = keyValueStore.getString(Constants.PREF_KEY_API_URL, "") ?: ""
+
+    companion object {
+        private const val TAG = "PhoneViewModel"
+    }
 }
 
 data class ViewState(
     val journalEntries: List<JournalEntry> = listOf(),
+    val receivedText: String? = null,
+    val suggestedTextFromReceivedText: String? = null,
     val serverText: String = "",
     val loading: Boolean = false,
     val error: String? = null

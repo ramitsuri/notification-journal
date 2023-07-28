@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.ui
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +24,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val receivedText =
+            if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+                intent.getStringExtra(Intent.EXTRA_TEXT)
+            } else {
+                null
+            }
+        viewModel.setReceivedText(receivedText)
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         showNotification()
         setContent {
@@ -37,6 +46,7 @@ class MainActivity : ComponentActivity() {
                     setApiUrlRequested = viewModel::setApiUrl,
                     uploadRequested = viewModel::upload,
                     reverseSortOrderRequested = viewModel::reverseSortOrder,
+                    resetReceivedText = viewModel::resetReceivedText
                 )
             }
         }

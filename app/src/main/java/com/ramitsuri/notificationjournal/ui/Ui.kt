@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -56,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -75,10 +77,11 @@ fun AppUi(
     onErrorAcknowledged: () -> Unit,
     setApiUrlRequested: (String) -> Unit,
     uploadRequested: () -> Unit,
-    reverseSortOrderRequested: () -> Unit
+    reverseSortOrderRequested: () -> Unit,
+    resetReceivedText: () -> Unit
 ) {
-    var showDialog by rememberSaveable { mutableStateOf(false) }
-    var initialDialogText by rememberSaveable { mutableStateOf("") }
+    var showDialog by rememberSaveable { mutableStateOf(state.receivedText != null) }
+    var initialDialogText by rememberSaveable { mutableStateOf(state.receivedText ?: "") }
     var journalEntryId by rememberSaveable { mutableIntStateOf(-1) }
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -87,6 +90,7 @@ fun AppUi(
     if (showDialog) {
         AddEditEntryDialog(
             initialText = initialDialogText,
+            suggestedText = state.suggestedTextFromReceivedText,
             onPositiveClick = { value ->
                 showDialog = !showDialog
                 if (journalEntryId == -1) {
@@ -97,7 +101,8 @@ fun AppUi(
             },
             onNegativeClick = {
                 showDialog = !showDialog
-            }
+            },
+            resetReceivedText = resetReceivedText
         )
     }
 
@@ -414,10 +419,19 @@ private fun SetApiUrlDialog(
 @Composable
 private fun AddEditEntryDialog(
     initialText: String,
+    suggestedText: String?,
     onPositiveClick: (String) -> Unit,
-    onNegativeClick: () -> Unit
+    onNegativeClick: () -> Unit,
+    resetReceivedText: () -> Unit
 ) {
-    var text by remember { mutableStateOf(TextFieldValue(initialText)) }
+    var text by remember {
+        mutableStateOf(
+            TextFieldValue(
+                initialText,
+                selection = TextRange(initialText.length)
+            )
+        )
+    }
 
     val focusRequester = remember { FocusRequester() }
     val showKeyboard by remember { mutableStateOf(true) }
@@ -445,23 +459,57 @@ private fun AddEditEntryDialog(
                         .focusRequester(focusRequester = focusRequester)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+                if (!suggestedText.isNullOrEmpty()) {
+                    SuggestedText(suggestedText, onUseSuggestedText = {
+                        resetReceivedText()
+                        text = TextFieldValue(it, selection = text.selection)
+                    })
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     TextButton(onClick = {
+                        resetReceivedText()
                         onNegativeClick()
                     }) {
                         Text(text = stringResource(id = R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     TextButton(onClick = {
+                        resetReceivedText()
                         onPositiveClick(text.text)
                     }) {
                         Text(text = stringResource(id = R.string.ok))
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SuggestedText(
+    suggestedText: String,
+    onUseSuggestedText: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .sizeIn(minHeight = 64.dp)
+    ) {
+        Text(
+            text = suggestedText,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        TextButton(onClick = {
+            onUseSuggestedText(suggestedText)
+        }) {
+            Text(text = stringResource(id = R.string.use))
         }
     }
 }
