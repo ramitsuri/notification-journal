@@ -65,10 +65,8 @@ class MainViewModel(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val error = repository.upload()
-                if (error != null) {
-                    _state.update {
-                        it.copy(loading = false, error = error)
-                    }
+                _state.update {
+                    it.copy(loading = false, error = error)
                 }
             }
         }

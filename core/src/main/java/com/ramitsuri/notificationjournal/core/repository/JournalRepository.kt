@@ -54,7 +54,7 @@ class JournalRepository(
         if (entries.isEmpty()) {
             return null
         }
-        val error = try {
+        return try {
             val response = api.sendData(entries)
             if (response.code() == HTTP_OK) {
                 dao.deleteAll()
@@ -66,6 +66,5 @@ class JournalRepository(
             e.printStackTrace()
             e.message
         }
-        return error
     }
 }
