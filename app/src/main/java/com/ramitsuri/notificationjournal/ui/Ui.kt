@@ -498,7 +498,8 @@ fun SuggestedText(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .sizeIn(minHeight = 64.dp)
+            .sizeIn(minHeight = 64.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = suggestedText,
