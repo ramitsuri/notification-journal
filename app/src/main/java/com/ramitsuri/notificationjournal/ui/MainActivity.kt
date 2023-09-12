@@ -64,12 +64,11 @@ fun Context.getActivity(): AppCompatActivity? = when (this) {
 }
 
 fun Context.shutdown() {
-    val activity = getActivity()
-    val intent =
-        activity?.packageManager?.getLaunchIntentForPackage(activity.packageName)
-    activity?.finishAffinity()
-    activity?.startActivity(intent)
-    exitProcess(0)
+    val intent = packageManager.getLaunchIntentForPackage(packageName)
+    val componentName = intent?.component
+    val mainIntent = Intent.makeRestartActivityTask(componentName)
+    startActivity(mainIntent)
+    Runtime.getRuntime().exit(0)
 }
 
 enum class JournalMenuItem(@StringRes val textResId: Int) {
