@@ -1,9 +1,7 @@
 package com.ramitsuri.notificationjournal.presentation
 
-import android.app.RemoteInput
 import android.content.Intent
 import android.os.Bundle
-import android.view.inputmethod.EditorInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
@@ -11,10 +9,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
-import androidx.wear.input.RemoteInputIntentHelper
-import androidx.wear.input.wearableExtender
 import com.ramitsuri.notificationjournal.MainApplication
-import com.ramitsuri.notificationjournal.core.utils.Constants
 
 class MainActivity : ComponentActivity() {
 
@@ -68,8 +63,7 @@ class MainActivity : ComponentActivity() {
 
 fun ActivityResult?.processResult(onSuccess: (String) -> Unit) {
     this?.data?.let { data ->
-        val results: Bundle = RemoteInput.getResultsFromIntent(data)
-        val result = results.getCharSequence(Constants.REMOTE_INPUT_JOURNAL_KEY)?.toString()
+        val result = data.extras?.getString("result_text")
         if (result != null) {
             onSuccess(result)
         }
@@ -77,14 +71,7 @@ fun ActivityResult?.processResult(onSuccess: (String) -> Unit) {
 }
 
 fun ActivityResultLauncher<Intent>.launchInputActivity() {
-    val intent: Intent = RemoteInputIntentHelper.createActionRemoteInputIntent();
-    val remoteInputs: List<RemoteInput> = listOf(
-        RemoteInput.Builder(Constants.REMOTE_INPUT_JOURNAL_KEY)
-            .wearableExtender {
-                setEmojisAllowed(false)
-                setInputActionType(EditorInfo.IME_ACTION_DONE)
-            }.build()
-    )
-    RemoteInputIntentHelper.putRemoteInputsExtra(intent, remoteInputs)
+    // RemoteInputHelper stopped working after One UI 5 update
+    val intent = Intent("com.google.android.wearable.action.LAUNCH_KEYBOARD")
     launch(intent)
 }
