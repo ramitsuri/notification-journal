@@ -14,6 +14,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.Update
 import com.ramitsuri.notificationjournal.core.utils.DatabaseConverters
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.time.ZoneId
@@ -70,11 +72,23 @@ interface JournalEntryDao {
 }
 
 @Entity
+@JsonClass(generateAdapter = true)
 data class JournalEntry(
-    @PrimaryKey(autoGenerate = true) val id: Int,
-    @ColumnInfo(name = "entry_time") val entryTime: Instant,
-    @ColumnInfo(name = "time_zone") val timeZone: ZoneId,
-    @ColumnInfo(name = "text") val text: String
+    @PrimaryKey(autoGenerate = true)
+    @Json(name = "id")
+    val id: Int,
+
+    @ColumnInfo(name = "entry_time")
+    @Json(name = "entryTime")
+    val entryTime: Instant,
+
+    @ColumnInfo(name = "time_zone")
+    @Json(name = "timeZone")
+    val timeZone: ZoneId,
+
+    @ColumnInfo(name = "text")
+    @Json(name = "text")
+    val text: String
 )
 
 data class JournalEntryUpdate(

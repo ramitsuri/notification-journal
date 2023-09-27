@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">NotificationJournal</string>
+    <string name="app_name">Notification Journal</string>
     <string name="add_new_journal_content">Add</string>
     <string name="upload_journal_content">Upload</string>
     <string name="button_text_upload_all">Upload</string>
