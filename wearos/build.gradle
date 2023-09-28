@@ -5,13 +5,13 @@ plugins {
 
 android {
     namespace 'com.ramitsuri.notificationjournal'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.ramitsuri.notificationjournal"
         minSdk 30
         targetSdk 33
-        versionCode 2
+        versionCode 1 // Will be set based on version name when building
         versionName "2.0"
 
         vectorDrawables {
@@ -24,6 +24,8 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Enable if testing
+            //signingConfig signingConfigs.debug
         }
         debug {
             minifyEnabled true
@@ -47,6 +49,13 @@ android {
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.all { output ->
+            def versionCodeOverride = getVersionCode(variant.versionName, false)
+            output.setVersionCodeOverride(versionCodeOverride)
         }
     }
 }
