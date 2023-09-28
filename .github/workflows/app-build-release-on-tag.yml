@@ -1,4 +1,4 @@
-name: Create App Release
+name: Create Release
 
 on:
   push:
@@ -16,14 +16,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Generate Release bundle
-        run: ./gradlew app:bundleRelease
+      - name: Generate Release bundles
+        run: ./gradlew bundleRelease
 
-      - name: Sign bundle
+      - name: Sign phone bundle
         uses: r0adkll/sign-android-release@v1
-        id: sign_app
+        id: sign_phone_app
         with:
           releaseDirectory: app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Sign wear bundle
+        uses: r0adkll/sign-android-release@v1
+        id: sign_wear_app
+        with:
+          releaseDirectory: wearos/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -34,6 +44,6 @@ jobs:
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_SERVICE_ACCOUNT_JSON }}
           packageName: com.ramitsuri.notificationjournal
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab, wearos/build/outputs/bundle/release/wearos-release.aab
           track: internal
           status: completed
