@@ -1,13 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.NotificationJournal" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+    <style name="NightAdjusted.Theme.Journal" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.Journal" parent="NightAdjusted.Theme.Journal" />
+
+    <style name="NightAdjusted.Theme.Splash" parent="Theme.SplashScreen">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
-    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
-        <item name="postSplashScreenTheme">@style/Theme.NotificationJournal</item>
+    <style name="Theme.Journal.Splash" parent="NightAdjusted.Theme.Splash">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.Journal</item>
     </style>
 </resources>
