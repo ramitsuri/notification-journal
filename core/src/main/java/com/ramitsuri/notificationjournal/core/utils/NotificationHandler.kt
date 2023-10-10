@@ -63,8 +63,6 @@ enum class Importance(val key: Int) {
 
 enum class NotificationChannelType(val id: String) {
     MAIN("main"),
-    FOREGROUND_SERVICE("foreground_service"),
-    APP_RESTART("app_restart")
 }
 
 interface NotificationHandler {
@@ -103,10 +101,6 @@ class SystemNotificationHandler(
     override fun getNotificationId(notificationInfo: NotificationInfo): Int {
         return when (notificationInfo.channel) {
             NotificationChannelType.MAIN -> 1
-
-            NotificationChannelType.FOREGROUND_SERVICE -> 2
-
-            NotificationChannelType.APP_RESTART -> 3
         }
     }
 
@@ -162,6 +156,8 @@ class SystemNotificationHandler(
         for (channelInfo in channelInfos) {
             notificationManager.createNotificationChannel(toNotificationChannel(channelInfo))
         }
+        notificationManager.deleteNotificationChannel("foreground_service")
+        notificationManager.deleteNotificationChannel("app_restart")
     }
 
     private fun toNotificationChannel(notificationChannelInfo: NotificationChannelInfo): NotificationChannel {

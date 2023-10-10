@@ -36,11 +36,6 @@ class MainApplication : Application() {
         notificationHandler.init(
             listOf(
                 NotificationChannelInfo(
-                    channelType = NotificationChannelType.FOREGROUND_SERVICE,
-                    name = NotificationChannelType.FOREGROUND_SERVICE.id,
-                    description = "For foreground service notification"
-                ),
-                NotificationChannelInfo(
                     channelType = NotificationChannelType.MAIN,
                     name = NotificationChannelType.MAIN.id,
                     description = "For main notification"

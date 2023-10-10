@@ -52,10 +52,6 @@
         <receiver
             android:name=".broadcast.NotificationActionReceiver"
             android:enabled="true"
-            android:exported="true" />
-
-        <service
-            android:name=".service.ForegroundService"
             android:exported="false" />
 
          <service
