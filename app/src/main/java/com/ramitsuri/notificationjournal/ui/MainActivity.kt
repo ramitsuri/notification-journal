@@ -10,11 +10,11 @@ import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.collectAsState
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.ui.theme.NotificationJournalTheme
-import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
 
@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         val receivedText =
             if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
