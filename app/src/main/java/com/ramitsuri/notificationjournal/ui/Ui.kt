@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,14 +32,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -386,6 +382,7 @@ private fun ListItem(
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Card(
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
@@ -394,9 +391,6 @@ private fun ListItem(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clickable {
-                    onCopyRequested(item)
-                }
                 .padding(8.dp)
         ) {
             Text(
@@ -407,23 +401,62 @@ private fun ListItem(
                     .padding(8.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            FilledTonalIconButton(
-                onClick = { onDeleteRequested(item) }) {
-                Icon(
-                    imageVector = Icons.Outlined.Delete,
-                    contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            FilledTonalIconButton(
-                onClick = { onEditRequested(item) }) {
-                Icon(
-                    imageVector = Icons.Outlined.Edit,
-                    contentDescription = "Edit",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
+            ItemMenu(
+                showMenu = showMenu,
+                onCopyRequested = { onCopyRequested(item) },
+                onEditRequested = { onEditRequested(item) },
+                onDeleteRequested = { onDeleteRequested(item) },
+                onMenuButtonClicked = { showMenu = !showMenu },
+            )
+        }
+    }
+}
+
+@Composable
+fun ItemMenu(
+    showMenu: Boolean,
+    onCopyRequested: () -> Unit,
+    onEditRequested: () -> Unit,
+    onDeleteRequested: () -> Unit,
+    onMenuButtonClicked: () -> Unit
+) {
+    Box {
+        IconButton(
+            onClick = onMenuButtonClicked,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = stringResource(id = R.string.menu_content_description)
+            )
+        }
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = onMenuButtonClicked,
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.copy)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onCopyRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.edit)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onEditRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.delete)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onDeleteRequested()
+                }
+            )
         }
     }
 }

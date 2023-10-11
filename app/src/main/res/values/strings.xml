@@ -20,4 +20,8 @@
     <string name="yesterday">Yesterday</string>
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>
+
+    <string name="copy">Copy</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
 </resources>
