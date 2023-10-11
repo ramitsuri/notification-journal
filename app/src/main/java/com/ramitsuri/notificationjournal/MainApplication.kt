@@ -77,12 +77,10 @@ class MainApplication : Application() {
         notificationHandler.showNotification(notificationInfo)
     }
 
-    fun getViewModelFactory(): MainViewModel.Factory {
-        return MainViewModel.Factory(
-            getKeyValueStore(),
-            getRepository()
-        )
-    }
+    fun getViewModelFactory() = MainViewModel.factory(
+        getKeyValueStore(),
+        getRepository()
+    )
 
     fun getRepository(): JournalRepository {
         return JournalRepository(

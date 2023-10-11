@@ -18,28 +18,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class MainViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository
 ) : ViewModel() {
 
-    class Factory(
-        private val keyValueStore: KeyValueStore,
-        private val repository: JournalRepository
-    ) : ViewModelProvider.Factory {
-
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MainViewModel(keyValueStore, repository) as T
-        }
-    }
-
     private var collectionJob: Job? = null
 
     private val _state = MutableStateFlow(
         ViewState(
-            journalEntries = listOf(),
+            journalEntries = mapOf(),
             loading = false,
             serverText = getApiUrl()
         )
@@ -135,8 +126,9 @@ class MainViewModel(
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
             repository.getFlow(getSortOrder()).collect { entries ->
+                val groupedByDay = entries.groupBy { it.entryTime.truncatedTo(ChronoUnit.DAYS) }
                 _state.update {
-                    it.copy(journalEntries = entries)
+                    it.copy(journalEntries = groupedByDay)
                 }
             }
         }
@@ -196,11 +188,22 @@ class MainViewModel(
 
     companion object {
         private const val TAG = "PhoneViewModel"
+
+        fun factory(
+            keyValueStore: KeyValueStore,
+            repository: JournalRepository
+        ) = object : ViewModelProvider.Factory {
+
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return MainViewModel(keyValueStore, repository) as T
+            }
+        }
     }
 }
 
 data class ViewState(
-    val journalEntries: List<JournalEntry> = listOf(),
+    val journalEntries: Map<Instant, List<JournalEntry>> = mapOf(),
     val receivedText: String? = null,
     val suggestedTextFromReceivedText: String? = null,
     val serverText: String = "",

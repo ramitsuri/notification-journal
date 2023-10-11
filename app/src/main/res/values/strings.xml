@@ -16,4 +16,8 @@
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>
+
+    <string name="yesterday">Yesterday</string>
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
 </resources>

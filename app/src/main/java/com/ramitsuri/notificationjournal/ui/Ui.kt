@@ -1,6 +1,9 @@
 package com.ramitsuri.notificationjournal.ui
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +30,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -35,6 +37,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
@@ -45,6 +48,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -67,15 +71,19 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.data.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
+import com.ramitsuri.notificationjournal.core.utils.getDay
 import kotlinx.coroutines.delay
+import java.time.Instant
+import java.time.ZoneId
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -178,7 +186,6 @@ fun AppUi(
         ) {
             if (state.loading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-
             } else {
                 Spacer(
                     modifier = Modifier.height(
@@ -235,7 +242,7 @@ fun AppUi(
 
 
 @Composable
-fun MoreMenu(
+private fun MoreMenu(
     serverText: String,
     onUrlSet: (String) -> Unit,
     upload: () -> Unit,
@@ -325,23 +332,31 @@ fun MoreMenu(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun List(
-    items: List<JournalEntry>,
+private fun List(
+    items: Map<Instant, List<JournalEntry>>,
     onCopyRequested: (JournalEntry) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit
 ) {
-    LazyColumn {
-        items(items, key = { it.id }) {
-            ListItem(
-                item = it,
-                onCopyRequested = onCopyRequested,
-                onDeleteRequested = onDeleteRequested,
-                onEditRequested = onEditRequested
-            )
-            Divider()
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items.forEach { (header, entries) ->
+            stickyHeader {
+                HeaderItem(text = getDay(header).string())
+            }
+            items(entries, key = { it.id }) {
+                ListItem(
+                    item = it,
+                    onCopyRequested = onCopyRequested,
+                    onDeleteRequested = onDeleteRequested,
+                    onEditRequested = onEditRequested
+                )
+            }
         }
+
         item {
             Spacer(modifier = Modifier.height(128.dp))
         }
@@ -349,53 +364,66 @@ fun List(
 }
 
 @Composable
-fun ListItem(
+private fun HeaderItem(text: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colorScheme.background)
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun ListItem(
     item: JournalEntry,
     onCopyRequested: (JournalEntry) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit
 ) {
-    Row(
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable {
-            onCopyRequested(item)
-        }
+    Card(
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
     ) {
-        Column(
+        Row(
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .weight(1f)
+                .clickable {
+                    onCopyRequested(item)
+                }
                 .padding(8.dp)
         ) {
             Text(
-                text = formatForDisplay(
-                    item.entryTime,
-                    item.timeZone
-                ),
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
                 text = item.text,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp)
             )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        FilledTonalIconButton(
-            onClick = { onDeleteRequested(item) }) {
-            Icon(
-                imageVector = Icons.Outlined.Delete,
-                contentDescription = "Delete",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        FilledTonalIconButton(
-            onClick = { onEditRequested(item) }) {
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = "Edit",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
+            Spacer(modifier = Modifier.width(8.dp))
+            FilledTonalIconButton(
+                onClick = { onDeleteRequested(item) }) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            FilledTonalIconButton(
+                onClick = { onEditRequested(item) }) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Edit",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
     }
 }
@@ -538,4 +566,113 @@ fun SuggestedText(
             Text(text = stringResource(id = R.string.use))
         }
     }
+}
+
+@Preview
+@Composable
+fun ListItemPreview() {
+    Surface {
+        ListItem(
+            item = JournalEntry(
+                id = 0,
+                entryTime = Instant.now(),
+                timeZone = ZoneId.systemDefault(),
+                text = "Test text"
+            ),
+            onCopyRequested = {},
+            onEditRequested = {},
+            onDeleteRequested = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun AppUiPreview() {
+    val entryTime = Instant.parse("2023-10-10T12:00:00Z")
+    val timeZone = ZoneId.systemDefault()
+    val state = ViewState(
+        journalEntries = mapOf(
+            Instant.parse("2023-10-10T12:00:00Z") to listOf(
+                JournalEntry(
+                    id = 1,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry1"
+                ),
+                JournalEntry(
+                    id = 2,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry2"
+                ),
+                JournalEntry(
+                    id = 3,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry3"
+                ),
+                JournalEntry(
+                    id = 4,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry4"
+                ),
+                JournalEntry(
+                    id = 5,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry5"
+                )
+            ),
+            Instant.parse("2023-10-11T12:00:00Z") to listOf(
+                JournalEntry(
+                    id = 6,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry6"
+                ),
+                JournalEntry(
+                    id = 7,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry7"
+                ),
+                JournalEntry(
+                    id = 8,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry8"
+                ),
+                JournalEntry(
+                    id = 9,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry9"
+                ),
+                JournalEntry(
+                    id = 10,
+                    entryTime = entryTime,
+                    timeZone = timeZone,
+                    text = "Entry10 this is a long entry that could span multiple lines"
+                )
+            )
+        ),
+        receivedText = null,
+        suggestedTextFromReceivedText = null,
+        serverText = "",
+        loading = false,
+        error = null
+    )
+    AppUi(
+        state = state,
+        onAddRequested = { },
+        onEditRequested = { _, _ -> },
+        onDeleteRequested = { },
+        onErrorAcknowledged = { },
+        setApiUrlRequested = { },
+        uploadRequested = { },
+        reverseSortOrderRequested = { },
+        resetReceivedText = { },
+    )
 }
