@@ -13,6 +13,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.Update
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.utils.DatabaseConverters
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -24,7 +25,7 @@ import java.time.ZoneId
     entities = [
         JournalEntry::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
@@ -37,11 +38,14 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun getInstance(context: Context): AppDatabase {
             if (INSTANCE == null) {
-                INSTANCE = Room.databaseBuilder(
-                    context,
-                    AppDatabase::class.java,
-                    "app_database"
-                ).build()
+                INSTANCE = Room
+                    .databaseBuilder(
+                        context,
+                        AppDatabase::class.java,
+                        "app_database"
+                    )
+                    .addMigrations(MigrationFrom1To2())
+                    .build()
             }
             return INSTANCE as AppDatabase
         }
@@ -68,13 +72,20 @@ interface JournalEntryDao {
     suspend fun insert(journalEntry: JournalEntry)
 
     @Update(entity = JournalEntry::class)
-    suspend fun update(journalEntryUpdate: JournalEntryUpdate)
+    suspend fun updateText(journalEntryUpdate: JournalEntryTextUpdate)
+
+    @Update(entity = JournalEntry::class)
+    suspend fun updateTag(journalEntryUpdate: JournalEntryTagUpdate)
+
+    @Update(entity = JournalEntry::class)
+    suspend fun updateEntryTime(journalEntryUpdate: JournalEntryTimeUpdate)
 }
 
 @Entity
 @JsonClass(generateAdapter = true)
 data class JournalEntry(
     @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
     @Json(name = "id")
     val id: Int,
 
@@ -88,10 +99,37 @@ data class JournalEntry(
 
     @ColumnInfo(name = "text")
     @Json(name = "text")
+    val text: String,
+
+    @ColumnInfo(name = "tag")
+    @Json(name = "tag")
+    val tag: String? = null,
+
+    @ColumnInfo(name = "entry_time_override")
+    @Json(name = "entryTimeOverride")
+    val entryTimeOverride: Instant? = null,
+)
+
+data class JournalEntryTextUpdate(
+    @ColumnInfo(name = "id")
+    val id: Int,
+
+    @Json(name = "text")
     val text: String
 )
 
-data class JournalEntryUpdate(
+data class JournalEntryTagUpdate(
+    @ColumnInfo(name = "id")
     val id: Int,
-    val text: String
+
+    @ColumnInfo(name = "tag")
+    val tag: String?
+)
+
+data class JournalEntryTimeUpdate(
+    @ColumnInfo(name = "id")
+    val id: Int,
+
+    @ColumnInfo(name = "entry_time_override")
+    val entryTimeOverride: Instant?,
 )

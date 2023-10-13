@@ -2,7 +2,9 @@ package com.ramitsuri.notificationjournal.core.repository
 
 import com.ramitsuri.notificationjournal.core.data.JournalEntry
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
-import com.ramitsuri.notificationjournal.core.data.JournalEntryUpdate
+import com.ramitsuri.notificationjournal.core.data.JournalEntryTagUpdate
+import com.ramitsuri.notificationjournal.core.data.JournalEntryTextUpdate
+import com.ramitsuri.notificationjournal.core.data.JournalEntryTimeUpdate
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.network.Api
 import kotlinx.coroutines.flow.Flow
@@ -25,22 +27,42 @@ class JournalRepository(
         }
     }
 
-    suspend fun edit(id: Int, text: String) {
-        dao.update(
-            JournalEntryUpdate(
+    suspend fun editText(id: Int, text: String) {
+        dao.updateText(
+            JournalEntryTextUpdate(
                 id = id,
                 text = text
             )
         )
     }
 
-    suspend fun insert(text: String) {
+    suspend fun editTag(id: Int, tag: String?) {
+        dao.updateTag(
+            JournalEntryTagUpdate(
+                id = id,
+                tag = tag
+            )
+        )
+    }
+
+    suspend fun editEntryTime(id: Int, time: Instant?) {
+        dao.updateEntryTime(
+            JournalEntryTimeUpdate(
+                id = id,
+                entryTimeOverride = time,
+            )
+        )
+    }
+
+    suspend fun insert(text: String, tag: String? = null, originalEntryTime: Instant? = null) {
         dao.insert(
             JournalEntry(
                 id = 0,
                 entryTime = Instant.now(),
                 timeZone = ZoneId.systemDefault(),
-                text = text
+                text = text,
+                tag = tag,
+                entryTimeOverride = originalEntryTime
             )
         )
     }

@@ -78,7 +78,19 @@ class MainViewModel(
 
     fun edit(id: Int, text: String) {
         viewModelScope.launch {
-            repository.edit(id, text)
+            repository.editText(id, text)
+        }
+    }
+
+    fun editTag(id: Int, tag: String?) {
+        viewModelScope.launch {
+            repository.editTag(id, tag)
+        }
+    }
+
+    fun editTime(id: Int, time: Instant?) {
+        viewModelScope.launch {
+            repository.editEntryTime(id, time)
         }
     }
 

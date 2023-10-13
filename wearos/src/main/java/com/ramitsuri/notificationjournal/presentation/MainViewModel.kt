@@ -91,7 +91,9 @@ class MainViewModel(
             id = 0,
             entryTime = time,
             timeZone = timeZone,
-            text = value
+            text = value,
+            tag = null,
+            entryTimeOverride = null,
         )
         dao.insert(entry)
     }
