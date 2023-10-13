@@ -1,7 +1,5 @@
 package com.ramitsuri.notificationjournal.ui
 
-import android.util.Log
-import android.webkit.URLUtil
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,6 +8,7 @@ import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.loadTitle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,13 +16,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jsoup.Jsoup
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 class MainViewModel(
     private val keyValueStore: KeyValueStore,
-    private val repository: JournalRepository
+    private val repository: JournalRepository,
+    private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
 
     private var collectionJob: Job? = null
@@ -136,50 +135,11 @@ class MainViewModel(
 
     private fun loadAdditionalDataIfUrl(url: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (url == null) {
-                Log.d(TAG, "receivedText null")
-                return@launch
-            }
-            if (!(URLUtil.isHttpUrl(url) || URLUtil.isHttpsUrl(url))) {
-                Log.d(TAG, "receivedText not url")
-                return@launch
-            }
-            try {
-                val response = Jsoup.connect(url)
-                    .ignoreContentType(true)
-                    .userAgent("Mozilla")
-                    .referrer("http://www.google.com")
-                    .timeout(10000)
-                    .followRedirects(true)
-                    .execute()
-
-                val doc = response.parse()
-
-                val ogTags = doc.select("meta[property^=og:]")
-                if (ogTags.isEmpty()) {
-                    Log.d(TAG, "Tags empty")
-                    return@launch
+            val pageTitle = loadTitle(TAG, url)
+            if (!pageTitle.isNullOrEmpty()) {
+                _state.update {
+                    it.copy(suggestedTextFromReceivedText = pageTitle)
                 }
-                ogTags.forEach { tag ->
-                    when (tag.attr("property")) {
-                        "og:title" -> {
-                            val pageTitle = tag.attr("content")
-                            Log.d(TAG, "Page title: $pageTitle")
-                            if (!pageTitle.isNullOrEmpty()) {
-                                _state.update {
-                                    it.copy(suggestedTextFromReceivedText = pageTitle)
-                                }
-                                return@launch
-                            }
-                        }
-
-                        else -> {
-                            // Do nothing
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
@@ -196,7 +156,7 @@ class MainViewModel(
 
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MainViewModel(keyValueStore, repository) as T
+                return MainViewModel(keyValueStore, repository, ::loadTitle) as T
             }
         }
     }
