@@ -16,8 +16,7 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
-import com.ramitsuri.notificationjournal.ui.MainActivity
-import com.ramitsuri.notificationjournal.ui.MainViewModel
+import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryViewModel
 
 class MainApplication : Application() {
 
@@ -77,7 +76,7 @@ class MainApplication : Application() {
         notificationHandler.showNotification(notificationInfo)
     }
 
-    fun getViewModelFactory() = MainViewModel.factory(
+    fun getViewModelFactory() = JournalEntryViewModel.factory(
         getKeyValueStore(),
         getRepository()
     )

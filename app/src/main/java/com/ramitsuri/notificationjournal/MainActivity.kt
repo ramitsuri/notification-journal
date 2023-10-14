@@ -1,4 +1,4 @@
-package com.ramitsuri.notificationjournal.ui
+package com.ramitsuri.notificationjournal
 
 import android.content.Context
 import android.content.ContextWrapper
@@ -17,13 +17,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.ramitsuri.notificationjournal.MainApplication
-import com.ramitsuri.notificationjournal.R
+import com.ramitsuri.notificationjournal.ui.journalentry.AppUi
+import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryViewModel
 import com.ramitsuri.notificationjournal.ui.theme.NotificationJournalTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: MainViewModel by viewModels {
+    private val viewModel: JournalEntryViewModel by viewModels {
         (applicationContext as MainApplication).getViewModelFactory()
     }
 

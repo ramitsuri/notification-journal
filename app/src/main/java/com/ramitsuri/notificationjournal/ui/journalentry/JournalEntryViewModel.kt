@@ -1,4 +1,4 @@
-package com.ramitsuri.notificationjournal.ui
+package com.ramitsuri.notificationjournal.ui.journalentry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-class MainViewModel(
+class JournalEntryViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
     private val loadTitle: (String, String?) -> String?,
@@ -168,7 +168,7 @@ class MainViewModel(
 
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MainViewModel(keyValueStore, repository, ::loadTitle) as T
+                return JournalEntryViewModel(keyValueStore, repository, ::loadTitle) as T
             }
         }
     }
