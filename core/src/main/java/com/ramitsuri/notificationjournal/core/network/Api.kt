@@ -1,6 +1,6 @@
 package com.ramitsuri.notificationjournal.core.network
 
-import com.ramitsuri.notificationjournal.core.data.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson

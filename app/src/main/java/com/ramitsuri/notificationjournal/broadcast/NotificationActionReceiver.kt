@@ -8,7 +8,7 @@ import android.util.Log
 import androidx.core.app.RemoteInput
 import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_JOURNAL
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_UPLOAD
