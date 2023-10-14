@@ -74,9 +74,5 @@ private val lightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 private val darkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
 
 enum class JournalMenuItem(@StringRes val textResId: Int) {
-    UPLOAD(R.string.button_text_upload_all),
-    SET_SERVER(R.string.button_text_set_server),
-    SERVER_SET(R.string.button_text_server_set),
-    RESTART(R.string.button_text_restart),
-    REVERSE_SORT(R.string.button_text_sort_order)
+    SETTINGS(R.string.settings),
 }

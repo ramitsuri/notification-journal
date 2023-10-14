@@ -2,15 +2,14 @@
     <string name="app_name">Notification Journal</string>
     <string name="add_new_journal_content">Add</string>
     <string name="upload_journal_content">Upload</string>
-    <string name="button_text_upload_all">Upload</string>
     <string name="button_text_restart">Restart</string>
-    <string name="button_text_sort_order">Reverse Sort</string>
     <string name="button_text_set_server">Set Server</string>
-    <string name="button_text_server_set">Server Set</string>
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="use">Use</string>
+    <string name="back">Back</string>
+    <string name="settings">Settings</string>
     <string name="add_entry_content_description">Add</string>
     <string name="menu_content_description">Menu</string>
 
@@ -24,4 +23,13 @@
     <string name="copy">Copy</string>
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
+
+    <string name="settings_upload_title">Upload</string>
+    <string name="settings_upload_subtitle">Upload entries to server</string>
+
+    <string name="settings_server_title">Server URL</string>
+
+    <string name="settings_sort_order_title">Sort order</string>
+    <string name="settings_sort_order_asc">Oldest entry time first</string>
+    <string name="settings_sort_order_desc">Newest entry time first</string>
 </resources>

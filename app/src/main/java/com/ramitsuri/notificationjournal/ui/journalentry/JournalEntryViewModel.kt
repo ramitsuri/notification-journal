@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -34,7 +33,6 @@ class JournalEntryViewModel(
             receivedText = receivedText,
             journalEntries = mapOf(),
             loading = false,
-            serverText = getApiUrl()
         )
     )
     val state: StateFlow<ViewState> = _state
@@ -42,21 +40,6 @@ class JournalEntryViewModel(
     init {
         restartCollection()
         loadAdditionalDataIfUrl()
-    }
-
-    fun upload() {
-        _state.update {
-            it.copy(loading = true)
-        }
-
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val error = repository.upload()
-                _state.update {
-                    it.copy(loading = false, error = error)
-                }
-            }
-        }
     }
 
     fun delete(journalEntry: JournalEntry) {
@@ -91,43 +74,15 @@ class JournalEntryViewModel(
         }
     }
 
-    fun setApiUrl(url: String) {
-        keyValueStore.putString(Constants.PREF_KEY_API_URL, url)
+    fun resetReceivedText() {
         _state.update {
-            it.copy(serverText = url)
+            it.copy(receivedText = null, suggestedTextFromReceivedText = null)
         }
-    }
-
-    fun reverseSortOrder() {
-        val currentSortOrder = getSortOrder()
-        val newSortOrder = if (currentSortOrder == SortOrder.ASC) {
-            SortOrder.DESC
-        } else {
-            SortOrder.ASC
-        }
-        setSortOrder(newSortOrder)
-        restartCollection()
-    }
-
-    private fun setSortOrder(sortOrder: SortOrder) {
-        keyValueStore.putInt(Constants.PREF_KEY_SORT_ORDER, sortOrder.key)
     }
 
     private fun getSortOrder(): SortOrder {
         val preferredSortOrderKey = keyValueStore.getInt(Constants.PREF_KEY_SORT_ORDER, 0)
         return SortOrder.fromKey(preferredSortOrderKey)
-    }
-
-    fun onErrorAcknowledged() {
-        _state.update {
-            it.copy(error = null)
-        }
-    }
-
-    fun resetReceivedText() {
-        _state.update {
-            it.copy(receivedText = null, suggestedTextFromReceivedText = null)
-        }
     }
 
     private fun restartCollection() {
@@ -154,8 +109,6 @@ class JournalEntryViewModel(
         }
     }
 
-    private fun getApiUrl() = keyValueStore.getString(Constants.PREF_KEY_API_URL, "") ?: ""
-
     companion object {
         private const val TAG = "PhoneViewModel"
 
@@ -178,7 +131,5 @@ data class ViewState(
     val journalEntries: Map<Instant, List<JournalEntry>> = mapOf(),
     val receivedText: String? = null,
     val suggestedTextFromReceivedText: String? = null,
-    val serverText: String = "",
     val loading: Boolean = false,
-    val error: String? = null
 )

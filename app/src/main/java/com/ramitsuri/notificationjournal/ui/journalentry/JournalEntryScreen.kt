@@ -1,6 +1,5 @@
 package com.ramitsuri.notificationjournal.ui.journalentry
 
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -62,7 +61,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -73,12 +71,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.ramitsuri.notificationjournal.JournalMenuItem
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
-import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.getDay
-import com.ramitsuri.notificationjournal.JournalMenuItem
-import com.ramitsuri.notificationjournal.core.utils.shutdown
 import com.ramitsuri.notificationjournal.ui.string
 import kotlinx.coroutines.delay
 import java.time.Instant
@@ -91,18 +87,14 @@ fun JournalEntryScreen(
     onAddRequested: (String) -> Unit,
     onEditRequested: (Int, String) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
-    onErrorAcknowledged: () -> Unit,
-    setApiUrlRequested: (String) -> Unit,
-    uploadRequested: () -> Unit,
-    reverseSortOrderRequested: () -> Unit,
-    resetReceivedText: () -> Unit
+    resetReceivedText: () -> Unit,
+    onSettingsClicked: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(state.receivedText != null) }
     var initialDialogText by rememberSaveable { mutableStateOf(state.receivedText ?: "") }
     var journalEntryId by rememberSaveable { mutableIntStateOf(-1) }
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
 
     if (showDialog) {
         AddEditEntryDialog(
@@ -191,19 +183,8 @@ fun JournalEntryScreen(
                         WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                     )
                 )
-                if (!state.error.isNullOrEmpty()) {
-                    Toast.makeText(
-                        context, state.error, Toast.LENGTH_LONG
-                    ).show()
-                    onErrorAcknowledged()
-                }
 
-                MoreMenu(
-                    serverText = state.serverText,
-                    onUrlSet = setApiUrlRequested,
-                    upload = uploadRequested,
-                    reverseSortOrder = reverseSortOrderRequested
-                )
+                MoreMenu(onSettingsClicked = onSettingsClicked)
 
                 if (state.journalEntries.isEmpty()) {
                     Column(
@@ -242,29 +223,9 @@ fun JournalEntryScreen(
 
 @Composable
 private fun MoreMenu(
-    serverText: String,
-    onUrlSet: (String) -> Unit,
-    upload: () -> Unit,
-    reverseSortOrder: () -> Unit
+    onSettingsClicked: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var showDialog by rememberSaveable { mutableStateOf(false) }
-    var serverSet by rememberSaveable { mutableStateOf(false) }
-
-    if (showDialog) {
-        SetApiUrlDialog(
-            serverText,
-            onPositiveClick = { value ->
-                showDialog = !showDialog
-                onUrlSet(value)
-                serverSet = true
-            },
-            onNegativeClick = {
-                showDialog = !showDialog
-            }
-        )
-    }
-    val context = LocalContext.current
 
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         Box {
@@ -287,43 +248,10 @@ private fun MoreMenu(
             ) {
 
                 DropdownMenuItem(
-                    text = { Text(stringResource(id = JournalMenuItem.UPLOAD.textResId)) },
+                    text = { Text(stringResource(id = JournalMenuItem.SETTINGS.textResId)) },
                     onClick = {
                         expanded = false
-                        upload()
-                    }
-                )
-                if (serverSet) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(id = JournalMenuItem.RESTART.textResId)) },
-                        onClick = {
-                            expanded = false
-                            context.shutdown()
-                        }
-                    )
-                } else if (serverText.isEmpty() || serverText == Constants.DEFAULT_API_URL) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(id = JournalMenuItem.SET_SERVER.textResId)) },
-                        onClick = {
-                            expanded = false
-                            showDialog = true
-                        }
-                    )
-                } else {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(id = JournalMenuItem.SERVER_SET.textResId)) },
-                        onClick = {
-                            expanded = false
-                            showDialog = true
-                        }
-                    )
-                }
-
-                DropdownMenuItem(
-                    text = { Text(stringResource(id = JournalMenuItem.REVERSE_SORT.textResId)) },
-                    onClick = {
-                        expanded = false
-                        reverseSortOrder()
+                        onSettingsClicked()
                     }
                 )
             }
@@ -463,46 +391,6 @@ fun ItemMenu(
         }
     }
 }
-
-@Composable
-private fun SetApiUrlDialog(
-    previousText: String,
-    onPositiveClick: (String) -> Unit,
-    onNegativeClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var text by rememberSaveable { mutableStateOf(previousText.ifEmpty { "http://" }) }
-    Dialog(onDismissRequest = { }) {
-        Card {
-            Column(modifier = modifier.padding(8.dp)) {
-                OutlinedTextField(
-                    value = text,
-                    singleLine = true,
-                    onValueChange = { text = it },
-                    modifier = modifier.fillMaxWidth()
-                )
-                Spacer(modifier = modifier.height(16.dp))
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = modifier.fillMaxWidth()
-                ) {
-                    TextButton(onClick = {
-                        onNegativeClick()
-                    }) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    TextButton(onClick = {
-                        onPositiveClick(text)
-                    }) {
-                        Text(text = stringResource(id = R.string.ok))
-                    }
-                }
-            }
-        }
-    }
-}
-
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -696,19 +584,14 @@ fun AppUiPreview() {
         ),
         receivedText = null,
         suggestedTextFromReceivedText = null,
-        serverText = "",
         loading = false,
-        error = null
     )
     JournalEntryScreen(
         state = state,
         onAddRequested = { },
         onEditRequested = { _, _ -> },
         onDeleteRequested = { },
-        onErrorAcknowledged = { },
-        setApiUrlRequested = { },
-        uploadRequested = { },
-        reverseSortOrderRequested = { },
         resetReceivedText = { },
+        onSettingsClicked = { },
     )
 }
