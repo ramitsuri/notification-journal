@@ -6,10 +6,10 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
-import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -72,9 +72,7 @@ class DataLayerListenerService : WearableListenerService() {
 
         if (uploadEvents.isNotEmpty()) {
             CoroutineScope(SupervisorJob()).launch {
-                val error = (applicationContext as? MainApplication)?.getRepository()?.upload()
-                    ?: return@launch
-
+                val error = ServiceLocator.repository.upload() ?: return@launch
                 Log.d(TAG, "Failed to upload: $error")
             }
         }

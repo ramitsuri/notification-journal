@@ -12,6 +12,7 @@ import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_JOURNAL
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_UPLOAD
+import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -59,10 +60,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
     private fun upload(context: Context) {
         CoroutineScope(SupervisorJob()).launch {
-            val error =
-                (context.applicationContext as? MainApplication)?.getRepository()?.upload()
-                    ?: return@launch
-
+            val error = ServiceLocator.repository.upload() ?: return@launch
             Log.d(TAG, "Failed to upload: $error")
         }
     }

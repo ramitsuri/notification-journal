@@ -9,6 +9,7 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.loadTitle
+import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ import java.time.temporal.ChronoUnit
 class JournalEntryViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
+    receivedText: String?,
     private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
 
@@ -29,6 +31,7 @@ class JournalEntryViewModel(
 
     private val _state = MutableStateFlow(
         ViewState(
+            receivedText = receivedText,
             journalEntries = mapOf(),
             loading = false,
             serverText = getApiUrl()
@@ -38,13 +41,7 @@ class JournalEntryViewModel(
 
     init {
         restartCollection()
-    }
-
-    fun setReceivedText(text: String?) {
-        _state.update {
-            it.copy(receivedText = text)
-        }
-        loadAdditionalDataIfUrl(text)
+        loadAdditionalDataIfUrl()
     }
 
     fun upload() {
@@ -145,7 +142,8 @@ class JournalEntryViewModel(
         }
     }
 
-    private fun loadAdditionalDataIfUrl(url: String?) {
+    private fun loadAdditionalDataIfUrl() {
+        val url = _state.value.receivedText
         viewModelScope.launch(Dispatchers.IO) {
             val pageTitle = loadTitle(TAG, url)
             if (!pageTitle.isNullOrEmpty()) {
@@ -161,14 +159,16 @@ class JournalEntryViewModel(
     companion object {
         private const val TAG = "PhoneViewModel"
 
-        fun factory(
-            keyValueStore: KeyValueStore,
-            repository: JournalRepository
-        ) = object : ViewModelProvider.Factory {
+        fun factory(receivedText: String?) = object : ViewModelProvider.Factory {
 
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return JournalEntryViewModel(keyValueStore, repository, ::loadTitle) as T
+                return JournalEntryViewModel(
+                    ServiceLocator.keyValueStore,
+                    ServiceLocator.repository,
+                    receivedText,
+                    ::loadTitle
+                ) as T
             }
         }
     }

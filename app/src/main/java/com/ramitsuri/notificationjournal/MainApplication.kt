@@ -3,45 +3,18 @@ package com.ramitsuri.notificationjournal
 import android.app.Application
 import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
-import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.network.Api
-import com.ramitsuri.notificationjournal.core.network.buildApi
-import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
-import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
-import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
-import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
-import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
-import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryViewModel
+import com.ramitsuri.notificationjournal.di.ServiceLocator
 
 class MainApplication : Application() {
-
-    lateinit var notificationHandler: NotificationHandler
-        private set
-
     override fun onCreate() {
         super.onCreate()
 
         DynamicColors.applyToActivitiesIfAvailable(this)
-        start()
-    }
-
-    fun start() {
-        notificationHandler = SystemNotificationHandler(this)
-        notificationHandler.init(
-            listOf(
-                NotificationChannelInfo(
-                    channelType = NotificationChannelType.MAIN,
-                    name = NotificationChannelType.MAIN.id,
-                    description = "For main notification"
-                )
-            )
-        )
-
+        ServiceLocator.init(this)
         showJournalNotification()
     }
 
@@ -73,30 +46,6 @@ class MainApplication : Application() {
             ),
             actionExtras = mapOf()
         )
-        notificationHandler.showNotification(notificationInfo)
-    }
-
-    fun getViewModelFactory() = JournalEntryViewModel.factory(
-        getKeyValueStore(),
-        getRepository()
-    )
-
-    fun getRepository(): JournalRepository {
-        return JournalRepository(
-            api = getApi(),
-            dao = AppDatabase.getDao(applicationContext)
-        )
-    }
-
-    private fun getApi(): Api {
-        return buildApi(
-            getKeyValueStore().getString(Constants.PREF_KEY_API_URL, Constants.DEFAULT_API_URL)
-                ?: Constants.DEFAULT_API_URL,
-            Api::class.java
-        )
-    }
-
-    private fun getKeyValueStore(): KeyValueStore {
-        return PrefsKeyValueStore(this, Constants.PREF_FILE)
+        ServiceLocator.notificationHandler.showNotification(notificationInfo)
     }
 }

@@ -17,6 +17,6 @@ class RestartBroadcastReceiver : BroadcastReceiver() {
             return
         }
 
-        (context.applicationContext as MainApplication).start()
+        (context.applicationContext as MainApplication).showJournalNotification()
     }
 }

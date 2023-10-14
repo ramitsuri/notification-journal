@@ -86,7 +86,7 @@ import java.time.ZoneId
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AppUi(
+fun JournalEntryScreen(
     state: ViewState,
     onAddRequested: (String) -> Unit,
     onEditRequested: (Int, String) -> Unit,
@@ -700,7 +700,7 @@ fun AppUiPreview() {
         loading = false,
         error = null
     )
-    AppUi(
+    JournalEntryScreen(
         state = state,
         onAddRequested = { },
         onEditRequested = { _, _ -> },

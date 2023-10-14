@@ -7,22 +7,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.ramitsuri.notificationjournal.ui.journalentry.AppUi
-import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryViewModel
+import com.ramitsuri.notificationjournal.ui.NavGraph
 import com.ramitsuri.notificationjournal.ui.theme.NotificationJournalTheme
 
 class MainActivity : ComponentActivity() {
-
-    private val viewModel: JournalEntryViewModel by viewModels {
-        (applicationContext as MainApplication).getViewModelFactory()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -33,7 +26,6 @@ class MainActivity : ComponentActivity() {
             } else {
                 null
             }
-        viewModel.setReceivedText(receivedText)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
@@ -55,18 +47,7 @@ class MainActivity : ComponentActivity() {
             }
 
             NotificationJournalTheme {
-                val viewState = viewModel.state.collectAsState().value
-                AppUi(
-                    state = viewState,
-                    onAddRequested = viewModel::add,
-                    onEditRequested = viewModel::edit,
-                    onDeleteRequested = viewModel::delete,
-                    onErrorAcknowledged = viewModel::onErrorAcknowledged,
-                    setApiUrlRequested = viewModel::setApiUrl,
-                    uploadRequested = viewModel::upload,
-                    reverseSortOrderRequested = viewModel::reverseSortOrder,
-                    resetReceivedText = viewModel::resetReceivedText
-                )
+                NavGraph(receivedText = receivedText)
             }
         }
     }
