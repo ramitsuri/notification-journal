@@ -1,7 +1,5 @@
 package com.ramitsuri.notificationjournal
 
-import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -11,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -85,7 +82,7 @@ class MainActivity : ComponentActivity() {
  * activity/activity/src/main/java/androidx/activity/EdgeToEdge.kt;l=35-38;
  * drc=27e7d52e8604a080133e8b842db10c89b4482598
  */
-private val lightScrim = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+private val lightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 
 /**
  * The default dark scrim, as defined by androidx and the platform:
@@ -93,21 +90,7 @@ private val lightScrim = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
  * activity/activity/src/main/java/androidx/activity/EdgeToEdge.kt;l=40-44;
  * drc=27e7d52e8604a080133e8b842db10c89b4482598
  */
-private val darkScrim = android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
-
-fun Context.getActivity(): AppCompatActivity? = when (this) {
-    is AppCompatActivity -> this
-    is ContextWrapper -> baseContext.getActivity()
-    else -> null
-}
-
-fun Context.shutdown() {
-    val intent = packageManager.getLaunchIntentForPackage(packageName)
-    val componentName = intent?.component
-    val mainIntent = Intent.makeRestartActivityTask(componentName)
-    startActivity(mainIntent)
-    Runtime.getRuntime().exit(0)
-}
+private val darkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
 
 enum class JournalMenuItem(@StringRes val textResId: Int) {
     UPLOAD(R.string.button_text_upload_all),

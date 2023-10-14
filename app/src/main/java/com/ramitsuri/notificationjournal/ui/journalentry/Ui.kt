@@ -78,7 +78,7 @@ import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.JournalMenuItem
-import com.ramitsuri.notificationjournal.shutdown
+import com.ramitsuri.notificationjournal.core.utils.shutdown
 import com.ramitsuri.notificationjournal.ui.string
 import kotlinx.coroutines.delay
 import java.time.Instant
