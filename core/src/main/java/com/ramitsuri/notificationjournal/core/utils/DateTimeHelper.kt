@@ -4,6 +4,8 @@ import com.ramitsuri.notificationjournal.core.text.LocalizedString
 import com.ramitsuri.notificationjournal.core.text.TextValue
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -18,13 +20,16 @@ fun formatForDisplay(
 
 @Suppress("MoveVariableDeclarationIntoWhen")
 fun getDay(
-    toFormat: Instant,
+    toFormat: LocalDate,
     now: Instant = Instant.now(),
     timeZone: ZoneId = ZoneId.systemDefault(),
 ): TextValue {
-    val nowTruncated = now.truncatedTo(ChronoUnit.DAYS)
-    val toFormatTruncated = toFormat.truncatedTo(ChronoUnit.DAYS)
-    val daysBetweenNowAndToFormat = Duration.between(nowTruncated, toFormatTruncated).toDays()
+    val nowLocalDateTime = getLocalDate(now, timeZone).atTime(0, 0)
+    val toFormatDateTime = toFormat.atTime(0, 0)
+    val daysBetweenNowAndToFormat = Duration.between(
+        nowLocalDateTime.truncatedTo(ChronoUnit.DAYS),
+        toFormatDateTime.truncatedTo(ChronoUnit.DAYS)
+    ).toDays()
     return when (daysBetweenNowAndToFormat) {
         0L -> {
             TextValue.ForKey(LocalizedString.TODAY)
@@ -39,13 +44,32 @@ fun getDay(
         }
 
         else -> {
-            TextValue.ForString(format(toFormat, "MMM d", timeZone))
+            TextValue.ForString(format(toFormatDateTime, "MMM d", timeZone))
         }
     }
 }
 
+fun getLocalDate(
+    time: Instant,
+    zoneId: ZoneId = ZoneId.systemDefault()
+): LocalDate {
+    return time.atZone(zoneId).toLocalDate()
+}
+
 private fun format(
     toFormat: Instant,
+    format: String,
+    timeZone: ZoneId
+): String {
+    val formatter = DateTimeFormatter
+        .ofPattern(format)
+        .withLocale(Locale.getDefault())
+        .withZone(timeZone)
+    return formatter.format(toFormat)
+}
+
+private fun format(
+    toFormat: LocalDateTime,
     format: String,
     timeZone: ZoneId
 ): String {

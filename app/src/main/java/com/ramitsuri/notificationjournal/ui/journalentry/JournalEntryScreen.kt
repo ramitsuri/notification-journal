@@ -1,6 +1,5 @@
 package com.ramitsuri.notificationjournal.ui.journalentry
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,14 +25,13 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -57,8 +55,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -69,13 +71,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.JournalMenuItem
 import com.ramitsuri.notificationjournal.R
+import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.getDay
+import com.ramitsuri.notificationjournal.ui.bottomBorder
+import com.ramitsuri.notificationjournal.ui.sideBorder
 import com.ramitsuri.notificationjournal.ui.string
+import com.ramitsuri.notificationjournal.ui.topBorder
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
@@ -187,7 +194,7 @@ fun JournalEntryScreen(
 
                 MoreMenu(onSettingsClicked = onSettingsClicked)
 
-                if (state.journalEntries.isEmpty()) {
+                if (state.dayGroups.isEmpty()) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -202,7 +209,7 @@ fun JournalEntryScreen(
                         )
                     }
                 } else {
-                    List(state.journalEntries,
+                    List(state.dayGroups,
                         onCopyRequested = { item ->
                             clipboardManager.setText(AnnotatedString(item.text))
                         },
@@ -263,30 +270,71 @@ private fun MoreMenu(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun List(
-    items: Map<Instant, List<JournalEntry>>,
+    items: List<DayGroup>,
     onCopyRequested: (JournalEntry) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items.forEach { (header, entries) ->
+    val strokeWidth: Dp = 1.dp
+    val strokeColor: Color = MaterialTheme.colorScheme.outline
+    val cornerRadius: Dp = 16.dp
+    val topShape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
+    val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
+
+    LazyColumn {
+        items.forEach { (date, tagGroups) ->
             stickyHeader {
-                HeaderItem(text = getDay(header).string())
+                HeaderItem(text = getDay(date).string())
             }
-            items(entries, key = { it.id }) {
-                ListItem(
-                    item = it,
-                    onCopyRequested = onCopyRequested,
-                    onDeleteRequested = onDeleteRequested,
-                    onEditRequested = onEditRequested
-                )
+            tagGroups.forEach { (tag, entries) ->
+                var shape: Shape
+                var borderModifier: Modifier
+                item {
+                    SubHeaderItem(
+                        text = tag ?: "Untagged",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(topShape)
+                            .background(color = MaterialTheme.colorScheme.background)
+                            .then(Modifier.topBorder(strokeWidth, strokeColor, cornerRadius))
+                            .padding(16.dp)
+                    )
+                }
+                items(
+                    count = entries.size,
+                    key = { index -> entries[index].id }) { index ->
+                    when (index) {
+                        entries.size - 1 -> {
+                            shape = bottomShape
+                            borderModifier =
+                                Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
+                        }
+
+                        else -> {
+                            shape = RectangleShape
+                            borderModifier =
+                                Modifier.sideBorder(strokeWidth, strokeColor, cornerRadius)
+                        }
+                    }
+                    ListItem(
+                        item = entries[index],
+                        onCopyRequested = onCopyRequested,
+                        onDeleteRequested = onDeleteRequested,
+                        onEditRequested = onEditRequested,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(shape)
+                            .then(borderModifier)
+                            .padding(8.dp)
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
-
         item {
-            Spacer(modifier = Modifier.height(128.dp))
+            Spacer(modifier = Modifier.height(64.dp))
         }
     }
 }
@@ -301,6 +349,22 @@ private fun HeaderItem(text: String) {
     ) {
         Text(
             text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun SubHeaderItem(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
         )
@@ -312,35 +376,30 @@ private fun ListItem(
     item: JournalEntry,
     onCopyRequested: (JournalEntry) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
-    onDeleteRequested: (JournalEntry) -> Unit
+    onDeleteRequested: (JournalEntry) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    Card(
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+    Row(
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
     ) {
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
+            text = item.text,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
+                .weight(1f)
                 .padding(8.dp)
-        ) {
-            Text(
-                text = item.text,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            ItemMenu(
-                showMenu = showMenu,
-                onCopyRequested = { onCopyRequested(item) },
-                onEditRequested = { onEditRequested(item) },
-                onDeleteRequested = { onDeleteRequested(item) },
-                onMenuButtonClicked = { showMenu = !showMenu },
-            )
-        }
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        ItemMenu(
+            showMenu = showMenu,
+            onCopyRequested = { onCopyRequested(item) },
+            onEditRequested = { onEditRequested(item) },
+            onDeleteRequested = { onDeleteRequested(item) },
+            onMenuButtonClicked = { showMenu = !showMenu },
+        )
     }
 }
 
@@ -509,90 +568,4 @@ fun ListItemPreview() {
             onDeleteRequested = {}
         )
     }
-}
-
-@Preview
-@Composable
-fun AppUiPreview() {
-    val entryTime = Instant.parse("2023-10-10T12:00:00Z")
-    val timeZone = ZoneId.systemDefault()
-    val state = ViewState(
-        journalEntries = mapOf(
-            Instant.parse("2023-10-10T12:00:00Z") to listOf(
-                JournalEntry(
-                    id = 1,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry1"
-                ),
-                JournalEntry(
-                    id = 2,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry2"
-                ),
-                JournalEntry(
-                    id = 3,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry3"
-                ),
-                JournalEntry(
-                    id = 4,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry4"
-                ),
-                JournalEntry(
-                    id = 5,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry5"
-                )
-            ),
-            Instant.parse("2023-10-11T12:00:00Z") to listOf(
-                JournalEntry(
-                    id = 6,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry6"
-                ),
-                JournalEntry(
-                    id = 7,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry7"
-                ),
-                JournalEntry(
-                    id = 8,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry8"
-                ),
-                JournalEntry(
-                    id = 9,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry9"
-                ),
-                JournalEntry(
-                    id = 10,
-                    entryTime = entryTime,
-                    timeZone = timeZone,
-                    text = "Entry10 this is a long entry that could span multiple lines"
-                )
-            )
-        ),
-        receivedText = null,
-        suggestedTextFromReceivedText = null,
-        loading = false,
-    )
-    JournalEntryScreen(
-        state = state,
-        onAddRequested = { },
-        onEditRequested = { _, _ -> },
-        onDeleteRequested = { },
-        resetReceivedText = { },
-        onSettingsClicked = { },
-    )
 }

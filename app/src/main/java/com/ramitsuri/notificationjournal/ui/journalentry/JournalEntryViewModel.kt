@@ -3,11 +3,14 @@ package com.ramitsuri.notificationjournal.ui.journalentry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.SortOrder
+import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.getLocalDate
 import com.ramitsuri.notificationjournal.core.utils.loadTitle
 import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
@@ -17,13 +20,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
-import java.time.temporal.ChronoUnit
+import java.time.ZoneId
 
 class JournalEntryViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
     receivedText: String?,
     private val loadTitle: (String, String?) -> String?,
+    private val zoneId: ZoneId = ZoneId.systemDefault()
 ) : ViewModel() {
 
     private var collectionJob: Job? = null
@@ -31,7 +35,7 @@ class JournalEntryViewModel(
     private val _state = MutableStateFlow(
         ViewState(
             receivedText = receivedText,
-            journalEntries = mapOf(),
+            dayGroups = listOf(),
             loading = false,
         )
     )
@@ -89,9 +93,18 @@ class JournalEntryViewModel(
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
             repository.getFlow(getSortOrder()).collect { entries ->
-                val groupedByDay = entries.groupBy { it.entryTime.truncatedTo(ChronoUnit.DAYS) }
+                val dayGroups = entries
+                    .groupBy { getLocalDate(it.entryTime, zoneId) }
+                    .map { (date, entriesByDate) ->
+                        val byTag = entriesByDate
+                            .groupBy { it.tag }
+                            .map { (tag, entriesByTag) ->
+                                TagGroup(tag, entriesByTag)
+                            }
+                        DayGroup(date, byTag)
+                    }
                 _state.update {
-                    it.copy(journalEntries = groupedByDay)
+                    it.copy(dayGroups = dayGroups)
                 }
             }
         }
@@ -128,7 +141,7 @@ class JournalEntryViewModel(
 }
 
 data class ViewState(
-    val journalEntries: Map<Instant, List<JournalEntry>> = mapOf(),
+    val dayGroups: List<DayGroup> = listOf(),
     val receivedText: String? = null,
     val suggestedTextFromReceivedText: String? = null,
     val loading: Boolean = false,
