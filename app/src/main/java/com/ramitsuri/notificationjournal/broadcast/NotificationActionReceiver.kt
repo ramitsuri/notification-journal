@@ -50,7 +50,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             timeZone = ZoneId.systemDefault(),
             text = text
         )
-        val dao = AppDatabase.getDao(context = context)
+        val dao = AppDatabase.getJournalEntryDao(context = context)
         CoroutineScope(SupervisorJob()).launch {
             withContext(Dispatchers.IO) {
                 dao.insert(journalEntry)

@@ -61,7 +61,7 @@ class DataLayerListenerService : WearableListenerService() {
 
                 )
 
-                val dao = AppDatabase.getDao(context = applicationContext)
+                val dao = AppDatabase.getJournalEntryDao(context = applicationContext)
                 CoroutineScope(SupervisorJob()).launch {
                     withContext(Dispatchers.IO) {
                         dao.insert(journalEntry)

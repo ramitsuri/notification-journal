@@ -23,6 +23,8 @@ import com.ramitsuri.notificationjournal.core.utils.DatabaseConverters
 abstract class AppDatabase : RoomDatabase() {
     abstract fun journalEntryDao(): JournalEntryDao
 
+    abstract fun tagsDao(): TagsDao
+
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -42,7 +44,9 @@ abstract class AppDatabase : RoomDatabase() {
             return INSTANCE as AppDatabase
         }
 
-        fun getDao(context: Context) = getInstance(context).journalEntryDao()
+        fun getJournalEntryDao(context: Context) = getInstance(context).journalEntryDao()
+
+        fun getTagsDao(context: Context) = getInstance(context).tagsDao()
     }
 }
 

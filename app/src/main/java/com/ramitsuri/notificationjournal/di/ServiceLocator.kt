@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.di
 import android.app.Application
 import android.content.Context
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
+import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.network.Api
 import com.ramitsuri.notificationjournal.core.network.buildApi
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -31,7 +32,7 @@ object ServiceLocator {
     val repository: JournalRepository by lazy {
         JournalRepository(
             api = api,
-            dao = AppDatabase.getDao(applicationContext)
+            dao = AppDatabase.getJournalEntryDao(applicationContext)
         )
     }
 
@@ -41,6 +42,10 @@ object ServiceLocator {
 
     val keyValueStore: KeyValueStore by lazy {
         PrefsKeyValueStore(applicationContext, Constants.PREF_FILE)
+    }
+
+    val tagsDao: TagsDao by lazy {
+        AppDatabase.getTagsDao(applicationContext)
     }
 
     private val api: Api by lazy {

@@ -14,7 +14,7 @@ class MainApplication : Application() {
 
     fun getViewModelFactory(): MainViewModel.Factory {
         return MainViewModel.Factory(
-            AppDatabase.getDao(applicationContext),
+            AppDatabase.getJournalEntryDao(applicationContext),
             getDataClient(),
             coroutineScope
         )
