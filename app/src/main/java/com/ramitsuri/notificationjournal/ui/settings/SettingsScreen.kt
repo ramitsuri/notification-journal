@@ -50,6 +50,7 @@ fun SettingsScreen(
     onApiUrlSet: (String) -> Unit,
     onSortOrderClicked: () -> Unit,
     onErrorAcknowledged: () -> Unit,
+    onTagsClicked: () -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -125,6 +126,15 @@ fun SettingsScreen(
             }
             item {
                 SettingsItem(
+                    title = stringResource(id = R.string.settings_tags_title),
+                    subtitle = stringResource(id = R.string.settings_tags_subtitle),
+                    onClick = onTagsClicked,
+                    showProgress = false,
+                    modifier = modifier
+                )
+            }
+            item {
+                SettingsItem(
                     title = stringResource(id = R.string.settings_upload_title),
                     subtitle = stringResource(id = R.string.settings_upload_subtitle),
                     onClick = onUploadClicked,
@@ -146,7 +156,7 @@ fun SettingsScreen(
         }
 
         state.error?.let { error ->
-            LaunchedEffect(error, error) {
+            LaunchedEffect(error) {
                 snackbarHostState.showSnackbar(error)
                 onErrorAcknowledged()
             }

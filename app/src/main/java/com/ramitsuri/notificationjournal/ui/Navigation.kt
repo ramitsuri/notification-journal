@@ -10,8 +10,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryViewModel
+import com.ramitsuri.notificationjournal.ui.screens.TagsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsViewModel
+import com.ramitsuri.notificationjournal.ui.tags.TagsViewModel
 
 object Destinations {
     const val JOURNAL_ENTRY = "journal_entry"
@@ -53,12 +55,23 @@ fun NavGraph(
                 onUploadClicked = viewModel::upload,
                 onApiUrlSet = viewModel::setApiUrl,
                 onSortOrderClicked = viewModel::reverseSortOrder,
-                onErrorAcknowledged = viewModel::onErrorAcknowledged
+                onErrorAcknowledged = viewModel::onErrorAcknowledged,
+                onTagsClicked = { navController.navigate(Destinations.TAGS) },
             )
         }
 
         composable(Destinations.TAGS) {
-
+            val viewModel: TagsViewModel = viewModel(factory = TagsViewModel.factory())
+            val viewState = viewModel.state.collectAsStateWithLifecycle().value
+            TagsScreen(
+                state = viewState,
+                onEditOrder = viewModel::editOrder,
+                onAddRequested = viewModel::add,
+                onEditRequested = viewModel::editValue,
+                onDeleteRequested = viewModel::delete,
+                onErrorAcknowledged = viewModel::onErrorAcknowledged,
+                onBack = { navController.navigateUp() },
+            )
         }
     }
 }

@@ -33,31 +33,57 @@ class TagsViewModel(private val dao: TagsDao) : ViewModel() {
         val currentState = _state.value
         viewModelScope.launch {
             val maxOrder = currentState.tags.maxByOrNull { it.order }?.order ?: 0
-            dao.insert(Tag(id = 0, order = maxOrder + 1, value = text))
+            val success = dao.insertIfPossible(Tag(id = 0, order = maxOrder + 1, value = text))
+            if (!success) {
+                _state.update {
+                    it.copy(error = TagError.INSERT_FAIL)
+                }
+            }
         }
     }
 
     fun editValue(id: Int, text: String) {
         viewModelScope.launch {
-            dao.updateText(TagTextUpdate(id = id, value = text))
+            val success = dao.updateTextIfPossible(TagTextUpdate(id = id, value = text))
+            if (!success) {
+                _state.update {
+                    it.copy(error = TagError.INSERT_FAIL)
+                }
+            }
         }
     }
 
     fun delete(tag: Tag) {
         viewModelScope.launch {
-            dao.deleteIfPossible(tag)
+            val success = dao.deleteIfPossible(tag)
+            if (!success) {
+                _state.update {
+                    it.copy(error = TagError.DELETE_FAIL)
+                }
+            }
         }
     }
 
-    fun editOrder(tag: Tag, fromOrder: Int, toOrder: Int) {
+    fun editOrder(fromOrder: Int, toOrder: Int) {
         val currentTags = _state.value.tags
         viewModelScope.launch {
-            val currentAtToOrder = currentTags.firstOrNull { it.order == toOrder } ?: return@launch
+            val currentTagAtFromIndex = currentTags
+                .getOrNull(fromOrder)
+                ?: return@launch
+            val currentAtToOrder = currentTags
+                .getOrNull(toOrder)
+                ?: return@launch
             val newTags = listOf(
-                tag.copy(order = toOrder),
+                currentTagAtFromIndex.copy(order = toOrder),
                 currentAtToOrder.copy(order = fromOrder),
             )
             dao.updateOrder(newTags)
+        }
+    }
+
+    fun onErrorAcknowledged() {
+        _state.update {
+            it.copy(error = null)
         }
     }
 
@@ -72,5 +98,11 @@ class TagsViewModel(private val dao: TagsDao) : ViewModel() {
 }
 
 data class TagsViewState(
-    val tags: List<Tag>
+    val tags: List<Tag>,
+    val error: TagError? = null
 )
+
+enum class TagError {
+    DELETE_FAIL,
+    INSERT_FAIL
+}

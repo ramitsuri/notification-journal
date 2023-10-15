@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.data
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -30,17 +31,37 @@ abstract class TagsDao {
         return true
     }
 
+    @Transaction
+    open suspend fun insertIfPossible(tag: Tag): Boolean {
+        return try {
+            insert(tag)
+            true
+        } catch (e: SQLiteConstraintException) {
+            false
+        }
+    }
+
+    @Transaction
+    open suspend fun updateTextIfPossible(tagTextUpdate: TagTextUpdate): Boolean {
+        return try {
+            updateText(tagTextUpdate)
+            true
+        } catch (e: SQLiteConstraintException) {
+            false
+        }
+    }
+
     @Query("SELECT * FROM tags ORDER BY `order` ASC")
     abstract fun getAllFlow(): Flow<List<Tag>>
 
     @Query("SELECT * FROM tags ORDER BY `order` ASC")
     abstract suspend fun getAll(): List<Tag>
 
-    @Insert
-    abstract suspend fun insert(tag: Tag)
-
     @Update(entity = Tag::class)
-    abstract suspend fun updateText(tagTextUpdate: TagTextUpdate)
+    protected abstract suspend fun updateText(tagTextUpdate: TagTextUpdate)
+
+    @Insert
+    protected abstract suspend fun insert(tag: Tag)
 
     @Delete
     protected abstract suspend fun delete(tag: Tag)

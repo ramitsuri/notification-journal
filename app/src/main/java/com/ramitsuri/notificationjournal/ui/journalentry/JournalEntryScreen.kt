@@ -150,6 +150,7 @@ fun JournalEntryScreen(
             .fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(
+                modifier = Modifier.padding(bottom = 32.dp),
                 onClick = {
                     showDialog = true
                     journalEntryId = -1
@@ -344,7 +345,7 @@ private fun ListItem(
 }
 
 @Composable
-fun ItemMenu(
+private fun ItemMenu(
     showMenu: Boolean,
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,

@@ -32,4 +32,10 @@
     <string name="settings_sort_order_title">Sort order</string>
     <string name="settings_sort_order_asc">Oldest entry time first</string>
     <string name="settings_sort_order_desc">Newest entry time first</string>
+
+    <string name="settings_tags_title">Tags</string>
+    <string name="settings_tags_subtitle">Add or edit tags</string>
+
+    <string name="tag_delete_fail_message">Tag is being used</string>
+    <string name="tag_insert_fail_message">Tag already exists</string>
 </resources>
