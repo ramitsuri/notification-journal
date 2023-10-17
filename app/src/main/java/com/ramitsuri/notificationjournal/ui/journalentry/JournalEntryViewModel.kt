@@ -11,22 +11,17 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
-import com.ramitsuri.notificationjournal.core.utils.loadTitle
 import com.ramitsuri.notificationjournal.di.ServiceLocator
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.time.ZoneId
 
 class JournalEntryViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
-    receivedText: String?,
-    private val loadTitle: (String, String?) -> String?,
     private val zoneId: ZoneId = ZoneId.systemDefault()
 ) : ViewModel() {
 
@@ -34,7 +29,6 @@ class JournalEntryViewModel(
 
     private val _state = MutableStateFlow(
         ViewState(
-            receivedText = receivedText,
             dayGroups = listOf(),
             loading = false,
         )
@@ -43,44 +37,11 @@ class JournalEntryViewModel(
 
     init {
         restartCollection()
-        loadAdditionalDataIfUrl()
     }
 
     fun delete(journalEntry: JournalEntry) {
         viewModelScope.launch {
             repository.delete(journalEntry)
-        }
-    }
-
-    fun add(text: String) {
-        viewModelScope.launch {
-            repository.insert(
-                text = text
-            )
-        }
-    }
-
-    fun edit(id: Int, text: String) {
-        viewModelScope.launch {
-            repository.editText(id, text)
-        }
-    }
-
-    fun editTag(id: Int, tag: String?) {
-        viewModelScope.launch {
-            repository.editTag(id, tag)
-        }
-    }
-
-    fun editTime(id: Int, time: Instant?) {
-        viewModelScope.launch {
-            repository.editEntryTime(id, time)
-        }
-    }
-
-    fun resetReceivedText() {
-        _state.update {
-            it.copy(receivedText = null, suggestedTextFromReceivedText = null)
         }
     }
 
@@ -110,30 +71,14 @@ class JournalEntryViewModel(
         }
     }
 
-    private fun loadAdditionalDataIfUrl() {
-        val url = _state.value.receivedText
-        viewModelScope.launch(Dispatchers.IO) {
-            val pageTitle = loadTitle(TAG, url)
-            if (!pageTitle.isNullOrEmpty()) {
-                _state.update {
-                    it.copy(suggestedTextFromReceivedText = pageTitle)
-                }
-            }
-        }
-    }
-
     companion object {
-        private const val TAG = "PhoneViewModel"
-
-        fun factory(receivedText: String?) = object : ViewModelProvider.Factory {
+        fun factory() = object : ViewModelProvider.Factory {
 
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return JournalEntryViewModel(
                     ServiceLocator.keyValueStore,
                     ServiceLocator.repository,
-                    receivedText,
-                    ::loadTitle
                 ) as T
             }
         }
@@ -142,7 +87,5 @@ class JournalEntryViewModel(
 
 data class ViewState(
     val dayGroups: List<DayGroup> = listOf(),
-    val receivedText: String? = null,
-    val suggestedTextFromReceivedText: String? = null,
     val loading: Boolean = false,
 )

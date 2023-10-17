@@ -1,6 +1,7 @@
 package com.ramitsuri.notificationjournal.ui.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -18,6 +19,7 @@ import com.ramitsuri.notificationjournal.ui.screens.TagsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.ui.tags.TagsViewModel
+import java.net.URLEncoder
 
 @Composable
 fun NavGraph(
@@ -31,15 +33,38 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Destination.JOURNAL_ENTRY.route()) {
+            LaunchedEffect(key1 = receivedText) {
+                if (!receivedText.isNullOrEmpty()) {
+                    navController.navigate(
+                        Destination.ADD_ENTRY.routeWithArgValues(
+                            mapOf(
+                                AddJournalEntryViewModel.RECEIVED_TEXT_ARG to
+                                        URLEncoder.encode(receivedText, "UTF-8")
+                            )
+                        )
+                    )
+                }
+            }
             val viewModel: JournalEntryViewModel =
-                viewModel(factory = JournalEntryViewModel.factory(receivedText))
+                viewModel(factory = JournalEntryViewModel.factory())
             val viewState = viewModel.state.collectAsStateWithLifecycle().value
             JournalEntryScreen(
                 state = viewState,
-                onAddRequested = viewModel::add,
-                onEditRequested = viewModel::edit,
+                onAddRequested = {
+                    navController.navigate(
+                        Destination.ADD_ENTRY.routeWithArgValues()
+                    )
+                },
+                onEditRequested = { entryId ->
+                    navController.navigate(
+                        Destination.EDIT_ENTRY.routeWithArgValues(
+                            mapOf(
+                                EditJournalEntryViewModel.ENTRY_ID_ARG to entryId.toString()
+                            )
+                        )
+                    )
+                },
                 onDeleteRequested = viewModel::delete,
-                resetReceivedText = viewModel::resetReceivedText,
                 onSettingsClicked = {
                     navController.navigate(Destination.SETTINGS.routeWithArgValues())
                 }
@@ -59,7 +84,10 @@ fun NavGraph(
                 onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
                 onUseSuggestedText = viewModel::useSuggestedText,
-                onSave = viewModel::save,
+                onSave = {
+                    navController.navigateUp()
+                    viewModel.save()
+                },
                 onCancel = { navController.navigateUp() },
             )
         }
@@ -76,7 +104,10 @@ fun NavGraph(
                 state = viewState,
                 onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
-                onSave = viewModel::save,
+                onSave = {
+                    navController.navigateUp()
+                    viewModel.save()
+                },
                 onCancel = { navController.navigateUp() },
             )
         }

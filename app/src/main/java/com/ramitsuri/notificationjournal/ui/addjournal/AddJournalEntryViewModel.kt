@@ -14,19 +14,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.net.URLDecoder
 
 class AddJournalEntryViewModel(
     savedStateHandle: SavedStateHandle,
     private val repository: JournalRepository,
     private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
+    private val receivedText = URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
     private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
-        AddJournalEntryViewState.default(receivedText = savedStateHandle[RECEIVED_TEXT_ARG])
+        AddJournalEntryViewState.default(receivedText = receivedText)
     )
     val state: StateFlow<AddJournalEntryViewState> = _state
 
     init {
-        loadAdditionalDataIfUrl(savedStateHandle[RECEIVED_TEXT_ARG])
+        loadAdditionalDataIfUrl(receivedText)
     }
 
     fun textUpdated(text: String) {
