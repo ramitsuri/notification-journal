@@ -1,7 +1,7 @@
 package com.ramitsuri.notificationjournal.core.repository
 
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
+import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTagUpdate
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTextUpdate
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTimeUpdate
@@ -25,6 +25,10 @@ class JournalRepository(
                 SortOrder.DESC -> list.sortedByDescending { it.entryTime }
             }
         }
+    }
+
+    suspend fun get(id: Int): JournalEntry {
+        return dao.get(id)
     }
 
     suspend fun editText(id: Int, text: String) {

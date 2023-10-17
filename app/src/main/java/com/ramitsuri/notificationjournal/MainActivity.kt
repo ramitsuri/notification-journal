@@ -12,7 +12,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.ramitsuri.notificationjournal.ui.NavGraph
+import com.ramitsuri.notificationjournal.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.ui.theme.NotificationJournalTheme
 
 class MainActivity : ComponentActivity() {

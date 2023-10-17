@@ -1,4 +1,4 @@
-package com.ramitsuri.notificationjournal.ui
+package com.ramitsuri.notificationjournal.ui.nav
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,19 +10,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ramitsuri.notificationjournal.ui.addjournal.AddJournalEntryScreen
 import com.ramitsuri.notificationjournal.ui.addjournal.AddJournalEntryViewModel
+import com.ramitsuri.notificationjournal.ui.editjournal.EditJournalEntryScreen
+import com.ramitsuri.notificationjournal.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryViewModel
 import com.ramitsuri.notificationjournal.ui.screens.TagsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.ui.tags.TagsViewModel
-
-object Destinations {
-    const val JOURNAL_ENTRY = "journal_entry"
-    const val TAGS = "tags"
-    const val SETTINGS = "settings"
-    const val ADD_ENTRY = "add_entry"
-}
 
 @Composable
 fun NavGraph(
@@ -32,10 +27,10 @@ fun NavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Destinations.JOURNAL_ENTRY,
+        startDestination = Destination.JOURNAL_ENTRY.route(),
         modifier = modifier
     ) {
-        composable(Destinations.JOURNAL_ENTRY) {
+        composable(Destination.JOURNAL_ENTRY.route()) {
             val viewModel: JournalEntryViewModel =
                 viewModel(factory = JournalEntryViewModel.factory(receivedText))
             val viewState = viewModel.state.collectAsStateWithLifecycle().value
@@ -45,13 +40,18 @@ fun NavGraph(
                 onEditRequested = viewModel::edit,
                 onDeleteRequested = viewModel::delete,
                 resetReceivedText = viewModel::resetReceivedText,
-                onSettingsClicked = { navController.navigate(Destinations.SETTINGS) }
+                onSettingsClicked = {
+                    navController.navigate(Destination.SETTINGS.routeWithArgValues())
+                }
             )
         }
 
-        composable(Destinations.ADD_ENTRY) {
+        composable(
+            route = Destination.ADD_ENTRY.route(),
+            arguments = Destination.ADD_ENTRY.navArgs()
+        ) { backStackEntry ->
             val viewModel: AddJournalEntryViewModel =
-                viewModel(factory = AddJournalEntryViewModel.factory(receivedText))
+                viewModel(factory = AddJournalEntryViewModel.factory(backStackEntry))
             val viewState = viewModel.state.collectAsStateWithLifecycle().value
 
             AddJournalEntryScreen(
@@ -64,7 +64,24 @@ fun NavGraph(
             )
         }
 
-        composable(Destinations.SETTINGS) {
+        composable(
+            Destination.EDIT_ENTRY.route(),
+            arguments = Destination.EDIT_ENTRY.navArgs()
+        ) { backStackEntry ->
+            val viewModel: EditJournalEntryViewModel =
+                viewModel(factory = EditJournalEntryViewModel.factory(backStackEntry))
+            val viewState = viewModel.state.collectAsStateWithLifecycle().value
+
+            EditJournalEntryScreen(
+                state = viewState,
+                onTextUpdated = viewModel::textUpdated,
+                onTagClicked = viewModel::tagClicked,
+                onSave = viewModel::save,
+                onCancel = { navController.navigateUp() },
+            )
+        }
+
+        composable(Destination.SETTINGS.route()) {
             val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory())
             val viewState = viewModel.state.collectAsStateWithLifecycle().value
             SettingsScreen(
@@ -74,11 +91,11 @@ fun NavGraph(
                 onApiUrlSet = viewModel::setApiUrl,
                 onSortOrderClicked = viewModel::reverseSortOrder,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
-                onTagsClicked = { navController.navigate(Destinations.TAGS) },
+                onTagsClicked = { navController.navigate(Destination.TAGS.routeWithArgValues()) },
             )
         }
 
-        composable(Destinations.TAGS) {
+        composable(Destination.TAGS.route()) {
             val viewModel: TagsViewModel = viewModel(factory = TagsViewModel.factory())
             val viewState = viewModel.state.collectAsStateWithLifecycle().value
             TagsScreen(

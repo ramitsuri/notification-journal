@@ -1,32 +1,36 @@
-package com.ramitsuri.notificationjournal.ui.addjournal
+package com.ramitsuri.notificationjournal.ui.editjournal
 
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavBackStackEntry
+import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
-import com.ramitsuri.notificationjournal.core.utils.loadTitle
 import com.ramitsuri.notificationjournal.di.ServiceLocator
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AddJournalEntryViewModel(
+class EditJournalEntryViewModel(
     savedStateHandle: SavedStateHandle,
     private val repository: JournalRepository,
-    private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
-    private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
-        AddJournalEntryViewState.default(receivedText = savedStateHandle[RECEIVED_TEXT_ARG])
-    )
-    val state: StateFlow<AddJournalEntryViewState> = _state
+    private val _state: MutableStateFlow<EditJournalEntryViewState> =
+        MutableStateFlow(EditJournalEntryViewState.default())
+    val state: StateFlow<EditJournalEntryViewState> = _state
+
+    private lateinit var entry: JournalEntry
 
     init {
-        loadAdditionalDataIfUrl(savedStateHandle[RECEIVED_TEXT_ARG])
+        viewModelScope.launch {
+            entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG]))
+            _state.update {
+                it.copy(text = entry.text, selectedTag = entry.tag)
+            }
+        }
     }
 
     fun textUpdated(text: String) {
@@ -41,42 +45,26 @@ class AddJournalEntryViewModel(
         }
     }
 
-    fun useSuggestedText() {
-        val suggestedText = _state.value.suggestedText
-        if (suggestedText != null) {
-            _state.update {
-                it.copy(text = suggestedText, suggestedText = null)
-            }
-        }
-    }
-
     fun save() {
+        if (!::entry.isInitialized) {
+            return
+        }
         val text = _state.value.text
         if (text.isEmpty()) {
             return
         }
         viewModelScope.launch {
-            repository.insert(
+            repository.editText(
+                id = entry.id,
                 text = text
             )
         }
     }
 
-    private fun loadAdditionalDataIfUrl(receivedText: String?) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val pageTitle = loadTitle(TAG, receivedText)
-            if (!pageTitle.isNullOrEmpty()) {
-                _state.update {
-                    it.copy(suggestedText = pageTitle)
-                }
-            }
-        }
-    }
-
     companion object {
-        private const val TAG = "AddJournalEntryViewModel"
+        private const val TAG = "EditJournalEntryViewModel"
 
-        const val RECEIVED_TEXT_ARG = "received_text"
+        const val ENTRY_ID_ARG = "entry_id"
 
         fun factory(navBackStackEntry: NavBackStackEntry) =
             object : AbstractSavedStateViewModelFactory(
@@ -89,28 +77,25 @@ class AddJournalEntryViewModel(
                     modelClass: Class<T>,
                     handle: SavedStateHandle
                 ): T {
-                    return AddJournalEntryViewModel(
+                    return EditJournalEntryViewModel(
                         savedStateHandle = handle,
                         repository = ServiceLocator.repository,
-                        loadTitle = ::loadTitle
                     ) as T
                 }
             }
     }
 }
 
-data class AddJournalEntryViewState(
+data class EditJournalEntryViewState(
     val text: String,
     val tags: List<Tag>,
     val selectedTag: String?,
-    val suggestedText: String?,
 ) {
     companion object {
-        fun default(receivedText: String?) = AddJournalEntryViewState(
-            text = receivedText ?: "",
+        fun default() = EditJournalEntryViewState(
+            text = "",
             tags = listOf(),
             selectedTag = null,
-            suggestedText = null
         )
     }
 }

@@ -19,6 +19,9 @@ interface JournalEntryDao {
     @Query("SELECT * FROM journalentry ORDER BY entry_time ASC")
     suspend fun getAll(): List<JournalEntry>
 
+    @Query("SELECT * FROM journalentry WHERE id = :id")
+    suspend fun get(id: Int): JournalEntry
+
     @Query("DELETE FROM journalentry")
     suspend fun deleteAll()
 

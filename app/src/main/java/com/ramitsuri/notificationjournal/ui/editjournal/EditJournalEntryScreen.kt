@@ -1,23 +1,22 @@
-package com.ramitsuri.notificationjournal.ui.addjournal
+package com.ramitsuri.notificationjournal.ui.editjournal
 
 import androidx.compose.runtime.Composable
 import com.ramitsuri.notificationjournal.ui.components.AddEditEntryDialog
 
 @Composable
-fun AddJournalEntryScreen(
-    state: AddJournalEntryViewState,
+fun EditJournalEntryScreen(
+    state: EditJournalEntryViewState,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
-    onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
 ) {
     AddEditEntryDialog(
         text = state.text,
-        suggestedText = state.suggestedText,
+        suggestedText = null,
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
-        onUseSuggestedText = onUseSuggestedText,
+        onUseSuggestedText = { },
         onSave = onSave,
         onCancel = onCancel,
     )
