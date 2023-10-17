@@ -527,7 +527,7 @@ private fun AddEditEntryDialog(
 }
 
 @Composable
-fun SuggestedText(
+private fun SuggestedText(
     suggestedText: String,
     onUseSuggestedText: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -554,7 +554,7 @@ fun SuggestedText(
 
 @Preview
 @Composable
-fun ListItemPreview() {
+private fun ListItemPreview() {
     Surface {
         ListItem(
             item = JournalEntry(
