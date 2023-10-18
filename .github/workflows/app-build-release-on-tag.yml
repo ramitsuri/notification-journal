@@ -60,5 +60,5 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_SERVICE_ACCOUNT_JSON }}
           packageName: com.ramitsuri.notificationjournal
           releaseFiles: wearos/build/outputs/bundle/release/wearos-release.aab
-          track: wear:qa
+          track: wear:internal
           status: completed
