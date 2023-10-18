@@ -1,6 +1,5 @@
 package com.ramitsuri.notificationjournal
 
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,12 +19,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        val receivedText =
-            if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-                intent.getStringExtra(Intent.EXTRA_TEXT)
-            } else {
-                null
-            }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
@@ -47,7 +40,7 @@ class MainActivity : ComponentActivity() {
             }
 
             NotificationJournalTheme {
-                NavGraph(receivedText = receivedText)
+                NavGraph()
             }
         }
     }

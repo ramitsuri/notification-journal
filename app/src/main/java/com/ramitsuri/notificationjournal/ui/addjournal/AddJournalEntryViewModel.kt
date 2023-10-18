@@ -21,7 +21,13 @@ class AddJournalEntryViewModel(
     private val repository: JournalRepository,
     private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
-    private val receivedText = URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
+    private val receivedText: String? =
+        if (savedStateHandle.get<String?>(RECEIVED_TEXT_ARG).isNullOrEmpty()) {
+            null
+        } else {
+            URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
+        }
+
     private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
         AddJournalEntryViewState.default(receivedText = receivedText)
     )

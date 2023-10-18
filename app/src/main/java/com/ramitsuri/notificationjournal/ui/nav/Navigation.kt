@@ -1,8 +1,11 @@
 package com.ramitsuri.notificationjournal.ui.nav
 
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -25,7 +28,6 @@ import java.net.URLEncoder
 fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    receivedText: String?,
 ) {
     NavHost(
         navController = navController,
@@ -33,6 +35,10 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Destination.JOURNAL_ENTRY.route()) {
+            val viewModel: JournalEntryViewModel =
+                viewModel(factory = JournalEntryViewModel.factory(LocalContext.current as? Activity))
+
+            val receivedText by viewModel.receivedText.collectAsStateWithLifecycle()
             LaunchedEffect(key1 = receivedText) {
                 if (!receivedText.isNullOrEmpty()) {
                     navController.navigate(
@@ -43,11 +49,11 @@ fun NavGraph(
                             )
                         )
                     )
+                    viewModel.onReceivedTextConsumed()
                 }
             }
-            val viewModel: JournalEntryViewModel =
-                viewModel(factory = JournalEntryViewModel.factory())
-            val viewState = viewModel.state.collectAsStateWithLifecycle().value
+
+            val viewState by viewModel.state.collectAsStateWithLifecycle()
             JournalEntryScreen(
                 state = viewState,
                 onAddRequested = {
@@ -77,7 +83,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val viewModel: AddJournalEntryViewModel =
                 viewModel(factory = AddJournalEntryViewModel.factory(backStackEntry))
-            val viewState = viewModel.state.collectAsStateWithLifecycle().value
+            val viewState by viewModel.state.collectAsStateWithLifecycle()
 
             AddJournalEntryScreen(
                 state = viewState,
@@ -98,7 +104,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val viewModel: EditJournalEntryViewModel =
                 viewModel(factory = EditJournalEntryViewModel.factory(backStackEntry))
-            val viewState = viewModel.state.collectAsStateWithLifecycle().value
+            val viewState by viewModel.state.collectAsStateWithLifecycle()
 
             EditJournalEntryScreen(
                 state = viewState,
@@ -114,7 +120,7 @@ fun NavGraph(
 
         composable(Destination.SETTINGS.route()) {
             val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory())
-            val viewState = viewModel.state.collectAsStateWithLifecycle().value
+            val viewState by viewModel.state.collectAsStateWithLifecycle()
             SettingsScreen(
                 state = viewState,
                 onBack = { navController.navigateUp() },
@@ -128,7 +134,7 @@ fun NavGraph(
 
         composable(Destination.TAGS.route()) {
             val viewModel: TagsViewModel = viewModel(factory = TagsViewModel.factory())
-            val viewState = viewModel.state.collectAsStateWithLifecycle().value
+            val viewState by viewModel.state.collectAsStateWithLifecycle()
             TagsScreen(
                 state = viewState,
                 onEditOrder = viewModel::editOrder,
