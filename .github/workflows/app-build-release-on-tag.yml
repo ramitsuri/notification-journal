@@ -52,4 +52,4 @@ jobs:
           packageName: com.ramitsuri.notificationjournal
           releaseFiles: app/build/outputs/bundle/release/app-release.aab, wearos/build/outputs/bundle/release/wearos-release.aab
           track: internal
-          status: completed
+          status: draft
