@@ -52,7 +52,7 @@ jobs:
           packageName: com.ramitsuri.notificationjournal
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           track: internal
-          status: draft
+          status: completed
 
       - name: Publish wear OS app to Play Console
         uses: r0adkll/upload-google-play@v1.0.19
@@ -60,5 +60,5 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_SERVICE_ACCOUNT_JSON }}
           packageName: com.ramitsuri.notificationjournal
           releaseFiles: wearos/build/outputs/bundle/release/wearos-release.aab
-          track: internal
-          status: draft
+          track: wear:qa
+          status: completed
