@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -31,6 +35,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.R
+import com.ramitsuri.notificationjournal.core.model.Tag
 import kotlinx.coroutines.delay
 
 
@@ -38,6 +43,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun AddEditEntryDialog(
     text: String,
+    tags: List<Tag>,
+    selectedTag: String?,
     suggestedText: String?,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
@@ -73,8 +80,12 @@ fun AddEditEntryDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 if (!suggestedText.isNullOrEmpty()) {
                     SuggestedText(suggestedText, onUseSuggestedText = onUseSuggestedText)
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                if (tags.isNotEmpty()) {
+                    Tags(tags, selectedTag, onTagClicked)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 Row(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
@@ -88,6 +99,19 @@ fun AddEditEntryDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Tags(tags: List<Tag>, selectedTag: String?, onTagClicked: (String) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(tags) {
+            FilterChip(
+                selected = it.value == selectedTag,
+                onClick = { onTagClicked(it.value) },
+                label = { Text(text = it.value, modifier = Modifier.padding(8.dp)) })
         }
     }
 }

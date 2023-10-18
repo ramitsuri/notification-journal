@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavBackStackEntry
+import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.loadTitle
@@ -19,6 +20,7 @@ import java.net.URLDecoder
 class AddJournalEntryViewModel(
     savedStateHandle: SavedStateHandle,
     private val repository: JournalRepository,
+    private val tagsDao: TagsDao,
     private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
     private val receivedText: String? =
@@ -35,6 +37,7 @@ class AddJournalEntryViewModel(
 
     init {
         loadAdditionalDataIfUrl(receivedText)
+        loadTags()
     }
 
     fun textUpdated(text: String) {
@@ -59,13 +62,16 @@ class AddJournalEntryViewModel(
     }
 
     fun save() {
-        val text = _state.value.text
+        val currentState = _state.value
+        val text = currentState.text
         if (text.isEmpty()) {
             return
         }
+        val tag = currentState.selectedTag
         viewModelScope.launch {
             repository.insert(
-                text = text
+                text = text,
+                tag = tag,
             )
         }
     }
@@ -77,6 +83,14 @@ class AddJournalEntryViewModel(
                 _state.update {
                     it.copy(suggestedText = pageTitle)
                 }
+            }
+        }
+    }
+
+    private fun loadTags() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(tags = tagsDao.getAll())
             }
         }
     }
@@ -100,6 +114,7 @@ class AddJournalEntryViewModel(
                     return AddJournalEntryViewModel(
                         savedStateHandle = handle,
                         repository = ServiceLocator.repository,
+                        tagsDao = ServiceLocator.tagsDao,
                         loadTitle = ::loadTitle
                     ) as T
                 }

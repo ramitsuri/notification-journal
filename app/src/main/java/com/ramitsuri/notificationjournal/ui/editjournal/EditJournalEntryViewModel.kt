@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavBackStackEntry
+import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class EditJournalEntryViewModel(
     savedStateHandle: SavedStateHandle,
     private val repository: JournalRepository,
+    private val tagsDao: TagsDao,
 ) : ViewModel() {
     private val _state: MutableStateFlow<EditJournalEntryViewState> =
         MutableStateFlow(EditJournalEntryViewState.default())
@@ -31,6 +33,7 @@ class EditJournalEntryViewModel(
                 it.copy(text = entry.text, selectedTag = entry.tag)
             }
         }
+        loadTags()
     }
 
     fun textUpdated(text: String) {
@@ -49,21 +52,33 @@ class EditJournalEntryViewModel(
         if (!::entry.isInitialized) {
             return
         }
-        val text = _state.value.text
+        val currentState = _state.value
+        val text = currentState.text
         if (text.isEmpty()) {
             return
         }
+        val tag = currentState.selectedTag
         viewModelScope.launch {
             repository.editText(
                 id = entry.id,
                 text = text
             )
+            repository.editTag(
+                id = entry.id,
+                tag = tag
+            )
+        }
+    }
+
+    private fun loadTags() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(tags = tagsDao.getAll())
+            }
         }
     }
 
     companion object {
-        private const val TAG = "EditJournalEntryViewModel"
-
         const val ENTRY_ID_ARG = "entry_id"
 
         fun factory(navBackStackEntry: NavBackStackEntry) =
@@ -80,6 +95,7 @@ class EditJournalEntryViewModel(
                     return EditJournalEntryViewModel(
                         savedStateHandle = handle,
                         repository = ServiceLocator.repository,
+                        tagsDao = ServiceLocator.tagsDao,
                     ) as T
                 }
             }

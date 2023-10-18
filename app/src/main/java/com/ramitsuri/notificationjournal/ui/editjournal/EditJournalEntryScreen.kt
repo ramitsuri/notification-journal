@@ -13,6 +13,8 @@ fun EditJournalEntryScreen(
 ) {
     AddEditEntryDialog(
         text = state.text,
+        tags = state.tags,
+        selectedTag = state.selectedTag,
         suggestedText = null,
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
