@@ -20,6 +20,10 @@ class EditJournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
 ) : ViewModel() {
+
+    private val _saved = MutableStateFlow(false)
+    val saved: StateFlow<Boolean> = _saved
+
     private val _state: MutableStateFlow<EditJournalEntryViewState> =
         MutableStateFlow(EditJournalEntryViewState.default())
     val state: StateFlow<EditJournalEntryViewState> = _state
@@ -57,6 +61,7 @@ class EditJournalEntryViewModel(
         if (text.isEmpty()) {
             return
         }
+        _state.update { it.copy(isLoading = true) }
         val tag = currentState.selectedTag
         viewModelScope.launch {
             repository.editText(
@@ -67,6 +72,9 @@ class EditJournalEntryViewModel(
                 id = entry.id,
                 tag = tag
             )
+            _saved.update {
+                true
+            }
         }
     }
 
@@ -103,12 +111,14 @@ class EditJournalEntryViewModel(
 }
 
 data class EditJournalEntryViewState(
+    val isLoading: Boolean,
     val text: String,
     val tags: List<Tag>,
     val selectedTag: String?,
 ) {
     companion object {
         fun default() = EditJournalEntryViewState(
+            isLoading = false,
             text = "",
             tags = listOf(),
             selectedTag = null,

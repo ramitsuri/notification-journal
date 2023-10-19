@@ -84,6 +84,14 @@ fun NavGraph(
         ) { backStackEntry ->
             val viewModel: AddJournalEntryViewModel =
                 viewModel(factory = AddJournalEntryViewModel.factory(backStackEntry))
+
+            val saved by viewModel.saved.collectAsStateWithLifecycle()
+            LaunchedEffect(saved) {
+                if (saved) {
+                    navController.navigateUp()
+                }
+            }
+
             val viewState by viewModel.state.collectAsStateWithLifecycle()
 
             AddJournalEntryScreen(
@@ -91,10 +99,7 @@ fun NavGraph(
                 onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
                 onUseSuggestedText = viewModel::useSuggestedText,
-                onSave = {
-                    navController.navigateUp()
-                    viewModel.save()
-                },
+                onSave = viewModel::save,
                 onCancel = { navController.navigateUp() },
             )
         }
@@ -105,16 +110,21 @@ fun NavGraph(
         ) { backStackEntry ->
             val viewModel: EditJournalEntryViewModel =
                 viewModel(factory = EditJournalEntryViewModel.factory(backStackEntry))
+
+            val saved by viewModel.saved.collectAsStateWithLifecycle()
+            LaunchedEffect(saved) {
+                if (saved) {
+                    navController.navigateUp()
+                }
+            }
+
             val viewState by viewModel.state.collectAsStateWithLifecycle()
 
             EditJournalEntryScreen(
                 state = viewState,
                 onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
-                onSave = {
-                    navController.navigateUp()
-                    viewModel.save()
-                },
+                onSave = viewModel::save,
                 onCancel = { navController.navigateUp() },
             )
         }

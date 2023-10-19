@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,9 +46,9 @@ import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.Tag
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AddEditEntryDialog(
+    isLoading: Boolean,
     text: String,
     tags: List<Tag>,
     selectedTag: String?,
@@ -58,9 +59,6 @@ fun AddEditEntryDialog(
     onSave: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    val focusRequester = remember { FocusRequester() }
-    val showKeyboard by remember { mutableStateOf(true) }
-    val keyboard = LocalSoftwareKeyboardController.current
 
     Dialog(
         onDismissRequest = { },
@@ -75,60 +73,96 @@ fun AddEditEntryDialog(
                     .fillMaxWidth(0.9f)
                     .padding(16.dp)
             ) {
-                LaunchedEffect(focusRequester) {
-                    if (showKeyboard) {
-                        delay(100)
-                        focusRequester.requestFocus()
-                        keyboard?.show()
-                    }
+                if (isLoading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                } else {
+                    Content(
+                        text = text,
+                        tags = tags,
+                        selectedTag = selectedTag,
+                        suggestedText = suggestedText,
+                        onTextUpdated = onTextUpdated,
+                        onTagClicked = onTagClicked,
+                        onUseSuggestedText = onUseSuggestedText,
+                        onSave = onSave,
+                        onCancel = onCancel
+                    )
                 }
-                BasicTextField(
-                    value = text,
-                    onValueChange = onTextUpdated,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences
-                    ),
-                    maxLines = 10,
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun Content(
+    text: String,
+    tags: List<Tag>,
+    selectedTag: String?,
+    suggestedText: String?,
+    onTextUpdated: (String) -> Unit,
+    onTagClicked: (String) -> Unit,
+    onUseSuggestedText: () -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    val showKeyboard by remember { mutableStateOf(true) }
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    Column {
+        LaunchedEffect(focusRequester) {
+            if (showKeyboard) {
+                delay(100)
+                focusRequester.requestFocus()
+                keyboard?.show()
+            }
+        }
+        BasicTextField(
+            value = text,
+            onValueChange = onTextUpdated,
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences
+            ),
+            maxLines = 10,
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester = focusRequester),
+            decorationBox = { innerTextField ->
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester = focusRequester),
-                    decorationBox = { innerTextField ->
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(5.dp))
-                                .border(
-                                    BorderStroke(
-                                        1.dp,
-                                        SolidColor(MaterialTheme.colorScheme.outline)
-                                    ),
-                                    RoundedCornerShape(5.dp)
-                                )
-                                .padding(8.dp)
-                        ) {
-                            innerTextField()
-                        }
-                    })
-                Spacer(modifier = Modifier.height(16.dp))
-                if (!suggestedText.isNullOrEmpty()) {
-                    SuggestedText(suggestedText, onUseSuggestedText = onUseSuggestedText)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                if (tags.isNotEmpty()) {
-                    Tags(tags, selectedTag, onTagClicked)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(5.dp))
+                        .border(
+                            BorderStroke(
+                                1.dp,
+                                SolidColor(MaterialTheme.colorScheme.outline)
+                            ),
+                            RoundedCornerShape(5.dp)
+                        )
+                        .padding(8.dp)
                 ) {
-                    TextButton(onClick = onCancel) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    TextButton(onClick = onSave) {
-                        Text(text = stringResource(id = R.string.ok))
-                    }
+                    innerTextField()
                 }
+            })
+        Spacer(modifier = Modifier.height(16.dp))
+        if (!suggestedText.isNullOrEmpty()) {
+            SuggestedText(suggestedText, onUseSuggestedText = onUseSuggestedText)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        if (tags.isNotEmpty()) {
+            Tags(tags, selectedTag, onTagClicked)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        Row(
+            horizontalArrangement = Arrangement.End,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextButton(onClick = onCancel) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            TextButton(onClick = onSave) {
+                Text(text = stringResource(id = R.string.ok))
             }
         }
     }

@@ -13,6 +13,7 @@ fun AddJournalEntryScreen(
     onCancel: () -> Unit,
 ) {
     AddEditEntryDialog(
+        isLoading = state.isLoading,
         text = state.text,
         tags = state.tags,
         selectedTag = state.selectedTag,

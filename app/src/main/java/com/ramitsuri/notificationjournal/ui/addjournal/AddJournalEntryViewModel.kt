@@ -30,6 +30,9 @@ class AddJournalEntryViewModel(
             URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
         }
 
+    private val _saved = MutableStateFlow(false)
+    val saved: StateFlow<Boolean> = _saved
+
     private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
         AddJournalEntryViewState.default(receivedText = receivedText)
     )
@@ -67,12 +70,16 @@ class AddJournalEntryViewModel(
         if (text.isEmpty()) {
             return
         }
+        _state.update { it.copy(isLoading = true) }
         val tag = currentState.selectedTag
         viewModelScope.launch {
             repository.insert(
                 text = text,
                 tag = tag,
             )
+            _saved.update {
+                true
+            }
         }
     }
 
@@ -123,6 +130,7 @@ class AddJournalEntryViewModel(
 }
 
 data class AddJournalEntryViewState(
+    val isLoading: Boolean,
     val text: String,
     val tags: List<Tag>,
     val selectedTag: String?,
@@ -130,6 +138,7 @@ data class AddJournalEntryViewState(
 ) {
     companion object {
         fun default(receivedText: String?) = AddJournalEntryViewState(
+            isLoading = false,
             text = receivedText ?: "",
             tags = listOf(),
             selectedTag = null,
