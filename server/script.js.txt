@@ -32,10 +32,16 @@ function addDayGroup(dayGroup) {{
    thText.innerText = "Text";
    tr.appendChild(thText);
 
+   let thButton = document.createElement("th");
+   thButton.innerText = "Copy";
+   tr.appendChild(thButton);
+
    thead.appendChild(tr);
    table.append(tr);
 
    dayGroup['tag_groups'].forEach((tagGroup) => {{
+      let textId = dayGroup['date'] + "-" + tagGroup['tag']
+
       let tr = document.createElement("tr");
 
       let tdTag = document.createElement("td");
@@ -54,12 +60,39 @@ function addDayGroup(dayGroup) {{
       tr.appendChild(tdEntryTime);
 
       let tdText = document.createElement("td");
+      tdText.id = textId
       tdText.innerText = text;
       tr.appendChild(tdText);
+
+      let tdButton = document.createElement("td");
+      tdButton.innerHTML = '<button onclick="copyText(\'' + textId + '\')">Copy</button>';
+      tr.appendChild(tdButton);
 
       table.appendChild(tr);
    }});
    container.appendChild(table)
+}}
+
+function copyText(id) {{
+   let text = document.getElementById(id).innerText
+
+   // https://stackoverflow.com/a/65996386
+
+   const textArea = document.createElement("textarea");
+   textArea.value = text;
+   textArea.style.position = "absolute";
+   textArea.style.left = "-999999px";
+
+   document.body.prepend(textArea);
+   textArea.select();
+
+   try {{
+       document.execCommand('copy');
+   }} catch (error) {{
+       console.error(error);
+   }} finally {{
+       textArea.remove();
+   }}
 }}
 
 function resetHtml() {{
