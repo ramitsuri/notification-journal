@@ -9,7 +9,7 @@ object Constants {
     const val PREF_KEY_API_URL = "api_url"
     const val PREF_KEY_SORT_ORDER = "sort_order"
 
-    const val DEFAULT_API_URL = "http://example.com"
+    const val DEFAULT_API_URL = "http://test.com"
 
     object DataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"

@@ -8,11 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.SortOrder
-import com.ramitsuri.notificationjournal.core.model.TagGroup
+import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
-import com.ramitsuri.notificationjournal.core.utils.getLocalDate
 import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,16 +65,7 @@ class JournalEntryViewModel(
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
             repository.getFlow(getSortOrder()).collect { entries ->
-                val dayGroups = entries
-                    .groupBy { getLocalDate(it.entryTime, zoneId) }
-                    .map { (date, entriesByDate) ->
-                        val byTag = entriesByDate
-                            .groupBy { it.tag }
-                            .map { (tag, entriesByTag) ->
-                                TagGroup(tag, entriesByTag)
-                            }
-                        DayGroup(date, byTag)
-                    }
+                val dayGroups = entries.toDayGroups(zoneId = zoneId)
                 _state.update {
                     it.copy(dayGroups = dayGroups)
                 }

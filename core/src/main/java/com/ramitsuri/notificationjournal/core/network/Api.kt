@@ -1,6 +1,6 @@
 package com.ramitsuri.notificationjournal.core.network
 
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
@@ -14,19 +14,21 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 interface Api {
     @POST("/")
-    suspend fun sendData(@Body entries: List<JournalEntry>): Response<ResponseBody>
+    suspend fun sendData(@Body entries: List<DayGroup>): Response<ResponseBody>
 }
 
 fun <T> buildApi(baseUrl: String, apiClass: Class<T>): T {
     val moshi = Moshi.Builder()
         .add(InstantAdapter())
         .add(ZoneIdAdapter())
+        .add(LocalDateAdapter())
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
@@ -65,5 +67,17 @@ private class ZoneIdAdapter() {
     @FromJson
     fun fromJson(json: String): ZoneId {
         return ZoneId.of(json)
+    }
+}
+
+private class LocalDateAdapter() {
+    @ToJson
+    fun toJson(localDate: LocalDate): String {
+        return localDate.toString()
+    }
+
+    @FromJson
+    fun fromJson(json: String): LocalDate {
+        return LocalDate.parse(json)
     }
 }

@@ -1,3 +1,13 @@
 package com.ramitsuri.notificationjournal.core.model
 
-data class TagGroup(val tag: String?, val entries: List<JournalEntry>)
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
+data class TagGroup(
+    @Json(name = "tag")
+    val tag: String?,
+
+    @Json(name = "entries")
+    val entries: List<JournalEntry>
+)

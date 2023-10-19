@@ -6,6 +6,7 @@ import com.ramitsuri.notificationjournal.core.model.JournalEntryTagUpdate
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTextUpdate
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTimeUpdate
 import com.ramitsuri.notificationjournal.core.model.SortOrder
+import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.network.Api
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -87,7 +88,7 @@ class JournalRepository(
             return null
         }
         return try {
-            val response = api.sendData(entries)
+            val response = api.sendData(entries.toDayGroups())
             if (response.code() == HTTP_OK) {
                 dao.deleteAll()
                 null
