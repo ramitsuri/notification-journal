@@ -1,9 +1,8 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
-import json
-import dateutil.parser
-from dateutil import tz
 import socket
+
+from json_saver import write_json_to_file
 
 
 hostName = "0.0.0.0"
@@ -19,25 +18,27 @@ def get_ip_address():
 
 
 class MyServer(BaseHTTPRequestHandler):
-    def do_post(self):
+    def do_GET(self):
+        if self.path == '/':
+            self.path = '/index.html'
+        try:
+            if self.path != ".py":
+                f = open(self.path[1:]).read()
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(bytes(f, 'utf-8'))
+            else:
+                f = self.path + " - File Not Found"
+                self.send_error(404, f)
+        except:
+            f = self.path + " - File Not Found"
+            self.send_error(404, f)
+
+    def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length).decode('utf-8')
+        write_json_to_file(post_data)
 
-        entries = json.loads(post_data)
-        for entry in entries:
-            utc = dateutil.parser.isoparse(entry['entryTime'])
-            to_zone = tz.gettz(entry['timeZone'])
-            at_zone = utc.astimezone(to_zone)
-            print('------------------------')
-            print(at_zone.strftime('%b %d %H:%M'))
-            print('------------------------')
-            lines = entry['text'].split("\n")
-            for line in lines:
-                print("- " + line)
-            print('------------------------')
-            print()
-
-        print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
         self.send_response(200)
         self.end_headers()
 
