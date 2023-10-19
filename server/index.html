@@ -8,13 +8,19 @@
       td, th {
          padding: 10px;
       }
+      .center {
+         position: absolute;
+         left: 50%;
+         top: 50%;
+         transform: translate(-50%, -50%);
+      }
    </style>
     <meta charset="UTF-8">
     <title>Notification Journal</title>
 </head>
 <body onload="convert();">
    <h2>Notification Journal</h2>
-   <div id="container"></div>
+   <div id="container" class="center"></div>
    <script src="script.js"></script>
 </body>
 </html>

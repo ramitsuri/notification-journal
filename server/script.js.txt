@@ -2,30 +2,59 @@ function convert() {{
    resetHtml()
    let jsonData = {json_data};
 
+   jsonData.forEach((dayGroup) => {{
+       addDayGroup(dayGroup)
+   }});
+}}
+
+function addDayGroup(dayGroup) {{
    let container = document.getElementById("container");
+
+   // Date header
+   let dateH3 = document.createElement("h3")
+   dateH3.innerText = dayGroup['date']
+   container.appendChild(dateH3)
+
+   // Table with each tag group as a single row
    let table = document.createElement("table");
    let thead = document.createElement("thead");
    let tr = document.createElement("tr");
 
+   let thTag = document.createElement("th");
+   thTag.innerText = "Tag";
+   tr.appendChild(thTag);
+
    let thEntryTime = document.createElement("th");
    thEntryTime.innerText = "Entry Time";
    tr.appendChild(thEntryTime);
+
    let thText = document.createElement("th");
    thText.innerText = "Text";
    tr.appendChild(thText);
 
    thead.appendChild(tr);
-   table.append(tr)
+   table.append(tr);
 
-   jsonData.forEach((item) => {{
+   dayGroup['tag_groups'].forEach((tagGroup) => {{
       let tr = document.createElement("tr");
 
+      let tdTag = document.createElement("td");
+      tdTag.innerText = tagGroup['tag'];
+      tr.appendChild(tdTag);
+
+      let entryTime = ""
+      let text = ""
+      tagGroup['entries'].forEach((entry) => {{
+          entryTime = entryTime + getTime(entry['entryTime'], entry['timeZone']) + "\n";
+          text = text + '- ' + entry['text'] + "\n";
+      }});
+
       let tdEntryTime = document.createElement("td");
-      tdEntryTime.innerText = item['entryTime'];
+      tdEntryTime.innerText = entryTime;
       tr.appendChild(tdEntryTime);
 
       let tdText = document.createElement("td");
-      tdText.innerText = '- ' + item['text'];
+      tdText.innerText = text;
       tr.appendChild(tdText);
 
       table.appendChild(tr);
@@ -38,4 +67,8 @@ function resetHtml() {{
     for (const child of container.children) {{
         child.remove();
     }}
+}}
+
+function getTime(date, tzString) {{
+    return new Date((new Date(date)).toLocaleString("en-US", {{timeZone: tzString}})).toLocaleTimeString("en-US");
 }}
