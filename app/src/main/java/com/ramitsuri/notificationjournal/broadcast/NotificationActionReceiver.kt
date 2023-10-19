@@ -7,8 +7,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.core.app.RemoteInput
 import com.ramitsuri.notificationjournal.MainApplication
-import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_JOURNAL
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_UPLOAD
@@ -18,8 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.ZoneId
 
 class NotificationActionReceiver : BroadcastReceiver() {
 
@@ -30,35 +26,29 @@ class NotificationActionReceiver : BroadcastReceiver() {
             ACTION_JOURNAL -> {
                 val remoteInputBundle = RemoteInput.getResultsFromIntent(intent)
                 if (remoteInputBundle != null) {
-                    processRemoteInput(context, remoteInputBundle)
+                    processRemoteInput(remoteInputBundle)
                     (context.applicationContext as MainApplication).showJournalNotification()
                 }
             }
 
             ACTION_UPLOAD -> {
-                upload(context)
+                upload()
             }
         }
 
     }
 
-    private fun processRemoteInput(context: Context, remoteInput: Bundle) {
+    private fun processRemoteInput(remoteInput: Bundle) {
         val text = remoteInput.getCharSequence(Constants.REMOTE_INPUT_JOURNAL_KEY).toString()
-        val journalEntry = JournalEntry(
-            id = 0,
-            entryTime = Instant.now(),
-            timeZone = ZoneId.systemDefault(),
-            text = text
-        )
-        val dao = AppDatabase.getJournalEntryDao(context = context)
+        val repository = ServiceLocator.repository
         CoroutineScope(SupervisorJob()).launch {
             withContext(Dispatchers.IO) {
-                dao.insert(journalEntry)
+                repository.insert(text = text)
             }
         }
     }
 
-    private fun upload(context: Context) {
+    private fun upload() {
         CoroutineScope(SupervisorJob()).launch {
             val error = ServiceLocator.repository.upload() ?: return@launch
             Log.d(TAG, "Failed to upload: $error")

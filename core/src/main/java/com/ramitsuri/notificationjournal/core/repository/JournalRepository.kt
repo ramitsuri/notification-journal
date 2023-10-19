@@ -59,16 +59,22 @@ class JournalRepository(
     }
 
     suspend fun insert(text: String, tag: String? = null, originalEntryTime: Instant? = null) {
-        dao.insert(
-            JournalEntry(
-                id = 0,
-                entryTime = Instant.now(),
-                timeZone = ZoneId.systemDefault(),
-                text = text,
-                tag = tag,
-                entryTimeOverride = originalEntryTime
-            )
-        )
+        val entryTime = Instant.now()
+        val timeZone = ZoneId.systemDefault()
+        text
+            .split("\n")
+            .forEach {
+                dao.insert(
+                    JournalEntry(
+                        id = 0,
+                        entryTime = entryTime,
+                        timeZone = timeZone,
+                        text = it.trim(),
+                        tag = tag,
+                        entryTimeOverride = originalEntryTime
+                    )
+                )
+            }
     }
 
     suspend fun delete(entry: JournalEntry) {
