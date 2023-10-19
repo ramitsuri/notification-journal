@@ -11,6 +11,7 @@
     <string name="back">Back</string>
     <string name="settings">Settings</string>
     <string name="add_entry_content_description">Add</string>
+    <string name="add_entry_add_another">Add Another</string>
     <string name="menu_content_description">Menu</string>
 
     <string name="alert">Alert!</string>

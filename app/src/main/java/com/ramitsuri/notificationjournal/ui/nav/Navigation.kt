@@ -100,6 +100,7 @@ fun NavGraph(
                 onTagClicked = viewModel::tagClicked,
                 onUseSuggestedText = viewModel::useSuggestedText,
                 onSave = viewModel::save,
+                onAddAnother = viewModel::saveAndAddAnother,
                 onCancel = { navController.navigateUp() },
             )
         }

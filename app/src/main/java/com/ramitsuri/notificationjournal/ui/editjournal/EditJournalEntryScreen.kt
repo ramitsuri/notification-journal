@@ -21,6 +21,8 @@ fun EditJournalEntryScreen(
         onTagClicked = onTagClicked,
         onUseSuggestedText = { },
         onSave = onSave,
+        showAddAnother = false,
+        onAddAnother = { },
         onCancel = onCancel,
     )
 }

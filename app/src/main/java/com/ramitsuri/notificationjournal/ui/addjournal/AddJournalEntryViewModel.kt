@@ -65,6 +65,14 @@ class AddJournalEntryViewModel(
     }
 
     fun save() {
+        save(exitOnSave = true)
+    }
+
+    fun saveAndAddAnother() {
+        save(exitOnSave = false)
+    }
+
+    private fun save(exitOnSave: Boolean) {
         val currentState = _state.value
         val text = currentState.text
         if (text.isEmpty()) {
@@ -77,8 +85,14 @@ class AddJournalEntryViewModel(
                 text = text,
                 tag = tag,
             )
-            _saved.update {
-                true
+            if (exitOnSave) {
+                _saved.update {
+                    true
+                }
+            } else {
+                _state.update {
+                    it.copy(isLoading = false, text = "", selectedTag = null, suggestedText = null)
+                }
             }
         }
     }

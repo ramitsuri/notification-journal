@@ -10,6 +10,7 @@ fun AddJournalEntryScreen(
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
+    onAddAnother: () -> Unit,
     onCancel: () -> Unit,
 ) {
     AddEditEntryDialog(
@@ -18,10 +19,12 @@ fun AddJournalEntryScreen(
         tags = state.tags,
         selectedTag = state.selectedTag,
         suggestedText = state.suggestedText,
+        showAddAnother = true,
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
         onUseSuggestedText = onUseSuggestedText,
         onSave = onSave,
+        onAddAnother = onAddAnother,
         onCancel = onCancel,
     )
 }

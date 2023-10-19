@@ -53,10 +53,12 @@ fun AddEditEntryDialog(
     tags: List<Tag>,
     selectedTag: String?,
     suggestedText: String?,
+    showAddAnother: Boolean,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
+    onAddAnother: () -> Unit,
     onCancel: () -> Unit,
 ) {
 
@@ -81,10 +83,12 @@ fun AddEditEntryDialog(
                         tags = tags,
                         selectedTag = selectedTag,
                         suggestedText = suggestedText,
+                        showAddAnother = showAddAnother,
                         onTextUpdated = onTextUpdated,
                         onTagClicked = onTagClicked,
                         onUseSuggestedText = onUseSuggestedText,
                         onSave = onSave,
+                        onAddAnother = onAddAnother,
                         onCancel = onCancel
                     )
                 }
@@ -100,10 +104,12 @@ private fun Content(
     tags: List<Tag>,
     selectedTag: String?,
     suggestedText: String?,
+    showAddAnother: Boolean,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
+    onAddAnother: () -> Unit,
     onCancel: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -152,6 +158,17 @@ private fun Content(
         if (tags.isNotEmpty()) {
             Tags(tags, selectedTag, onTagClicked)
             Spacer(modifier = Modifier.height(16.dp))
+        }
+        if (showAddAnother){
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(onClick = onAddAnother) {
+                    Text(text = stringResource(id = R.string.add_entry_add_another))
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
         }
         Row(
             horizontalArrangement = Arrangement.End,
