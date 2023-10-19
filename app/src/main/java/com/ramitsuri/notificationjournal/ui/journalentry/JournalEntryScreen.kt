@@ -116,7 +116,8 @@ fun JournalEntryScreen(
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 32.dp),

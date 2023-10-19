@@ -23,6 +23,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -70,95 +71,96 @@ fun SettingsScreen(
         )
     }
     val context = LocalContext.current
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .displayCutoutPadding(),
-    ) {
-        IconButton(
-            onClick = onBack
+    Surface {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .systemBarsPadding()
+                .displayCutoutPadding(),
         ) {
-            Icon(
-                Icons.Filled.ArrowBack,
-                contentDescription = stringResource(id = R.string.back)
-            )
-        }
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth(),
-        ) {
-            item {
-                val subtitle = when (state.serverState) {
-                    ServerState.RESTART -> {
-                        stringResource(id = R.string.button_text_restart)
-                    }
-
-                    ServerState.SET_SERVER -> {
-                        stringResource(id = R.string.button_text_set_server)
-                    }
-
-                    ServerState.SERVER_SET -> {
-                        state.serverText
-                    }
-                }
-                SettingsItem(
-                    title = stringResource(id = R.string.settings_server_title),
-                    subtitle = subtitle,
-                    onClick = {
-                        when (state.serverState) {
-                            ServerState.RESTART -> {
-                                context.shutdown()
-                            }
-
-                            ServerState.SET_SERVER -> {
-                                showDialog = true
-                            }
-
-                            ServerState.SERVER_SET -> {
-                                showDialog = true
-                            }
+            IconButton(
+                onClick = onBack
+            ) {
+                Icon(
+                    Icons.Filled.ArrowBack,
+                    contentDescription = stringResource(id = R.string.back)
+                )
+            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
+                item {
+                    val subtitle = when (state.serverState) {
+                        ServerState.RESTART -> {
+                            stringResource(id = R.string.button_text_restart)
                         }
-                    },
-                    showProgress = false
-                )
-            }
-            item {
-                SettingsItem(
-                    title = stringResource(id = R.string.settings_tags_title),
-                    subtitle = stringResource(id = R.string.settings_tags_subtitle),
-                    onClick = onTagsClicked,
-                    showProgress = false,
-                    modifier = modifier
-                )
-            }
-            item {
-                SettingsItem(
-                    title = stringResource(id = R.string.settings_upload_title),
-                    subtitle = stringResource(id = R.string.settings_upload_subtitle),
-                    onClick = onUploadClicked,
-                    showProgress = state.uploadLoading,
-                    modifier = modifier
-                )
-            }
-            item {
-                SettingsItem(
-                    title = stringResource(id = R.string.settings_sort_order_title),
-                    subtitle = when (state.sortOrder) {
-                        SortOrder.ASC -> stringResource(id = R.string.settings_sort_order_asc)
-                        SortOrder.DESC -> stringResource(id = R.string.settings_sort_order_desc)
-                    },
-                    onClick = onSortOrderClicked,
-                    showProgress = false
-                )
-            }
-        }
 
-        state.error?.let { error ->
-            LaunchedEffect(error) {
-                snackbarHostState.showSnackbar(error)
-                onErrorAcknowledged()
+                        ServerState.SET_SERVER -> {
+                            stringResource(id = R.string.button_text_set_server)
+                        }
+
+                        ServerState.SERVER_SET -> {
+                            state.serverText
+                        }
+                    }
+                    SettingsItem(
+                        title = stringResource(id = R.string.settings_server_title),
+                        subtitle = subtitle,
+                        onClick = {
+                            when (state.serverState) {
+                                ServerState.RESTART -> {
+                                    context.shutdown()
+                                }
+
+                                ServerState.SET_SERVER -> {
+                                    showDialog = true
+                                }
+
+                                ServerState.SERVER_SET -> {
+                                    showDialog = true
+                                }
+                            }
+                        },
+                        showProgress = false
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = stringResource(id = R.string.settings_tags_title),
+                        subtitle = stringResource(id = R.string.settings_tags_subtitle),
+                        onClick = onTagsClicked,
+                        showProgress = false,
+                        modifier = modifier
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = stringResource(id = R.string.settings_upload_title),
+                        subtitle = stringResource(id = R.string.settings_upload_subtitle),
+                        onClick = onUploadClicked,
+                        showProgress = state.uploadLoading,
+                        modifier = modifier
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = stringResource(id = R.string.settings_sort_order_title),
+                        subtitle = when (state.sortOrder) {
+                            SortOrder.ASC -> stringResource(id = R.string.settings_sort_order_asc)
+                            SortOrder.DESC -> stringResource(id = R.string.settings_sort_order_desc)
+                        },
+                        onClick = onSortOrderClicked,
+                        showProgress = false
+                    )
+                }
+            }
+
+            state.error?.let { error ->
+                LaunchedEffect(error) {
+                    snackbarHostState.showSnackbar(error)
+                    onErrorAcknowledged()
+                }
             }
         }
     }
