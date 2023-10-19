@@ -11,6 +11,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.ramitsuri.notificationjournal.ui.addjournal.AddJournalEntryScreen
 import com.ramitsuri.notificationjournal.ui.addjournal.AddJournalEntryViewModel
@@ -77,7 +78,7 @@ fun NavGraph(
             )
         }
 
-        composable(
+        dialog(
             route = Destination.ADD_ENTRY.route(),
             arguments = Destination.ADD_ENTRY.navArgs()
         ) { backStackEntry ->
@@ -98,7 +99,7 @@ fun NavGraph(
             )
         }
 
-        composable(
+        dialog(
             Destination.EDIT_ENTRY.route(),
             arguments = Destination.EDIT_ENTRY.navArgs()
         ) { backStackEntry ->
