@@ -28,7 +28,7 @@ android {
             //signingConfig signingConfigs.debug
         }
         debug {
-            minifyEnabled true
+            minifyEnabled false
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
         }

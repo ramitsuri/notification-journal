@@ -64,6 +64,7 @@ import com.ramitsuri.notificationjournal.JournalMenuItem
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.ui.bottomBorder
 import com.ramitsuri.notificationjournal.ui.sideBorder
@@ -172,6 +173,11 @@ fun JournalEntryScreen(
                         onCopyRequested = { item ->
                             clipboardManager.setText(AnnotatedString(item.text))
                         },
+                        onTagGroupCopyRequested = { tagGroup ->
+                            val text = tagGroup.entries
+                                .joinToString(separator = "\n") { "- ${it.text}" }
+                            clipboardManager.setText(AnnotatedString(text))
+                        },
                         onEditRequested = { item ->
                             onEditRequested(item.id)
                         },
@@ -184,7 +190,6 @@ fun JournalEntryScreen(
         }
     }
 }
-
 
 @Composable
 private fun MoreMenu(
@@ -229,6 +234,7 @@ private fun MoreMenu(
 private fun List(
     items: List<DayGroup>,
     onCopyRequested: (JournalEntry) -> Unit,
+    onTagGroupCopyRequested: (TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit
 ) {
@@ -243,18 +249,20 @@ private fun List(
             stickyHeader {
                 HeaderItem(text = getDay(date).string())
             }
-            tagGroups.forEach { (tag, entries) ->
+            tagGroups.forEach { tagGroup ->
+                val entries = tagGroup.entries
                 var shape: Shape
                 var borderModifier: Modifier
                 item {
                     SubHeaderItem(
-                        text = tag ?: "Untagged",
+                        tagGroup = tagGroup,
+                        onCopyRequested = onTagGroupCopyRequested,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(topShape)
                             .background(color = MaterialTheme.colorScheme.background)
                             .then(Modifier.topBorder(strokeWidth, strokeColor, cornerRadius))
-                            .padding(16.dp)
+                            .padding(8.dp)
                     )
                 }
                 items(
@@ -282,7 +290,7 @@ private fun List(
                             .fillMaxWidth()
                             .clip(shape)
                             .then(borderModifier)
-                            .padding(8.dp)
+                            .padding(horizontal = 8.dp)
                     )
                 }
                 item {
@@ -291,7 +299,7 @@ private fun List(
             }
         }
         item {
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(96.dp))
         }
     }
 }
@@ -314,16 +322,26 @@ private fun HeaderItem(text: String) {
 
 @Composable
 private fun SubHeaderItem(
-    text: String,
+    tagGroup: TagGroup,
+    onCopyRequested: (TagGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
+        var showMenu by remember { mutableStateOf(false) }
         Text(
-            text = text,
+            text = tagGroup.tag ?: stringResource(id = R.string.untagged),
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        SubHeaderItemMenu(
+            showMenu = showMenu,
+            onCopyRequested = { onCopyRequested(tagGroup) },
+            onMenuButtonClicked = { showMenu = !showMenu },
         )
     }
 }
@@ -403,6 +421,39 @@ private fun ItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onDeleteRequested()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SubHeaderItemMenu(
+    showMenu: Boolean,
+    onCopyRequested: () -> Unit,
+    onMenuButtonClicked: () -> Unit
+) {
+    Box {
+        IconButton(
+            onClick = onMenuButtonClicked,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = stringResource(id = R.string.menu_content_description)
+            )
+        }
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = onMenuButtonClicked,
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.copy)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onCopyRequested()
                 }
             )
         }
