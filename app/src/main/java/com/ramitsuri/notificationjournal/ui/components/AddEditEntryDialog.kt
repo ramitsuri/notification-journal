@@ -168,7 +168,7 @@ private fun Content(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TextButton(onClick = onAddAnother) {
-                    Text(text = stringResource(id = R.string.add_entry_add_another))
+                    Text(text = stringResource(id = R.string.add_entry_save_and_add_another))
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -182,7 +182,7 @@ private fun Content(
             }
             Spacer(modifier = Modifier.width(16.dp))
             TextButton(onClick = onSave) {
-                Text(text = stringResource(id = R.string.ok))
+                Text(text = stringResource(id = R.string.add_entry_save))
             }
         }
     }
