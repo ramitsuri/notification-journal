@@ -130,6 +130,9 @@ private fun Content(
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences
             ),
+            textStyle = MaterialTheme.typography.bodyMedium
+                .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            cursorBrush= SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
             maxLines = 10,
             modifier = Modifier
                 .fillMaxWidth()
@@ -159,7 +162,7 @@ private fun Content(
             Tags(tags, selectedTag, onTagClicked)
             Spacer(modifier = Modifier.height(16.dp))
         }
-        if (showAddAnother){
+        if (showAddAnother) {
             Row(
                 horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth()
