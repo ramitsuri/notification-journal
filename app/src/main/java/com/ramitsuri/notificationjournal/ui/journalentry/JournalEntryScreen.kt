@@ -2,10 +2,12 @@ package com.ramitsuri.notificationjournal.ui.journalentry
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,8 +31,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,10 +65,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.JournalMenuItem
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.ui.bottomBorder
@@ -80,6 +88,7 @@ fun JournalEntryScreen(
     onAddRequested: () -> Unit,
     onEditRequested: (Int) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
+    onEditTagRequested: (JournalEntry, String) -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
@@ -169,10 +178,13 @@ fun JournalEntryScreen(
                         )
                     }
                 } else {
-                    List(state.dayGroups,
+                    List(
+                        items = state.dayGroups,
+                        tags = state.tags,
                         onCopyRequested = { item ->
                             clipboardManager.setText(AnnotatedString(item.text))
                         },
+                        onTagClicked = onEditTagRequested,
                         onTagGroupCopyRequested = { tagGroup ->
                             val text = tagGroup.entries
                                 .joinToString(separator = "\n") { "- ${it.text}" }
@@ -233,10 +245,12 @@ private fun MoreMenu(
 @Composable
 private fun List(
     items: List<DayGroup>,
+    tags: List<Tag>,
     onCopyRequested: (JournalEntry) -> Unit,
+    onTagClicked: (JournalEntry, String) -> Unit,
     onTagGroupCopyRequested: (TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
-    onDeleteRequested: (JournalEntry) -> Unit
+    onDeleteRequested: (JournalEntry) -> Unit,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -281,11 +295,15 @@ private fun List(
                                 Modifier.sideBorder(strokeWidth, strokeColor, cornerRadius)
                         }
                     }
+                    val entry = entries[index]
                     ListItem(
-                        item = entries[index],
+                        item = entry,
                         onCopyRequested = onCopyRequested,
                         onDeleteRequested = onDeleteRequested,
                         onEditRequested = onEditRequested,
+                        tags = tags,
+                        selectedTag = entry.tag,
+                        onTagClicked = onTagClicked,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(shape)
@@ -352,13 +370,18 @@ private fun ListItem(
     onCopyRequested: (JournalEntry) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
+    tags: List<Tag>,
+    selectedTag: String?,
+    onTagClicked: (JournalEntry, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    var showTags by remember { mutableStateOf(false) }
+
     Row(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
+        modifier = modifier.clickable(onClick = { showTags = true })
     ) {
         Text(
             text = item.text,
@@ -375,6 +398,53 @@ private fun ListItem(
             onDeleteRequested = { onDeleteRequested(item) },
             onMenuButtonClicked = { showMenu = !showMenu },
         )
+    }
+
+    TagsDialog(
+        showTags = showTags,
+        tags = tags,
+        selectedTag = selectedTag,
+        onTagClicked = { tag -> onTagClicked(item, tag) },
+        onDismiss = { showTags = false })
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun TagsDialog(
+    showTags: Boolean,
+    tags: List<Tag>,
+    selectedTag: String?,
+    onTagClicked: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (showTags) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(16.dp)
+                ) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        tags.forEach {
+                            FilterChip(
+                                selected = it.value == selectedTag,
+                                onClick = {
+                                    onTagClicked(it.value)
+                                    onDismiss()
+                                },
+                                label = { Text(text = it.value) })
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -473,7 +543,10 @@ private fun ListItemPreview() {
             ),
             onCopyRequested = {},
             onEditRequested = {},
-            onDeleteRequested = {}
+            onDeleteRequested = {},
+            tags = listOf(),
+            selectedTag = null,
+            onTagClicked = { _, _ -> },
         )
     }
 }

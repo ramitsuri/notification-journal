@@ -5,9 +5,11 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.SortOrder
+import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -24,6 +26,7 @@ class JournalEntryViewModel(
     receivedText: String?,
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
+    private val tagsDao: TagsDao,
     private val zoneId: ZoneId = ZoneId.systemDefault()
 ) : ViewModel() {
 
@@ -35,6 +38,7 @@ class JournalEntryViewModel(
     private val _state = MutableStateFlow(
         ViewState(
             dayGroups = listOf(),
+            tags = listOf(),
             loading = false,
         )
     )
@@ -42,6 +46,7 @@ class JournalEntryViewModel(
 
     init {
         restartCollection()
+        loadTags()
     }
 
     fun onReceivedTextConsumed() {
@@ -53,6 +58,15 @@ class JournalEntryViewModel(
     fun delete(journalEntry: JournalEntry) {
         viewModelScope.launch {
             repository.delete(journalEntry)
+        }
+    }
+
+    fun editTag(journalEntry: JournalEntry, tag: String) {
+        if (journalEntry.tag == tag) {
+            return
+        }
+        viewModelScope.launch {
+            repository.editTag(journalEntry.id, tag)
         }
     }
 
@@ -73,6 +87,12 @@ class JournalEntryViewModel(
         }
     }
 
+    private fun loadTags() {
+        viewModelScope.launch {
+            _state.update { it.copy(tags = tagsDao.getAll()) }
+        }
+    }
+
     companion object {
         fun factory(activity: Activity?) = object : ViewModelProvider.Factory {
 
@@ -90,6 +110,7 @@ class JournalEntryViewModel(
                     receivedText,
                     ServiceLocator.keyValueStore,
                     ServiceLocator.repository,
+                    ServiceLocator.tagsDao,
                 ) as T
             }
         }
@@ -98,5 +119,6 @@ class JournalEntryViewModel(
 
 data class ViewState(
     val dayGroups: List<DayGroup> = listOf(),
+    val tags: List<Tag>,
     val loading: Boolean = false,
 )

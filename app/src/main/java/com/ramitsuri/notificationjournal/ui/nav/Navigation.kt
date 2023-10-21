@@ -72,6 +72,7 @@ fun NavGraph(
                     )
                 },
                 onDeleteRequested = viewModel::delete,
+                onEditTagRequested = viewModel::editTag,
                 onSettingsClicked = {
                     navController.navigate(Destination.SETTINGS.routeWithArgValues())
                 }
