@@ -16,21 +16,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -52,7 +51,6 @@ fun SettingsScreen(
     onSortOrderClicked: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var serverSet by rememberSaveable { mutableStateOf(false) }
@@ -157,10 +155,7 @@ fun SettingsScreen(
             }
 
             state.error?.let { error ->
-                LaunchedEffect(error) {
-                    snackbarHostState.showSnackbar(error)
-                    onErrorAcknowledged()
-                }
+                ErrorAlert(text = error, onDismiss = onErrorAcknowledged)
             }
         }
     }
@@ -237,4 +232,30 @@ private fun SetApiUrlDialog(
             }
         }
     }
+}
+
+@Composable
+private fun ErrorAlert(text: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(id = R.string.error),
+                style = MaterialTheme.typography.titleSmall,
+            )
+        },
+        text = {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = stringResource(id = R.string.ok),
+                )
+            }
+        }
+    )
 }

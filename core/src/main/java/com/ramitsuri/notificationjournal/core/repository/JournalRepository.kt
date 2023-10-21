@@ -93,7 +93,7 @@ class JournalRepository(
                 dao.deleteAll()
                 null
             } else {
-                "Not successful"
+                "Message: ${response.message()}, Code: ${response.code()}, Error: ${response.errorBody()?.charStream()?.readText()}"
             }
         } catch (e: Exception) {
             e.printStackTrace()
