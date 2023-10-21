@@ -3,7 +3,10 @@ package com.ramitsuri.notificationjournal.core.model
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
 import java.time.ZoneId
 
-fun List<JournalEntry>.toDayGroups(zoneId: ZoneId = ZoneId.systemDefault()): List<DayGroup> {
+fun List<JournalEntry>.toDayGroups(
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    tagsForSort: List<Tag> = listOf()
+): List<DayGroup> {
     return groupBy { getLocalDate(it.entryTime, zoneId) }
         .map { (date, entriesByDate) ->
             val byTag = entriesByDate
@@ -11,6 +14,13 @@ fun List<JournalEntry>.toDayGroups(zoneId: ZoneId = ZoneId.systemDefault()): Lis
                 .map { (tag, entriesByTag) ->
                     TagGroup(tag, entriesByTag)
                 }
-            DayGroup(date, byTag)
+            val sorted = if (tagsForSort.isNotEmpty()) {
+                byTag.sortedBy { (tag, _) ->
+                    tagsForSort.first { it.value == tag }.order
+                }
+            }else{
+                byTag
+            }
+            DayGroup(date, sorted)
         }
 }

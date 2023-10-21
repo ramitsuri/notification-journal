@@ -46,7 +46,6 @@ class JournalEntryViewModel(
 
     init {
         restartCollection()
-        loadTags()
     }
 
     fun onReceivedTextConsumed() {
@@ -79,17 +78,12 @@ class JournalEntryViewModel(
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
             repository.getFlow(getSortOrder()).collect { entries ->
-                val dayGroups = entries.toDayGroups(zoneId = zoneId)
+                val tags = tagsDao.getAll()
+                val dayGroups = entries.toDayGroups(zoneId = zoneId, tags)
                 _state.update {
-                    it.copy(dayGroups = dayGroups)
+                    it.copy(dayGroups = dayGroups, tags = tags)
                 }
             }
-        }
-    }
-
-    private fun loadTags() {
-        viewModelScope.launch {
-            _state.update { it.copy(tags = tagsDao.getAll()) }
         }
     }
 
