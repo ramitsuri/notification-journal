@@ -1,6 +1,5 @@
 package com.ramitsuri.notificationjournal.ui.settings
 
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -52,6 +50,7 @@ fun SettingsScreen(
     onSortOrderClicked: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
+    onApplySorting: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var serverSet by rememberSaveable { mutableStateOf(false) }
@@ -70,9 +69,6 @@ fun SettingsScreen(
         )
     }
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        Toast.makeText(context, state.sortStatus, Toast.LENGTH_LONG).show()
-    }
     Surface {
         Column(
             modifier = modifier
@@ -153,6 +149,14 @@ fun SettingsScreen(
                             SortOrder.DESC -> stringResource(id = R.string.settings_sort_order_desc)
                         },
                         onClick = onSortOrderClicked,
+                        showProgress = false
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = "Apply sorting",
+                        subtitle = state.sortStatus,
+                        onClick = onApplySorting,
                         showProgress = false
                     )
                 }

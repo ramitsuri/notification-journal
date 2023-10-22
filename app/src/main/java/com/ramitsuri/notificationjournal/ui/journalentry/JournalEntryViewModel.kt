@@ -100,28 +100,10 @@ class JournalEntryViewModel(
         collectionJob = viewModelScope.launch {
             repository.getFlow().collect { entries ->
                 val tags = tagsDao.getAll()
-                val sortByTagOrder =
-                    keyValueStore.getBoolean(Constants.PREF_SORT_BY_TAG_ORDER, false)
-                val sortByEntryTime =
-                    keyValueStore.getBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, false)
-                val dayGroups = try {
-                    entries.toDayGroups(
+                val dayGroups = entries.toDayGroups(
                         zoneId = zoneId,
                         tagsForSort = tags,
-                        sortByEntryTime = sortByEntryTime,
-                        sortByTagOrder = sortByTagOrder
                     )
-                } catch (e: Exception) {
-                    if (sortByEntryTime == false && sortByTagOrder == false) {
-                        keyValueStore.getBoolean(Constants.PREF_SORT_BY_TAG_ORDER, true)
-                    } else if (sortByEntryTime == false) {
-                        keyValueStore.getBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, true)
-                    } else {
-                        keyValueStore.getBoolean(Constants.PREF_SORT_BY_TAG_ORDER, false)
-                        keyValueStore.getBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, false)
-                    }
-                    listOf()
-                }
                 _state.update { previousState ->
                     val sorted = when (getSortOrder()) {
                         SortOrder.ASC -> dayGroups.sortedBy { it.date }
