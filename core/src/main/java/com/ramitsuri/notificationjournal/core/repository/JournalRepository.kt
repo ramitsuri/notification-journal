@@ -5,7 +5,6 @@ import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTagUpdate
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTextUpdate
 import com.ramitsuri.notificationjournal.core.model.JournalEntryTimeUpdate
-import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.network.Api
 import kotlinx.coroutines.flow.Flow
@@ -18,13 +17,9 @@ class JournalRepository(
     private val api: Api,
     private val dao: JournalEntryDao
 ) {
-    fun getFlow(order: SortOrder): Flow<List<JournalEntry>> {
+    fun getFlow(): Flow<List<JournalEntry>> {
         return dao.getAllFlow().map { list ->
-            when (order) {
-                SortOrder.ASC -> list.sortedBy { it.entryTime }
-
-                SortOrder.DESC -> list.sortedByDescending { it.entryTime }
-            }
+            list.sortedBy { it.entryTime }
         }
     }
 
@@ -93,7 +88,9 @@ class JournalRepository(
                 dao.deleteAll()
                 null
             } else {
-                "Message: ${response.message()}, Code: ${response.code()}, Error: ${response.errorBody()?.charStream()?.readText()}"
+                "Message: ${response.message()}, Code: ${response.code()}, Error: ${
+                    response.errorBody()?.charStream()?.readText()
+                }"
             }
         } catch (e: Exception) {
             e.printStackTrace()

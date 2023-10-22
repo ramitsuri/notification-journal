@@ -89,6 +89,8 @@ fun JournalEntryScreen(
     onEditRequested: (Int) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onEditTagRequested: (JournalEntry, String) -> Unit,
+    onMoveToNextDayRequested: (JournalEntry) -> Unit,
+    onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
@@ -195,7 +197,9 @@ fun JournalEntryScreen(
                         },
                         onDeleteRequested = { item ->
                             journalEntryForDelete = item
-                        }
+                        },
+                        onMoveToNextDayRequested = onMoveToNextDayRequested,
+                        onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
                     )
                 }
             }
@@ -251,6 +255,8 @@ private fun List(
     onTagGroupCopyRequested: (TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
+    onMoveToNextDayRequested: (JournalEntry) -> Unit,
+    onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -304,6 +310,8 @@ private fun List(
                         tags = tags,
                         selectedTag = entry.tag,
                         onTagClicked = onTagClicked,
+                        onMoveToNextDayRequested = onMoveToNextDayRequested,
+                        onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(shape)
@@ -373,6 +381,8 @@ private fun ListItem(
     tags: List<Tag>,
     selectedTag: String?,
     onTagClicked: (JournalEntry, String) -> Unit,
+    onMoveToNextDayRequested: (JournalEntry) -> Unit,
+    onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -396,6 +406,8 @@ private fun ListItem(
             onCopyRequested = { onCopyRequested(item) },
             onEditRequested = { onEditRequested(item) },
             onDeleteRequested = { onDeleteRequested(item) },
+            onMoveToNextDayRequested = { onMoveToNextDayRequested(item) },
+            onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(item) },
             onMenuButtonClicked = { showMenu = !showMenu },
         )
     }
@@ -454,7 +466,9 @@ private fun ItemMenu(
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
-    onMenuButtonClicked: () -> Unit
+    onMoveToNextDayRequested: () -> Unit,
+    onMoveToPreviousDayRequested: () -> Unit,
+    onMenuButtonClicked: () -> Unit,
 ) {
     Box {
         IconButton(
@@ -491,6 +505,20 @@ private fun ItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onDeleteRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.next_day)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onMoveToNextDayRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.previous_day)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onMoveToPreviousDayRequested()
                 }
             )
         }
@@ -547,6 +575,8 @@ private fun ListItemPreview() {
             tags = listOf(),
             selectedTag = null,
             onTagClicked = { _, _ -> },
+            onMoveToNextDayRequested = { },
+            onMoveToPreviousDayRequested = { },
         )
     }
 }

@@ -20,7 +20,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.ZoneId
+import kotlin.time.Duration.Companion.days
+import kotlin.time.toJavaDuration
 
 class JournalEntryViewModel(
     receivedText: String?,
@@ -69,6 +72,24 @@ class JournalEntryViewModel(
         }
     }
 
+    fun moveToPreviousDay(journalEntry: JournalEntry) {
+        val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
+        val previousDayTime = currentEntryTime.minusSeconds(1.days.toJavaDuration().seconds)
+        setDate(journalEntry, previousDayTime)
+    }
+
+    fun moveToNextDay(journalEntry: JournalEntry) {
+        val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
+        val nextDayTime = currentEntryTime.plusSeconds(1.days.toJavaDuration().seconds)
+        setDate(journalEntry, nextDayTime)
+    }
+
+    private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
+        viewModelScope.launch {
+            repository.editEntryTime(journalEntry.id, entryTime)
+        }
+    }
+
     private fun getSortOrder(): SortOrder {
         val preferredSortOrderKey = keyValueStore.getInt(Constants.PREF_KEY_SORT_ORDER, 0)
         return SortOrder.fromKey(preferredSortOrderKey)
@@ -77,11 +98,15 @@ class JournalEntryViewModel(
     private fun restartCollection() {
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
-            repository.getFlow(getSortOrder()).collect { entries ->
+            repository.getFlow().collect { entries ->
                 val tags = tagsDao.getAll()
                 val dayGroups = entries.toDayGroups(zoneId = zoneId, tags)
-                _state.update {
-                    it.copy(dayGroups = dayGroups, tags = tags)
+                _state.update { previousState ->
+                    val sorted = when (getSortOrder()) {
+                        SortOrder.ASC -> dayGroups.sortedBy { it.date }
+                        SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
+                    }
+                    previousState.copy(dayGroups = sorted, tags = tags)
                 }
             }
         }

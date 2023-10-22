@@ -7,20 +7,22 @@ fun List<JournalEntry>.toDayGroups(
     zoneId: ZoneId = ZoneId.systemDefault(),
     tagsForSort: List<Tag> = listOf()
 ): List<DayGroup> {
-    return groupBy { getLocalDate(it.entryTime, zoneId) }
-        .map { (date, entriesByDate) ->
-            val byTag = entriesByDate
-                .groupBy { it.tag }
-                .map { (tag, entriesByTag) ->
-                    TagGroup(tag, entriesByTag)
-                }
-            val sorted = if (tagsForSort.isNotEmpty()) {
-                byTag.sortedBy { (tag, _) ->
-                    tagsForSort.first { it.value == tag }.order
-                }
-            }else{
-                byTag
+    return groupBy {
+        val entryTime = it.entryTimeOverride ?: it.entryTime
+        getLocalDate(entryTime, zoneId)
+    }.map { (date, entriesByDate) ->
+        val byTag = entriesByDate
+            .groupBy { it.tag }
+            .map { (tag, entriesByTag) ->
+                TagGroup(tag, entriesByTag.sortedBy { it.entryTimeOverride ?: it.entryTime })
             }
-            DayGroup(date, sorted)
+        val sorted = if (tagsForSort.isNotEmpty()) {
+            byTag.sortedBy { (tag, _) ->
+                tagsForSort.first { it.value == tag }.order
+            }
+        } else {
+            byTag
         }
+        DayGroup(date, sorted)
+    }
 }

@@ -27,6 +27,8 @@
     <string name="copy">Copy</string>
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
+    <string name="next_day">Next day</string>
+    <string name="previous_day">Previous day</string>
 
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>
