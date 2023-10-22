@@ -34,7 +34,18 @@ class SettingsViewModel(
                     ServerState.SET_SERVER
                 } else {
                     ServerState.SERVER_SET
-                }
+                },
+                sortStatus = "By Tag: ${
+                    keyValueStore.getBoolean(
+                        Constants.PREF_SORT_BY_TAG_ORDER,
+                        false
+                    )
+                }, By Entry Time: ${
+                    keyValueStore.getBoolean(
+                        Constants.PREF_SORT_BY_ENTRY_TIME,
+                        false
+                    )
+                }"
             )
         )
         state = _state
@@ -110,7 +121,8 @@ data class SettingsViewState(
     val sortOrder: SortOrder,
     val serverText: String,
     val serverState: ServerState,
-    val error: String? = null
+    val error: String? = null,
+    val sortStatus: String = "",
 )
 
 enum class ServerState {

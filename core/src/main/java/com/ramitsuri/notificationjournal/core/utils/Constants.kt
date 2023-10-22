@@ -8,6 +8,8 @@ object Constants {
     const val PREF_FILE = "com.ramitsuri.notificationjournal.prefs"
     const val PREF_KEY_API_URL = "api_url"
     const val PREF_KEY_SORT_ORDER = "sort_order"
+    const val PREF_SORT_BY_ENTRY_TIME = "sort_by_entry_time"
+    const val PREF_SORT_BY_TAG_ORDER = "sort_by_tag_order"
 
     const val DEFAULT_API_URL = "http://test.com"
 
