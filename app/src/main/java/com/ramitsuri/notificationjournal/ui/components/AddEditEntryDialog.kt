@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -38,7 +39,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -116,6 +119,7 @@ private fun Content(
     val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
 
+    var selection by remember(text) { mutableStateOf(TextRange(text.length)) }
     Column {
         LaunchedEffect(focusRequester) {
             if (showKeyboard) {
@@ -125,14 +129,17 @@ private fun Content(
             }
         }
         BasicTextField(
-            value = text,
-            onValueChange = onTextUpdated,
+            value = TextFieldValue(text = text, selection = selection),
+            onValueChange = {
+                onTextUpdated(it.text)
+                selection = it.selection
+            },
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences
             ),
             textStyle = MaterialTheme.typography.bodyMedium
                 .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-            cursorBrush= SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
             maxLines = 10,
             modifier = Modifier
                 .fillMaxWidth()
