@@ -91,6 +91,7 @@ fun JournalEntryScreen(
     onEditTagRequested: (JournalEntry, String) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
@@ -192,6 +193,7 @@ fun JournalEntryScreen(
                                 .joinToString(separator = "\n") { "- ${it.text}" }
                             clipboardManager.setText(AnnotatedString(text))
                         },
+                        onTagGroupDeleteRequested = onTagGroupDeleteRequested,
                         onEditRequested = { item ->
                             onEditRequested(item.id)
                         },
@@ -253,6 +255,7 @@ private fun List(
     onCopyRequested: (JournalEntry) -> Unit,
     onTagClicked: (JournalEntry, String) -> Unit,
     onTagGroupCopyRequested: (TagGroup) -> Unit,
+    onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
@@ -277,6 +280,7 @@ private fun List(
                     SubHeaderItem(
                         tagGroup = tagGroup,
                         onCopyRequested = onTagGroupCopyRequested,
+                        onDeleteRequested = onTagGroupDeleteRequested,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(topShape)
@@ -350,6 +354,7 @@ private fun HeaderItem(text: String) {
 private fun SubHeaderItem(
     tagGroup: TagGroup,
     onCopyRequested: (TagGroup) -> Unit,
+    onDeleteRequested: (TagGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -367,6 +372,7 @@ private fun SubHeaderItem(
         SubHeaderItemMenu(
             showMenu = showMenu,
             onCopyRequested = { onCopyRequested(tagGroup) },
+            onDeleteRequested = { onDeleteRequested(tagGroup) },
             onMenuButtonClicked = { showMenu = !showMenu },
         )
     }
@@ -529,6 +535,7 @@ private fun ItemMenu(
 private fun SubHeaderItemMenu(
     showMenu: Boolean,
     onCopyRequested: () -> Unit,
+    onDeleteRequested: () -> Unit,
     onMenuButtonClicked: () -> Unit
 ) {
     Box {
@@ -552,6 +559,13 @@ private fun SubHeaderItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onCopyRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.delete)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onDeleteRequested()
                 }
             )
         }

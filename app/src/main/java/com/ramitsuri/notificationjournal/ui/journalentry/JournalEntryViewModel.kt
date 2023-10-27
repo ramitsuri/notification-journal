@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.Tag
+import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -63,6 +64,14 @@ class JournalEntryViewModel(
         }
     }
 
+    fun delete(tagGroup: TagGroup) {
+        viewModelScope.launch {
+            tagGroup.entries.forEach { journalEntry ->
+                repository.delete(journalEntry)
+            }
+        }
+    }
+
     fun editTag(journalEntry: JournalEntry, tag: String) {
         if (journalEntry.tag == tag) {
             return
@@ -101,9 +110,9 @@ class JournalEntryViewModel(
             repository.getFlow().collect { entries ->
                 val tags = tagsDao.getAll()
                 val dayGroups = entries.toDayGroups(
-                        zoneId = zoneId,
-                        tagsForSort = tags,
-                    )
+                    zoneId = zoneId,
+                    tagsForSort = tags,
+                )
                 _state.update { previousState ->
                     val sorted = when (getSortOrder()) {
                         SortOrder.ASC -> dayGroups.sortedBy { it.date }
