@@ -109,10 +109,22 @@ class JournalEntryViewModel(
         collectionJob = viewModelScope.launch {
             repository.getFlow().collect { entries ->
                 val tags = tagsDao.getAll()
-                val dayGroups = entries.toDayGroups(
-                    zoneId = zoneId,
-                    tagsForSort = tags,
-                )
+                val dayGroups = try {
+                    entries.toDayGroups(
+                        zoneId = zoneId,
+                        tagsForSort = tags,
+                        sortByTagOrder = keyValueStore.getBoolean(
+                            Constants.PREF_SORT_BY_TAG_ORDER,
+                            true
+                        ),
+                        sortByEntryTime = keyValueStore.getBoolean(
+                            Constants.PREF_SORT_BY_ENTRY_TIME,
+                            true
+                        )
+                    )
+                } catch (e: Exception) {
+                    listOf()
+                }
                 _state.update { previousState ->
                     val sorted = when (getSortOrder()) {
                         SortOrder.ASC -> dayGroups.sortedBy { it.date }
