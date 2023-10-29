@@ -364,7 +364,11 @@ private fun SubHeaderItem(
     ) {
         var showMenu by remember { mutableStateOf(false) }
         Text(
-            text = tagGroup.tag ?: stringResource(id = R.string.untagged),
+            text = if (tagGroup.tag == Tag.NO_TAG.value) {
+                stringResource(id = R.string.untagged)
+            } else {
+                tagGroup.tag
+            },
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
         )

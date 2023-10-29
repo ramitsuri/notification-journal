@@ -6,7 +6,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class TagGroup(
     @Json(name = "tag")
-    val tag: String?,
+    val tag: String,
 
     @Json(name = "entries")
     val entries: List<JournalEntry>

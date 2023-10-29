@@ -9,6 +9,7 @@ fun List<JournalEntry>.toDayGroups(
     sortByEntryTime: Boolean = false,
     sortByTagOrder: Boolean = false,
 ): List<DayGroup> {
+    val tags = listOf(Tag.NO_TAG) + tagsForSort
     return groupBy {
         val entryTime = it.entryTimeOverride ?: it.entryTime
         getLocalDate(entryTime, zoneId)
@@ -16,15 +17,17 @@ fun List<JournalEntry>.toDayGroups(
         val byTag = entriesByDate
             .groupBy { it.tag }
             .map { (tag, entriesByTag) ->
-                if (sortByEntryTime) {
-                    TagGroup(tag, entriesByTag.sortedBy { it.entryTimeOverride ?: it.entryTime })
+                val nonNullTag = tag ?: Tag.NO_TAG.value
+                val entries = if (sortByEntryTime) {
+                    entriesByTag.sortedBy { it.entryTimeOverride ?: it.entryTime }
                 } else {
-                    TagGroup(tag, entriesByTag)
+                    entriesByTag
                 }
+                TagGroup(nonNullTag, entries)
             }
-        val sorted = if (tagsForSort.isNotEmpty() && sortByTagOrder) {
+        val sorted = if (sortByTagOrder) {
             byTag.sortedBy { (tag, _) ->
-                tagsForSort.first { it.value == tag }.order
+                tags.first { it.value == tag }.order
             }
         } else {
             byTag

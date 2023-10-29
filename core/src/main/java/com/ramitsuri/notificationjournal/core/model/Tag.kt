@@ -16,4 +16,8 @@ data class Tag(
 
     @ColumnInfo(name = "value")
     val value: String,
-)
+) {
+    companion object {
+        val NO_TAG = Tag(id = Int.MIN_VALUE, order = Int.MIN_VALUE, value = "internal_no_tag_value")
+    }
+}
