@@ -43,6 +43,11 @@ abstract class TagsDao {
 
     @Transaction
     open suspend fun updateTextIfPossible(tagTextUpdate: TagTextUpdate): Boolean {
+        val currentTag = getAll().firstOrNull { it.id == tagTextUpdate.id } ?: return false
+        val rowCountForTag = getRowCountForTag(currentTag.value)
+        if (rowCountForTag != 0) {
+            return false
+        }
         return try {
             updateText(tagTextUpdate)
             true

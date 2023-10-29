@@ -43,5 +43,5 @@
     <string name="settings_tags_subtitle">Add or edit tags</string>
 
     <string name="tag_delete_fail_message">Tag is being used</string>
-    <string name="tag_insert_fail_message">Tag already exists</string>
+    <string name="tag_insert_fail_message">Tag being used or new tag exists</string>
 </resources>
