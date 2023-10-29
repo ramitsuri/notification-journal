@@ -91,6 +91,8 @@ fun JournalEntryScreen(
     onEditTagRequested: (JournalEntry, String) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
+    onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
@@ -194,14 +196,16 @@ fun JournalEntryScreen(
                             clipboardManager.setText(AnnotatedString(text))
                         },
                         onTagGroupDeleteRequested = onTagGroupDeleteRequested,
+                        onMoveToNextDayRequested = onMoveToNextDayRequested,
+                        onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
                         onEditRequested = { item ->
                             onEditRequested(item.id)
                         },
                         onDeleteRequested = { item ->
                             journalEntryForDelete = item
                         },
-                        onMoveToNextDayRequested = onMoveToNextDayRequested,
-                        onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
+                        onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
+                        onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                     )
                 }
             }
@@ -256,6 +260,8 @@ private fun List(
     onTagClicked: (JournalEntry, String) -> Unit,
     onTagGroupCopyRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
+    onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
+    onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
@@ -281,6 +287,8 @@ private fun List(
                         tagGroup = tagGroup,
                         onCopyRequested = onTagGroupCopyRequested,
                         onDeleteRequested = onTagGroupDeleteRequested,
+                        onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
+                        onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(topShape)
@@ -355,6 +363,8 @@ private fun SubHeaderItem(
     tagGroup: TagGroup,
     onCopyRequested: (TagGroup) -> Unit,
     onDeleteRequested: (TagGroup) -> Unit,
+    onMoveToNextDayRequested: (TagGroup) -> Unit,
+    onMoveToPreviousDayRequested: (TagGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -378,6 +388,8 @@ private fun SubHeaderItem(
             onCopyRequested = { onCopyRequested(tagGroup) },
             onDeleteRequested = { onDeleteRequested(tagGroup) },
             onMenuButtonClicked = { showMenu = !showMenu },
+            onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
+            onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
         )
     }
 }
@@ -540,7 +552,9 @@ private fun SubHeaderItemMenu(
     showMenu: Boolean,
     onCopyRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
-    onMenuButtonClicked: () -> Unit
+    onMenuButtonClicked: () -> Unit,
+    onMoveToNextDayRequested: () -> Unit,
+    onMoveToPreviousDayRequested: () -> Unit,
 ) {
     Box {
         IconButton(
@@ -570,6 +584,20 @@ private fun SubHeaderItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onDeleteRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.next_day)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onMoveToNextDayRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.previous_day)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onMoveToPreviousDayRequested()
                 }
             )
         }

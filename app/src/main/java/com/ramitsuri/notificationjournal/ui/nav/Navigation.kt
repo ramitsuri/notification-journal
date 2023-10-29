@@ -75,6 +75,8 @@ fun NavGraph(
                 onEditTagRequested = viewModel::editTag,
                 onMoveToNextDayRequested = viewModel::moveToNextDay,
                 onMoveToPreviousDayRequested = viewModel::moveToPreviousDay,
+                onTagGroupMoveToNextDayRequested = viewModel::moveToNextDay,
+                onTagGroupMoveToPreviousDayRequested = viewModel::moveToPreviousDay,
                 onTagGroupDeleteRequested = viewModel::delete,
                 onSettingsClicked = {
                     navController.navigate(Destination.SETTINGS.routeWithArgValues())

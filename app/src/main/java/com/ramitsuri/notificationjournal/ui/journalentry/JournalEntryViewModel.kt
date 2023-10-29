@@ -93,6 +93,26 @@ class JournalEntryViewModel(
         setDate(journalEntry, nextDayTime)
     }
 
+    fun moveToPreviousDay(tagGroup: TagGroup) {
+        viewModelScope.launch {
+            tagGroup.entries.forEach { journalEntry ->
+                val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
+                val previousDayTime = currentEntryTime.minusSeconds(1.days.toJavaDuration().seconds)
+                repository.editEntryTime(journalEntry.id, previousDayTime)
+            }
+        }
+    }
+
+    fun moveToNextDay(tagGroup: TagGroup) {
+        viewModelScope.launch {
+            tagGroup.entries.forEach { journalEntry ->
+                val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
+                val nextDayTime = currentEntryTime.plusSeconds(1.days.toJavaDuration().seconds)
+                repository.editEntryTime(journalEntry.id, nextDayTime)
+            }
+        }
+    }
+
     private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
         viewModelScope.launch {
             repository.editEntryTime(journalEntry.id, entryTime)
