@@ -119,7 +119,7 @@ private fun Content(
     val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
 
-    var selection by remember(text) { mutableStateOf(TextRange(text.length)) }
+    var selection by remember { mutableStateOf(TextRange(text.length)) }
     Column {
         LaunchedEffect(focusRequester) {
             if (showKeyboard) {

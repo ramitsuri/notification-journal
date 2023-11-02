@@ -34,7 +34,7 @@ class EditJournalEntryViewModel(
         viewModelScope.launch {
             entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG]))
             _state.update {
-                it.copy(text = entry.text, selectedTag = entry.tag)
+                it.copy(isLoading = false, text = entry.text, selectedTag = entry.tag)
             }
         }
         loadTags()
@@ -118,7 +118,7 @@ data class EditJournalEntryViewState(
 ) {
     companion object {
         fun default() = EditJournalEntryViewState(
-            isLoading = false,
+            isLoading = true,
             text = "",
             tags = listOf(),
             selectedTag = null,
