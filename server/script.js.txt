@@ -103,5 +103,5 @@ function resetHtml() {{
 }}
 
 function getTime(date, tzString) {{
-    return new Date((new Date(date)).toLocaleString("en-US", {{timeZone: tzString}})).toLocaleTimeString("en-US");
+    return new Date((new Date(date)).toLocaleString("en-US", {{timeZone: tzString}})).toLocaleTimeString([], {{hour: '2-digit', minute:'2-digit'}});
 }}
