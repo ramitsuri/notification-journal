@@ -425,6 +425,7 @@ private fun ListItem(
         Spacer(modifier = Modifier.width(8.dp))
         ItemMenu(
             showMenu = showMenu,
+            time = item.formattedTime,
             onCopyRequested = { onCopyRequested(item) },
             onEditRequested = { onEditRequested(item) },
             onDeleteRequested = { onDeleteRequested(item) },
@@ -485,6 +486,7 @@ private fun TagsDialog(
 @Composable
 private fun ItemMenu(
     showMenu: Boolean,
+    time: String,
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
@@ -541,6 +543,12 @@ private fun ItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onMoveToPreviousDayRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(time) },
+                onClick = {
+                    onMenuButtonClicked()
                 }
             )
         }

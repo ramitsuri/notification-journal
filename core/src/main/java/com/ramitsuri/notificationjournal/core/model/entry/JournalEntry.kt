@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.model.entry
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import java.time.Instant
@@ -35,4 +36,8 @@ data class JournalEntry(
     @ColumnInfo(name = "entry_time_override")
     @Json(name = "entryTimeOverride")
     val entryTimeOverride: Instant? = null,
-)
+) {
+    val formattedTime: String
+        get() = formatForDisplay(toFormat = entryTimeOverride ?: entryTime, timeZone = timeZone)
+
+}

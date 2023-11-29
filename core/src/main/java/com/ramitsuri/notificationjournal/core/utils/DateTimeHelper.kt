@@ -15,7 +15,7 @@ fun formatForDisplay(
     toFormat: Instant,
     timeZone: ZoneId
 ): String {
-    return format(toFormat = toFormat, format = "MMM d HH:mm", timeZone = timeZone)
+    return format(toFormat = toFormat, format = "K:mm a", timeZone = timeZone)
 }
 
 @Suppress("MoveVariableDeclarationIntoWhen")
