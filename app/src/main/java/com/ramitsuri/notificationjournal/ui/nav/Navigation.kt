@@ -25,6 +25,7 @@ import com.ramitsuri.notificationjournal.ui.tags.TagsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.ui.tags.TagsViewModel
+import com.ramitsuri.notificationjournal.utils.ReceivedTextListener
 import java.net.URLEncoder
 
 @Composable
@@ -64,6 +65,10 @@ fun NavGraph(
         composable(Destination.JOURNAL_ENTRY.route()) {
             val viewModel: JournalEntryViewModel =
                 viewModel(factory = JournalEntryViewModel.factory(LocalContext.current as? Activity))
+
+            ReceivedTextListener(navController = navController) {
+                viewModel.setReceivedText(it)
+            }
 
             val receivedText by viewModel.receivedText.collectAsStateWithLifecycle()
             LaunchedEffect(key1 = receivedText) {

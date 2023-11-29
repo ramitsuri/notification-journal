@@ -1,7 +1,6 @@
 package com.ramitsuri.notificationjournal.ui.journalentry
 
 import android.app.Activity
-import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -16,6 +15,7 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.di.ServiceLocator
+import com.ramitsuri.notificationjournal.utils.receivedText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +50,14 @@ class JournalEntryViewModel(
 
     init {
         restartCollection()
+    }
+
+    fun setReceivedText(text: String?) {
+        if (!text.isNullOrEmpty()) {
+            _receivedText.update {
+                text
+            }
+        }
     }
 
     fun onReceivedTextConsumed() {
@@ -161,14 +169,7 @@ class JournalEntryViewModel(
 
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val intent = activity?.intent
-                val receivedText =
-                    if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-                        intent.getStringExtra(Intent.EXTRA_TEXT)
-                    } else {
-                        null
-                    }
-
+                val receivedText = activity?.intent?.receivedText()
                 return JournalEntryViewModel(
                     receivedText,
                     ServiceLocator.keyValueStore,
