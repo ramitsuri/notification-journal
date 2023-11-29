@@ -1,10 +1,10 @@
 package com.ramitsuri.notificationjournal.core.repository
 
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.JournalEntryTagUpdate
-import com.ramitsuri.notificationjournal.core.model.JournalEntryTextUpdate
-import com.ramitsuri.notificationjournal.core.model.JournalEntryTimeUpdate
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTagUpdate
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTextUpdate
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTimeUpdate
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.network.Api
 import kotlinx.coroutines.flow.Flow

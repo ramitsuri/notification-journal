@@ -21,7 +21,7 @@ import com.ramitsuri.notificationjournal.ui.editjournal.EditJournalEntryScreen
 import com.ramitsuri.notificationjournal.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.ui.journalentry.JournalEntryViewModel
-import com.ramitsuri.notificationjournal.ui.screens.TagsScreen
+import com.ramitsuri.notificationjournal.ui.tags.TagsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.ui.tags.TagsViewModel

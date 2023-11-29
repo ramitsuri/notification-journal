@@ -54,7 +54,7 @@
             android:exported="false" />
 
         <service
-            android:name=".service.DataLayerListenerService"
+            android:name=".service.PhoneDataLayerListenerService"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />

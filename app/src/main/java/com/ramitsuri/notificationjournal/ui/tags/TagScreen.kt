@@ -1,4 +1,4 @@
-package com.ramitsuri.notificationjournal.ui.screens
+package com.ramitsuri.notificationjournal.ui.tags
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
@@ -46,7 +46,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -79,8 +78,6 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.ui.components.DraggableItem
 import com.ramitsuri.notificationjournal.ui.components.dragContainer
 import com.ramitsuri.notificationjournal.ui.components.rememberDragDropState
-import com.ramitsuri.notificationjournal.ui.tags.TagError
-import com.ramitsuri.notificationjournal.ui.tags.TagsViewState
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -209,7 +206,7 @@ fun TagsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "No items",
+                        text = stringResource(id = R.string.no_items),
                         style = MaterialTheme.typography.displaySmall
                     )
                 }

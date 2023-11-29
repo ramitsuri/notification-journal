@@ -70,7 +70,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.JournalMenuItem
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.DayGroup
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.utils.getDay
@@ -178,7 +178,7 @@ fun JournalEntryScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "No items",
+                            text = stringResource(id = R.string.no_items),
                             style = MaterialTheme.typography.displaySmall
                         )
                     }

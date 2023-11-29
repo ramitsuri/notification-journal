@@ -7,7 +7,7 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 
-class DataLayerListenerService : WearableListenerService() {
+class PhoneDataLayerListenerService : WearableListenerService() {
 
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -79,6 +79,6 @@ class DataLayerListenerService : WearableListenerService() {
     }
 
     companion object {
-        private const val TAG = "DataLayerListenerService"
+        private const val TAG = "PhoneDataLayerListenerService"
     }
 }

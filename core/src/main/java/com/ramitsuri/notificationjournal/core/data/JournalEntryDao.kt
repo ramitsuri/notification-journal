@@ -5,10 +5,10 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.JournalEntryTagUpdate
-import com.ramitsuri.notificationjournal.core.model.JournalEntryTextUpdate
-import com.ramitsuri.notificationjournal.core.model.JournalEntryTimeUpdate
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTagUpdate
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTextUpdate
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTimeUpdate
 import kotlinx.coroutines.flow.Flow
 
 @Dao

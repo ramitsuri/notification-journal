@@ -16,6 +16,7 @@
     <string name="add_entry_save_and_add_another">Save and add another</string>
     <string name="add_entry_save">Save</string>
     <string name="menu_content_description">Menu</string>
+    <string name="no_items">No items</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>
@@ -41,6 +42,8 @@
 
     <string name="settings_tags_title">Tags</string>
     <string name="settings_tags_subtitle">Add or edit tags</string>
+
+    <string name="settings_apply_sorting">Apply sorting</string>
 
     <string name="tag_delete_fail_message">Tag is being used</string>
     <string name="tag_insert_fail_message">Tag being used or new tag exists</string>
