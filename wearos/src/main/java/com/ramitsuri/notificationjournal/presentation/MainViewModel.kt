@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.core.data.DataSharingClient
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow

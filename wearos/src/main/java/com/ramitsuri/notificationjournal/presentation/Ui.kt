@@ -33,7 +33,7 @@ import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.material.scrollAway
 import com.ramitsuri.notificationjournal.R
-import com.ramitsuri.notificationjournal.core.model.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.presentation.theme.NotificationJournalTheme
 import java.time.Instant
 import java.time.ZoneId
