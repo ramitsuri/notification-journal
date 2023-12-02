@@ -7,8 +7,6 @@ import java.time.ZoneId
 fun List<JournalEntry>.toDayGroups(
     zoneId: ZoneId = ZoneId.systemDefault(),
     tagsForSort: List<Tag> = listOf(),
-    sortByEntryTime: Boolean = false,
-    sortByTagOrder: Boolean = false,
 ): List<DayGroup> {
     val tags = listOf(Tag.NO_TAG) + tagsForSort
     return groupBy {
@@ -19,20 +17,12 @@ fun List<JournalEntry>.toDayGroups(
             .groupBy { it.tag }
             .map { (tag, entriesByTag) ->
                 val nonNullTag = tag ?: Tag.NO_TAG.value
-                val entries = if (sortByEntryTime) {
-                    entriesByTag.sortedBy { it.entryTimeOverride ?: it.entryTime }
-                } else {
-                    entriesByTag
-                }
+                val entries = entriesByTag.sortedBy { it.entryTimeOverride ?: it.entryTime }
                 TagGroup(nonNullTag, entries)
             }
-        val sorted = if (sortByTagOrder) {
-            byTag.sortedBy { (tag, _) ->
-                tags.first { it.value == tag }.order
+            .sortedBy { (tag, _) ->
+                tags.firstOrNull { it.value == tag }?.order
             }
-        } else {
-            byTag
-        }
-        DayGroup(date, sorted)
+        DayGroup(date, byTag)
     }
 }

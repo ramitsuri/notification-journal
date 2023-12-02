@@ -50,7 +50,6 @@ fun SettingsScreen(
     onSortOrderClicked: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
-    onApplySorting: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var serverSet by rememberSaveable { mutableStateOf(false) }
@@ -149,14 +148,6 @@ fun SettingsScreen(
                             SortOrder.DESC -> stringResource(id = R.string.settings_sort_order_desc)
                         },
                         onClick = onSortOrderClicked,
-                        showProgress = false
-                    )
-                }
-                item {
-                    SettingsItem(
-                        title = "Apply sorting",
-                        subtitle = state.sortStatus,
-                        onClick = onApplySorting,
                         showProgress = false
                     )
                 }

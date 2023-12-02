@@ -178,7 +178,6 @@ fun NavGraph(
                 onSortOrderClicked = viewModel::reverseSortOrder,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
                 onTagsClicked = { navController.navigate(Destination.TAGS.routeWithArgValues()) },
-                onApplySorting = viewModel::applySorting
             )
         }
 

@@ -141,14 +141,6 @@ class JournalEntryViewModel(
                     entries.toDayGroups(
                         zoneId = zoneId,
                         tagsForSort = tags,
-                        sortByTagOrder = keyValueStore.getBoolean(
-                            Constants.PREF_SORT_BY_TAG_ORDER,
-                            true
-                        ),
-                        sortByEntryTime = keyValueStore.getBoolean(
-                            Constants.PREF_SORT_BY_ENTRY_TIME,
-                            true
-                        )
                     )
                 } catch (e: Exception) {
                     listOf()

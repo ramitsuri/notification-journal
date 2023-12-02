@@ -3,15 +3,12 @@ package com.ramitsuri.notificationjournal.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.SortOrder
-import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -21,12 +18,9 @@ import kotlinx.coroutines.withContext
 class SettingsViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
-    private val tagsDao: TagsDao,
 ) : ViewModel() {
     private val _state: MutableStateFlow<SettingsViewState>
     val state: StateFlow<SettingsViewState>
-
-    private var collectionJob: Job? = null
 
     init {
         val serverUrl = getApiUrl()
@@ -41,11 +35,9 @@ class SettingsViewModel(
                 } else {
                     ServerState.SERVER_SET
                 },
-                sortStatus = ""
             )
         )
         state = _state
-        restartCollection()
     }
 
     fun upload() {
@@ -86,58 +78,6 @@ class SettingsViewModel(
         }
     }
 
-    fun applySorting() {
-        restartCollection(firstTime = false)
-    }
-
-    private fun restartCollection(firstTime: Boolean = true) {
-        var sortByTagOrder =
-            keyValueStore.getBoolean(Constants.PREF_SORT_BY_TAG_ORDER, true)
-        var sortByEntryTime =
-            keyValueStore.getBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, true)
-        if (!firstTime) {
-            if (sortByEntryTime && sortByTagOrder) {
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_TAG_ORDER, false)
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, true)
-            } else if (sortByEntryTime) {
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_TAG_ORDER, true)
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, false)
-            } else if (sortByTagOrder) {
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_TAG_ORDER, false)
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, false)
-            } else {
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_TAG_ORDER, true)
-                keyValueStore.putBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, true)
-            }
-        }
-        sortByTagOrder = keyValueStore.getBoolean(Constants.PREF_SORT_BY_TAG_ORDER, true)
-        sortByEntryTime = keyValueStore.getBoolean(Constants.PREF_SORT_BY_ENTRY_TIME, true)
-        collectionJob?.cancel()
-        collectionJob = viewModelScope.launch {
-            repository.getFlow().collect { entries ->
-                val tags = tagsDao.getAll()
-                val dayGroups = try {
-                    entries.toDayGroups(
-                        tagsForSort = tags,
-                        sortByEntryTime = sortByEntryTime,
-                        sortByTagOrder = sortByTagOrder
-                    )
-                } catch (e: Exception) {
-                    listOf()
-                }
-                _state.update { previousState ->
-                    val newState =
-                    previousState.copy(
-                        sortStatus = "By Tag: ${sortByTagOrder}, " +
-                                "By Entry Time: ${sortByEntryTime}, " +
-                                "DayGroups: ${dayGroups.size}"
-                    )
-                    newState
-                }
-            }
-        }
-    }
-
     private fun setSortOrder(sortOrder: SortOrder) {
         keyValueStore.putInt(Constants.PREF_KEY_SORT_ORDER, sortOrder.key)
         _state.update {
@@ -159,7 +99,6 @@ class SettingsViewModel(
                 return SettingsViewModel(
                     keyValueStore = ServiceLocator.keyValueStore,
                     repository = ServiceLocator.repository,
-                    tagsDao = ServiceLocator.tagsDao,
                 ) as T
             }
         }
@@ -172,7 +111,6 @@ data class SettingsViewState(
     val serverText: String,
     val serverState: ServerState,
     val error: String? = null,
-    val sortStatus: String = "",
 )
 
 enum class ServerState {
