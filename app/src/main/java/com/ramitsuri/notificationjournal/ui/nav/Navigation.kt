@@ -26,6 +26,8 @@ import com.ramitsuri.notificationjournal.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.ui.tags.TagsViewModel
 import com.ramitsuri.notificationjournal.utils.ReceivedTextListener
+import com.ramitsuri.notificationjournal.ui.templates.TemplatesScreen
+import com.ramitsuri.notificationjournal.ui.templates.TemplatesViewModel
 import java.net.URLEncoder
 
 @Composable
@@ -177,7 +179,12 @@ fun NavGraph(
                 onApiUrlSet = viewModel::setApiUrl,
                 onSortOrderClicked = viewModel::reverseSortOrder,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
-                onTagsClicked = { navController.navigate(Destination.TAGS.routeWithArgValues()) },
+                onTagsClicked = {
+                    navController.navigate(Destination.TAGS.routeWithArgValues())
+                },
+                onTemplatesClicked = {
+                    navController.navigate(Destination.TEMPLATES.routeWithArgValues())
+                },
             )
         }
 
@@ -191,6 +198,23 @@ fun NavGraph(
                 onEditRequested = viewModel::editValue,
                 onDeleteRequested = viewModel::delete,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
+                onBack = { navController.navigateUp() },
+            )
+        }
+
+        composable(Destination.TEMPLATES.route()) {
+            val viewModel: TemplatesViewModel = viewModel(factory = TemplatesViewModel.factory())
+            val viewState by viewModel.state.collectAsStateWithLifecycle()
+            TemplatesScreen(
+                state = viewState,
+                onTextUpdated = viewModel::textUpdated,
+                onTagClicked = viewModel::tagClicked,
+                onEditRequested = viewModel::editClicked,
+                onDeleteRequested = viewModel::delete,
+                onAddRequested = viewModel::addClicked,
+                onSyncWithWearRequested = viewModel::syncWithWear,
+                onAddOrEditApproved = viewModel::save,
+                onAddOrEditCanceled = viewModel::onAddOrEditCanceled,
                 onBack = { navController.navigateUp() },
             )
         }

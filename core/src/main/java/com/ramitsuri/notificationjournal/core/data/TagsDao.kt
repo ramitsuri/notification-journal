@@ -72,8 +72,15 @@ abstract class TagsDao {
     protected abstract suspend fun delete(tag: Tag)
 
     @Query("SELECT COUNT(id) from journalentry WHERE tag = :tag")
-    protected abstract suspend fun getRowCountForTag(tag: String): Int
+    protected abstract suspend fun getJournalEntryCountForTag(tag: String): Int
+
+    @Query("SELECT COUNT(id) from journalentrytemplate WHERE tag = :tag")
+    protected abstract suspend fun getTemplateCountForTag(tag: String): Int
 
     @Update(entity = Tag::class)
     protected abstract suspend fun updateOrder(tagOrderUpdate: TagOrderUpdate)
+
+    private suspend fun getRowCountForTag(tag: String): Int {
+        return getJournalEntryCountForTag(tag) + getTemplateCountForTag(tag)
+    }
 }

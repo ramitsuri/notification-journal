@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
             WearApp(
                 viewState = viewState,
                 onAddRequested = viewModel::add,
+                onTemplateAddRequested = viewModel::addFromTemplate,
                 onTransferRequested = viewModel::transferLocallySaved,
                 onUploadRequested = viewModel::triggerUpload
             )

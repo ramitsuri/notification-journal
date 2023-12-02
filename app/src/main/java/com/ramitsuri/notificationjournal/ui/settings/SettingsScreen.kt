@@ -50,6 +50,7 @@ fun SettingsScreen(
     onSortOrderClicked: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
+    onTemplatesClicked: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var serverSet by rememberSaveable { mutableStateOf(false) }
@@ -129,6 +130,14 @@ fun SettingsScreen(
                         onClick = onTagsClicked,
                         showProgress = false,
                         modifier = modifier
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = stringResource(id = R.string.settings_templates_title),
+                        subtitle = stringResource(id = R.string.settings_templates_subtitle),
+                        onClick = onTemplatesClicked,
+                        showProgress = false
                     )
                 }
                 item {

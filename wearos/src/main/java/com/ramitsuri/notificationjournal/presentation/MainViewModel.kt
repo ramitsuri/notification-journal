@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.core.data.DataSharingClient
-import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
+import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,19 +18,21 @@ import java.time.ZoneId
 
 class MainViewModel(
     private val dao: JournalEntryDao,
+    private val templateDao: JournalEntryTemplateDao,
     private val dataSharingClient: DataSharingClient,
     private val longLivingCoroutineScope: CoroutineScope
 ) : ViewModel() {
 
     class Factory(
         private val dao: JournalEntryDao,
+        private val templateDao: JournalEntryTemplateDao,
         private val dataSharingClient: DataSharingClient,
         private val coroutineScope: CoroutineScope
     ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MainViewModel(dao, dataSharingClient, coroutineScope) as T
+            return MainViewModel(dao, templateDao, dataSharingClient, coroutineScope) as T
         }
     }
 
@@ -47,15 +51,27 @@ class MainViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            templateDao.getAllFlow().collect { templates ->
+                _state.update {
+                    it.copy(journalEntryTemplates = templates)
+                }
+            }
+        }
     }
 
-    fun add(value: String) {
+    fun addFromTemplate(templateId: Int) {
+        val entry = _state.value.journalEntryTemplates.firstOrNull { it.id == templateId } ?: return
+        add(entry.text, entry.tag)
+    }
+
+    fun add(value: String, tag: String? = null) {
         val entries = value.split(". ")
         longLivingCoroutineScope.launch {
             val time = Instant.now()
             val timeZone = ZoneId.systemDefault()
             for (entry in entries) {
-                postToClient(value = entry, time, timeZone)
+                postToClient(value = entry, time, timeZone, tag)
             }
         }
     }
@@ -67,7 +83,8 @@ class MainViewModel(
                 val posted = dataSharingClient.postJournalEntry(
                     journalEntry.text,
                     journalEntry.entryTime,
-                    journalEntry.timeZone
+                    journalEntry.timeZone,
+                    journalEntry.tag
                 )
                 if (posted) {
                     dao.delete(listOf(journalEntry))
@@ -82,8 +99,8 @@ class MainViewModel(
         }
     }
 
-    private suspend fun postToClient(value: String, time: Instant, timeZone: ZoneId) {
-        val posted = dataSharingClient.postJournalEntry(value, time, timeZone)
+    private suspend fun postToClient(value: String, time: Instant, timeZone: ZoneId, tag: String?) {
+        val posted = dataSharingClient.postJournalEntry(value, time, timeZone, tag)
         if (posted) { // Shared with phone client, so no need to save to local db
             return
         }
@@ -100,5 +117,6 @@ class MainViewModel(
 }
 
 data class ViewState(
-    val journalEntries: List<JournalEntry> = listOf()
+    val journalEntries: List<JournalEntry> = listOf(),
+    val journalEntryTemplates: List<JournalEntryTemplate> = listOf(),
 )

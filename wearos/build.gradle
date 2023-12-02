@@ -73,6 +73,7 @@ dependencies {
     implementation "androidx.wear.compose:compose-material:$wear_compose_version"
     implementation "androidx.wear.compose:compose-foundation:$wear_compose_version"
     implementation "androidx.compose.material:material-icons-core"
+    implementation "androidx.compose.material:material-icons-extended"
     implementation "androidx.wear:wear-input:1.2.0-alpha02"
     implementation 'androidx.activity:activity-compose:1.7.2'
 

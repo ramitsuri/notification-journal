@@ -2,7 +2,11 @@ package com.ramitsuri.notificationjournal.di
 
 import android.app.Application
 import android.content.Context
+import com.google.android.gms.wearable.Wearable
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
+import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.data.DataSharingClientImpl
+import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.network.Api
 import com.ramitsuri.notificationjournal.core.network.buildApi
@@ -46,6 +50,14 @@ object ServiceLocator {
 
     val tagsDao: TagsDao by lazy {
         AppDatabase.getTagsDao(applicationContext)
+    }
+
+    val templatesDao: JournalEntryTemplateDao by lazy {
+        AppDatabase.getJournalEntryTemplateDao(applicationContext)
+    }
+
+    val dataSharingClient: DataSharingClient by lazy {
+        DataSharingClientImpl(Wearable.getDataClient(applicationContext))
     }
 
     private val api: Api by lazy {

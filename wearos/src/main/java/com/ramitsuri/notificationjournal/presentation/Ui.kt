@@ -2,6 +2,9 @@ package com.ramitsuri.notificationjournal.presentation
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,9 +14,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
@@ -42,6 +47,7 @@ import java.time.ZoneId
 fun WearApp(
     viewState: ViewState,
     onAddRequested: (String) -> Unit,
+    onTemplateAddRequested: (Int) -> Unit,
     onUploadRequested: () -> Unit,
     onTransferRequested: () -> Unit
 ) {
@@ -78,11 +84,28 @@ fun WearApp(
                         )
                     }
                 }
-                item { AddButton(onAddRequested) }
-                item { Spacer(modifier = Modifier.height(8.dp)) }
-                item { RequestUploadFromPhoneButton(onUploadRequested) }
+                viewState.journalEntryTemplates.forEach {
+                    item {
+                        LargeButton(
+                            onClick = { onTemplateAddRequested(it.id) },
+                            text = it.text,
+                        )
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                    ) {
+                        AddButton(onAddRequested)
+                        RequestUploadFromPhoneButton(onUploadRequested)
+                    }
+                }
                 if (showOnDeviceEntries) {
-                    item { TransferToPhoneButton(onTransferRequested) }
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TransferToPhoneButton(onTransferRequested)
+                    }
                 }
             }
         }
@@ -90,31 +113,22 @@ fun WearApp(
 }
 
 @Composable
-fun AddButton(onAddRequested: (String) -> Unit) {
+private fun AddButton(onAddRequested: (String) -> Unit) {
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             it.processResult(onAddRequested)
         }
-    Button(
-        modifier = Modifier
-            .size(ButtonDefaults.LargeButtonSize),
+    SmallButton(
         onClick = {
             launcher.launchInputActivity()
         },
-    ) {
-        val iconModifier = Modifier
-            .size(16.dp)
-            .wrapContentSize(align = Alignment.Center)
-        Icon(
-            imageVector = Icons.Rounded.Add,
-            contentDescription = stringResource(id = R.string.add_new),
-            modifier = iconModifier
-        )
-    }
+        contentDescriptionRes = R.string.add_new,
+        icon = Icons.Rounded.Add
+    )
 }
 
 @Composable
-fun TransferToPhoneButton(onTransferRequested: () -> Unit) {
+private fun TransferToPhoneButton(onTransferRequested: () -> Unit) {
     Button(
         modifier = Modifier
             .fillMaxWidth()
@@ -126,26 +140,60 @@ fun TransferToPhoneButton(onTransferRequested: () -> Unit) {
 }
 
 @Composable
-fun RequestUploadFromPhoneButton(onUploadRequested: () -> Unit) {
+private fun RequestUploadFromPhoneButton(onUploadRequested: () -> Unit) {
+    SmallButton(
+        onClick = onUploadRequested,
+        contentDescriptionRes = R.string.upload,
+        icon = Icons.Rounded.Upload
+    )
+}
+
+@Composable
+private fun SmallButton(
+    onClick: () -> Unit,
+    @StringRes contentDescriptionRes: Int,
+    icon: ImageVector
+) {
+    Button(
+        modifier = Modifier
+            .size(ButtonDefaults.LargeButtonSize),
+        onClick = onClick,
+    ) {
+        val iconModifier = Modifier
+            .size(16.dp)
+            .wrapContentSize(align = Alignment.Center)
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(id = contentDescriptionRes),
+            modifier = iconModifier
+        )
+    }
+}
+
+@Composable
+private fun LargeButton(
+    onClick: () -> Unit,
+    text: String,
+) {
     Button(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp),
-        onClick = { onUploadRequested() },
+        onClick = onClick,
     ) {
-        Text(text = stringResource(id = R.string.upload))
+        Text(text = text)
     }
 }
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
-fun DefaultPreview() {
-    WearApp(viewState = ViewState(), { }, { }, { })
+private fun DefaultPreview() {
+    WearApp(viewState = ViewState(), { }, { }, { }, { })
 }
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
-fun JournalEntriesPresentPreview() {
+private fun JournalEntriesPresentPreview() {
     WearApp(viewState = ViewState(
         journalEntries = listOf(
             JournalEntry(
@@ -167,5 +215,5 @@ fun JournalEntriesPresentPreview() {
                 text = "Text3"
             )
         )
-    ), { }, { }, { })
+    ), { }, { }, { }, { })
 }

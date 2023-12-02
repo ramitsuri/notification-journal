@@ -52,13 +52,14 @@ class PhoneDataLayerListenerService : WearableListenerService() {
                 } catch (e: Exception) {
                     ZoneId.systemDefault()
                 }
+                val tag = dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_TAG)
 
                 val journalEntry = JournalEntry(
                     id = 0,
                     entryTime = journalEntryTime,
                     timeZone = journalEntryTimeZone,
-                    text = journalEntryText
-
+                    text = journalEntryText,
+                    tag = tag,
                 )
 
                 val dao = AppDatabase.getJournalEntryDao(context = applicationContext)
