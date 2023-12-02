@@ -193,12 +193,15 @@ fun NavGraph(
             val viewState by viewModel.state.collectAsStateWithLifecycle()
             TagsScreen(
                 state = viewState,
+                onTextUpdated = viewModel::textUpdated,
                 onEditOrder = viewModel::editOrder,
-                onAddRequested = viewModel::add,
-                onEditRequested = viewModel::editValue,
+                onAddRequested = viewModel::addClicked,
+                onEditRequested = viewModel::editClicked,
                 onDeleteRequested = viewModel::delete,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
                 onBack = { navController.navigateUp() },
+                onAddOrEditApproved = viewModel::save,
+                onAddOrEditCanceled = viewModel::onAddOrEditCanceled,
             )
         }
 

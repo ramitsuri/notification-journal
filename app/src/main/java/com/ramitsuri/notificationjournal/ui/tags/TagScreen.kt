@@ -36,7 +36,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
@@ -54,7 +53,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -73,6 +71,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.ui.components.DraggableItem
@@ -84,63 +83,32 @@ import kotlinx.coroutines.delay
 @Composable
 fun TagsScreen(
     state: TagsViewState,
-    onEditOrder: (Int, Int) -> Unit,
-    onAddRequested: (String) -> Unit,
-    onEditRequested: (Int, String) -> Unit,
+    onTextUpdated: (String) -> Unit,
+    onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
+    onAddRequested: () -> Unit,
+    onAddOrEditApproved: () -> Unit,
+    onAddOrEditCanceled: () -> Unit,
+    onEditOrder: (Int, Int) -> Unit,
     onBack: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
-    var initialDialogText by rememberSaveable { mutableStateOf("") }
-    var tagId by rememberSaveable { mutableIntStateOf(-1) }
-    var tagForDelete: Tag? by rememberSaveable { mutableStateOf(null) }
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showDialog) {
         AddEditTagDialog(
-            initialText = initialDialogText,
-            onPositiveClick = { value ->
+            text = state.text,
+            onTextUpdated = onTextUpdated,
+            onPositiveClick = {
+                onAddOrEditApproved()
                 showDialog = !showDialog
-                if (tagId == -1) {
-                    onAddRequested(value)
-                } else {
-                    onEditRequested(tagId, value)
-                }
             },
             onNegativeClick = {
+                onAddOrEditCanceled()
                 showDialog = !showDialog
             }
         )
-    }
-    if (tagForDelete != null) {
-        AlertDialog(
-            onDismissRequest = { tagForDelete = null },
-            title = {
-                Text(text = stringResource(id = R.string.alert))
-            },
-            text = {
-                Text(stringResource(id = R.string.delete_warning_message))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        tagForDelete?.let { forDeletion ->
-                            onDeleteRequested(forDeletion)
-                        }
-                        tagForDelete = null
-                    }) {
-                    Text(stringResource(id = R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        tagForDelete = null
-                    }) {
-                    Text(stringResource(id = R.string.cancel))
-                }
-            })
     }
     val errorMessage = state.error.string()
     LaunchedEffect(errorMessage) {
@@ -161,8 +129,7 @@ fun TagsScreen(
                 modifier = Modifier.padding(bottom = 32.dp),
                 onClick = {
                     showDialog = true
-                    tagId = -1
-                    initialDialogText = ""
+                    onAddRequested()
                 }
             ) {
                 Icon(
@@ -215,13 +182,10 @@ fun TagsScreen(
                     tags = state.tags,
                     onEditOrder = onEditOrder,
                     onEditRequested = { item ->
-                        tagId = item.id
-                        initialDialogText = item.value
+                        onEditRequested(item)
                         showDialog = true
                     },
-                    onDeleteRequested = { item ->
-                        tagForDelete = item
-                    },
+                    onDeleteRequested = onDeleteRequested,
                     modifier = Modifier
                         .padding(start = 16.dp, end = 16.dp)
                 )
@@ -343,24 +307,24 @@ private fun ItemMenu(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun AddEditTagDialog(
-    initialText: String,
-    onPositiveClick: (String) -> Unit,
+    text: String,
+    onTextUpdated: (String) -> Unit,
+    onPositiveClick: () -> Unit,
     onNegativeClick: () -> Unit,
 ) {
-    var text by remember {
-        mutableStateOf(
-            TextFieldValue(
-                initialText,
-                selection = TextRange(initialText.length)
-            )
-        )
-    }
+    var selection by remember { mutableStateOf(TextRange(text.length)) }
 
     val focusRequester = remember { FocusRequester() }
     val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
 
-    Dialog(onDismissRequest = { }) {
+    Dialog(
+        onDismissRequest = { },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnClickOutside = false
+        )
+    ) {
         Card {
             Column(
                 modifier = Modifier
@@ -375,8 +339,11 @@ private fun AddEditTagDialog(
                     }
                 }
                 BasicTextField(
-                    value = text,
-                    onValueChange = { text = it },
+                    value = TextFieldValue(text = text, selection = selection),
+                    onValueChange = {
+                        onTextUpdated(it.text)
+                        selection = it.selection
+                    },
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences
                     ),
@@ -414,9 +381,7 @@ private fun AddEditTagDialog(
                         Text(text = stringResource(id = R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(16.dp))
-                    TextButton(onClick = {
-                        onPositiveClick(text.text)
-                    }) {
+                    TextButton(onClick = onPositiveClick) {
                         Text(text = stringResource(id = R.string.ok))
                     }
                 }

@@ -405,9 +405,7 @@ private fun AddEditTemplateDialog(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    TextButton(onClick = {
-                        onNegativeClick()
-                    }) {
+                    TextButton(onClick = onNegativeClick) {
                         Text(text = stringResource(id = R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(16.dp))

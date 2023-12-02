@@ -15,9 +15,11 @@ import kotlinx.coroutines.launch
 class TagsViewModel(private val dao: TagsDao) : ViewModel() {
 
     private val _state = MutableStateFlow(
-        TagsViewState(tags = listOf())
+        TagsViewState(text = "", tags = listOf())
     )
     val state: StateFlow<TagsViewState> = _state
+
+    private var idBeingEdited: Int? = null
 
     init {
         viewModelScope.launch {
@@ -29,27 +31,61 @@ class TagsViewModel(private val dao: TagsDao) : ViewModel() {
         }
     }
 
-    fun add(text: String) {
-        val currentState = _state.value
+    fun editClicked(tag: Tag) {
+        idBeingEdited = tag.id
         viewModelScope.launch {
-            val maxOrder = currentState.tags.maxByOrNull { it.order }?.order ?: 0
-            val success = dao.insertIfPossible(Tag(id = 0, order = maxOrder + 1, value = text))
-            if (!success) {
-                _state.update {
-                    it.copy(error = TagError.INSERT_FAIL)
+            _state.update {
+                it.copy(text = tag.value)
+            }
+        }
+    }
+
+    fun addClicked() {
+        idBeingEdited = null
+        _state.update {
+            it.copy(text = "")
+        }
+    }
+
+    fun textUpdated(text: String) {
+        _state.update {
+            it.copy(text = text)
+        }
+    }
+
+    fun save() {
+        val currentState = _state.value
+
+        val text = currentState.text
+        if (text.isEmpty()) {
+            return
+        }
+
+        viewModelScope.launch {
+            val id = idBeingEdited
+            if (id == null) {
+                val maxOrder = currentState.tags.maxByOrNull { it.order }?.order ?: 0
+                val success = dao.insertIfPossible(Tag(id = 0, order = maxOrder + 1, value = text))
+                if (!success) {
+                    _state.update {
+                        it.copy(error = TagError.INSERT_FAIL)
+                    }
+                }
+            } else {
+                val success = dao.updateTextIfPossible(TagTextUpdate(id = id, value = text))
+                if (!success) {
+                    _state.update {
+                        it.copy(error = TagError.INSERT_FAIL)
+                    }
                 }
             }
         }
     }
 
-    fun editValue(id: Int, text: String) {
-        viewModelScope.launch {
-            val success = dao.updateTextIfPossible(TagTextUpdate(id = id, value = text))
-            if (!success) {
-                _state.update {
-                    it.copy(error = TagError.INSERT_FAIL)
-                }
-            }
+    fun onAddOrEditCanceled() {
+        idBeingEdited = null
+        _state.update {
+            it.copy(text = "")
         }
     }
 
@@ -98,6 +134,7 @@ class TagsViewModel(private val dao: TagsDao) : ViewModel() {
 }
 
 data class TagsViewState(
+    val text: String,
     val tags: List<Tag>,
     val error: TagError? = null
 )
