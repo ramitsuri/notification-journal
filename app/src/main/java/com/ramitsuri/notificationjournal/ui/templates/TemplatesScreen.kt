@@ -35,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -167,6 +168,8 @@ fun TemplatesScreen(
                     )
                 }
             } else {
+                Spacer(modifier = Modifier.height(24.dp))
+                HelperText()
                 List(
                     templates = state.templates,
                     onEditRequested = { item ->
@@ -179,6 +182,27 @@ fun TemplatesScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun HelperText() {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(id = R.string.template_info),
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
