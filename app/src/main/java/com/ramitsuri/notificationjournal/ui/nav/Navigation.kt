@@ -42,25 +42,25 @@ fun NavGraph(
         enterTransition = {
             slideIntoContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
-                animationSpec = tween(700)
+                animationSpec = tween(300)
             )
         },
         exitTransition = {
             slideOutOfContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
-                animationSpec = tween(700)
+                animationSpec = tween(300)
             )
         },
         popEnterTransition = {
             slideIntoContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
-                animationSpec = tween(700)
+                animationSpec = tween(300)
             )
         },
         popExitTransition = {
             slideOutOfContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
-                animationSpec = tween(700)
+                animationSpec = tween(300)
             )
         }
     ) {
