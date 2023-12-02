@@ -59,6 +59,7 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_KEY = "EXTRA_KEY"
         const val ADD = "ADD_JOURNAL_ENTRY"
         const val UPLOAD = "UPLOAD"
+        const val OPEN_APP = "OPEN_APP"
     }
 }
 

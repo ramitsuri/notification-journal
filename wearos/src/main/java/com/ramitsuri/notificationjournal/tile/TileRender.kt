@@ -18,9 +18,7 @@ import com.ramitsuri.notificationjournal.presentation.MainActivity
 
 @OptIn(ExperimentalHorologistApi::class)
 class TileRenderer(context: Context) :
-    SingleTileLayoutRenderer<Unit, Unit>(
-        context
-    ) {
+    SingleTileLayoutRenderer<Unit, Unit>(context) {
     override fun renderTile(
         state: Unit,
         deviceParameters: DeviceParametersBuilders.DeviceParameters
@@ -28,6 +26,12 @@ class TileRenderer(context: Context) :
         return PrimaryLayout.Builder(deviceParameters)
             .setContent(
                 MultiButtonLayout.Builder()
+                    .addButtonContent(
+                        iconButton(
+                            icon = Icon.APP,
+                            launchActivityClickable(action = MainActivity.OPEN_APP)
+                        )
+                    )
                     .addButtonContent(
                         iconButton(
                             icon = Icon.ADD,
@@ -57,7 +61,7 @@ class TileRenderer(context: Context) :
 
     private fun launchActivityClickable(action: String): ModifiersBuilders.Clickable {
         val activity = ActionBuilders.AndroidActivity.Builder()
-            .setPackageName(PACKAGE)
+            .setPackageName(context.packageName)
             .setClassName(ACTIVITY)
             .addKeyToExtraMapping(
                 MainActivity.EXTRA_KEY,
@@ -82,11 +86,14 @@ class TileRenderer(context: Context) :
 
     companion object {
         private const val ACTIVITY = "com.ramitsuri.notificationjournal.presentation.MainActivity"
-        private const val PACKAGE = "com.ramitsuri.notificationjournal"
     }
 }
 
 enum class Icon(val id: String, val resId: Int) {
+    APP(
+        id = "icon_app",
+        resId = R.drawable.ic_launcher_foreground
+    ),
     ADD(
         id = "icon_add",
         resId = R.drawable.ic_add
