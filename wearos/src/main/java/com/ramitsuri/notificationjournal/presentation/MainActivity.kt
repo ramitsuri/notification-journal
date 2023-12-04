@@ -8,6 +8,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import com.ramitsuri.notificationjournal.MainApplication
 
@@ -21,6 +22,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val viewState = viewModel.state.collectAsState().value
+            LaunchedEffect(key1 = viewState) {
+                if (viewState.shouldExit) {
+                    finish()
+                }
+            }
             WearApp(
                 viewState = viewState,
                 onAddRequested = viewModel::add,

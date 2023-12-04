@@ -62,16 +62,16 @@ class MainViewModel(
 
     fun addFromTemplate(templateId: Int) {
         val entry = _state.value.journalEntryTemplates.firstOrNull { it.id == templateId } ?: return
-        add(entry.text, entry.tag)
+        add(entry.text, entry.tag, exitOnDone = true)
     }
 
-    fun add(value: String, tag: String? = null) {
+    fun add(value: String, tag: String? = null, exitOnDone: Boolean = false) {
         val entries = value.split(". ")
         longLivingCoroutineScope.launch {
             val time = Instant.now()
             val timeZone = ZoneId.systemDefault()
             for (entry in entries) {
-                postToClient(value = entry, time, timeZone, tag)
+                postToClient(value = entry, time, timeZone, tag, exitOnDone)
             }
         }
     }
@@ -99,9 +99,20 @@ class MainViewModel(
         }
     }
 
-    private suspend fun postToClient(value: String, time: Instant, timeZone: ZoneId, tag: String?) {
+    private suspend fun postToClient(
+        value: String,
+        time: Instant,
+        timeZone: ZoneId,
+        tag: String?,
+        exitOnDone: Boolean = false
+    ) {
         val posted = dataSharingClient.postJournalEntry(value, time, timeZone, tag)
         if (posted) { // Shared with phone client, so no need to save to local db
+            if (exitOnDone) {
+                _state.update {
+                    it.copy(shouldExit = true)
+                }
+            }
             return
         }
         val entry = JournalEntry(
@@ -113,10 +124,16 @@ class MainViewModel(
             entryTimeOverride = null,
         )
         dao.insert(entry)
+        if (exitOnDone) {
+            _state.update {
+                it.copy(shouldExit = true)
+            }
+        }
     }
 }
 
 data class ViewState(
     val journalEntries: List<JournalEntry> = listOf(),
     val journalEntryTemplates: List<JournalEntryTemplate> = listOf(),
+    val shouldExit: Boolean = false,
 )

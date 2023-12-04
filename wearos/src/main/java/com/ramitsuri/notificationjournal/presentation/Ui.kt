@@ -84,14 +84,16 @@ fun WearApp(
                         )
                     }
                 }
-                viewState.journalEntryTemplates.forEach {
-                    item {
-                        LargeButton(
-                            onClick = { onTemplateAddRequested(it.id) },
-                            text = it.text,
-                        )
+                viewState.journalEntryTemplates
+                    .map {
+                        TemplateButton(text = it.text, onClick = { onTemplateAddRequested(it.id) })
                     }
-                }
+                    .chunked(2)
+                    .forEach { templateButtons ->
+                        item {
+                            TemplateButtonRow(templateButtons)
+                        }
+                    }
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -108,6 +110,22 @@ fun WearApp(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun TemplateButtonRow(templateButtons: List<TemplateButton>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        templateButtons.forEach {
+            LargeButton(
+                modifier = Modifier.weight(1f),
+                onClick = it.onClick,
+                text = it.text
+            )
         }
     }
 }
@@ -172,18 +190,20 @@ private fun SmallButton(
 
 @Composable
 private fun LargeButton(
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
     text: String,
 ) {
     Button(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .padding(bottom = 8.dp),
         onClick = onClick,
     ) {
-        Text(text = text)
+        Text(text = text, maxLines = 1)
     }
 }
+
+private data class TemplateButton(val text: String, val onClick: () -> Unit)
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
