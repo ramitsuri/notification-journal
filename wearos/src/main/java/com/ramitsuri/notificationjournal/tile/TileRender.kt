@@ -92,7 +92,7 @@ class TileRenderer(context: Context) :
 enum class Icon(val id: String, val resId: Int) {
     APP(
         id = "icon_app",
-        resId = R.drawable.ic_launcher_foreground
+        resId = R.drawable.ic_open_app
     ),
     ADD(
         id = "icon_add",
