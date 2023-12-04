@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -175,6 +176,7 @@ private fun SmallButton(
     Button(
         modifier = Modifier
             .size(ButtonDefaults.LargeButtonSize),
+        colors = ButtonDefaults.primaryButtonColors(backgroundColor = Color(0xFFE76767)),
         onClick = onClick,
     ) {
         val iconModifier = Modifier
@@ -197,6 +199,7 @@ private fun LargeButton(
     Button(
         modifier = modifier
             .padding(bottom = 8.dp),
+        colors = ButtonDefaults.primaryButtonColors(backgroundColor = Color(0xFFE76767)),
         onClick = onClick,
     ) {
         Text(text = text, maxLines = 1)
