@@ -253,6 +253,9 @@ private fun List(
                 onDeleteRequested = onDeleteRequested,
             )
         }
+        item {
+            Spacer(modifier = Modifier.height(96.dp))
+        }
     }
 }
 

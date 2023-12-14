@@ -247,6 +247,9 @@ private fun List(
                 )
             }
         }
+        item {
+            Spacer(modifier = Modifier.height(96.dp))
+        }
     }
 }
 

@@ -131,7 +131,7 @@ class TemplatesViewModel(
             }
         }
 
-        private const val MAX_TEMPLATES_ALLOWED = 4
+        private const val MAX_TEMPLATES_ALLOWED = 8
     }
 }
 
