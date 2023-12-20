@@ -35,7 +35,7 @@ abstract class JournalEntryTemplateDao {
     }
 
     @Query("SELECT * FROM journalentrytemplate")
-    protected abstract suspend fun getAll(): List<JournalEntryTemplate>
+    abstract suspend fun getAll(): List<JournalEntryTemplate>
 
     @Upsert
     protected abstract suspend fun insertOrUpdate(journalEntryTemplate: JournalEntryTemplate)

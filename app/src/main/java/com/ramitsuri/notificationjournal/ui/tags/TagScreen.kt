@@ -407,7 +407,7 @@ private fun AddEditTagDialog(
                     }) {
                         Text(text = stringResource(id = R.string.cancel))
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = onPositiveClick) {
                         Text(text = stringResource(id = R.string.ok))
                     }

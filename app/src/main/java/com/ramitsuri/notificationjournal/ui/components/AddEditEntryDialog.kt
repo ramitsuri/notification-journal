@@ -47,6 +47,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.Tag
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.coroutines.delay
 
 @Composable
@@ -57,9 +58,11 @@ fun AddEditEntryDialog(
     selectedTag: String?,
     suggestedText: String?,
     showAddAnother: Boolean,
+    templates: List<JournalEntryTemplate>,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
+    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
@@ -87,9 +90,11 @@ fun AddEditEntryDialog(
                         selectedTag = selectedTag,
                         suggestedText = suggestedText,
                         showAddAnother = showAddAnother,
+                        templates = templates,
                         onTextUpdated = onTextUpdated,
                         onTagClicked = onTagClicked,
                         onUseSuggestedText = onUseSuggestedText,
+                        onTemplateClicked = onTemplateClicked,
                         onSave = onSave,
                         onAddAnother = onAddAnother,
                         onCancel = onCancel
@@ -108,9 +113,11 @@ private fun Content(
     selectedTag: String?,
     suggestedText: String?,
     showAddAnother: Boolean,
+    templates: List<JournalEntryTemplate>,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
+    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
@@ -163,31 +170,30 @@ private fun Content(
         Spacer(modifier = Modifier.height(16.dp))
         if (!suggestedText.isNullOrEmpty()) {
             SuggestedText(suggestedText, onUseSuggestedText = onUseSuggestedText)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
         if (tags.isNotEmpty()) {
             Tags(tags, selectedTag, onTagClicked)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
-        if (showAddAnother) {
-            Row(
-                horizontalArrangement = Arrangement.End,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TextButton(onClick = onAddAnother) {
-                    Text(text = stringResource(id = R.string.add_entry_save_and_add_another))
-                }
-            }
-            Spacer(modifier = Modifier.width(16.dp))
+        if (templates.isNotEmpty()) {
+            Templates(templates, onTemplateClicked)
+            Spacer(modifier = Modifier.height(8.dp))
         }
         Row(
             horizontalArrangement = Arrangement.End,
             modifier = Modifier.fillMaxWidth()
         ) {
+            if (showAddAnother) {
+                TextButton(onClick = onAddAnother) {
+                    Text(text = stringResource(id = R.string.add_entry_save_and_add_another))
+                }
+                Spacer(modifier = Modifier.weight(1f))
+            }
             TextButton(onClick = onCancel) {
                 Text(text = stringResource(id = R.string.cancel))
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             TextButton(onClick = onSave) {
                 Text(text = stringResource(id = R.string.add_entry_save))
             }
@@ -198,12 +204,48 @@ private fun Content(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun Tags(tags: List<Tag>, selectedTag: String?, onTagClicked: (String) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        tags.forEach {
-            FilterChip(
-                selected = it.value == selectedTag,
-                onClick = { onTagClicked(it.value) },
-                label = { Text(text = it.value) })
+    Column {
+        Text(
+            text = stringResource(id = R.string.tags),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            tags.forEach {
+                FilterChip(
+                    selected = it.value == selectedTag,
+                    onClick = { onTagClicked(it.value) },
+                    label = { Text(text = it.value) })
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun Templates(
+    templates: List<JournalEntryTemplate>,
+    onTemplateClicked: (JournalEntryTemplate) -> Unit
+) {
+    Column {
+        Text(
+            text = stringResource(id = R.string.add_from_template),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            templates.forEach {
+                FilterChip(
+                    selected = false,
+                    onClick = { onTemplateClicked(it) },
+                    label = {
+                        Column {
+                            Text(
+                                text = it.tag,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            Text(text = it.text)
+                        }
+                    })
+            }
         }
     }
 }

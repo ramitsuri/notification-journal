@@ -435,7 +435,7 @@ private fun AddEditTemplateDialog(
                     TextButton(onClick = onNegativeClick) {
                         Text(text = stringResource(id = R.string.cancel))
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         enabled = canSave,
                         onClick = onPositiveClick

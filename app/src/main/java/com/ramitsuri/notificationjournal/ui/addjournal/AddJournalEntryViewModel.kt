@@ -5,8 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavBackStackEntry
+import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.Tag
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.loadTitle
 import com.ramitsuri.notificationjournal.di.ServiceLocator
@@ -21,6 +23,7 @@ class AddJournalEntryViewModel(
     savedStateHandle: SavedStateHandle,
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
+    private val templatesDao: JournalEntryTemplateDao,
     private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
     private val receivedText: String? =
@@ -41,6 +44,7 @@ class AddJournalEntryViewModel(
     init {
         loadAdditionalDataIfUrl(receivedText)
         loadTags()
+        loadTemplates()
     }
 
     fun textUpdated(text: String) {
@@ -62,6 +66,13 @@ class AddJournalEntryViewModel(
                 it.copy(text = suggestedText, suggestedText = null)
             }
         }
+    }
+
+    fun templateClicked(template: JournalEntryTemplate) {
+        _state.update {
+            it.copy(text = template.text, selectedTag = template.tag)
+        }
+        save(exitOnSave = true)
     }
 
     fun save() {
@@ -116,6 +127,14 @@ class AddJournalEntryViewModel(
         }
     }
 
+    private fun loadTemplates() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(templates = templatesDao.getAll())
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "AddJournalEntryViewModel"
 
@@ -136,6 +155,7 @@ class AddJournalEntryViewModel(
                         savedStateHandle = handle,
                         repository = ServiceLocator.repository,
                         tagsDao = ServiceLocator.tagsDao,
+                        templatesDao = ServiceLocator.templatesDao,
                         loadTitle = ::loadTitle
                     ) as T
                 }
@@ -149,6 +169,7 @@ data class AddJournalEntryViewState(
     val tags: List<Tag>,
     val selectedTag: String?,
     val suggestedText: String?,
+    val templates: List<JournalEntryTemplate>,
 ) {
     companion object {
         fun default(receivedText: String?) = AddJournalEntryViewState(
@@ -156,7 +177,8 @@ data class AddJournalEntryViewState(
             text = receivedText ?: "",
             tags = listOf(),
             selectedTag = null,
-            suggestedText = null
+            suggestedText = null,
+            templates = listOf(),
         )
     }
 }

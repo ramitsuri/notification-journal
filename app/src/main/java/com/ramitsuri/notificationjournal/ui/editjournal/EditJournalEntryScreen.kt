@@ -17,6 +17,7 @@ fun EditJournalEntryScreen(
         tags = state.tags,
         selectedTag = state.selectedTag,
         suggestedText = null,
+        templates = listOf(),
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
         onUseSuggestedText = { },
@@ -24,5 +25,6 @@ fun EditJournalEntryScreen(
         showAddAnother = false,
         onAddAnother = { },
         onCancel = onCancel,
+        onTemplateClicked = { },
     )
 }
