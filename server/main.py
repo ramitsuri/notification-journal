@@ -1,6 +1,9 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import socket
+import json
+from pathlib import Path
+
 
 from json_saver import write_json_to_file
 
@@ -35,12 +38,29 @@ class MyServer(BaseHTTPRequestHandler):
             self.send_error(404, f)
 
     def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length).decode('utf-8')
-        write_json_to_file(post_data)
+        if self.path == '/':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            write_json_to_file(post_data)
 
-        self.send_response(200)
-        self.end_headers()
+            self.send_response(200)
+            self.end_headers()
+
+        elif self.path == '/previous':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            json_data = json.loads(post_data)
+            file_name = json_data['file']
+            base_path = Path(__file__).parent
+            file_path = (base_path / "entries" / file_name).resolve()
+            try:
+                with open(file_path, 'r') as file:
+                    write_json_to_file(file.read().replace('\n', ''))
+                self.send_response(200)
+                self.end_headers()
+            except FileNotFoundError:
+                self.send_response(404)
+                self.end_headers()
 
 
 if __name__ == "__main__":
