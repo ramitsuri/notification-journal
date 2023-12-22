@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.ui.addjournal
 
+import android.util.Log
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -13,6 +14,8 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.loadTitle
 import com.ramitsuri.notificationjournal.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -26,6 +29,8 @@ class AddJournalEntryViewModel(
     private val templatesDao: JournalEntryTemplateDao,
     private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
+    private var processUrlJob: Job? = null
+
     private val receivedText: String? =
         if (savedStateHandle.get<String?>(RECEIVED_TEXT_ARG).isNullOrEmpty()) {
             null
@@ -51,6 +56,7 @@ class AddJournalEntryViewModel(
         _state.update {
             it.copy(text = text)
         }
+        loadAdditionalDataIfUrl(text)
     }
 
     fun tagClicked(tag: String) {
@@ -108,13 +114,14 @@ class AddJournalEntryViewModel(
         }
     }
 
-    private fun loadAdditionalDataIfUrl(receivedText: String?) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val pageTitle = loadTitle(TAG, receivedText)
-            if (!pageTitle.isNullOrEmpty()) {
-                _state.update {
-                    it.copy(suggestedText = pageTitle)
-                }
+    private fun loadAdditionalDataIfUrl(text: String?) {
+        Log.d(TAG, "Canceling existing process url job")
+        processUrlJob?.cancel()
+        processUrlJob = viewModelScope.launch(Dispatchers.IO) {
+            delay(300)
+            val pageTitle = loadTitle(TAG, text)
+            _state.update {
+                it.copy(suggestedText = pageTitle)
             }
         }
     }
