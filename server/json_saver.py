@@ -4,12 +4,13 @@ import locale
 from time import gmtime, strftime
 
 
-def write_json_to_file(json):
+def write_json_to_file(json, print_json_as_file):
     time = gmtime()
     path = strftime("%Y/%m/%d/", time)
     file_name = strftime("%H%M%S", time) + ".json"
     file_with_path = __BASE_PATH + path + file_name
-    __print_json(json, file_with_path)
+    if print_json_as_file:
+        __print_json(json, file_with_path)
     __write_script_for_html(json)
 
 

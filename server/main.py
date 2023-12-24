@@ -23,6 +23,8 @@ def get_ip_address():
 class MyServer(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
+            # So that for first time load, script.js file can be written and made available
+            write_json_to_file("", False)
             self.path = '/index.html'
         try:
             if self.path != ".py":
@@ -41,7 +43,7 @@ class MyServer(BaseHTTPRequestHandler):
         if self.path == '/':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
-            write_json_to_file(post_data)
+            write_json_to_file(post_data, True)
 
             self.send_response(200)
             self.end_headers()
@@ -55,7 +57,7 @@ class MyServer(BaseHTTPRequestHandler):
             file_path = (base_path / "entries" / file_name).resolve()
             try:
                 with open(file_path, 'r') as file:
-                    write_json_to_file(file.read().replace('\n', ''))
+                    write_json_to_file(file.read().replace('\n', ''), False)
                 self.send_response(200)
                 self.end_headers()
             except FileNotFoundError:

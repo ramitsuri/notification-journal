@@ -19,11 +19,15 @@
     <meta charset="UTF-8">
     <title>Notification Journal</title>
 </head>
-<body onload="convert();">
+<body>
    <h2>Notification Journal</h2>
-   <a href="previous.html">Load previous</a>
-   <div id="container" class="center"></div>
-   <script src="script.js"></script>
+   <h3>Load previous entries</h3>
+   <a href="index.html">Journal Entries</a>
+   <div id="form" class="center">
+       <label for="file">File:</label>
+       <input type="text" id="file" name="file"/><br><br>
+       <button onclick="postPreviousEntry(document.getElementById('file').value);">Submit</button>
+   </div>
    <script src="base_script.js"></script>
 </body>
 </html>
