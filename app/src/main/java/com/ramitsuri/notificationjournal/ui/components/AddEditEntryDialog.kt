@@ -237,13 +237,7 @@ private fun Templates(
                     selected = false,
                     onClick = { onTemplateClicked(it) },
                     label = {
-                        Column {
-                            Text(
-                                text = it.tag,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            Text(text = it.text)
-                        }
+                        Text(text = it.text)
                     })
             }
         }
