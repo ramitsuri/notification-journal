@@ -29,9 +29,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -57,9 +62,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -70,9 +77,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.JournalMenuItem
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.DayGroup
-import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.ui.bottomBorder
 import com.ramitsuri.notificationjournal.ui.sideBorder
@@ -407,52 +414,53 @@ private fun ListItem(
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showMenu by remember { mutableStateOf(false) }
-    var showTags by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
 
     Row(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.clickable(onClick = { showTags = true })
+        modifier = modifier
+            .clickable(onClick = { showDetails = true })
     ) {
         Text(
             text = item.text,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .weight(1f)
-                .padding(8.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        ItemMenu(
-            showMenu = showMenu,
-            time = item.formattedTime,
-            onCopyRequested = { onCopyRequested(item) },
-            onEditRequested = { onEditRequested(item) },
-            onDeleteRequested = { onDeleteRequested(item) },
-            onMoveToNextDayRequested = { onMoveToNextDayRequested(item) },
-            onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(item) },
-            onMenuButtonClicked = { showMenu = !showMenu },
+                .padding(16.dp)
         )
     }
 
-    TagsDialog(
-        showTags = showTags,
+    DetailsDialog(
+        showDetails = showDetails,
         tags = tags,
         selectedTag = selectedTag,
+        time = item.formattedTime,
+        onCopyRequested = { onCopyRequested(item) },
+        onEditRequested = { onEditRequested(item) },
+        onDeleteRequested = { onDeleteRequested(item) },
+        onMoveToNextDayRequested = { onMoveToNextDayRequested(item) },
+        onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(item) },
         onTagClicked = { tag -> onTagClicked(item, tag) },
-        onDismiss = { showTags = false })
+        onDismiss = { showDetails = false })
 }
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun TagsDialog(
-    showTags: Boolean,
+private fun DetailsDialog(
+    showDetails: Boolean,
     tags: List<Tag>,
     selectedTag: String?,
+    time: String,
+    onCopyRequested: () -> Unit,
+    onEditRequested: () -> Unit,
+    onDeleteRequested: () -> Unit,
+    onMoveToNextDayRequested: () -> Unit,
+    onMoveToPreviousDayRequested: () -> Unit,
     onTagClicked: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    if (showTags) {
+    if (showDetails) {
         Dialog(
             onDismissRequest = onDismiss,
             properties = DialogProperties(
@@ -466,6 +474,8 @@ private fun TagsDialog(
                         .fillMaxWidth(0.9f)
                         .padding(16.dp)
                 ) {
+                    Text(time)
+                    Spacer(modifier = Modifier.height(16.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         tags.forEach {
                             FilterChip(
@@ -477,6 +487,33 @@ private fun TagsDialog(
                                 label = { Text(text = it.value) })
                         }
                     }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Divider(color = MaterialTheme.colorScheme.onBackground)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    TimeModifiers(
+                        onMoveToNextDayRequested = {
+                            onMoveToNextDayRequested()
+                            onDismiss()
+                        },
+                        onMoveToPreviousDayRequested = {
+                            onMoveToPreviousDayRequested()
+                            onDismiss()
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ButtonRow(
+                        onCopyRequested = {
+                            onCopyRequested()
+                            onDismiss()
+                        },
+                        onEditRequested = {
+                            onEditRequested()
+                            onDismiss()
+                        },
+                        onDeleteRequested = {
+                            onDeleteRequested()
+                            onDismiss()
+                        })
                 }
             }
         }
@@ -484,74 +521,91 @@ private fun TagsDialog(
 }
 
 @Composable
-private fun ItemMenu(
-    showMenu: Boolean,
-    time: String,
+private fun TimeModifiers(
+    modifier: Modifier = Modifier,
+    onMoveToNextDayRequested: () -> Unit,
+    onMoveToPreviousDayRequested: () -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            TimeModifierActionButton(
+                modifier = Modifier.weight(1f),
+                text = stringResource(id = R.string.previous_day),
+                onClick = onMoveToPreviousDayRequested
+            )
+            TimeModifierActionButton(
+                modifier = Modifier.weight(1f),
+                text = stringResource(id = R.string.next_day),
+                onClick = onMoveToNextDayRequested
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimeModifierActionButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(text)
+    }
+}
+
+@Composable
+private fun ButtonRow(
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
-    onMoveToNextDayRequested: () -> Unit,
-    onMoveToPreviousDayRequested: () -> Unit,
-    onMenuButtonClicked: () -> Unit,
 ) {
-    Box {
-        IconButton(
-            onClick = onMenuButtonClicked,
+    Row(modifier = Modifier.fillMaxWidth()) {
+        ActionButton(
+            icon = Icons.Filled.ContentCopy,
+            contentDescription = stringResource(id = R.string.copy),
+            onClick = onCopyRequested,
             modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.MoreVert,
-                contentDescription = stringResource(id = R.string.menu_content_description)
-            )
-        }
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = onMenuButtonClicked,
-        ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(id = R.string.copy)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onCopyRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(id = R.string.edit)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onEditRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(id = R.string.delete)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onDeleteRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(id = R.string.next_day)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onMoveToNextDayRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(id = R.string.previous_day)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onMoveToPreviousDayRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(time) },
-                onClick = {
-                    onMenuButtonClicked()
-                }
-            )
-        }
+                .weight(1f)
+        )
+        ActionButton(
+            icon = Icons.Filled.Edit,
+            contentDescription = stringResource(id = R.string.edit),
+            onClick = onEditRequested,
+            modifier = Modifier
+                .weight(1f)
+        )
+        ActionButton(
+            icon = Icons.Filled.Delete,
+            contentDescription = stringResource(id = R.string.delete),
+            onClick = onDeleteRequested,
+            modifier = Modifier
+                .weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun ActionButton(
+    icon: ImageVector,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    OutlinedIconButton(
+        onClick = onClick,
+        modifier = modifier
+            .size(48.dp)
+            .padding(4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription
+        )
     }
 }
 
