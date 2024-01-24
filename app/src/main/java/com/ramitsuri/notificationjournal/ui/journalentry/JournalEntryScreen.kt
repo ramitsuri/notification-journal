@@ -29,6 +29,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -98,6 +101,8 @@ fun JournalEntryScreen(
     onEditTagRequested: (JournalEntry, String) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
+    onMoveDownRequested: (JournalEntry, TagGroup) -> Unit,
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
@@ -205,6 +210,8 @@ fun JournalEntryScreen(
                         onTagGroupDeleteRequested = onTagGroupDeleteRequested,
                         onMoveToNextDayRequested = onMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
+                        onMoveUpRequested = onMoveUpRequested,
+                        onMoveDownRequested = onMoveDownRequested,
                         onEditRequested = { item ->
                             onEditRequested(item.id)
                         },
@@ -269,6 +276,8 @@ private fun List(
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
+    onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
+    onMoveDownRequested: (JournalEntry, TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
@@ -323,14 +332,20 @@ private fun List(
                     val entry = entries[index]
                     ListItem(
                         item = entry,
-                        onCopyRequested = onCopyRequested,
-                        onDeleteRequested = onDeleteRequested,
-                        onEditRequested = onEditRequested,
+                        onCopyRequested = { onCopyRequested(entry) },
+                        onDeleteRequested = { onDeleteRequested(entry) },
+                        onEditRequested = { onEditRequested(entry) },
+                        onMoveUpRequested = {
+                            onMoveUpRequested(entry, tagGroup)
+                        },
+                        onMoveDownRequested = {
+                            onMoveDownRequested(entry, tagGroup)
+                        },
                         tags = tags,
                         selectedTag = entry.tag,
-                        onTagClicked = onTagClicked,
-                        onMoveToNextDayRequested = onMoveToNextDayRequested,
-                        onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
+                        onTagClicked = { onTagClicked(entry, it) },
+                        onMoveToNextDayRequested = { onMoveToNextDayRequested(entry) },
+                        onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(entry) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(shape)
@@ -339,7 +354,7 @@ private fun List(
                     )
                 }
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -404,14 +419,16 @@ private fun SubHeaderItem(
 @Composable
 private fun ListItem(
     item: JournalEntry,
-    onCopyRequested: (JournalEntry) -> Unit,
-    onEditRequested: (JournalEntry) -> Unit,
-    onDeleteRequested: (JournalEntry) -> Unit,
+    onCopyRequested: () -> Unit,
+    onEditRequested: () -> Unit,
+    onDeleteRequested: () -> Unit,
+    onMoveUpRequested: () -> Unit,
+    onMoveDownRequested: () -> Unit,
     tags: List<Tag>,
     selectedTag: String?,
-    onTagClicked: (JournalEntry, String) -> Unit,
-    onMoveToNextDayRequested: (JournalEntry) -> Unit,
-    onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    onTagClicked: (String) -> Unit,
+    onMoveToNextDayRequested: () -> Unit,
+    onMoveToPreviousDayRequested: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDetails by remember { mutableStateOf(false) }
@@ -436,12 +453,14 @@ private fun ListItem(
         tags = tags,
         selectedTag = selectedTag,
         time = item.formattedTime,
-        onCopyRequested = { onCopyRequested(item) },
-        onEditRequested = { onEditRequested(item) },
-        onDeleteRequested = { onDeleteRequested(item) },
-        onMoveToNextDayRequested = { onMoveToNextDayRequested(item) },
-        onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(item) },
-        onTagClicked = { tag -> onTagClicked(item, tag) },
+        onCopyRequested = onCopyRequested,
+        onEditRequested = onEditRequested,
+        onDeleteRequested = onDeleteRequested,
+        onMoveUpRequested = onMoveUpRequested,
+        onMoveDownRequested = onMoveDownRequested,
+        onMoveToNextDayRequested = onMoveToNextDayRequested,
+        onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
+        onTagClicked = { tag -> onTagClicked(tag) },
         onDismiss = { showDetails = false })
 }
 
@@ -455,6 +474,8 @@ private fun DetailsDialog(
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
+    onMoveUpRequested: () -> Unit,
+    onMoveDownRequested: () -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
     onTagClicked: (String) -> Unit,
@@ -498,6 +519,14 @@ private fun DetailsDialog(
                         onMoveToPreviousDayRequested = {
                             onMoveToPreviousDayRequested()
                             onDismiss()
+                        },
+                        onMoveDownRequested = {
+                            onMoveDownRequested()
+                            onDismiss()
+                        },
+                        onMoveUpRequested = {
+                            onMoveUpRequested()
+                            onDismiss()
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -525,18 +554,37 @@ private fun TimeModifiers(
     modifier: Modifier = Modifier,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
+    onMoveUpRequested: () -> Unit,
+    onMoveDownRequested: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
             TimeModifierActionButton(
                 modifier = Modifier.weight(1f),
-                text = stringResource(id = R.string.previous_day),
-                onClick = onMoveToPreviousDayRequested
+                icon = Icons.Filled.ArrowDownward,
+                text = stringResource(id = R.string.move_down),
+                onClick = onMoveDownRequested,
             )
             TimeModifierActionButton(
                 modifier = Modifier.weight(1f),
+                icon = Icons.Filled.ArrowUpward,
+                text = stringResource(id = R.string.move_up),
+                onClick = onMoveUpRequested,
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            TimeModifierActionButton(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Filled.CalendarMonth,
+                text = stringResource(id = R.string.previous_day),
+                onClick = onMoveToPreviousDayRequested,
+            )
+            TimeModifierActionButton(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Filled.CalendarMonth,
                 text = stringResource(id = R.string.next_day),
-                onClick = onMoveToNextDayRequested
+                onClick = onMoveToNextDayRequested,
             )
         }
     }
@@ -544,6 +592,7 @@ private fun TimeModifiers(
 
 @Composable
 private fun TimeModifierActionButton(
+    icon: ImageVector,
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -552,8 +601,16 @@ private fun TimeModifierActionButton(
         modifier = modifier
             .clickable(role = Role.Button, onClick = onClick)
             .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
+        Icon(
+            modifier = Modifier
+                .size(24.dp)
+                .padding(4.dp),
+            imageVector = icon,
+            contentDescription = text
+        )
         Text(text)
     }
 }
@@ -682,9 +739,11 @@ private fun ListItemPreview() {
             onDeleteRequested = {},
             tags = listOf(),
             selectedTag = null,
-            onTagClicked = { _, _ -> },
+            onTagClicked = { },
             onMoveToNextDayRequested = { },
             onMoveToPreviousDayRequested = { },
+            onMoveUpRequested = { },
+            onMoveDownRequested = { },
         )
     }
 }

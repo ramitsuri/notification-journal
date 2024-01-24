@@ -101,6 +101,28 @@ class JournalEntryViewModel(
         setDate(journalEntry, nextDayTime)
     }
 
+    // Move it down in the list of entries that are ordered by ascending of display time
+    fun moveDown(journalEntry: JournalEntry, tagGroup: TagGroup) {
+        val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
+        if (indexOfEntry == -1 || indexOfEntry == tagGroup.entries.lastIndex) {
+            return
+        }
+        val nextEntry = tagGroup.entries[indexOfEntry + 1]
+        val newDateTime = (nextEntry.entryTimeOverride ?: nextEntry.entryTime).plusSeconds(1)
+        setDate(journalEntry, newDateTime)
+    }
+
+    // Move it up in the list of entries that are ordered by ascending of display time
+    fun moveUp(journalEntry: JournalEntry, tagGroup: TagGroup) {
+        val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
+        if (indexOfEntry == -1 || indexOfEntry == 0) {
+            return
+        }
+        val previousEntry = tagGroup.entries[indexOfEntry - 1]
+        val newDateTime = (previousEntry.entryTimeOverride ?: previousEntry.entryTime).minusSeconds(1)
+        setDate(journalEntry, newDateTime)
+    }
+
     fun moveToPreviousDay(tagGroup: TagGroup) {
         viewModelScope.launch {
             tagGroup.entries.forEach { journalEntry ->
