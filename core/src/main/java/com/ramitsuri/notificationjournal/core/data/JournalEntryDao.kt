@@ -4,39 +4,52 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTagUpdate
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTextUpdate
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTimeUpdate
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryUploadedUpdate
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface JournalEntryDao {
-    @Query("SELECT * FROM journalentry")
-    fun getAllFlow(): Flow<List<JournalEntry>>
+abstract class JournalEntryDao {
+    @Query("SELECT * FROM journalentry WHERE uploaded = 0")
+    abstract fun getAllFlow(): Flow<List<JournalEntry>>
 
-    @Query("SELECT * FROM journalentry ORDER BY entry_time ASC")
-    suspend fun getAll(): List<JournalEntry>
+    @Query("SELECT * FROM journalentry WHERE uploaded = 0 ORDER BY entry_time ASC")
+    abstract suspend fun getAll(): List<JournalEntry>
 
     @Query("SELECT * FROM journalentry WHERE id = :id")
-    suspend fun get(id: Int): JournalEntry
-
-    @Query("DELETE FROM journalentry")
-    suspend fun deleteAll()
+    abstract suspend fun get(id: Int): JournalEntry
 
     @Delete
-    suspend fun delete(journalEntries: List<JournalEntry>)
+    abstract suspend fun delete(journalEntries: List<JournalEntry>)
 
     @Insert
-    suspend fun insert(journalEntry: JournalEntry)
+    abstract suspend fun insert(journalEntry: JournalEntry)
 
     @Update(entity = JournalEntry::class)
-    suspend fun updateText(journalEntryUpdate: JournalEntryTextUpdate)
+    abstract suspend fun updateText(journalEntryUpdate: JournalEntryTextUpdate)
 
     @Update(entity = JournalEntry::class)
-    suspend fun updateTag(journalEntryUpdate: JournalEntryTagUpdate)
+    abstract suspend fun updateTag(journalEntryUpdate: JournalEntryTagUpdate)
 
     @Update(entity = JournalEntry::class)
-    suspend fun updateEntryTime(journalEntryUpdate: JournalEntryTimeUpdate)
+    abstract suspend fun updateEntryTime(journalEntryUpdate: JournalEntryTimeUpdate)
+
+    @Transaction
+    open suspend fun updateUploaded(entries: List<JournalEntry>) {
+        entries
+            .map {
+                JournalEntryUploadedUpdate(id = it.id, uploaded = true)
+            }
+            .forEach {
+                updateUploaded(it)
+            }
+    }
+
+    @Update(entity = JournalEntry::class)
+    protected abstract suspend fun updateUploaded(update: JournalEntryUploadedUpdate)
 }

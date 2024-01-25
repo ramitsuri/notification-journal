@@ -85,7 +85,7 @@ class JournalRepository(
         return try {
             val response = api.sendData(entries.toDayGroups())
             if (response.code() == HTTP_OK) {
-                dao.deleteAll()
+                dao.updateUploaded(entries)
                 null
             } else {
                 "Message: ${response.message()}, Code: ${response.code()}, Error: ${
