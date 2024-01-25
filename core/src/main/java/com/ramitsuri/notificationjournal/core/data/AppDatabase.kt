@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom4To5
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
@@ -19,7 +20,7 @@ import com.ramitsuri.notificationjournal.core.utils.DatabaseConverters
         JournalEntryTemplate::class,
         Tag::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
@@ -45,6 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MigrationFrom1To2())
                     .addMigrations(MigrationFrom2To3())
                     .addMigrations(MigrationFrom3To4())
+                    .addMigrations(MigrationFrom4To5())
                     .build()
             }
             return INSTANCE as AppDatabase

@@ -36,6 +36,10 @@ data class JournalEntry(
     @ColumnInfo(name = "entry_time_override")
     @Json(name = "entryTimeOverride")
     val entryTimeOverride: Instant? = null,
+
+    @ColumnInfo(name = "uploaded", defaultValue = "false")
+    @Json(name = "uploaded")
+    val uploaded: Boolean = false,
 ) {
     val formattedTime: String
         get() = formatForDisplay(toFormat = entryTimeOverride ?: entryTime, timeZone = timeZone)
