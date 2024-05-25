@@ -22,7 +22,8 @@ class MigrationFrom4To5 : Migration(4, 5) {
                     "`text` TEXT NOT NULL, " +
                     "`tag` TEXT, " +
                     "`entry_time_override` INTEGER, " +
-                    "`uploaded` INTEGER NOT NULL DEFAULT false" +
+                    "`uploaded` INTEGER NOT NULL DEFAULT 0," +
+                    "`auto_tagged` INTEGER NOT NULL DEFAULT 0" +
                     ")"
         )
 
@@ -36,6 +37,7 @@ class MigrationFrom4To5 : Migration(4, 5) {
             contentValues.put("tag", entry.tag)
             contentValues.put("entry_time_override", entry.entryTimeOverride)
             contentValues.put("uploaded", false)
+            contentValues.put("auto_tagged", false)
             database.insert("JournalEntry", SQLiteDatabase.CONFLICT_IGNORE, contentValues)
         }
     }

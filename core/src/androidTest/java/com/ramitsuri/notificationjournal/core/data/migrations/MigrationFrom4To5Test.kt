@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.data.migrations
 
+import android.database.Cursor
 import androidx.core.database.getLongOrNull
 import androidx.room.testing.MigrationTestHelper
 import androidx.room.util.TableInfo
@@ -39,6 +40,7 @@ class MigrationFrom4To5Test {
 
             // Assert
             assertTrue(tableInfo.columns.keys.contains("uploaded"))
+            assertTrue(tableInfo.columns.keys.contains("auto_tagged"))
         } catch (e: Exception) {
             fail(e.message)
         }
@@ -62,6 +64,7 @@ class MigrationFrom4To5Test {
                 assertEquals(v4Entry.tag, v5Entry.tag)
                 assertEquals(v4Entry.entryTimeOverride, v5Entry.entryTimeOverride)
                 assertEquals(false, v5Entry.uploaded)
+                assertEquals(false, v5Entry.autoTagged)
             }
         } catch (e: Exception) {
             fail(e.message)
@@ -89,7 +92,8 @@ class MigrationFrom4To5Test {
                 val tag = cursor.getString(cursor.getColumnIndex("tag"))
                 val entryTimeOverride =
                     cursor.getLongOrNull(cursor.getColumnIndex("entry_time_override"))
-                val uploaded = cursor.getInt(cursor.getColumnIndex("uploaded")) == 1
+                val uploaded = cursor.getBoolean(cursor.getColumnIndex("uploaded"))
+                val autoTagged = cursor.getBoolean(cursor.getColumnIndex("auto_tagged"))
                 data.add(
                     JournalEntryV5(
                         id = id,
@@ -99,6 +103,7 @@ class MigrationFrom4To5Test {
                         tag = tag,
                         entryTimeOverride = entryTimeOverride,
                         uploaded = uploaded,
+                        autoTagged = autoTagged,
                     ),
                 )
             } catch (e: Exception) {
@@ -106,6 +111,10 @@ class MigrationFrom4To5Test {
             }
         } while (cursor.moveToNext())
         return data
+    }
+
+    private fun Cursor.getBoolean(columnIndex: Int): Boolean {
+        return getInt(columnIndex) == 1
     }
 
     private fun createAndGetDataFromV4(): List<JournalEntryV4> {
@@ -181,5 +190,6 @@ class MigrationFrom4To5Test {
         val tag: String?,
         val entryTimeOverride: Long?,
         val uploaded: Boolean,
+        val autoTagged: Boolean,
     )
 }
