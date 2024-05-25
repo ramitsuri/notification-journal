@@ -1,6 +1,5 @@
 package com.ramitsuri.notificationjournal.ui.addjournal
 
-import android.util.Log
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -11,11 +10,7 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
-import com.ramitsuri.notificationjournal.core.utils.loadTitle
 import com.ramitsuri.notificationjournal.di.ServiceLocator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -27,10 +22,7 @@ class AddJournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
-    private val loadTitle: (String, String?) -> String?,
 ) : ViewModel() {
-    private var processUrlJob: Job? = null
-
     private val receivedText: String? =
         if (savedStateHandle.get<String?>(RECEIVED_TEXT_ARG).isNullOrEmpty()) {
             null
@@ -47,7 +39,6 @@ class AddJournalEntryViewModel(
     val state: StateFlow<AddJournalEntryViewState> = _state
 
     init {
-        loadAdditionalDataIfUrl(receivedText)
         loadTags()
         loadTemplates()
     }
@@ -56,7 +47,6 @@ class AddJournalEntryViewModel(
         _state.update {
             it.copy(text = text)
         }
-        loadAdditionalDataIfUrl(text)
     }
 
     fun tagClicked(tag: String) {
@@ -114,18 +104,6 @@ class AddJournalEntryViewModel(
         }
     }
 
-    private fun loadAdditionalDataIfUrl(text: String?) {
-        Log.d(TAG, "Canceling existing process url job")
-        processUrlJob?.cancel()
-        processUrlJob = viewModelScope.launch(Dispatchers.IO) {
-            delay(300)
-            val pageTitle = loadTitle(TAG, text)
-            _state.update {
-                it.copy(suggestedText = pageTitle)
-            }
-        }
-    }
-
     private fun loadTags() {
         viewModelScope.launch {
             _state.update {
@@ -143,8 +121,6 @@ class AddJournalEntryViewModel(
     }
 
     companion object {
-        private const val TAG = "AddJournalEntryViewModel"
-
         const val RECEIVED_TEXT_ARG = "received_text"
 
         fun factory(navBackStackEntry: NavBackStackEntry) =
@@ -163,7 +139,6 @@ class AddJournalEntryViewModel(
                         repository = ServiceLocator.repository,
                         tagsDao = ServiceLocator.tagsDao,
                         templatesDao = ServiceLocator.templatesDao,
-                        loadTitle = ::loadTitle
                     ) as T
                 }
             }
