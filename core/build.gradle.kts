@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 android {
@@ -34,15 +35,16 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
     sourceSets {
         getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
     configurations.implementation {
         exclude(group = "com.intellij", module = "annotations")
     }
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {
@@ -55,6 +57,7 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
     implementation(libs.room.runtime)
+    implementation(libs.androidx.sqlite.bundled)
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.moshi)

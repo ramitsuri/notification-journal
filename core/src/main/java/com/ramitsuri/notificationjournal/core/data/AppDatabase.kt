@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
@@ -13,6 +14,7 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.utils.DatabaseConverters
+import kotlinx.coroutines.Dispatchers
 
 @Database(
     entities = [
@@ -36,13 +38,16 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
 
         private fun getInstance(context: Context): AppDatabase {
+            val dbFile = context.getDatabasePath("app_database")
             if (INSTANCE == null) {
                 INSTANCE = Room
                     .databaseBuilder(
                         context,
                         AppDatabase::class.java,
-                        "app_database"
+                        dbFile.absolutePath
                     )
+                    .setDriver(BundledSQLiteDriver())
+                    .setQueryCoroutineContext(Dispatchers.IO)
                     .addMigrations(MigrationFrom1To2())
                     .addMigrations(MigrationFrom2To3())
                     .addMigrations(MigrationFrom3To4())
