@@ -3,7 +3,8 @@
 # Constants                                                #
 ############################################################
 REMOTE="origin"
-TEAM="team" # Replace with real team
+MAIN="main"
+RESTRICTED_BRANCHES=("main" "develop")
 
 CREATE="Create"
 UPDATE="Update"
@@ -12,70 +13,8 @@ UPDATE="Update"
 # Variables                                                #
 ############################################################
 MainBranch="main"
-RunLintCheck=false
 PRMode=$UPDATE
-
-############################################################
-# Help                                                     #
-############################################################
-Help()
-{
-   # Display Help
-   echo "This script will automate most of the PR create/update process for an Android project"
-   echo "Including"
-   echo "- running lint check"
-   echo "- squashing commits against a branch. When creating a PR, commits will be squashed against"
-   echo "the main branch. And when updating it, they'll be squashed against the remote branch"
-   echo "- commit changes. Will ask for commit message"
-   echo "- push changes to remote"
-   echo "- create PR on GitHub. GitHub CLI should be installed and authenticated"
-   echo
-   echo "To use"
-   echo "- put the script in the root of your Android project"
-   echo "- edit the constants if necessary"
-   echo "- install GitHub cli"
-   echo "- run gh auth login"
-   echo "- select github.com, select ssh, skip selecting ssh key, login with browser"
-   echo "- [Do If Getting Authentication Error] create personal access token to login"
-   echo "- [Do If Still Getting Authentication Error] create ssh key for GitHub cli, run gh auth login and select the created key this time"
-   echo
-   echo "Syntax: ./pr.sh [-l|c|u|b|h]"
-   echo "options:"
-   echo "l     Skip lint checks"
-   echo "c     Will create a new PR with this branch. Squashing will be done against the main branch"
-   echo "u     Will update the existing PR. This is the default. Squashing is done against current branch's remote branch"
-   echo "b     Set the main branch to squash commits against. Takes an argument. You can also update the MainBranch var in the script. Default is main"
-   echo "h     Show help"
-   echo
-   echo "Examples"
-   echo "./pr.sh -c"
-   echo "This will run the lint check, squash commits against main branch, ask for commit message, push the changes to remote (will create new remote branch if doesn't exist) and create a PR"
-   echo
-   echo "./pr.sh"
-   echo "This will run the lint check, squash commits against main branch, ask for commit message and push the changes to remote (will create new remote branch if doesn't exist)"
-   echo "Run if updating the current PR after making changes"
-   echo
-   echo "./pr.sh -cb feature-self-reports"
-   echo "This will run the lint check, squash commits against feature-self-reports branch, ask for commit message, push the changes to remote (will create new remote branch if doesn't exist) and create a PR against feature-self-reports branch"
-   echo
-}
-
-############################################################
-# LintCheck                                                #
-############################################################
-LintCheck()
-{
-   echo "LintCheck Start"
-   if ! ./gradlew ktlintFormat;
-   then
-     exit $?
-   fi
-   if ! ./gradlew ktlintCheck;
-   then
-     exit $?
-   fi
-   echo "LintCheck End"
-}
+KeepCurrentBranchAfterPR=false
 
 ############################################################
 # SquashCommits                                            #
@@ -167,16 +106,84 @@ CheckChangelog()
 }
 
 ############################################################
+# Checkout MainBranch and delete current branch after PR   #
+############################################################
+CheckoutMainBranchDeleteCurrent()
+{
+   current=$(git branch --show-current)
+
+   if [ "$current" == $MAIN ]
+      then
+        return
+   elif [ "$current" == $MainBranch ]
+      then
+        return
+   elif [ $KeepCurrentBranchAfterPR = true ]
+      then
+        return
+   fi
+
+   echo "CheckoutMainBranchDeleteCurrent Start"
+
+   if ! git checkout $MainBranch;
+      then
+        exit $?
+   fi
+
+   if ! git branch -D "$current";
+      then
+        exit $?
+   fi
+
+   echo "CheckoutMainBranchDeleteCurrent End"
+}
+
+############################################################
+# Checkout branch for PR number                            #
+############################################################
+CheckoutBranchForPr()
+{
+   if [ "$#" -ne 1 ]
+      then
+        echo "PR number not supplied"
+        exit
+   fi
+   prNumber=$1
+
+   branch=$(gh pr view "$prNumber" --json headRefName --template '{{ .headRefName }}')
+   if ! git checkout -b "$branch" "${REMOTE}/${branch}";
+      then
+        exit $?
+   fi
+
+   if ! git pull;
+      then
+        exit $?
+   fi
+}
+
+############################################################
+# Check if current branch is restricted                    #
+############################################################
+CheckCurrentBranchRestricted()
+{
+   current=$(git branch --show-current)
+
+   for restricted_branch in "${RESTRICTED_BRANCHES[@]}"
+   do
+      if [ "$current" == "$restricted_branch" ] ; then
+         echo "${current} is a restricted branch. Submit changes on a different branch"
+         exit 1
+      fi
+   done
+}
+
+############################################################
 # Run                                                     #
 ############################################################
 Run()
 {
-   #CheckChangelog
-
-   if [ $RunLintCheck = true ]
-   then
-     LintCheck
-   fi
+   CheckCurrentBranchRestricted
 
    if [ $PRMode == $CREATE ]
    then
@@ -193,6 +200,8 @@ Run()
    then
      CreatePR
    fi
+
+   CheckoutMainBranchDeleteCurrent
 }
 
 ############################################################
@@ -200,17 +209,12 @@ Run()
 # Main program                                             #
 ############################################################
 ############################################################
-while getopts "lcuhb:" option; do
+while getopts "cub:" option; do
    case $option in
-      h) # display Help
-         Help
-         exit;;
       c) # Create PR
          PRMode=$CREATE;;
       u) # Update PR
          PRMode=$UPDATE;;
-      l) # Lint check
-         RunLintCheck=false;;
       b) # Set main branch commits
          MainBranch=$OPTARG;;
       \?) # Invalid option
