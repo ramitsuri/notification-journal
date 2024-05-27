@@ -26,7 +26,7 @@ android {
             )
         }
         debug {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.ktor.content.negotation)
     implementation(libs.ktor.serialization)
     implementation(libs.ktor.logging)
+
+    implementation(libs.multiplatform.settings)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext)

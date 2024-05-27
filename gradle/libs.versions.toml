@@ -12,6 +12,7 @@ ktor = "2.3.8"
 ktx = "1.13.1"
 lifecycle = "2.7.0"
 material = "1.12.0"
+multiplatformSettings = "1.1.1"
 navigationCompose = "2.7.7"
 playservices-wearable = "18.1.0"
 playservices-coroutines = "1.8.0"
@@ -58,6 +59,7 @@ ktor-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = 
 ktor-serialization = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 playservices-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "playservices-coroutines" }
 playservices-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "playservices-wearable" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }

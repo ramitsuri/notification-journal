@@ -46,7 +46,7 @@ object ServiceLocator {
     }
 
     val keyValueStore: KeyValueStore by lazy {
-        PrefsKeyValueStore(applicationContext, Constants.PREF_FILE)
+        PrefsKeyValueStore(applicationContext)
     }
 
     val tagsDao: TagsDao by lazy {
