@@ -8,18 +8,18 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
+import kotlinx.datetime.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class MigrationFrom1To2Test {
     private val testDb = "migration-test"
-    private val baseEntryTime = Instant.parse("2023-10-10T12:00:00Z").toEpochMilli()
+    private val baseEntryTime = Instant.parse("2023-10-10T12:00:00Z").toEpochMilliseconds()
     private val zoneId = "America/New_York"
     private val baseText = "Text"
 

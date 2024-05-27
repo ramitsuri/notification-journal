@@ -83,6 +83,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
+    implementation(libs.kotlin.datetime)
+
     androidTestImplementation(composeBom)
     androidTestImplementation(libs.compose.test.junit4)
     debugImplementation(libs.compose.ui.tooling)

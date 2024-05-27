@@ -6,15 +6,15 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.tasks.await
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 import kotlin.coroutines.cancellation.CancellationException
 
 interface DataSharingClient {
     suspend fun postJournalEntry(
         value: String,
         time: Instant,
-        timeZoneId: ZoneId,
+        timeZoneId: TimeZone,
         tag: String?,
     ): Boolean
 
@@ -30,7 +30,7 @@ class DataSharingClientImpl(
     override suspend fun postJournalEntry(
         value: String,
         time: Instant,
-        timeZoneId: ZoneId,
+        timeZoneId: TimeZone,
         tag: String?,
     ): Boolean {
         return try {
@@ -39,7 +39,10 @@ class DataSharingClientImpl(
             val request = PutDataMapRequest.create(path)
                 .apply {
                     dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_VALUE, value)
-                    dataMap.putLong(Constants.DataSharing.JOURNAL_ENTRY_TIME, time.toEpochMilli())
+                    dataMap.putLong(
+                        Constants.DataSharing.JOURNAL_ENTRY_TIME,
+                        time.toEpochMilliseconds()
+                    )
                     dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_TIME_ZONE, timeZoneId.id)
                     if (tag != null) {
                         dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_TAG, tag)

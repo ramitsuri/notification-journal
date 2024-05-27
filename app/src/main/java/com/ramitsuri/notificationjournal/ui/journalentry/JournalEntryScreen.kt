@@ -68,6 +68,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -88,8 +89,8 @@ import com.ramitsuri.notificationjournal.ui.bottomBorder
 import com.ramitsuri.notificationjournal.ui.sideBorder
 import com.ramitsuri.notificationjournal.ui.string
 import com.ramitsuri.notificationjournal.ui.topBorder
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -292,7 +293,13 @@ private fun List(
     LazyColumn {
         items.forEach { (date, tagGroups) ->
             stickyHeader {
-                HeaderItem(text = getDay(date).string())
+                HeaderItem(
+                    text = getDay(
+                        toFormat = date,
+                        monthNames = stringArrayResource(id = R.array.month_names),
+                        dayOfWeekNames = stringArrayResource(id = R.array.day_of_week_names),
+                    ).string()
+                )
             }
             tagGroups.forEach { tagGroup ->
                 val entries = tagGroup.entries
@@ -452,7 +459,10 @@ private fun ListItem(
         showDetails = showDetails,
         tags = tags,
         selectedTag = selectedTag,
-        time = item.formattedTime,
+        time = item.formattedTime(
+            am = stringResource(id = R.string.am),
+            pm = stringResource(id = R.string.pm)
+        ),
         onCopyRequested = onCopyRequested,
         onEditRequested = onEditRequested,
         onDeleteRequested = onDeleteRequested,
@@ -730,8 +740,8 @@ private fun ListItemPreview() {
         ListItem(
             item = JournalEntry(
                 id = 0,
-                entryTime = Instant.now(),
-                timeZone = ZoneId.systemDefault(),
+                entryTime = Clock.System.now(),
+                timeZone = TimeZone.currentSystemDefault(),
                 text = "Test text"
             ),
             onCopyRequested = {},

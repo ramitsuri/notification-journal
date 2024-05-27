@@ -2,10 +2,10 @@ package com.ramitsuri.notificationjournal.core.model
 
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
-import java.time.ZoneId
+import kotlinx.datetime.TimeZone
 
 fun List<JournalEntry>.toDayGroups(
-    zoneId: ZoneId = ZoneId.systemDefault(),
+    zoneId: TimeZone = TimeZone.currentSystemDefault(),
     tagsForSort: List<Tag> = listOf(),
 ): List<DayGroup> {
     val tags = listOf(Tag.NO_TAG) + tagsForSort

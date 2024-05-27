@@ -1,7 +1,7 @@
 package com.ramitsuri.notificationjournal.core.model.entry
 
 import androidx.room.ColumnInfo
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 data class JournalEntryTimeUpdate(
     @ColumnInfo(name = "id")

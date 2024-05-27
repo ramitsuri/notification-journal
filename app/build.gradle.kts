@@ -87,6 +87,8 @@ dependencies {
     implementation(libs.playservices.wearable)
     implementation(libs.playservices.coroutines)
 
+    implementation(libs.kotlin.datetime)
+
     testImplementation(libs.junit)
 
     androidTestImplementation(libs.androidx.test.ext)
