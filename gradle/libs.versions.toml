@@ -6,6 +6,7 @@ activityCompose = "1.9.0"
 composeBom = "2024.05.00"
 coreSplashscreen = "1.0.1"
 horologist = "0.4.11"
+kotlin-datetime = "0.6.0"
 ktx = "1.13.1"
 lifecycle = "2.7.0"
 material = "1.12.0"
@@ -48,6 +49,7 @@ compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
 horologist-compose-tools = { module = "com.google.android.horologist:horologist-compose-tools", version.ref = "horologist" }
 horologist-tiles = { module = "com.google.android.horologist:horologist-tiles", version.ref = "horologist" }
+kotlin-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlin-datetime" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 moshi = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }

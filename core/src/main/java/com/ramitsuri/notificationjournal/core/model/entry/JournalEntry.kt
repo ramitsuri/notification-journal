@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 
 @Entity
 @JsonClass(generateAdapter = true)
@@ -23,7 +23,7 @@ data class JournalEntry(
 
     @ColumnInfo(name = "time_zone")
     @Json(name = "timeZone")
-    val timeZone: ZoneId,
+    val timeZone: TimeZone,
 
     @ColumnInfo(name = "text")
     @Json(name = "text")
@@ -45,7 +45,12 @@ data class JournalEntry(
     @Json(name = "auto_tagged")
     val autoTagged: Boolean = false,
 ) {
-    val formattedTime: String
-        get() = formatForDisplay(toFormat = entryTimeOverride ?: entryTime, timeZone = timeZone)
+    fun formattedTime(am: String, pm: String): String =
+        formatForDisplay(
+            toFormat = entryTimeOverride ?: entryTime,
+            timeZone = timeZone,
+            amString = am,
+            pmString = pm,
+        )
 
 }

@@ -41,8 +41,8 @@ import androidx.wear.compose.material.scrollAway
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.presentation.theme.NotificationJournalTheme
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
 
 @Composable
 fun WearApp(
@@ -221,20 +221,20 @@ private fun JournalEntriesPresentPreview() {
         journalEntries = listOf(
             JournalEntry(
                 id = 0,
-                entryTime = Instant.now(),
-                timeZone = ZoneId.systemDefault(),
+                entryTime = Clock.System.now(),
+                timeZone = TimeZone.currentSystemDefault(),
                 text = "Text1"
             ),
             JournalEntry(
                 id = 0,
-                entryTime = Instant.now(),
-                timeZone = ZoneId.systemDefault(),
+                entryTime = Clock.System.now(),
+                timeZone = TimeZone.currentSystemDefault(),
                 text = "Text2"
             ),
             JournalEntry(
                 id = 0,
-                entryTime = Instant.now(),
-                timeZone = ZoneId.systemDefault(),
+                entryTime = Clock.System.now(),
+                timeZone = TimeZone.currentSystemDefault(),
                 text = "Text3"
             )
         )

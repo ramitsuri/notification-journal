@@ -1,27 +1,27 @@
 package com.ramitsuri.notificationjournal.core.utils
 
 import androidx.room.TypeConverter
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 
 class DatabaseConverters {
     @TypeConverter
     fun toInstant(millis: Long): Instant {
-        return Instant.ofEpochMilli(millis)
+        return Instant.fromEpochMilliseconds(millis)
     }
 
     @TypeConverter
     fun fromInstant(instant: Instant): Long {
-        return instant.toEpochMilli()
+        return instant.toEpochMilliseconds()
     }
 
     @TypeConverter
-    fun toZoneId(zoneIdString: String): ZoneId {
-        return ZoneId.of(zoneIdString)
+    fun toZoneId(zoneIdString: String): TimeZone {
+        return TimeZone.of(zoneIdString)
     }
 
     @TypeConverter
-    fun fromZoneId(zoneId: ZoneId): String {
+    fun fromZoneId(zoneId: TimeZone): String {
         return zoneId.id
     }
 }

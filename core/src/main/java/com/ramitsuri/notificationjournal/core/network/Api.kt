@@ -5,6 +5,9 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
@@ -13,11 +16,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 interface Api {
     @POST("/")
@@ -49,7 +47,7 @@ fun <T> buildApi(baseUrl: String, apiClass: Class<T>): T {
 private class InstantAdapter() {
     @ToJson
     fun toJson(instant: Instant): String {
-        return DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.from(ZoneOffset.UTC)).format(instant)
+        return instant.toString()
     }
 
     @FromJson
@@ -60,13 +58,13 @@ private class InstantAdapter() {
 
 private class ZoneIdAdapter() {
     @ToJson
-    fun toJson(zoneId: ZoneId): String {
+    fun toJson(zoneId: TimeZone): String {
         return zoneId.id
     }
 
     @FromJson
-    fun fromJson(json: String): ZoneId {
-        return ZoneId.of(json)
+    fun fromJson(json: String): TimeZone {
+        return TimeZone.of(json)
     }
 }
 

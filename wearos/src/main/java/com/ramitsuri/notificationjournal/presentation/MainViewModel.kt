@@ -13,8 +13,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 
 class MainViewModel(
     private val dao: JournalEntryDao,
@@ -65,11 +66,15 @@ class MainViewModel(
         add(entry.text, entry.tag, exitOnDone = true)
     }
 
-    fun add(value: String, tag: String? = null, exitOnDone: Boolean = false) {
+    fun add(
+        value: String,
+        tag: String? = null,
+        exitOnDone: Boolean = false,
+        time: Instant = Clock.System.now(),
+        timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    ) {
         val entries = value.split(". ")
         longLivingCoroutineScope.launch {
-            val time = Instant.now()
-            val timeZone = ZoneId.systemDefault()
             for (entry in entries) {
                 postToClient(value = entry, time, timeZone, tag, exitOnDone)
             }
@@ -102,7 +107,7 @@ class MainViewModel(
     private suspend fun postToClient(
         value: String,
         time: Instant,
-        timeZone: ZoneId,
+        timeZone: TimeZone,
         tag: String?,
         exitOnDone: Boolean = false
     ) {

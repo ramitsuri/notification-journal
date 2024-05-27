@@ -15,8 +15,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 
 class PhoneDataLayerListenerService : WearableListenerService() {
 
@@ -40,17 +41,21 @@ class PhoneDataLayerListenerService : WearableListenerService() {
                 val journalEntryTimeMillis =
                     dataMap.getLong(Constants.DataSharing.JOURNAL_ENTRY_TIME)
                 val journalEntryTime = if (journalEntryTimeMillis == 0L) {
-                    Instant.now()
+                    Clock.System.now()
                 } else {
-                    Instant.ofEpochMilli(journalEntryTimeMillis)
+                    Instant.fromEpochMilliseconds(journalEntryTimeMillis)
                 }
 
                 val journalEntryTimeZoneId =
                     dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_TIME_ZONE)
                 val journalEntryTimeZone = try {
-                    ZoneId.of(journalEntryTimeZoneId)
+                    if (journalEntryTimeZoneId != null) {
+                        TimeZone.of(journalEntryTimeZoneId)
+                    } else {
+                        TimeZone.currentSystemDefault()
+                    }
                 } catch (e: Exception) {
-                    ZoneId.systemDefault()
+                    TimeZone.currentSystemDefault()
                 }
                 val tag = dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_TAG)
 

@@ -59,6 +59,8 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.androidx.sqlite.bundled)
 
+    implementation(libs.kotlin.datetime)
+
     implementation(libs.retrofit)
     implementation(libs.retrofit.moshi)
     implementation(libs.retrofit.logging.interceptor)

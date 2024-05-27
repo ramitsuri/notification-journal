@@ -21,17 +21,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 import kotlin.time.Duration.Companion.days
-import kotlin.time.toJavaDuration
+import kotlin.time.Duration.Companion.seconds
 
 class JournalEntryViewModel(
     receivedText: String?,
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
-    private val zoneId: ZoneId = ZoneId.systemDefault()
+    private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
 
     private var collectionJob: Job? = null
@@ -91,13 +91,13 @@ class JournalEntryViewModel(
 
     fun moveToPreviousDay(journalEntry: JournalEntry) {
         val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
-        val previousDayTime = currentEntryTime.minusSeconds(1.days.toJavaDuration().seconds)
+        val previousDayTime = currentEntryTime.minus(1.days)
         setDate(journalEntry, previousDayTime)
     }
 
     fun moveToNextDay(journalEntry: JournalEntry) {
         val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
-        val nextDayTime = currentEntryTime.plusSeconds(1.days.toJavaDuration().seconds)
+        val nextDayTime = currentEntryTime.plus(1.days)
         setDate(journalEntry, nextDayTime)
     }
 
@@ -108,7 +108,7 @@ class JournalEntryViewModel(
             return
         }
         val nextEntry = tagGroup.entries[indexOfEntry + 1]
-        val newDateTime = (nextEntry.entryTimeOverride ?: nextEntry.entryTime).plusSeconds(1)
+        val newDateTime = (nextEntry.entryTimeOverride ?: nextEntry.entryTime).plus(1.seconds)
         setDate(journalEntry, newDateTime)
     }
 
@@ -119,7 +119,8 @@ class JournalEntryViewModel(
             return
         }
         val previousEntry = tagGroup.entries[indexOfEntry - 1]
-        val newDateTime = (previousEntry.entryTimeOverride ?: previousEntry.entryTime).minusSeconds(1)
+        val newDateTime =
+            (previousEntry.entryTimeOverride ?: previousEntry.entryTime).minus(1.seconds)
         setDate(journalEntry, newDateTime)
     }
 
@@ -127,7 +128,7 @@ class JournalEntryViewModel(
         viewModelScope.launch {
             tagGroup.entries.forEach { journalEntry ->
                 val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
-                val previousDayTime = currentEntryTime.minusSeconds(1.days.toJavaDuration().seconds)
+                val previousDayTime = currentEntryTime.minus(1.days)
                 repository.editEntryTime(journalEntry.id, previousDayTime)
             }
         }
@@ -137,7 +138,7 @@ class JournalEntryViewModel(
         viewModelScope.launch {
             tagGroup.entries.forEach { journalEntry ->
                 val currentEntryTime = journalEntry.entryTimeOverride ?: journalEntry.entryTime
-                val nextDayTime = currentEntryTime.plusSeconds(1.days.toJavaDuration().seconds)
+                val nextDayTime = currentEntryTime.plus(1.days)
                 repository.editEntryTime(journalEntry.id, nextDayTime)
             }
         }

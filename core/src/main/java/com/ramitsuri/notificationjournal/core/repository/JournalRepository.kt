@@ -9,13 +9,16 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.network.Api
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 import okhttp3.internal.http.HTTP_OK
-import java.time.Instant
-import java.time.ZoneId
 
 class JournalRepository(
     private val api: Api,
-    private val dao: JournalEntryDao
+    private val dao: JournalEntryDao,
+    private val clock: Clock = Clock.System,
+    private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
     fun getFlow(): Flow<List<JournalEntry>> {
         return dao.getAllFlow().map { list ->
@@ -55,8 +58,7 @@ class JournalRepository(
     }
 
     suspend fun insert(text: String, tag: String? = null, originalEntryTime: Instant? = null) {
-        val entryTime = Instant.now()
-        val timeZone = ZoneId.systemDefault()
+        val entryTime = clock.now()
         text
             .split("\n")
             .forEach {
