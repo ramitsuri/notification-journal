@@ -1,14 +1,14 @@
 package com.ramitsuri.notificationjournal.core.model
 
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class TagGroup(
-    @Json(name = "tag")
+    @SerialName("tag")
     val tag: String,
 
-    @Json(name = "entries")
+    @SerialName("entries")
     val entries: List<JournalEntry>
 )

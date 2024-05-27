@@ -1,14 +1,14 @@
 package com.ramitsuri.notificationjournal.core.model
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class DayGroup(
-    @Json(name = "date")
+    @SerialName("date")
     val date: LocalDate,
 
-    @Json(name = "tag_groups")
+    @SerialName("tag_groups")
     val tagGroups: List<TagGroup>
 )

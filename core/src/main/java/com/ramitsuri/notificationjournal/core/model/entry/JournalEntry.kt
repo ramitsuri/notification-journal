@@ -4,45 +4,45 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 @Entity
-@JsonClass(generateAdapter = true)
+@Serializable
 data class JournalEntry(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    @Json(name = "id")
+    @SerialName("id")
     val id: Int,
 
     @ColumnInfo(name = "entry_time")
-    @Json(name = "entryTime")
+    @SerialName("entryTime")
     val entryTime: Instant,
 
     @ColumnInfo(name = "time_zone")
-    @Json(name = "timeZone")
+    @SerialName("timeZone")
     val timeZone: TimeZone,
 
     @ColumnInfo(name = "text")
-    @Json(name = "text")
+    @SerialName("text")
     val text: String,
 
     @ColumnInfo(name = "tag")
-    @Json(name = "tag")
+    @SerialName("tag")
     val tag: String? = null,
 
     @ColumnInfo(name = "entry_time_override")
-    @Json(name = "entryTimeOverride")
+    @SerialName("entryTimeOverride")
     val entryTimeOverride: Instant? = null,
 
     @ColumnInfo(name = "uploaded", defaultValue = "0")
-    @Json(name = "uploaded")
+    @SerialName("uploaded")
     val uploaded: Boolean = false,
 
     @ColumnInfo(name = "auto_tagged", defaultValue = "0")
-    @Json(name = "auto_tagged")
+    @SerialName("auto_tagged")
     val autoTagged: Boolean = false,
 ) {
     fun formattedTime(am: String, pm: String): String =

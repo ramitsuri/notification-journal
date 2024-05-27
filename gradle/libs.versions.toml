@@ -7,15 +7,14 @@ composeBom = "2024.05.00"
 coreSplashscreen = "1.0.1"
 horologist = "0.4.11"
 kotlin-datetime = "0.6.0"
+kotlin-serialization = "1.6.3"
+ktor = "2.3.8"
 ktx = "1.13.1"
 lifecycle = "2.7.0"
 material = "1.12.0"
-moshi = "1.15.0"
 navigationCompose = "2.7.7"
 playservices-wearable = "18.1.0"
 playservices-coroutines = "1.8.0"
-retrofit = "2.9.0"
-retrofit-logging-interceptor = "5.0.0-alpha.10"
 room = "2.7.0-alpha02"
 sqliteBundled = "2.5.0-alpha02"
 wearCompose = "1.3.1"
@@ -50,15 +49,17 @@ compose-ui-toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" 
 horologist-compose-tools = { module = "com.google.android.horologist:horologist-compose-tools", version.ref = "horologist" }
 horologist-tiles = { module = "com.google.android.horologist:horologist-tiles", version.ref = "horologist" }
 kotlin-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlin-datetime" }
+kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlin-serialization" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
+ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-content-negotation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-serialization = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-moshi = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
-moshi-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
 playservices-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "playservices-coroutines" }
 playservices-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "playservices-wearable" }
-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
-retrofit-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
-retrofit-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "retrofit-logging-interceptor" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
@@ -80,5 +81,6 @@ junit = { module = "junit:junit", version.ref = "junit" }
 android-application = { id = "com.android.application", version.ref = "android-gradle" }
 android-library = { id = "com.android.library", version.ref = "android-gradle" }
 kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }

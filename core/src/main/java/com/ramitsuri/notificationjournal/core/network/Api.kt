@@ -1,81 +1,72 @@
 package com.ramitsuri.notificationjournal.core.network
 
+import android.util.Log
 import com.ramitsuri.notificationjournal.core.model.DayGroup
-import com.squareup.moshi.FromJson
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.ToJson
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import okhttp3.OkHttpClient
-import okhttp3.ResponseBody
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.POST
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import io.ktor.client.plugins.logging.Logger as KtorLogger
 
 interface Api {
-    @POST("/")
-    suspend fun sendData(@Body entries: List<DayGroup>): Response<ResponseBody>
+    suspend fun sendData(entries: List<DayGroup>): HttpResponse?
 }
 
-fun <T> buildApi(baseUrl: String, apiClass: Class<T>): T {
-    val moshi = Moshi.Builder()
-        .add(InstantAdapter())
-        .add(ZoneIdAdapter())
-        .add(LocalDateAdapter())
-        .addLast(KotlinJsonAdapterFactory())
-        .build()
-
-    val httpClientBuilder = OkHttpClient.Builder()
-    val logging = HttpLoggingInterceptor()
-    logging.setLevel(HttpLoggingInterceptor.Level.BODY)
-    httpClientBuilder.addInterceptor(logging)
-
-    val retrofit = Retrofit.Builder()
-        .baseUrl(baseUrl)
-        .client(httpClientBuilder.build())
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
-        .build()
-
-    return retrofit.create(apiClass)
-}
-
-private class InstantAdapter() {
-    @ToJson
-    fun toJson(instant: Instant): String {
-        return instant.toString()
-    }
-
-    @FromJson
-    fun fromJson(json: String): Instant {
-        return Instant.parse(json)
+internal class ApiImpl(
+    private val baseUrl: String,
+    private val httpClient: HttpClient,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : Api {
+    override suspend fun sendData(entries: List<DayGroup>): HttpResponse? {
+        return withContext(ioDispatcher) {
+            try {
+                return@withContext httpClient.post("$baseUrl/") {
+                    setBody(entries)
+                }
+            } catch (e: Exception) {
+                Log.e("Api", "Error sending data", e)
+                null
+            }
+        }
     }
 }
 
-private class ZoneIdAdapter() {
-    @ToJson
-    fun toJson(zoneId: TimeZone): String {
-        return zoneId.id
+fun buildApi(baseUrl: String, isDebug: Boolean): Api {
+    val client = HttpClient(Android.create()) {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    prettyPrint = true
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                },
+            )
+        }
+        install(DefaultRequest) {
+            contentType(ContentType.Application.Json)
+        }
+        install(Logging) {
+            logger =
+                object : KtorLogger {
+                    override fun log(message: String) {
+                        Log.v("Api", message)
+                    }
+                }
+            level = if (isDebug) LogLevel.ALL else LogLevel.NONE
+        }
     }
 
-    @FromJson
-    fun fromJson(json: String): TimeZone {
-        return TimeZone.of(json)
-    }
-}
-
-private class LocalDateAdapter() {
-    @ToJson
-    fun toJson(localDate: LocalDate): String {
-        return localDate.toString()
-    }
-
-    @FromJson
-    fun fromJson(json: String): LocalDate {
-        return LocalDate.parse(json)
-    }
+    return ApiImpl(baseUrl, client)
 }
