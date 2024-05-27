@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.di
 import android.app.Application
 import android.content.Context
 import com.google.android.gms.wearable.Wearable
+import com.ramitsuri.notificationjournal.BuildConfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.DataSharingClient
 import com.ramitsuri.notificationjournal.core.data.DataSharingClientImpl
@@ -64,7 +65,7 @@ object ServiceLocator {
         buildApi(
             keyValueStore.getString(Constants.PREF_KEY_API_URL, Constants.DEFAULT_API_URL)
                 ?: Constants.DEFAULT_API_URL,
-            Api::class.java
+            BuildConfig.DEBUG,
         )
     }
 

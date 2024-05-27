@@ -7,12 +7,13 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTextUpdate
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTimeUpdate
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.network.Api
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
-import okhttp3.internal.http.HTTP_OK
 
 class JournalRepository(
     private val api: Api,
@@ -84,19 +85,14 @@ class JournalRepository(
         if (entries.isEmpty()) {
             return null
         }
-        return try {
-            val response = api.sendData(entries.toDayGroups())
-            if (response.code() == HTTP_OK) {
-                dao.updateUploaded(entries)
-                null
-            } else {
-                "Message: ${response.message()}, Code: ${response.code()}, Error: ${
-                    response.errorBody()?.charStream()?.readText()
-                }"
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            e.message
+        val response = api.sendData(entries.toDayGroups())
+        return if (response == null) {
+            "Null response"
+        } else if (response.status == HttpStatusCode.OK) {
+            dao.updateUploaded(entries)
+            null
+        } else {
+            "Message: ${response.bodyAsText()}, Code: ${response.status}"
         }
     }
 }

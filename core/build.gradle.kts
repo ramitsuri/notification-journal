@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
 }
@@ -61,11 +62,13 @@ dependencies {
 
     implementation(libs.kotlin.datetime)
 
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.moshi)
-    implementation(libs.retrofit.logging.interceptor)
-    implementation(libs.moshi)
-    ksp(libs.moshi.codegen)
+    implementation(libs.kotlin.serialization)
+    implementation(libs.ktor.core)
+    implementation(libs.ktor.okhttp)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.content.negotation)
+    implementation(libs.ktor.serialization)
+    implementation(libs.ktor.logging)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext)
