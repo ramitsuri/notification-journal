@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.SortOrder
-import com.ramitsuri.notificationjournal.core.utils.shutdown
+import com.ramitsuri.notificationjournal.utils.shutdown
 
 @Composable
 fun SettingsScreen(
