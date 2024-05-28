@@ -4,9 +4,9 @@ import android.app.Application
 import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
 import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
-import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
-import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
+import com.ramitsuri.notificationjournal.utils.NotificationActionInfo
+import com.ramitsuri.notificationjournal.utils.NotificationChannelType
+import com.ramitsuri.notificationjournal.utils.NotificationInfo
 import com.ramitsuri.notificationjournal.di.ServiceLocator
 
 class MainApplication : Application() {

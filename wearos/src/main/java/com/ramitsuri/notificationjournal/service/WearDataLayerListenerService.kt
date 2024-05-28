@@ -5,6 +5,7 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
+import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -43,7 +44,8 @@ class WearDataLayerListenerService : WearableListenerService() {
         }
 
         val coroutineScope = CoroutineScope(SupervisorJob())
-        val dao = AppDatabase.getJournalEntryTemplateDao(context = applicationContext)
+        val dao =
+            AppDatabase.getJournalEntryTemplateDao((applicationContext as MainApplication).factory)
 
         coroutineScope.launch {
             // Use ones received from the phone app as the single source of truth
