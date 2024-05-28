@@ -7,6 +7,7 @@ import com.ramitsuri.notificationjournal.BuildConfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.DataSharingClient
 import com.ramitsuri.notificationjournal.core.data.DataSharingClientImpl
+import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.di.Factory
@@ -48,7 +49,11 @@ object ServiceLocator {
     }
 
     val keyValueStore: KeyValueStore by lazy {
-        PrefsKeyValueStore(factory.getSettings())
+        PrefsKeyValueStore(factory)
+    }
+
+    val journalEntryDao: JournalEntryDao by lazy {
+        AppDatabase.getJournalEntryDao(factory)
     }
 
     val tagsDao: TagsDao by lazy {

@@ -1,6 +1,6 @@
 package com.ramitsuri.notificationjournal.core.utils
 
-import com.russhwolf.settings.Settings
+import com.ramitsuri.notificationjournal.core.di.Factory
 
 interface KeyValueStore {
     fun getString(key: String, fallback: String): String?
@@ -10,7 +10,9 @@ interface KeyValueStore {
     fun putInt(key: String, value: Int)
 }
 
-class PrefsKeyValueStore(private val prefs: Settings) : KeyValueStore {
+class PrefsKeyValueStore(factory: Factory) : KeyValueStore {
+    private val prefs = factory.getSettings()
+
     override fun getString(key: String, fallback: String): String? {
         return try {
             prefs.getString(key, fallback)
