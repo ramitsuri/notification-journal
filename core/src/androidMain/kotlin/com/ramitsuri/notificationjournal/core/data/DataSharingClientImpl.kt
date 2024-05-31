@@ -1,9 +1,11 @@
 package com.ramitsuri.notificationjournal.core.data
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.util.Log
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.tasks.await
 import kotlinx.datetime.Instant
@@ -11,8 +13,11 @@ import kotlinx.datetime.TimeZone
 import kotlin.coroutines.cancellation.CancellationException
 
 class DataSharingClientImpl(
-    private val dataClient: DataClient
+    application: Application,
 ) : DataSharingClient {
+
+    private val dataClient: DataClient = Wearable.getDataClient(application)
+
     @SuppressLint("VisibleForTests")
     override suspend fun postJournalEntry(
         value: String,

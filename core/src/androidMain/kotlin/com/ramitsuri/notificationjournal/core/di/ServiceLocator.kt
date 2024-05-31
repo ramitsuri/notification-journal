@@ -1,31 +1,23 @@
-package com.ramitsuri.notificationjournal.di
+package com.ramitsuri.notificationjournal.core.di
 
-import android.app.Application
-import android.content.Context
-import com.google.android.gms.wearable.Wearable
-import com.ramitsuri.notificationjournal.BuildConfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.DataSharingClient
-import com.ramitsuri.notificationjournal.core.data.DataSharingClientImpl
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
-import com.ramitsuri.notificationjournal.core.di.Factory
 import com.ramitsuri.notificationjournal.core.network.Api
 import com.ramitsuri.notificationjournal.core.network.buildApi
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
-import com.ramitsuri.notificationjournal.utils.NotificationChannelInfo
-import com.ramitsuri.notificationjournal.utils.NotificationChannelType
-import com.ramitsuri.notificationjournal.utils.NotificationHandler
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
+import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
-import com.ramitsuri.notificationjournal.utils.SystemNotificationHandler
 
 object ServiceLocator {
-    fun init(application: Application) {
-        applicationContext = application
-        factory = Factory(application)
+    fun init(factory: Factory) {
+        ServiceLocator.factory = factory
         notificationHandler.init(
             listOf(
                 NotificationChannelInfo(
@@ -45,7 +37,7 @@ object ServiceLocator {
     }
 
     val notificationHandler: NotificationHandler by lazy {
-        SystemNotificationHandler(applicationContext)
+        factory.getNotificationHandler()
     }
 
     val keyValueStore: KeyValueStore by lazy {
@@ -65,17 +57,16 @@ object ServiceLocator {
     }
 
     val dataSharingClient: DataSharingClient by lazy {
-        DataSharingClientImpl(Wearable.getDataClient(applicationContext))
+        factory.getDataSharingClient()
     }
 
     private val api: Api by lazy {
         buildApi(
             keyValueStore.getString(Constants.PREF_KEY_API_URL, Constants.DEFAULT_API_URL)
                 ?: Constants.DEFAULT_API_URL,
-            BuildConfig.DEBUG,
+            factory.isDebug(),
         )
     }
 
-    private lateinit var applicationContext: Context
     private lateinit var factory: Factory
 }
