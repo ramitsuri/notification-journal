@@ -5,7 +5,12 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
+import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.data.DataSharingClientImpl
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
+import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
+import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 
@@ -27,5 +32,17 @@ actual class Factory(private val application: Application) {
                 AppDatabase::class.java,
                 dbFile.absolutePath
             )
+    }
+
+    actual fun getDataSharingClient(): DataSharingClient {
+        return DataSharingClientImpl(application)
+    }
+
+    actual fun getNotificationHandler(): NotificationHandler {
+        return SystemNotificationHandler(application)
+    }
+
+    actual fun isDebug(): Boolean {
+        return BuildConfig.DEBUG
     }
 }

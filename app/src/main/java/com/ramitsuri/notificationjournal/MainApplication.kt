@@ -3,18 +3,20 @@ package com.ramitsuri.notificationjournal
 import android.app.Application
 import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
+import com.ramitsuri.notificationjournal.core.di.Factory
 import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.utils.NotificationActionInfo
-import com.ramitsuri.notificationjournal.utils.NotificationChannelType
-import com.ramitsuri.notificationjournal.utils.NotificationInfo
-import com.ramitsuri.notificationjournal.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
+import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 
 class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
         DynamicColors.applyToActivitiesIfAvailable(this)
-        ServiceLocator.init(this)
+        val factory = Factory(this)
+        ServiceLocator.init(factory)
         showJournalNotification()
     }
 

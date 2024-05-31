@@ -14,7 +14,7 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
-import com.ramitsuri.notificationjournal.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.utils.receivedText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.ramitsuri.notificationjournal.utils
+package com.ramitsuri.notificationjournal.core.utils
 
 import android.Manifest
 import android.app.Notification
@@ -9,71 +9,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.RingtoneManager
-import androidx.annotation.DrawableRes
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.app.TaskStackBuilder
-
-data class NotificationChannelInfo(
-    val channelType: NotificationChannelType,
-    val name: String,
-    val description: String,
-    val importance: Importance = Importance.LOW,
-    val playSound: Boolean = false,
-    val vibrate: Boolean = false,
-    val showBadge: Boolean = false
-)
-
-/**
- * @property isForegroundServiceImmediate Should set to true if the notification is for a foreground service and it
- * should be shown immediately.
- */
-data class NotificationInfo(
-    val channel: NotificationChannelType,
-    val title: String,
-    val body: String,
-    @DrawableRes val iconResId: Int,
-    val isVisibilityPublic: Boolean = true,
-    val cancelOnTouch: Boolean = false,
-    val isForegroundServiceImmediate: Boolean = false,
-    val isOngoing: Boolean = false,
-    val intentClass: Class<*>,
-    val intentExtras: Map<String, Any>? = null,
-    val actions: List<NotificationActionInfo>? = null,
-    val actionExtras: Map<String, Any>? = null
-)
-
-data class NotificationActionInfo(
-    val action: String,
-    val textResId: Int,
-    val intentReceiverClass: Class<*>,
-    val remoteInputKey: String?
-)
-
-enum class Importance(val key: Int) {
-    NONE(0),
-    MIN(1),
-    LOW(2),
-    DEFAULT(3),
-    HIGH(4),
-    MAX(5);
-}
-
-enum class NotificationChannelType(val id: String) {
-    MAIN("main"),
-}
-
-interface NotificationHandler {
-    fun init(channels: List<NotificationChannelInfo>)
-
-    fun showNotification(notificationInfo: NotificationInfo)
-
-    fun toSystemNotification(notificationInfo: NotificationInfo): Notification
-
-    fun getNotificationId(notificationInfo: NotificationInfo): Int
-}
 
 class SystemNotificationHandler(
     context: Context
@@ -104,7 +44,7 @@ class SystemNotificationHandler(
         }
     }
 
-    override fun toSystemNotification(notificationInfo: NotificationInfo): Notification {
+    private fun toSystemNotification(notificationInfo: NotificationInfo): Notification {
         val builder = NotificationCompat.Builder(appContext, notificationInfo.channel.id)
         builder.apply {
             setSmallIcon(notificationInfo.iconResId)
@@ -219,8 +159,9 @@ class SystemNotificationHandler(
             intent,
             PendingIntent.FLAG_MUTABLE
         )
-        val remoteInput: RemoteInput? = if (actionInfo.remoteInputKey != null) {
-            RemoteInput.Builder(actionInfo.remoteInputKey).build()
+        val resultKey = actionInfo.remoteInputKey
+        val remoteInput: RemoteInput? = if (resultKey != null) {
+            RemoteInput.Builder(resultKey).build()
         } else {
             null
         }

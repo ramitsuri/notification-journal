@@ -10,7 +10,7 @@ import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_JOURNAL
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_UPLOAD
-import com.ramitsuri.notificationjournal.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
