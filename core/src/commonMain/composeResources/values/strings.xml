@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">Notification Journal</string>
+    <string name="button_text_restart">Restart</string>
+    <string name="button_text_set_server">Set Server</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="error">Error</string>
+    <string name="use">Use</string>
+    <string name="back">Back</string>
+    <string name="settings">Settings</string>
+    <string name="untagged">Untagged</string>
+    <string name="add_entry_content_description">Add</string>
+    <string name="add_entry_save_and_add_another">Add another</string>
+    <string name="add_entry_save">Save</string>
+    <string name="menu_content_description">Menu</string>
+    <string name="no_items">No items</string>
+
+    <string name="alert">Alert!</string>
+    <string name="delete_warning_message">The entry will be deleted</string>
+
+    <string name="yesterday">Yesterday</string>
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+
+    <string name="copy">Copy</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="next_day">Next day</string>
+    <string name="previous_day">Previous day</string>
+    <string name="move_down">Move down</string>
+    <string name="move_up">Move up</string>
+
+    <string name="settings_upload_title">Upload</string>
+    <string name="settings_upload_subtitle">Upload entries to server</string>
+
+    <string name="settings_server_title">Server URL</string>
+
+    <string name="settings_sort_order_title">Sort order</string>
+    <string name="settings_sort_order_asc">Oldest entry time first</string>
+    <string name="settings_sort_order_desc">Newest entry time first</string>
+
+    <string name="settings_tags_title">Tags</string>
+    <string name="settings_tags_subtitle">Add or edit tags</string>
+
+    <string name="settings_templates_title">Templates</string>
+    <string name="settings_templates_subtitle">Add or edit templates</string>
+
+    <string name="tag_delete_fail_message">Tag is being used</string>
+    <string name="tag_insert_fail_message">Tag being used or new tag exists</string>
+    <string name="tag_info">Tag can\'t be changed if it\'s currently being used by a template or a journal entry</string>
+
+    <string name="template_info">When done with changes, sync to make them available on watch</string>
+
+    <string name="sync_with_wear">Sync</string>
+
+    <string name="tags">Tags</string>
+    <string name="add_from_template">Add from template</string>
+
+    <string-array name="day_of_week_names">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+
+    <string-array name="month_names">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+
+    <string name="am">am</string>
+    <string name="pm">pm</string>
+</resources>

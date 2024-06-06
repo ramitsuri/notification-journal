@@ -6,13 +6,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.ramitsuri.notificationjournal.ui.nav.NavGraph
-import com.ramitsuri.notificationjournal.ui.theme.NotificationJournalTheme
+import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
+import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
+import com.ramitsuri.notificationjournal.core.utils.receivedText
+import com.ramitsuri.notificationjournal.utils.shutdown
 
 class MainActivity : ComponentActivity() {
 
@@ -39,8 +42,14 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
 
-            NotificationJournalTheme {
-                NavGraph()
+            NotificationJournalTheme(
+                dynamicDarkColorScheme = dynamicDarkColorScheme(this),
+                dynamicLightColorScheme = dynamicLightColorScheme(this)
+            ) {
+                NavGraph(
+                    receivedText = this@MainActivity.intent?.receivedText(),
+                    shutdown = this::shutdown
+                )
             }
         }
     }
@@ -65,7 +74,3 @@ private val lightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
  * drc=27e7d52e8604a080133e8b842db10c89b4482598
  */
 private val darkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
-
-enum class JournalMenuItem(@StringRes val textResId: Int) {
-    SETTINGS(R.string.settings),
-}

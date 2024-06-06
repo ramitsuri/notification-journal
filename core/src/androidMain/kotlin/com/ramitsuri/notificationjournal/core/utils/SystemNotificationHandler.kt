@@ -167,7 +167,7 @@ class SystemNotificationHandler(
         }
         return NotificationCompat.Action.Builder(
             0,
-            appContext.getString(actionInfo.textResId),
+            actionInfo.text,
             pendingIntent
         ).addRemoteInput(remoteInput).build()
     }

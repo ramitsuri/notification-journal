@@ -38,8 +38,8 @@ fun getDay(
     toFormat: LocalDate,
     now: Instant = Clock.System.now(),
     timeZone: TimeZone = TimeZone.currentSystemDefault(),
-    monthNames: Array<String>,
-    dayOfWeekNames: Array<String>,
+    monthNames: List<String>,
+    dayOfWeekNames: List<String>,
 ): TextValue {
     val nowLocalDate = now.toLocalDateTime(timeZone).date
     val daysBetweenNowAndToFormat = nowLocalDate.minus(toFormat).days
@@ -58,10 +58,10 @@ fun getDay(
 
         else -> {
             val format = LocalDateTime.Format {
-                dayOfWeek(DayOfWeekNames(dayOfWeekNames.toList()))
+                dayOfWeek(DayOfWeekNames(dayOfWeekNames))
                 char(',')
                 char(' ')
-                monthName(MonthNames(monthNames.toList()))
+                monthName(MonthNames(monthNames))
                 char(' ')
                 dayOfMonth()
             }

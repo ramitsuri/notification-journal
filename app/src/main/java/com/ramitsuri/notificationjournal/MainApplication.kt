@@ -35,13 +35,13 @@ class MainApplication : Application() {
             actions = listOf(
                 NotificationActionInfo(
                     action = Constants.ACTION_JOURNAL,
-                    textResId = R.string.add_new_journal_content,
+                    text = getString(R.string.add_new_journal_content),
                     intentReceiverClass = NotificationActionReceiver::class.java,
                     remoteInputKey = Constants.REMOTE_INPUT_JOURNAL_KEY
                 ),
                 NotificationActionInfo(
                     action = Constants.ACTION_UPLOAD,
-                    textResId = R.string.upload_journal_content,
+                    text = getString(R.string.upload_journal_content),
                     intentReceiverClass = NotificationActionReceiver::class.java,
                     remoteInputKey = null
                 )

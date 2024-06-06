@@ -1,9 +1,15 @@
 package com.ramitsuri.notificationjournal.core.di
 
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
@@ -13,6 +19,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import java.io.File
 import java.util.Properties
+import kotlin.reflect.KClass
 
 actual class Factory {
     actual fun getSettings(): Settings {
@@ -68,5 +75,43 @@ actual class Factory {
 
     actual fun isDebug(): Boolean {
         return false
+    }
+
+    actual fun addJournalEntryVMFactory(
+        navBackStackEntry: NavBackStackEntry,
+        getVMInstance: (SavedStateHandle) -> AddJournalEntryViewModel,
+    ): AbstractSavedStateViewModelFactory {
+        return object : AbstractSavedStateViewModelFactory(
+            owner = navBackStackEntry,
+            defaultArgs = navBackStackEntry.arguments,
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                key: String,
+                modelClass: KClass<T>,
+                handle: SavedStateHandle
+            ): T {
+                return getVMInstance(handle) as T
+            }
+        }
+    }
+
+    actual fun editJournalEntryVMFactory(
+        navBackStackEntry: NavBackStackEntry,
+        getVMInstance: (SavedStateHandle) -> EditJournalEntryViewModel,
+    ): AbstractSavedStateViewModelFactory {
+        return object : AbstractSavedStateViewModelFactory(
+            owner = navBackStackEntry,
+            defaultArgs = navBackStackEntry.arguments,
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                key: String,
+                modelClass: KClass<T>,
+                handle: SavedStateHandle
+            ): T {
+                return getVMInstance(handle) as T
+            }
+        }
     }
 }
