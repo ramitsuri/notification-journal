@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     val composeBom = platform(libs.composeBom)
     implementation(composeBom)
+    implementation(libs.compose.runtime)
     implementation(libs.compose.material.icons.core)
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui)
@@ -79,8 +80,7 @@ dependencies {
     implementation(libs.horologist.compose.tools)
     implementation(libs.horologist.tiles)
 
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     implementation(libs.kotlin.datetime)

@@ -66,6 +66,7 @@ dependencies {
 
     val composeBom = platform(libs.composeBom)
     implementation(composeBom)
+    implementation(libs.compose.runtime)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.toolingPreview)
     implementation(libs.compose.material)
@@ -80,8 +81,7 @@ dependencies {
 
     implementation(libs.androidx.core.splashscreen)
 
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.runtime.compose)
 

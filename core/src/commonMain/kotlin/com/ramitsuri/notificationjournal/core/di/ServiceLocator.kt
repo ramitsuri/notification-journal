@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.di
 
+import androidx.navigation.NavBackStackEntry
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.DataSharingClient
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
@@ -8,6 +9,8 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.network.Api
 import com.ramitsuri.notificationjournal.core.network.buildApi
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
@@ -58,6 +61,31 @@ object ServiceLocator {
 
     val dataSharingClient: DataSharingClient by lazy {
         factory.getDataSharingClient()
+    }
+
+    fun getAddJournalEntryVMFactory(
+        navBackStackEntry: NavBackStackEntry
+    ) = factory.addJournalEntryVMFactory(
+        navBackStackEntry,
+    ) { savedStateHandle ->
+        AddJournalEntryViewModel(
+            savedStateHandle = savedStateHandle,
+            repository = repository,
+            tagsDao = tagsDao,
+            templatesDao = templatesDao,
+        )
+    }
+
+    fun getEditJournalEntryVMFactory(
+        navBackStackEntry: NavBackStackEntry
+    ) = factory.editJournalEntryVMFactory(
+        navBackStackEntry,
+    ) { savedStateHandle ->
+        EditJournalEntryViewModel(
+            savedStateHandle = savedStateHandle,
+            repository = repository,
+            tagsDao = tagsDao,
+        )
     }
 
     private val api: Api by lazy {

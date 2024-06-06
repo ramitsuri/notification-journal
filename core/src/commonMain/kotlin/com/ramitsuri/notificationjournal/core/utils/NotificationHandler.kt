@@ -33,7 +33,7 @@ data class NotificationInfo(
 
 data class NotificationActionInfo(
     val action: String,
-    val textResId: Int,
+    val text: String,
     val intentReceiverClass: Class<*>,
     val remoteInputKey: String?
 )
