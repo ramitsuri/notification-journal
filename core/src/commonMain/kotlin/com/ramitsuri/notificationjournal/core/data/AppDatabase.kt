@@ -8,6 +8,7 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom4To5
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom5To6
 import com.ramitsuri.notificationjournal.core.di.Factory
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -21,7 +22,7 @@ import kotlinx.coroutines.Dispatchers
         JournalEntryTemplate::class,
         Tag::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
@@ -46,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MigrationFrom2To3())
                     .addMigrations(MigrationFrom3To4())
                     .addMigrations(MigrationFrom4To5())
+                    .addMigrations(MigrationFrom5To6())
                     .build()
             }
             return INSTANCE as AppDatabase

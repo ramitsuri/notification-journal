@@ -25,7 +25,7 @@ class TemplatesViewModel(
     private val _state = MutableStateFlow(TemplatesViewState())
     val state: StateFlow<TemplatesViewState> = _state
 
-    private var idBeingEdited: Int? = null
+    private var idBeingEdited: String? = null
 
     init {
         viewModelScope.launch {

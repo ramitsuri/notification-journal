@@ -73,13 +73,13 @@ class DataSharingClientImpl(
     }
 
     @SuppressLint("VisibleForTests")
-    override suspend fun postTemplate(id: Int, value: String, tag: String): Boolean {
+    override suspend fun postTemplate(id: String, value: String, tag: String): Boolean {
         return try {
             val requestId = System.currentTimeMillis()
             val path = "${Constants.DataSharing.TEMPLATE_ROUTE}/$requestId"
             val request = PutDataMapRequest.create(path)
                 .apply {
-                    dataMap.putInt(Constants.DataSharing.TEMPLATE_ID, id)
+                    dataMap.putString(Constants.DataSharing.TEMPLATE_ID, id)
                     dataMap.putString(Constants.DataSharing.TEMPLATE_VALUE, value)
                     dataMap.putString(Constants.DataSharing.TEMPLATE_TAG, tag)
                 }

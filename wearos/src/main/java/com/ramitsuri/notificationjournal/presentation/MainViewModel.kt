@@ -61,7 +61,7 @@ class MainViewModel(
         }
     }
 
-    fun addFromTemplate(templateId: Int) {
+    fun addFromTemplate(templateId: String) {
         val entry = _state.value.journalEntryTemplates.firstOrNull { it.id == templateId } ?: return
         add(entry.text, entry.tag, exitOnDone = true)
     }
@@ -121,7 +121,6 @@ class MainViewModel(
             return
         }
         val entry = JournalEntry(
-            id = 0,
             entryTime = time,
             timeZone = timeZone,
             text = value,

@@ -105,7 +105,7 @@ compose.resources {
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "com.ramitsuri.notificationjournal.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

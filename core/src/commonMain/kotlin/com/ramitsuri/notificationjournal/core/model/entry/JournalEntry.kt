@@ -8,14 +8,15 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Entity
 @Serializable
 data class JournalEntry(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     @ColumnInfo(name = "id")
     @SerialName("id")
-    val id: Int,
+    val id: String = UUID.randomUUID().toString(),
 
     @ColumnInfo(name = "entry_time")
     @SerialName("entryTime")

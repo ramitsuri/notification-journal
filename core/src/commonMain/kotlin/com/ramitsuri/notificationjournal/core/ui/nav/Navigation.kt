@@ -100,7 +100,7 @@ fun NavGraph(
                     navController.navigate(
                         Destination.EDIT_ENTRY.routeWithArgValues(
                             mapOf(
-                                EditJournalEntryViewModel.ENTRY_ID_ARG to entryId.toString()
+                                EditJournalEntryViewModel.ENTRY_ID_ARG to entryId
                             )
                         )
                     )

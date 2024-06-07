@@ -49,7 +49,7 @@ actual class Factory {
                 // Not supported
             }
 
-            override suspend fun postTemplate(id: Int, value: String, tag: String): Boolean {
+            override suspend fun postTemplate(id: String, value: String, tag: String): Boolean {
                 // Not supported
                 return true
             }

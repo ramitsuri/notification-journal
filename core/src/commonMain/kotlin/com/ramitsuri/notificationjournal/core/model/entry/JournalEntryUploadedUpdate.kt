@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 
 data class JournalEntryUploadedUpdate(
     @ColumnInfo(name = "id")
-    val id: Int,
+    val id: String,
 
     @ColumnInfo(name = "uploaded")
     val uploaded: Boolean

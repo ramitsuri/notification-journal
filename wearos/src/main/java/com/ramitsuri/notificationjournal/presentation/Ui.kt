@@ -48,7 +48,7 @@ import kotlinx.datetime.TimeZone
 fun WearApp(
     viewState: ViewState,
     onAddRequested: (String) -> Unit,
-    onTemplateAddRequested: (Int) -> Unit,
+    onTemplateAddRequested: (String) -> Unit,
     onUploadRequested: () -> Unit,
     onTransferRequested: () -> Unit
 ) {
@@ -220,19 +220,16 @@ private fun JournalEntriesPresentPreview() {
     WearApp(viewState = ViewState(
         journalEntries = listOf(
             JournalEntry(
-                id = 0,
                 entryTime = Clock.System.now(),
                 timeZone = TimeZone.currentSystemDefault(),
                 text = "Text1"
             ),
             JournalEntry(
-                id = 0,
                 entryTime = Clock.System.now(),
                 timeZone = TimeZone.currentSystemDefault(),
                 text = "Text2"
             ),
             JournalEntry(
-                id = 0,
                 entryTime = Clock.System.now(),
                 timeZone = TimeZone.currentSystemDefault(),
                 text = "Text3"
