@@ -18,7 +18,7 @@ class WearDataLayerListenerService : WearableListenerService() {
         val addTemplateEvents = mutableListOf<DataEvent>()
         dataEvents.forEach { event ->
             val path = event.dataItem.uri.path ?: ""
-            if (path.startsWith(Constants.DataSharing.TEMPLATE_ROUTE)) {
+            if (path.startsWith(Constants.WearDataSharing.TEMPLATE_ROUTE)) {
                 addTemplateEvents.add(event)
             }
         }
@@ -29,9 +29,9 @@ class WearDataLayerListenerService : WearableListenerService() {
         val journalEntryTemplates = mutableListOf<JournalEntryTemplate>()
         addTemplateEvents.forEach { dataEvent ->
             val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-            val templateId = dataMap.getString(Constants.DataSharing.TEMPLATE_ID)
-            val templateValue = dataMap.getString(Constants.DataSharing.TEMPLATE_VALUE)
-            val templateTag = dataMap.getString(Constants.DataSharing.TEMPLATE_TAG)
+            val templateId = dataMap.getString(Constants.WearDataSharing.TEMPLATE_ID)
+            val templateValue = dataMap.getString(Constants.WearDataSharing.TEMPLATE_VALUE)
+            val templateTag = dataMap.getString(Constants.WearDataSharing.TEMPLATE_TAG)
             if (templateId != null && templateValue != null && templateTag != null) {
                 val template = JournalEntryTemplate(
                     id = templateId,

@@ -3,7 +3,7 @@ package com.ramitsuri.notificationjournal.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -20,20 +20,20 @@ import kotlinx.datetime.TimeZone
 class MainViewModel(
     private val dao: JournalEntryDao,
     private val templateDao: JournalEntryTemplateDao,
-    private val dataSharingClient: DataSharingClient,
+    private val wearDataSharingClient: WearDataSharingClient,
     private val longLivingCoroutineScope: CoroutineScope
 ) : ViewModel() {
 
     class Factory(
         private val dao: JournalEntryDao,
         private val templateDao: JournalEntryTemplateDao,
-        private val dataSharingClient: DataSharingClient,
+        private val wearDataSharingClient: WearDataSharingClient,
         private val coroutineScope: CoroutineScope
     ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MainViewModel(dao, templateDao, dataSharingClient, coroutineScope) as T
+            return MainViewModel(dao, templateDao, wearDataSharingClient, coroutineScope) as T
         }
     }
 
@@ -85,7 +85,7 @@ class MainViewModel(
         longLivingCoroutineScope.launch {
             val onDeviceEntries = dao.getAll()
             onDeviceEntries.forEach { journalEntry ->
-                val posted = dataSharingClient.postJournalEntry(
+                val posted = wearDataSharingClient.postJournalEntry(
                     journalEntry.text,
                     journalEntry.entryTime,
                     journalEntry.timeZone,
@@ -100,7 +100,7 @@ class MainViewModel(
 
     fun triggerUpload() {
         longLivingCoroutineScope.launch {
-            dataSharingClient.requestUpload()
+            wearDataSharingClient.requestUpload()
         }
     }
 
@@ -111,7 +111,7 @@ class MainViewModel(
         tag: String?,
         exitOnDone: Boolean = false
     ) {
-        val posted = dataSharingClient.postJournalEntry(value, time, timeZone, tag)
+        val posted = wearDataSharingClient.postJournalEntry(value, time, timeZone, tag)
         if (posted) { // Shared with phone client, so no need to save to local db
             if (exitOnDone) {
                 _state.update {

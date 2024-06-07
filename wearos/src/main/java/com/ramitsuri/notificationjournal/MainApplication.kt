@@ -20,7 +20,7 @@ class MainApplication : Application() {
         return MainViewModel.Factory(
             ServiceLocator.journalEntryDao,
             ServiceLocator.templatesDao,
-            ServiceLocator.dataSharingClient,
+            ServiceLocator.wearDataSharingClient,
             coroutineScope
         )
     }

@@ -7,7 +7,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
@@ -33,8 +33,8 @@ actual class Factory {
         )
     }
 
-    actual fun getDataSharingClient(): DataSharingClient {
-        return object : DataSharingClient {
+    actual fun getWearDataSharingClient(): WearDataSharingClient {
+        return object : WearDataSharingClient {
             override suspend fun postJournalEntry(
                 value: String,
                 time: Instant,

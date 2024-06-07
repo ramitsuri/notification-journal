@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
@@ -16,7 +16,7 @@ expect class Factory {
 
     fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
 
-    fun getDataSharingClient(): DataSharingClient
+    fun getWearDataSharingClient(): WearDataSharingClient
 
     fun getNotificationHandler(): NotificationHandler
 
