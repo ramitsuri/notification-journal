@@ -2,7 +2,7 @@ package com.ramitsuri.notificationjournal.core.di
 
 import androidx.navigation.NavBackStackEntry
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
@@ -59,8 +59,8 @@ object ServiceLocator {
         AppDatabase.getJournalEntryTemplateDao(factory)
     }
 
-    val dataSharingClient: DataSharingClient by lazy {
-        factory.getDataSharingClient()
+    val wearDataSharingClient: WearDataSharingClient by lazy {
+        factory.getWearDataSharingClient()
     }
 
     fun getAddJournalEntryVMFactory(

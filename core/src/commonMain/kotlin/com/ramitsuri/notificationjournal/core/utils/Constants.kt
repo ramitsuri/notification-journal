@@ -11,7 +11,7 @@ object Constants {
 
     const val DEFAULT_API_URL = "http://test.com"
 
-    object DataSharing {
+    object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"
         const val JOURNAL_ENTRY_VALUE = "journal_entry_value"
         const val JOURNAL_ENTRY_TIME = "journal_entry_time"

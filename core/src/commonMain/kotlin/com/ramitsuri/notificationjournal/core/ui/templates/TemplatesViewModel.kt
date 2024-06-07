@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.ramitsuri.notificationjournal.core.data.DataSharingClient
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.Tag
@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 class TemplatesViewModel(
     private val dao: JournalEntryTemplateDao,
     private val tagsDao: TagsDao,
-    private val dataSharingClient: DataSharingClient,
+    private val wearDataSharingClient: WearDataSharingClient,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TemplatesViewState())
@@ -112,7 +112,7 @@ class TemplatesViewModel(
         viewModelScope.launch {
             val templates = _state.value.templates
             templates.forEach { template ->
-                dataSharingClient.postTemplate(
+                wearDataSharingClient.postTemplate(
                     id = template.id,
                     value = template.text,
                     tag = template.tag
@@ -128,7 +128,7 @@ class TemplatesViewModel(
                 return TemplatesViewModel(
                     dao = ServiceLocator.templatesDao,
                     tagsDao = ServiceLocator.tagsDao,
-                    dataSharingClient = ServiceLocator.dataSharingClient,
+                    wearDataSharingClient = ServiceLocator.wearDataSharingClient,
                 ) as T
             }
         }

@@ -26,19 +26,19 @@ class PhoneDataLayerListenerService : WearableListenerService() {
         val uploadEvents = mutableListOf<DataEvent>()
         dataEvents.forEach { event ->
             val path = event.dataItem.uri.path ?: ""
-            if (path.startsWith(Constants.DataSharing.JOURNAL_ENTRY_ROUTE)) {
+            if (path.startsWith(Constants.WearDataSharing.JOURNAL_ENTRY_ROUTE)) {
                 addJournalEntryEvents.add(event)
-            } else if (path.startsWith(Constants.DataSharing.REQUEST_UPLOAD_ROUTE)) {
+            } else if (path.startsWith(Constants.WearDataSharing.REQUEST_UPLOAD_ROUTE)) {
                 uploadEvents.add(event)
             }
         }
 
         addJournalEntryEvents.forEach { dataEvent ->
             val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-            val journalEntryText = dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_VALUE)
+            val journalEntryText = dataMap.getString(Constants.WearDataSharing.JOURNAL_ENTRY_VALUE)
             if (!journalEntryText.isNullOrEmpty()) {
                 val journalEntryTimeMillis =
-                    dataMap.getLong(Constants.DataSharing.JOURNAL_ENTRY_TIME)
+                    dataMap.getLong(Constants.WearDataSharing.JOURNAL_ENTRY_TIME)
                 val journalEntryTime = if (journalEntryTimeMillis == 0L) {
                     Clock.System.now()
                 } else {
@@ -46,7 +46,7 @@ class PhoneDataLayerListenerService : WearableListenerService() {
                 }
 
                 val journalEntryTimeZoneId =
-                    dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_TIME_ZONE)
+                    dataMap.getString(Constants.WearDataSharing.JOURNAL_ENTRY_TIME_ZONE)
                 val journalEntryTimeZone = try {
                     if (journalEntryTimeZoneId != null) {
                         TimeZone.of(journalEntryTimeZoneId)
@@ -56,7 +56,7 @@ class PhoneDataLayerListenerService : WearableListenerService() {
                 } catch (e: Exception) {
                     TimeZone.currentSystemDefault()
                 }
-                val tag = dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_TAG)
+                val tag = dataMap.getString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG)
 
                 val journalEntry = JournalEntry(
                     entryTime = journalEntryTime,

@@ -3,7 +3,7 @@ package com.ramitsuri.notificationjournal.core.data
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 
-interface DataSharingClient {
+interface WearDataSharingClient {
     suspend fun postJournalEntry(
         value: String,
         time: Instant,

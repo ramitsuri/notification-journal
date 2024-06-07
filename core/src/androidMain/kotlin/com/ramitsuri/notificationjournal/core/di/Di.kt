@@ -9,8 +9,8 @@ import androidx.navigation.NavBackStackEntry
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.DataSharingClient
-import com.ramitsuri.notificationjournal.core.data.DataSharingClientImpl
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClientImpl
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -40,8 +40,8 @@ actual class Factory(private val application: Application) {
             )
     }
 
-    actual fun getDataSharingClient(): DataSharingClient {
-        return DataSharingClientImpl(application)
+    actual fun getWearDataSharingClient(): WearDataSharingClient {
+        return WearDataSharingClientImpl(application)
     }
 
     actual fun getNotificationHandler(): NotificationHandler {

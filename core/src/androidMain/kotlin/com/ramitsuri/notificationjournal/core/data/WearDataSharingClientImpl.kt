@@ -12,9 +12,9 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlin.coroutines.cancellation.CancellationException
 
-class DataSharingClientImpl(
+class WearDataSharingClientImpl(
     application: Application,
-) : DataSharingClient {
+) : WearDataSharingClient {
 
     private val dataClient: DataClient = Wearable.getDataClient(application)
 
@@ -27,17 +27,17 @@ class DataSharingClientImpl(
     ): Boolean {
         return try {
             val id = System.currentTimeMillis()
-            val path = "${Constants.DataSharing.JOURNAL_ENTRY_ROUTE}/$id"
+            val path = "${Constants.WearDataSharing.JOURNAL_ENTRY_ROUTE}/$id"
             val request = PutDataMapRequest.create(path)
                 .apply {
-                    dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_VALUE, value)
+                    dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_VALUE, value)
                     dataMap.putLong(
-                        Constants.DataSharing.JOURNAL_ENTRY_TIME,
+                        Constants.WearDataSharing.JOURNAL_ENTRY_TIME,
                         time.toEpochMilliseconds()
                     )
-                    dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_TIME_ZONE, timeZoneId.id)
+                    dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TIME_ZONE, timeZoneId.id)
                     if (tag != null) {
-                        dataMap.putString(Constants.DataSharing.JOURNAL_ENTRY_TAG, tag)
+                        dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG, tag)
                     }
                 }
                 .asPutDataRequest()
@@ -61,7 +61,7 @@ class DataSharingClientImpl(
             // Even though there's only going to be one upload event, somehow not providing a unique
             // id every time, makes it work only the first time.
             // Receiving client should resolve receiving multiple upload events.
-            val path = "${Constants.DataSharing.REQUEST_UPLOAD_ROUTE}/$id"
+            val path = "${Constants.WearDataSharing.REQUEST_UPLOAD_ROUTE}/$id"
             val request = PutDataMapRequest.create(path)
                 .asPutDataRequest()
                 .setUrgent()
@@ -76,12 +76,12 @@ class DataSharingClientImpl(
     override suspend fun postTemplate(id: String, value: String, tag: String): Boolean {
         return try {
             val requestId = System.currentTimeMillis()
-            val path = "${Constants.DataSharing.TEMPLATE_ROUTE}/$requestId"
+            val path = "${Constants.WearDataSharing.TEMPLATE_ROUTE}/$requestId"
             val request = PutDataMapRequest.create(path)
                 .apply {
-                    dataMap.putString(Constants.DataSharing.TEMPLATE_ID, id)
-                    dataMap.putString(Constants.DataSharing.TEMPLATE_VALUE, value)
-                    dataMap.putString(Constants.DataSharing.TEMPLATE_TAG, tag)
+                    dataMap.putString(Constants.WearDataSharing.TEMPLATE_ID, id)
+                    dataMap.putString(Constants.WearDataSharing.TEMPLATE_VALUE, value)
+                    dataMap.putString(Constants.WearDataSharing.TEMPLATE_TAG, tag)
                 }
                 .asPutDataRequest()
                 .setUrgent()
