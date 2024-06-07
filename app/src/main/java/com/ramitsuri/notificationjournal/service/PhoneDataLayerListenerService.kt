@@ -36,7 +36,7 @@ class PhoneDataLayerListenerService : WearableListenerService() {
         addJournalEntryEvents.forEach { dataEvent ->
             val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
             val journalEntryText = dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_VALUE)
-            if (journalEntryText != null) {
+            if (!journalEntryText.isNullOrEmpty()) {
                 val journalEntryTimeMillis =
                     dataMap.getLong(Constants.DataSharing.JOURNAL_ENTRY_TIME)
                 val journalEntryTime = if (journalEntryTimeMillis == 0L) {
@@ -59,7 +59,6 @@ class PhoneDataLayerListenerService : WearableListenerService() {
                 val tag = dataMap.getString(Constants.DataSharing.JOURNAL_ENTRY_TAG)
 
                 val journalEntry = JournalEntry(
-                    id = 0,
                     entryTime = journalEntryTime,
                     timeZone = journalEntryTimeZone,
                     text = journalEntryText,

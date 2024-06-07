@@ -115,7 +115,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun JournalEntryScreen(
     state: ViewState,
     onAddRequested: () -> Unit,
-    onEditRequested: (Int) -> Unit,
+    onEditRequested: (String) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onEditTagRequested: (JournalEntry, String) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
@@ -761,7 +761,6 @@ private fun ListItemPreview() {
     Surface {
         ListItem(
             item = JournalEntry(
-                id = 0,
                 entryTime = Clock.System.now(),
                 timeZone = TimeZone.currentSystemDefault(),
                 text = "Test text"

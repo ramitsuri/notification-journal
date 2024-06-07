@@ -13,5 +13,5 @@ interface DataSharingClient {
 
     suspend fun requestUpload()
 
-    suspend fun postTemplate(id: Int, value: String, tag: String): Boolean
+    suspend fun postTemplate(id: String, value: String, tag: String): Boolean
 }

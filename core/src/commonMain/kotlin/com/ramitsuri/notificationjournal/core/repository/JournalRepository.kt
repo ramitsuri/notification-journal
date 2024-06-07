@@ -27,11 +27,11 @@ class JournalRepository(
         }
     }
 
-    suspend fun get(id: Int): JournalEntry {
+    suspend fun get(id: String): JournalEntry {
         return dao.get(id)
     }
 
-    suspend fun editText(id: Int, text: String) {
+    suspend fun editText(id: String, text: String) {
         dao.updateText(
             JournalEntryTextUpdate(
                 id = id,
@@ -40,7 +40,7 @@ class JournalRepository(
         )
     }
 
-    suspend fun editTag(id: Int, tag: String?) {
+    suspend fun editTag(id: String, tag: String?) {
         dao.updateTag(
             JournalEntryTagUpdate(
                 id = id,
@@ -49,7 +49,7 @@ class JournalRepository(
         )
     }
 
-    suspend fun editEntryTime(id: Int, time: Instant?) {
+    suspend fun editEntryTime(id: String, time: Instant?) {
         dao.updateEntryTime(
             JournalEntryTimeUpdate(
                 id = id,
@@ -62,10 +62,10 @@ class JournalRepository(
         val entryTime = clock.now()
         text
             .split("\n")
+            .filter { it.isNotBlank() }
             .forEach {
                 dao.insert(
                     JournalEntry(
-                        id = 0,
                         entryTime = entryTime,
                         timeZone = timeZone,
                         text = it.trim(),

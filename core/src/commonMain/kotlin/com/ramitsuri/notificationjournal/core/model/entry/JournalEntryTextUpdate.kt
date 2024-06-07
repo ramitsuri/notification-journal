@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 
 data class JournalEntryTextUpdate(
     @ColumnInfo(name = "id")
-    val id: Int,
+    val id: String,
 
     @ColumnInfo(name = "text")
     val text: String

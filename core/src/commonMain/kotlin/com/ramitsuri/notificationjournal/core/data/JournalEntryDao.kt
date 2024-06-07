@@ -22,7 +22,7 @@ abstract class JournalEntryDao {
     abstract suspend fun getAll(): List<JournalEntry>
 
     @Query("SELECT * FROM journalentry WHERE id = :id")
-    abstract suspend fun get(id: Int): JournalEntry
+    abstract suspend fun get(id: String): JournalEntry
 
     @Delete
     abstract suspend fun delete(journalEntries: List<JournalEntry>)

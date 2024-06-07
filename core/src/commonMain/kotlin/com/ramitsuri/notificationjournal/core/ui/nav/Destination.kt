@@ -52,7 +52,7 @@ enum class Destination(private val route: String) {
             this == EDIT_ENTRY -> {
                 listOf(
                     navArgument(EditJournalEntryViewModel.ENTRY_ID_ARG) {
-                        type = NavType.IntType
+                        type = NavType.StringType
                         nullable = false
                     },
                 )

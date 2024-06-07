@@ -4,12 +4,13 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(tableName = "Tags", indices = [Index(value = ["value"], unique = true)])
 data class Tag(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     @ColumnInfo(name = "id")
-    val id: Int,
+    val id: String = UUID.randomUUID().toString(),
 
     @ColumnInfo(name = "order")
     val order: Int,
@@ -18,6 +19,10 @@ data class Tag(
     val value: String,
 ) {
     companion object {
-        val NO_TAG = Tag(id = Int.MIN_VALUE, order = Int.MIN_VALUE, value = "internal_no_tag_value")
+        val NO_TAG = Tag(
+            id = "internal_no_tag",
+            order = Int.MIN_VALUE,
+            value = "internal_no_tag_value"
+        )
     }
 }

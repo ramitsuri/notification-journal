@@ -5,7 +5,7 @@ import kotlinx.datetime.Instant
 
 data class JournalEntryTimeUpdate(
     @ColumnInfo(name = "id")
-    val id: Int,
+    val id: String,
 
     @ColumnInfo(name = "entry_time_override")
     val entryTimeOverride: Instant?,

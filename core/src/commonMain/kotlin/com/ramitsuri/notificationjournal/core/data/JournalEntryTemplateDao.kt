@@ -23,15 +23,14 @@ abstract class JournalEntryTemplateDao {
     @Insert
     abstract suspend fun insert(journalEntryTemplate: JournalEntryTemplate)
 
-    @Suppress("IfThenToElvis")
     @Transaction
-    open suspend fun insertOrUpdate(id: Int? = null, text: String, tag: String) {
-        val idInQuestion = if (id != null) {
-            id
+    open suspend fun insertOrUpdate(id: String? = null, text: String, tag: String) {
+        val template = if (id != null) {
+            JournalEntryTemplate(id = id, text = text, tag = tag)
         } else {
-            (getAll().maxByOrNull { it.id }?.id ?: 0) + 1
+            JournalEntryTemplate(text = text, tag = tag)
         }
-        insertOrUpdate(JournalEntryTemplate(idInQuestion, text, tag))
+        insertOrUpdate(template)
     }
 
     @Query("SELECT * FROM journalentrytemplate")

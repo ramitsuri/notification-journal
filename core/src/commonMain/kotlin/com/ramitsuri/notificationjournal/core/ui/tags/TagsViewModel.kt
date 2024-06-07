@@ -21,7 +21,7 @@ class TagsViewModel(private val dao: TagsDao) : ViewModel() {
     )
     val state: StateFlow<TagsViewState> = _state
 
-    private var idBeingEdited: Int? = null
+    private var idBeingEdited: String? = null
 
     init {
         viewModelScope.launch {
@@ -67,7 +67,7 @@ class TagsViewModel(private val dao: TagsDao) : ViewModel() {
             val id = idBeingEdited
             if (id == null) {
                 val maxOrder = currentState.tags.maxByOrNull { it.order }?.order ?: 0
-                val success = dao.insertIfPossible(Tag(id = 0, order = maxOrder + 1, value = text))
+                val success = dao.insertIfPossible(Tag(order = maxOrder + 1, value = text))
                 if (!success) {
                     _state.update {
                         it.copy(error = TagError.INSERT_FAIL)

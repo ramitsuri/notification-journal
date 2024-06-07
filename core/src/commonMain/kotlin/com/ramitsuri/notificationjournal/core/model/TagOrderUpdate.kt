@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 
 data class TagOrderUpdate(
     @ColumnInfo(name = "id")
-    val id: Int,
+    val id: String,
 
     @ColumnInfo(name = "order")
     val order: Int,
