@@ -73,10 +73,6 @@ actual class Factory {
         }
     }
 
-    actual fun isDebug(): Boolean {
-        return false
-    }
-
     actual fun addJournalEntryVMFactory(
         navBackStackEntry: NavBackStackEntry,
         getVMInstance: (SavedStateHandle) -> AddJournalEntryViewModel,

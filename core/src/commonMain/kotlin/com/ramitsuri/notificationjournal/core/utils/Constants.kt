@@ -12,8 +12,6 @@ object Constants {
     const val PREF_KEY_DEVICE_ID = "device_id"
     const val PREF_KEY_EXCHANGE_NAME = "exchange_name"
 
-    const val DEFAULT_API_URL = "http://test.com"
-
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"
         const val JOURNAL_ENTRY_VALUE = "journal_entry_value"

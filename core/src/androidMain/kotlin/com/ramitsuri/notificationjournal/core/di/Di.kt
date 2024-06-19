@@ -48,10 +48,6 @@ actual class Factory(private val application: Application) {
         return SystemNotificationHandler(application)
     }
 
-    actual fun isDebug(): Boolean {
-        return BuildConfig.DEBUG
-    }
-
     actual fun addJournalEntryVMFactory(
         navBackStackEntry: NavBackStackEntry,
         getVMInstance: (SavedStateHandle) -> AddJournalEntryViewModel,
