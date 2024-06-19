@@ -7,15 +7,11 @@ import android.os.Bundle
 import android.util.Log
 import androidx.core.app.RemoteInput
 import com.ramitsuri.notificationjournal.MainApplication
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_JOURNAL
 import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_UPLOAD
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class NotificationActionReceiver : BroadcastReceiver() {
 
@@ -41,15 +37,13 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private fun processRemoteInput(remoteInput: Bundle) {
         val text = remoteInput.getCharSequence(Constants.REMOTE_INPUT_JOURNAL_KEY).toString()
         val repository = ServiceLocator.repository
-        CoroutineScope(SupervisorJob()).launch {
-            withContext(Dispatchers.IO) {
-                repository.insert(text = text)
-            }
+        ServiceLocator.coroutineScope.launch {
+            repository.insert(text = text)
         }
     }
 
     private fun upload() {
-        CoroutineScope(SupervisorJob()).launch {
+        ServiceLocator.coroutineScope.launch {
             val error = ServiceLocator.repository.upload() ?: return@launch
             Log.d(TAG, "Failed to upload: $error")
         }

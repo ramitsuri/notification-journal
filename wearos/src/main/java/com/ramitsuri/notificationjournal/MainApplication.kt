@@ -4,12 +4,8 @@ import android.app.Application
 import com.ramitsuri.notificationjournal.core.di.Factory
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.presentation.MainViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 
 class MainApplication : Application() {
-    private val coroutineScope = CoroutineScope(SupervisorJob())
-
     override fun onCreate() {
         super.onCreate()
         val factory = Factory(this)
@@ -18,10 +14,10 @@ class MainApplication : Application() {
 
     fun getViewModelFactory(): MainViewModel.Factory {
         return MainViewModel.Factory(
-            ServiceLocator.journalEntryDao,
+            ServiceLocator.repository,
             ServiceLocator.templatesDao,
             ServiceLocator.wearDataSharingClient,
-            coroutineScope
+            ServiceLocator.coroutineScope
         )
     }
 }
