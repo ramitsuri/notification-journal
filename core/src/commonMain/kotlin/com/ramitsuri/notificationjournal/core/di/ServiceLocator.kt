@@ -179,9 +179,8 @@ object ServiceLocator {
     }
 
     private val api: Api by lazy {
-        buildApi(
-            keyValueStore.getString(Constants.PREF_KEY_API_URL, Constants.DEFAULT_API_URL)
-                ?: Constants.DEFAULT_API_URL,
+        // TODO remove
+        buildApi(Constants.DEFAULT_API_URL,
             factory.isDebug(),
         )
     }

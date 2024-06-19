@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,18 +25,18 @@ class SettingsViewModel(
     val state: StateFlow<SettingsViewState>
 
     init {
-        val serverUrl = getApiUrl()
+        val dataHost = getDataHost()
+        val exchangeName = getExchangeName()
+        val deviceName = getDeviceName()
+
         _state = MutableStateFlow(
             SettingsViewState(
                 uploadLoading = false,
                 sortOrder = getSortOrder(),
-                serverText = serverUrl,
                 error = null,
-                serverState = if (serverUrl.isEmpty() || serverUrl == Constants.DEFAULT_API_URL) {
-                    ServerState.SET_SERVER
-                } else {
-                    ServerState.SERVER_SET
-                },
+                dataHost = DataHost(dataHost),
+                exchangeName = ExchangeName(exchangeName),
+                deviceName = DeviceName(deviceName),
             )
         )
         state = _state
@@ -57,10 +57,20 @@ class SettingsViewModel(
         }
     }
 
-    fun setApiUrl(url: String) {
-        keyValueStore.putString(Constants.PREF_KEY_API_URL, url)
+    fun setDataSharingProperties(
+        dataHost: DataHost,
+        exchangeName: ExchangeName,
+        deviceName: DeviceName
+    ) {
+        keyValueStore.putString(Constants.PREF_KEY_DATA_HOST, dataHost.host)
+        keyValueStore.putString(Constants.PREF_KEY_EXCHANGE_NAME, exchangeName.name)
+        keyValueStore.putString(Constants.PREF_KEY_DEVICE_NAME, deviceName.name)
         _state.update {
-            it.copy(serverText = url, serverState = ServerState.RESTART)
+            it.copy(
+                exchangeName = exchangeName,
+                dataHost = dataHost,
+                deviceName = deviceName
+            )
         }
     }
 
@@ -92,7 +102,12 @@ class SettingsViewModel(
         return SortOrder.fromKey(preferredSortOrderKey)
     }
 
-    private fun getApiUrl() = keyValueStore.getString(Constants.PREF_KEY_API_URL, "") ?: ""
+    private fun getDeviceName() = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "") ?: ""
+
+    private fun getExchangeName() =
+        keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "") ?: ""
+
+    private fun getDataHost() = keyValueStore.getString(Constants.PREF_KEY_DATA_HOST, "") ?: ""
 
     companion object {
         fun factory() = object : ViewModelProvider.Factory {
@@ -113,13 +128,8 @@ class SettingsViewModel(
 data class SettingsViewState(
     val uploadLoading: Boolean,
     val sortOrder: SortOrder,
-    val serverText: String,
-    val serverState: ServerState,
     val error: String? = null,
+    val dataHost: DataHost = DataHost(""),
+    val exchangeName: ExchangeName = ExchangeName(""),
+    val deviceName: DeviceName = DeviceName(""),
 )
-
-enum class ServerState {
-    RESTART,
-    SET_SERVER,
-    SERVER_SET,
-}

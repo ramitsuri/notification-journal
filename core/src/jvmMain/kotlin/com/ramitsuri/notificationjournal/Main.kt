@@ -17,9 +17,7 @@ fun main() = application {
         title = "Journal",
     ) {
         NotificationJournalTheme {
-            NavGraph(
-                shutdown = { }
-            )
+            NavGraph()
         }
     }
 }
