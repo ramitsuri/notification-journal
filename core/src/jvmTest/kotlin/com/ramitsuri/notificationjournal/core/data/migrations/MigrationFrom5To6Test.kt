@@ -6,6 +6,12 @@ import androidx.sqlite.execSQL
 import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
+import com.ramitsuri.notificationjournal.core.model.Tag
+import com.ramitsuri.notificationjournal.core.model.sync.Action
+import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.Sender
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
@@ -400,4 +406,29 @@ class MigrationFrom5To6Test : BaseMigrationTest() {
     )
 
     //endregion
+
+    @Test
+    fun name() {
+        var payload:Payload = Payload.Tags(
+            data = listOf(Tag(id = "", order = 0, value = "")),
+            action = Action.DELETE,
+            sender = Sender(name = "", id = ""),
+        )
+        val json = Json {
+            prettyPrint = true
+            isLenient = true
+            ignoreUnknownKeys = true
+        }
+        val jsonString = json.encodeToString(payload).also {
+            println(it)
+        }
+
+        val pa = json.decodeFromString<Payload>(jsonString)
+        println(pa)
+        when (pa) {
+            is Payload.Entries -> println("Entry")
+            is Payload.Tags -> println("Tags")
+            is Payload.Templates -> println("Templates")
+        }
+    }
 }

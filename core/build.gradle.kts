@@ -52,6 +52,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
 
             implementation(libs.multiplatform.settings)
+
+            implementation(libs.amqp.client)
         }
         androidMain.dependencies {
             implementation(libs.androidx.ktx)

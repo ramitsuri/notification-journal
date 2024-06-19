@@ -4,18 +4,24 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
+@Serializable
 @Entity(tableName = "Tags", indices = [Index(value = ["value"], unique = true)])
 data class Tag(
     @PrimaryKey
     @ColumnInfo(name = "id")
+    @SerialName("id")
     val id: String = UUID.randomUUID().toString(),
 
     @ColumnInfo(name = "order")
+    @SerialName("order")
     val order: Int,
 
     @ColumnInfo(name = "value")
+    @SerialName("value")
     val value: String,
 ) {
     companion object {

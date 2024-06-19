@@ -9,6 +9,10 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainApplication : Application() {
     override fun onCreate() {
@@ -18,6 +22,11 @@ class MainApplication : Application() {
         val factory = Factory(this)
         ServiceLocator.init(factory)
         showJournalNotification()
+        CoroutineScope(Dispatchers.IO).launch {
+            DataReceiveHelper.getDefault().startListening {
+                println("Received payload: $it")
+            }
+        }
     }
 
     fun showJournalNotification() {

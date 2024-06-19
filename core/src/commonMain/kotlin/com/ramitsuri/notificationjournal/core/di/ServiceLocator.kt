@@ -7,6 +7,7 @@ import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.network.Api
+import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.buildApi
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
@@ -17,6 +18,7 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
+import kotlinx.serialization.json.Json
 
 object ServiceLocator {
     fun init(factory: Factory) {
@@ -63,6 +65,14 @@ object ServiceLocator {
         factory.getWearDataSharingClient()
     }
 
+    val json by lazy {
+        Json {
+            prettyPrint = true
+            isLenient = true
+            ignoreUnknownKeys = true
+        }
+    }
+
     fun getAddJournalEntryVMFactory(
         navBackStackEntry: NavBackStackEntry
     ) = factory.addJournalEntryVMFactory(
@@ -86,6 +96,12 @@ object ServiceLocator {
             repository = repository,
             tagsDao = tagsDao,
         )
+    }
+
+    fun getDeviceName() = factory.deviceName()
+
+    val dataSendHelper by lazy {
+        DataSendHelper.getDefault()
     }
 
     private val api: Api by lazy {
