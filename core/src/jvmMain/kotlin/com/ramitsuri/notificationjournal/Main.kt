@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 fun main() = application {
     val factory = Factory()
     ServiceLocator.init(factory)
+    ServiceLocator.onAppStart()
 
     Window(
         onCloseRequest = ::exitApplication,

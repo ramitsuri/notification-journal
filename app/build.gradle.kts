@@ -83,6 +83,7 @@ dependencies {
 
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.lifecycle.process)
     implementation(libs.lifecycle.runtime.compose)
 
     implementation(libs.playservices.wearable)
