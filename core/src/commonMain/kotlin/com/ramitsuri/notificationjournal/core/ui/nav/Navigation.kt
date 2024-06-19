@@ -34,7 +34,6 @@ fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     receivedText: String? = null,
-    shutdown: () -> Unit,
 ) {
     NavHost(
         navController = navController,
@@ -180,7 +179,7 @@ fun NavGraph(
                 state = viewState,
                 onBack = { navController.navigateUp() },
                 onUploadClicked = viewModel::upload,
-                onApiUrlSet = viewModel::setApiUrl,
+                onDataSharingPropertiesSet = viewModel::setDataSharingProperties,
                 onSortOrderClicked = viewModel::reverseSortOrder,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
                 onTagsClicked = {
@@ -189,7 +188,6 @@ fun NavGraph(
                 onTemplatesClicked = {
                     navController.navigate(Destination.TEMPLATES.routeWithArgValues())
                 },
-                shutdown = shutdown,
             )
         }
 

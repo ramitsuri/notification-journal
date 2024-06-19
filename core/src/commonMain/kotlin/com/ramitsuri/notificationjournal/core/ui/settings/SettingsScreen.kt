@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -32,17 +33,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.back
-import notificationjournal.core.generated.resources.button_text_restart
-import notificationjournal.core.generated.resources.button_text_set_server
 import notificationjournal.core.generated.resources.cancel
+import notificationjournal.core.generated.resources.data_host
+import notificationjournal.core.generated.resources.device_name
 import notificationjournal.core.generated.resources.error
+import notificationjournal.core.generated.resources.exchange_name
 import notificationjournal.core.generated.resources.ok
-import notificationjournal.core.generated.resources.settings_server_title
+import notificationjournal.core.generated.resources.settings_data_sharing_not_set
+import notificationjournal.core.generated.resources.settings_data_sharing_title
 import notificationjournal.core.generated.resources.settings_sort_order_asc
 import notificationjournal.core.generated.resources.settings_sort_order_desc
 import notificationjournal.core.generated.resources.settings_sort_order_title
@@ -60,27 +64,24 @@ fun SettingsScreen(
     state: SettingsViewState,
     onBack: () -> Unit,
     onUploadClicked: () -> Unit,
-    onApiUrlSet: (String) -> Unit,
+    onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName) -> Unit,
     onSortOrderClicked: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
-    shutdown: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
-    var serverSet by rememberSaveable { mutableStateOf(false) }
 
     if (showDialog) {
-        SetApiUrlDialog(
-            state.serverText,
-            onPositiveClick = { value ->
+        DataSharingPropertiesDialog(
+            dataHost = state.dataHost,
+            exchangeName = state.exchangeName,
+            deviceName = state.deviceName,
+            onPositiveClick = { dataHost, exchangeName, deviceName ->
                 showDialog = !showDialog
-                onApiUrlSet(value)
-                serverSet = true
+                onDataSharingPropertiesSet(dataHost, exchangeName, deviceName)
             },
-            onNegativeClick = {
-                showDialog = !showDialog
-            }
+            onNegativeClick = { showDialog = !showDialog },
         )
     }
     Surface {
@@ -103,36 +104,24 @@ fun SettingsScreen(
                     .fillMaxWidth(),
             ) {
                 item {
-                    val subtitle = when (state.serverState) {
-                        ServerState.RESTART -> {
-                            stringResource(Res.string.button_text_restart)
+                    val subtitle = buildString {
+                        if (state.dataHost.host.isNotEmpty()) {
+                            append(state.dataHost.host)
+                            append(" : ")
                         }
-
-                        ServerState.SET_SERVER -> {
-                            stringResource(Res.string.button_text_set_server)
+                        if (state.exchangeName.name.isNotEmpty()) {
+                            append(state.exchangeName.name)
+                            append(" : ")
                         }
-
-                        ServerState.SERVER_SET -> {
-                            state.serverText
+                        if (state.deviceName.name.isNotEmpty()) {
+                            append(state.deviceName.name)
                         }
                     }
                     SettingsItem(
-                        title = stringResource(Res.string.settings_server_title),
-                        subtitle = subtitle,
+                        title = stringResource(Res.string.settings_data_sharing_title),
+                        subtitle = subtitle.ifEmpty { stringResource(Res.string.settings_data_sharing_not_set) },
                         onClick = {
-                            when (state.serverState) {
-                                ServerState.RESTART -> {
-                                    shutdown()
-                                }
-
-                                ServerState.SET_SERVER -> {
-                                    showDialog = true
-                                }
-
-                                ServerState.SERVER_SET -> {
-                                    showDialog = true
-                                }
-                            }
+                            showDialog = true
                         },
                         showProgress = false
                     )
@@ -218,20 +207,51 @@ private fun SettingsItem(
 }
 
 @Composable
-private fun SetApiUrlDialog(
-    previousText: String,
-    onPositiveClick: (String) -> Unit,
+private fun DataSharingPropertiesDialog(
+    dataHost: DataHost,
+    exchangeName: ExchangeName,
+    deviceName: DeviceName,
+    onPositiveClick: (DataHost, ExchangeName, DeviceName) -> Unit,
     onNegativeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var text by rememberSaveable { mutableStateOf(previousText.ifEmpty { "http://" }) }
+    var dataHostText by rememberSaveable { mutableStateOf(dataHost.host) }
+    var exchangeNameText by rememberSaveable { mutableStateOf(exchangeName.name) }
+    var deviceNameText by rememberSaveable { mutableStateOf(deviceName.name) }
+
     Dialog(onDismissRequest = { }) {
         Card {
-            Column(modifier = modifier.padding(8.dp)) {
+            Column(modifier = modifier.padding(16.dp)) {
                 OutlinedTextField(
-                    value = text,
+                    value = dataHostText,
                     singleLine = true,
-                    onValueChange = { text = it },
+                    label = {
+                        Text(stringResource(Res.string.data_host))
+                    },
+                    onValueChange = { dataHostText = it },
+                    modifier = modifier.fillMaxWidth()
+                )
+                Spacer(modifier = modifier.height(16.dp))
+                OutlinedTextField(
+                    value = exchangeNameText,
+                    singleLine = true,
+                    label = {
+                        Text(stringResource(Res.string.exchange_name))
+                    },
+                    onValueChange = { exchangeNameText = it },
+                    modifier = modifier.fillMaxWidth()
+                )
+                Spacer(modifier = modifier.height(16.dp))
+                OutlinedTextField(
+                    value = deviceNameText,
+                    singleLine = true,
+                    label = {
+                        Text(stringResource(Res.string.device_name))
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences
+                    ),
+                    onValueChange = { deviceNameText = it },
                     modifier = modifier.fillMaxWidth()
                 )
                 Spacer(modifier = modifier.height(16.dp))
@@ -245,9 +265,15 @@ private fun SetApiUrlDialog(
                         Text(text = stringResource(Res.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = {
-                        onPositiveClick(text)
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onPositiveClick(
+                                DataHost(dataHostText),
+                                ExchangeName(exchangeNameText),
+                                DeviceName(deviceNameText)
+                            )
+                        }
+                    ) {
                         Text(text = stringResource(Res.string.ok))
                     }
                 }

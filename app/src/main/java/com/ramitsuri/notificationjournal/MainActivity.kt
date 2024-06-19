@@ -15,7 +15,6 @@ import androidx.core.view.WindowCompat
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import com.ramitsuri.notificationjournal.core.utils.receivedText
-import com.ramitsuri.notificationjournal.utils.shutdown
 
 class MainActivity : ComponentActivity() {
 
@@ -48,7 +47,6 @@ class MainActivity : ComponentActivity() {
             ) {
                 NavGraph(
                     receivedText = this@MainActivity.intent?.receivedText(),
-                    shutdown = this::shutdown
                 )
             }
         }

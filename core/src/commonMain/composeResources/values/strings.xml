@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">Notification Journal</string>
-    <string name="button_text_restart">Restart</string>
-    <string name="button_text_set_server">Set Server</string>
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
@@ -34,7 +32,8 @@
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>
 
-    <string name="settings_server_title">Server URL</string>
+    <string name="settings_data_sharing_title">Data sharing between devices</string>
+    <string name="settings_data_sharing_not_set">Currently not sharing</string>
 
     <string name="settings_sort_order_title">Sort order</string>
     <string name="settings_sort_order_asc">Oldest entry time first</string>
@@ -84,4 +83,8 @@
 
     <string name="am">am</string>
     <string name="pm">pm</string>
+
+    <string name="data_host">Host</string>
+    <string name="device_name">Device name</string>
+    <string name="exchange_name">Exchange</string>
 </resources>
