@@ -3,11 +3,11 @@ package com.ramitsuri.notificationjournal.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
-import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,14 +18,14 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 
 class MainViewModel(
-    private val dao: JournalEntryDao,
+    private val repository: JournalRepository,
     private val templateDao: JournalEntryTemplateDao,
     private val wearDataSharingClient: WearDataSharingClient,
     private val longLivingCoroutineScope: CoroutineScope
 ) : ViewModel() {
 
     class Factory(
-        private val dao: JournalEntryDao,
+        private val repository: JournalRepository,
         private val templateDao: JournalEntryTemplateDao,
         private val wearDataSharingClient: WearDataSharingClient,
         private val coroutineScope: CoroutineScope
@@ -33,7 +33,7 @@ class MainViewModel(
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MainViewModel(dao, templateDao, wearDataSharingClient, coroutineScope) as T
+            return MainViewModel(repository, templateDao, wearDataSharingClient, coroutineScope) as T
         }
     }
 
@@ -46,7 +46,7 @@ class MainViewModel(
 
     init {
         viewModelScope.launch {
-            dao.getAllFlow().collect { entries ->
+            repository.getFlow().collect { entries ->
                 _state.update {
                     it.copy(journalEntries = entries)
                 }
@@ -74,6 +74,7 @@ class MainViewModel(
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
     ) {
         val entries = value.split(". ")
+            .filter { it.isNotBlank() }
         longLivingCoroutineScope.launch {
             for (entry in entries) {
                 postToClient(value = entry, time, timeZone, tag, exitOnDone)
@@ -83,7 +84,7 @@ class MainViewModel(
 
     fun transferLocallySaved() {
         longLivingCoroutineScope.launch {
-            val onDeviceEntries = dao.getAll()
+            val onDeviceEntries = repository.getAll()
             onDeviceEntries.forEach { journalEntry ->
                 val posted = wearDataSharingClient.postJournalEntry(
                     journalEntry.text,
@@ -92,7 +93,7 @@ class MainViewModel(
                     journalEntry.tag
                 )
                 if (posted) {
-                    dao.delete(listOf(journalEntry))
+                    repository.delete(journalEntry)
                 }
             }
         }
@@ -127,7 +128,7 @@ class MainViewModel(
             tag = null,
             entryTimeOverride = null,
         )
-        dao.insert(entry)
+        repository.insert(entry)
         if (exitOnDone) {
             _state.update {
                 it.copy(shouldExit = true)

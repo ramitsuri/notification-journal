@@ -6,14 +6,10 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -65,17 +61,15 @@ class PhoneDataLayerListenerService : WearableListenerService() {
                     tag = tag,
                 )
 
-                val dao = ServiceLocator.journalEntryDao
-                CoroutineScope(SupervisorJob()).launch {
-                    withContext(Dispatchers.IO) {
-                        dao.insert(journalEntry)
-                    }
+                val repository = ServiceLocator.repository
+                ServiceLocator.coroutineScope.launch {
+                    repository.insert(journalEntry)
                 }
             }
         }
 
         if (uploadEvents.isNotEmpty()) {
-            CoroutineScope(SupervisorJob()).launch {
+            ServiceLocator.coroutineScope.launch {
                 val error = ServiceLocator.repository.upload() ?: return@launch
                 Log.d(TAG, "Failed to upload: $error")
             }

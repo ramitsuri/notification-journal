@@ -22,6 +22,8 @@ class JournalRepository(
         }
     }
 
+    suspend fun getAll() = dao.getAll()
+
     suspend fun get(id: String): JournalEntry {
         return dao.get(id)
     }
@@ -59,7 +61,7 @@ class JournalRepository(
             .split("\n")
             .filter { it.isNotBlank() }
             .forEach {
-                dao.insert(
+                insert(
                     JournalEntry(
                         entryTime = entryTime,
                         timeZone = timeZone,
@@ -69,6 +71,10 @@ class JournalRepository(
                     )
                 )
             }
+    }
+
+    suspend fun insert(entry: JournalEntry) {
+        dao.insert(entry)
     }
 
     suspend fun delete(entry: JournalEntry) {

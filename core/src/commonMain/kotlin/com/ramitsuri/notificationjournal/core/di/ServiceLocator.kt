@@ -72,10 +72,6 @@ object ServiceLocator {
         PrefsKeyValueStore(factory)
     }
 
-    val journalEntryDao: JournalEntryDao by lazy {
-        AppDatabase.getJournalEntryDao(factory)
-    }
-
     val tagsDao: TagsDao by lazy {
         AppDatabase.getTagsDao(factory)
     }
@@ -167,7 +163,7 @@ object ServiceLocator {
         }
     }
 
-    private val coroutineScope by lazy {
+    val coroutineScope by lazy {
         CoroutineScope(SupervisorJob())
     }
 
