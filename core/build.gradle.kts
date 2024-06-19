@@ -44,11 +44,6 @@ kotlin {
             implementation(libs.kotlin.datetime)
 
             implementation(libs.kotlin.serialization)
-            implementation(libs.ktor.core)
-            implementation(libs.ktor.okhttp)
-            implementation(libs.ktor.content.negotation)
-            implementation(libs.ktor.serialization)
-            implementation(libs.ktor.logging)
             implementation(libs.kotlinx.coroutines.core)
 
             implementation(libs.multiplatform.settings)

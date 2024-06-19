@@ -5,10 +5,6 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTagUpdate
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTextUpdate
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntryTimeUpdate
-import com.ramitsuri.notificationjournal.core.model.toDayGroups
-import com.ramitsuri.notificationjournal.core.network.Api
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
@@ -16,7 +12,6 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 
 class JournalRepository(
-    private val api: Api,
     private val dao: JournalEntryDao,
     private val clock: Clock = Clock.System,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -85,7 +80,9 @@ class JournalRepository(
         if (entries.isEmpty()) {
             return null
         }
-        val response = api.sendData(entries.toDayGroups())
+        // TODO share with app clients
+        return "Not supported"
+        /*val response = api.sendData(entries.toDayGroups())
         return if (response == null) {
             "Null response"
         } else if (response.status == HttpStatusCode.OK) {
@@ -93,6 +90,6 @@ class JournalRepository(
             null
         } else {
             "Message: ${response.bodyAsText()}, Code: ${response.status}"
-        }
+        }*/
     }
 }

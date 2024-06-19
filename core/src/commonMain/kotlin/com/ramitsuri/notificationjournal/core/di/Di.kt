@@ -20,8 +20,6 @@ expect class Factory {
 
     fun getNotificationHandler(): NotificationHandler
 
-    fun isDebug(): Boolean
-
     // Because Android AbstractSavedStateViewModelFactory expects Class as a parameter but JVM
     // AbstractSavedStateViewModelFactory expects KClass as a parameter.
     fun addJournalEntryVMFactory(

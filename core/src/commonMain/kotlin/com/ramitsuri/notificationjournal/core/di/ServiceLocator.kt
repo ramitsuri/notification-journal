@@ -6,12 +6,10 @@ import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
-import com.ramitsuri.notificationjournal.core.network.Api
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
-import com.ramitsuri.notificationjournal.core.network.buildApi
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
@@ -62,7 +60,6 @@ object ServiceLocator {
 
     val repository: JournalRepository by lazy {
         JournalRepository(
-            api = api,
             dao = AppDatabase.getJournalEntryDao(factory)
         )
     }
@@ -176,13 +173,6 @@ object ServiceLocator {
 
     private val ioDispatcher by lazy {
         Dispatchers.IO
-    }
-
-    private val api: Api by lazy {
-        // TODO remove
-        buildApi(Constants.DEFAULT_API_URL,
-            factory.isDebug(),
-        )
     }
 
     private lateinit var factory: Factory
