@@ -7,18 +7,17 @@ import com.rabbitmq.client.DeliverCallback
 import com.rabbitmq.client.Delivery
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
-class DataReceiveHelperImpl(
+internal class DataReceiveHelperImpl(
     private val ioDispatcher: CoroutineDispatcher,
     private val hostName: String,
     private val exchangeName: String,
-    private val clientName: String,
-    private val clientId: String,
+    private val deviceName: String,
+    private val deviceId: String,
     private val json: Json,
 ) : DataReceiveHelper {
 
@@ -30,17 +29,19 @@ class DataReceiveHelperImpl(
         val deliverCallback = DeliverCallback { _: String?, delivery: Delivery ->
             val message = String(delivery.body, Charsets.UTF_8)
             val payload = json.decodeFromString<Payload>(message)
-            if (payload.sender.id == clientId) {
+            if (payload.sender.id == deviceId) {
                 return@DeliverCallback
             }
             onPayloadReceived(payload)
         }
-        mutex.withLock {
-            createChannelIfNecessary()
-            try {
-                channel?.basicConsume(clientName, true, deliverCallback) { _ -> }
-            } catch (e: Exception) {
-                log("Failed to setup receiver: ${e.message}")
+        withContext(ioDispatcher) {
+            mutex.withLock {
+                createChannelIfNecessary()
+                try {
+                    channel?.basicConsume(deviceName, true, deliverCallback) { _ -> }
+                } catch (e: Exception) {
+                    log("Failed to setup receiver: ${e.message}")
+                }
             }
         }
     }
@@ -57,22 +58,20 @@ class DataReceiveHelperImpl(
     }
 
     private suspend fun createChannelIfNecessary() {
-        withContext(ioDispatcher) {
-            try {
-                if (connection == null) {
-                    connection = ConnectionFactory().apply {
-                        host = hostName
-                        isAutomaticRecoveryEnabled = true
-                        isTopologyRecoveryEnabled = true
-                    }.newConnection()
-                    channel = connection?.createChannel()
-                    channel?.queueDeclare(clientName, true, false, false, null)
-                    channel?.queueBind(clientName, exchangeName, "")
-                }
-            } catch (e: Exception) {
-                log("Failed to connect to RabbitMQ: $e")
-                closeConnection()
+        try {
+            if (connection == null) {
+                connection = ConnectionFactory().apply {
+                    host = hostName
+                    isAutomaticRecoveryEnabled = true
+                    isTopologyRecoveryEnabled = true
+                }.newConnection()
+                channel = connection?.createChannel()
+                channel?.queueDeclare(deviceName, true, false, false, null)
+                channel?.queueBind(deviceName, exchangeName, "")
             }
+        } catch (e: Exception) {
+            log("Failed to connect to RabbitMQ: $e")
+            closeConnection()
         }
     }
 

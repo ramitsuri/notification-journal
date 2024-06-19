@@ -1,32 +1,37 @@
 package com.ramitsuri.notificationjournal
 
 import android.app.Application
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
 import com.ramitsuri.notificationjournal.core.di.Factory
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
-class MainApplication : Application() {
+class MainApplication : Application(), DefaultLifecycleObserver {
     override fun onCreate() {
-        super.onCreate()
+        super<Application>.onCreate()
 
         DynamicColors.applyToActivitiesIfAvailable(this)
         val factory = Factory(this)
         ServiceLocator.init(factory)
         showJournalNotification()
-        CoroutineScope(Dispatchers.IO).launch {
-            DataReceiveHelper.getDefault().startListening {
-                println("Received payload: $it")
-            }
-        }
+        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+    }
+
+    override fun onStart(owner: LifecycleOwner) {
+        super.onStart(owner)
+        ServiceLocator.onAppStart()
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        super.onStop(owner)
+        ServiceLocator.onAppStop()
     }
 
     fun showJournalNotification() {

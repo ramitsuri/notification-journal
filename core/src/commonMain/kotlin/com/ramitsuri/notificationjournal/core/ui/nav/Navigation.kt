@@ -14,10 +14,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import com.ramitsuri.notificationjournal.core.model.Tag
-import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.sync.Action
-import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryScreen
@@ -31,11 +27,6 @@ import com.ramitsuri.notificationjournal.core.ui.tags.TagsViewModel
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesScreen
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
 import com.ramitsuri.notificationjournal.core.utils.ReceivedTextListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
 import java.net.URLEncoder
 
 @Composable
@@ -97,54 +88,22 @@ fun NavGraph(
                 }
             }
 
-
             val viewState by viewModel.state.collectAsStateWithLifecycle()
             JournalEntryScreen(
                 state = viewState,
                 onAddRequested = {
-                    /*navController.navigate(
+                    navController.navigate(
                         Destination.ADD_ENTRY.routeWithArgValues()
-                    )*/
-                    CoroutineScope(Dispatchers.IO).launch {
-                        ServiceLocator.dataSendHelper.sendEntry(
-                            JournalEntry(
-                                id = "1",
-                                entryTime = Clock.System.now(),
-                                timeZone = TimeZone.currentSystemDefault(),
-                                text = "This is a test text",
-                                tag = null,
-                                entryTimeOverride = null,
-                                uploaded = false,
-                                autoTagged = false
-                            ),
-                            Action.CREATE,
-                        )
-                    }
+                    )
                 },
                 onEditRequested = { entryId ->
-                    /*navController.navigate(
+                    navController.navigate(
                         Destination.EDIT_ENTRY.routeWithArgValues(
                             mapOf(
                                 EditJournalEntryViewModel.ENTRY_ID_ARG to entryId
                             )
                         )
-                    )*/
-                    CoroutineScope(Dispatchers.IO).launch {
-                        ServiceLocator.dataSendHelper.sendTags(
-                            listOf(
-                                Tag(
-                                    id = "1",
-                                    order = 1,
-                                    value = "Tag1"
-                                ),
-                                Tag(
-                                    id = "2",
-                                    order = 2,
-                                    value = "Tag2"
-                                )
-                            )
-                        )
-                    }
+                    )
                 },
                 onDeleteRequested = viewModel::delete,
                 onEditTagRequested = viewModel::editTag,
@@ -156,23 +115,7 @@ fun NavGraph(
                 onTagGroupMoveToPreviousDayRequested = viewModel::moveToPreviousDay,
                 onTagGroupDeleteRequested = viewModel::delete,
                 onSettingsClicked = {
-                    /*navController.navigate(Destination.SETTINGS.routeWithArgValues())*/
-                    CoroutineScope(Dispatchers.IO).launch {
-                        ServiceLocator.dataSendHelper.sendTemplates(
-                            listOf(
-                                JournalEntryTemplate(
-                                    id = "1",
-                                    text = "Template1",
-                                    tag = "Tag1",
-                                ),
-                                JournalEntryTemplate(
-                                    id = "2",
-                                    text = "Template2",
-                                    tag = "Tag2",
-                                ),
-                            )
-                        )
-                    }
+                    navController.navigate(Destination.SETTINGS.routeWithArgValues())
                 },
             )
         }

@@ -77,10 +77,6 @@ actual class Factory {
         return false
     }
 
-    actual fun deviceName(): String {
-        return "Desktop"
-    }
-
     actual fun addJournalEntryVMFactory(
         navBackStackEntry: NavBackStackEntry,
         getVMInstance: (SavedStateHandle) -> AddJournalEntryViewModel,

@@ -18,12 +18,12 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
-class DataSendHelperImpl(
+internal class DataSendHelperImpl(
     private val ioDispatcher: CoroutineDispatcher,
     private val hostName: String,
     private val exchangeName: String,
-    private val clientName: String,
-    private val clientId: String,
+    private val deviceName: String,
+    private val deviceId: String,
     private val json: Json,
 ) : DataSendHelper {
 
@@ -35,7 +35,7 @@ class DataSendHelperImpl(
         return Payload.Entries(
             data = listOf(entry),
             action = action,
-            sender = Sender(name = clientName, id = clientId)
+            sender = Sender(name = deviceName, id = deviceId)
         ).send()
     }
 
@@ -43,7 +43,7 @@ class DataSendHelperImpl(
         return Payload.Tags(
             data = tags,
             action = Action.UPDATE,
-            sender = Sender(name = clientName, id = clientId)
+            sender = Sender(name = deviceName, id = deviceId)
         ).send()
     }
 
@@ -51,14 +51,14 @@ class DataSendHelperImpl(
         return Payload.Templates(
             data = templates,
             action = Action.UPDATE,
-            sender = Sender(name = clientName, id = clientId)
+            sender = Sender(name = deviceName, id = deviceId)
         ).send()
     }
 
     private suspend fun Payload.send(): Boolean {
-        mutex.withLock {
-            createChannelIfNecessary()
-            return withContext(ioDispatcher) {
+        return withContext(ioDispatcher) {
+            mutex.withLock {
+                createChannelIfNecessary()
                 try {
                     val message = json.encodeToString(this@send).toByteArray()
                     channel?.basicPublish(
@@ -89,21 +89,19 @@ class DataSendHelperImpl(
     }
 
     private suspend fun createChannelIfNecessary() {
-        withContext(ioDispatcher) {
-            try {
-                if (connection == null) {
-                    connection = ConnectionFactory().apply {
-                        host = hostName
-                        isAutomaticRecoveryEnabled = true
-                        isTopologyRecoveryEnabled = true
-                    }.newConnection()
-                    channel = connection?.createChannel()
-                    channel?.confirmSelect()
-                }
-            } catch (e: Exception) {
-                log("Failed to connect to RabbitMQ: $e")
-                closeConnection()
+        try {
+            if (connection == null) {
+                connection = ConnectionFactory().apply {
+                    host = hostName
+                    isAutomaticRecoveryEnabled = true
+                    isTopologyRecoveryEnabled = true
+                }.newConnection()
+                channel = connection?.createChannel()
+                channel?.confirmSelect()
             }
+        } catch (e: Exception) {
+            log("Failed to connect to RabbitMQ: $e")
+            closeConnection()
         }
     }
 

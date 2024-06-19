@@ -52,10 +52,6 @@ actual class Factory(private val application: Application) {
         return BuildConfig.DEBUG
     }
 
-    actual fun deviceName(): String {
-        return "Android"
-    }
-
     actual fun addJournalEntryVMFactory(
         navBackStackEntry: NavBackStackEntry,
         getVMInstance: (SavedStateHandle) -> AddJournalEntryViewModel,

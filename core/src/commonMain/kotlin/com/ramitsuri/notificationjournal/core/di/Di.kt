@@ -22,8 +22,6 @@ expect class Factory {
 
     fun isDebug(): Boolean
 
-    fun deviceName(): String
-
     // Because Android AbstractSavedStateViewModelFactory expects Class as a parameter but JVM
     // AbstractSavedStateViewModelFactory expects KClass as a parameter.
     fun addJournalEntryVMFactory(
