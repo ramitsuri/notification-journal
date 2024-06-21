@@ -60,14 +60,7 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(isLoading = true) }
         val tag = currentState.selectedTag
         viewModelScope.launch {
-            repository.editText(
-                id = entry.id,
-                text = text
-            )
-            repository.editTag(
-                id = entry.id,
-                tag = tag
-            )
+            repository.update(entry.copy(text = text, tag = tag))
             _saved.update {
                 true
             }
