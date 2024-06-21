@@ -45,6 +45,14 @@ data class JournalEntry(
     @ColumnInfo(name = "auto_tagged", defaultValue = "0")
     @SerialName("auto_tagged")
     val autoTagged: Boolean = false,
+
+    @ColumnInfo(name = "deleted", defaultValue = "0")
+    @SerialName("deleted")
+    val deleted: Boolean = false,
+
+    @ColumnInfo(name = "reconciled", defaultValue = "0")
+    @SerialName("reconciled")
+    val reconciled: Boolean = false,
 ) {
     fun formattedTime(am: String, pm: String): String =
         formatForDisplay(

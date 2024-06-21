@@ -44,13 +44,13 @@ class MigrationFrom5To6Test : BaseMigrationTest() {
             // Assert
             v5Data.forEach { v5 ->
                 val v6 = v6Data.first { it.text == v5.text }
-                assertEquals(v6.entryTime, v6.entryTime)
-                assertEquals(v6.timeZone, v6.timeZone)
-                assertEquals(v6.text, v6.text)
-                assertEquals(v6.tag, v6.tag)
-                assertEquals(v6.entryTimeOverride, v6.entryTimeOverride)
-                assertEquals(v6.uploaded, v6.uploaded)
-                assertEquals(v6.autoTagged, v6.autoTagged)
+                assertEquals(v5.entryTime, v6.entryTime)
+                assertEquals(v5.timeZone, v6.timeZone)
+                assertEquals(v5.text, v6.text)
+                assertEquals(v5.tag, v6.tag)
+                assertEquals(v5.entryTimeOverride, v6.entryTimeOverride)
+                assertEquals(v5.uploaded, v6.uploaded)
+                assertEquals(v5.autoTagged, v6.autoTagged)
             }
         } catch (e: Exception) {
             fail(e.message)
@@ -142,7 +142,7 @@ class MigrationFrom5To6Test : BaseMigrationTest() {
                             "(id,entry_time,time_zone,text,tag,entry_time_override,uploaded,auto_tagged) " +
                             "VALUES(" +
                             "${it.id},${it.entryTime},'${it.timeZone}','${it.text}'," +
-                            "$tag,${it.entryTimeOverride},0,0" +
+                            "$tag,${it.entryTimeOverride},${it.uploaded},${it.autoTagged}" +
                             ")"
                 )
             }

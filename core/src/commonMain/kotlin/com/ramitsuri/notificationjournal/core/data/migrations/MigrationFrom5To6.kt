@@ -8,6 +8,8 @@ import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
 import java.util.UUID
 
+// Changes auto generated int primary key to UUID string primary key for JournalEntry, Tags,
+// Templates tables
 class MigrationFrom5To6 : Migration(5, 6) {
 
     override fun migrate(connection: SQLiteConnection) {
@@ -48,8 +50,8 @@ class MigrationFrom5To6 : Migration(5, 6) {
                 } else {
                     statement.bindLong(index = 6, entry.entryTimeOverride)
                 }
-                statement.bindBoolean(index = 7, value = false)
-                statement.bindBoolean(index = 8, value = false)
+                statement.bindBoolean(index = 7, value = entry.uploaded)
+                statement.bindBoolean(index = 8, value = entry.autoTagged)
                 statement.step()
             }
         }
@@ -131,6 +133,12 @@ class MigrationFrom5To6 : Migration(5, 6) {
                     val entryTimeOverrideColumn = statement.getColumnIndex("entry_time_override")
                     val entryTimeOverride = statement.getLongOrNull(entryTimeOverrideColumn)
 
+                    val uploadedColumn = statement.getColumnIndex("uploaded")
+                    val uploaded = statement.getBoolean(uploadedColumn)
+
+                    val autoTaggedColumn = statement.getColumnIndex("auto_tagged")
+                    val autoTagged = statement.getBoolean(autoTaggedColumn)
+
                     entries.add(
                         JournalEntryV5(
                             id = id,
@@ -139,6 +147,8 @@ class MigrationFrom5To6 : Migration(5, 6) {
                             text = text,
                             tag = tag,
                             entryTimeOverride = entryTimeOverride,
+                            uploaded = uploaded,
+                            autoTagged = autoTagged,
                         )
                     )
                 } catch (e: Exception) {
@@ -202,8 +212,8 @@ class MigrationFrom5To6 : Migration(5, 6) {
         val text: String,
         val tag: String?,
         val entryTimeOverride: Long?,
-        val uploaded: Boolean = false,
-        val autoTagged: Boolean = false,
+        val uploaded: Boolean,
+        val autoTagged: Boolean,
     )
 
     private data class TagV5(
