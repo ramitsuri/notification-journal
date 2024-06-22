@@ -13,17 +13,17 @@ import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryVie
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
-import com.russhwolf.settings.PropertiesSettings
+import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import java.io.File
-import java.util.Properties
+import java.util.prefs.Preferences
 import kotlin.reflect.KClass
 
 actual class Factory {
     actual fun getSettings(): Settings {
-        return PropertiesSettings(Properties())
+        return PreferencesSettings(Preferences.userRoot().node("com.ramitsuri.notificationjournal"))
     }
 
     actual fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
