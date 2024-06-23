@@ -49,9 +49,9 @@ class SettingsViewModel(
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val error = repository.upload()
+                repository.upload()
                 _state.update {
-                    it.copy(uploadLoading = false, error = error)
+                    it.copy(uploadLoading = false)
                 }
             }
         }
