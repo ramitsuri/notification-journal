@@ -14,14 +14,16 @@ abstract class JournalEntryTemplateDao {
     @Query("SELECT * FROM journalentrytemplate")
     abstract fun getAllFlow(): Flow<List<JournalEntryTemplate>>
 
-    @Query("DELETE FROM journalentrytemplate")
-    abstract suspend fun deleteAll()
-
     @Delete
     abstract suspend fun delete(journalEntries: List<JournalEntryTemplate>)
 
-    @Insert
-    abstract suspend fun insert(journalEntryTemplate: JournalEntryTemplate)
+    @Transaction
+    open suspend fun clearAndInsert(templates: List<JournalEntryTemplate>) {
+        deleteAll()
+        templates.forEach {
+            insert(it)
+        }
+    }
 
     @Transaction
     open suspend fun insertOrUpdate(id: String? = null, text: String, tag: String) {
@@ -38,4 +40,10 @@ abstract class JournalEntryTemplateDao {
 
     @Upsert
     protected abstract suspend fun insertOrUpdate(journalEntryTemplate: JournalEntryTemplate)
+
+    @Query("DELETE FROM journalentrytemplate")
+    protected abstract suspend fun deleteAll()
+
+    @Insert
+    protected abstract suspend fun insert(journalEntryTemplate: JournalEntryTemplate)
 }

@@ -44,10 +44,7 @@ class WearDataLayerListenerService : WearableListenerService() {
 
         ServiceLocator.coroutineScope.launch {
             // Use ones received from the phone app as the single source of truth
-            dao.deleteAll()
-            journalEntryTemplates.forEach { template ->
-                dao.insert(template)
-            }
+            dao.clearAndInsert(journalEntryTemplates)
         }
     }
 }

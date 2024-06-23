@@ -5,16 +5,21 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.ramitsuri.notificationjournal.core.data.TagsDao
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagTextUpdate
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
-class TagsViewModel(private val dao: TagsDao) : ViewModel() {
+class TagsViewModel(
+    private val dao: TagsDao,
+    private val dataSendHelper: DataSendHelper?,
+) :
+    ViewModel() {
 
     private val _state = MutableStateFlow(
         TagsViewState(text = "", tags = listOf())
@@ -125,11 +130,21 @@ class TagsViewModel(private val dao: TagsDao) : ViewModel() {
         }
     }
 
+    fun sync() {
+        viewModelScope.launch {
+            val tags = _state.value.tags
+            dataSendHelper?.sendTags(tags)
+        }
+    }
+
     companion object {
         @Suppress("UNCHECKED_CAST")
         fun factory() = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
-                return TagsViewModel(ServiceLocator.tagsDao) as T
+                return TagsViewModel(
+                    ServiceLocator.tagsDao,
+                    dataSendHelper = ServiceLocator.dataSendHelper,
+                ) as T
             }
         }
     }

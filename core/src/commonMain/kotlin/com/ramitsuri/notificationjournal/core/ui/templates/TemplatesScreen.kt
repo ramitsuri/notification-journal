@@ -35,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -80,7 +81,7 @@ import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.menu_content_description
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
-import notificationjournal.core.generated.resources.sync_with_wear
+import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.template_info
 import org.jetbrains.compose.resources.stringResource
 
@@ -92,7 +93,7 @@ fun TemplatesScreen(
     onEditRequested: (JournalEntryTemplate) -> Unit,
     onDeleteRequested: (JournalEntryTemplate) -> Unit,
     onAddRequested: () -> Unit,
-    onSyncWithWearRequested: () -> Unit,
+    onSyncRequested: () -> Unit,
     onAddOrEditApproved: () -> Unit,
     onAddOrEditCanceled: () -> Unit,
     onBack: () -> Unit,
@@ -156,8 +157,7 @@ fun TemplatesScreen(
             )
             TopRow(
                 onBack = onBack,
-                showSync = state.showSync,
-                onSyncWithWear = onSyncWithWearRequested
+                onSyncClicked = onSyncRequested
             )
             if (state.templates.isEmpty()) {
                 Column(
@@ -216,8 +216,7 @@ private fun HelperText() {
 @Composable
 private fun TopRow(
     onBack: () -> Unit,
-    showSync: Boolean,
-    onSyncWithWear: () -> Unit,
+    onSyncClicked: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -231,11 +230,16 @@ private fun TopRow(
                 contentDescription = stringResource(Res.string.back)
             )
         }
-
-        if (showSync) {
-            TextButton(onClick = onSyncWithWear) {
-                Text(text = stringResource(Res.string.sync_with_wear))
-            }
+        IconButton(
+            onClick = onSyncClicked,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Sync,
+                contentDescription = stringResource(Res.string.settings_upload_title)
+            )
         }
     }
 }
