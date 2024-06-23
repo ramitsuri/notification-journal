@@ -69,7 +69,7 @@ class PhoneDataLayerListenerService : WearableListenerService() {
 
         if (uploadEvents.isNotEmpty()) {
             ServiceLocator.coroutineScope.launch {
-                ServiceLocator.repository.upload()
+                ServiceLocator.repository.sync()
             }
         }
     }

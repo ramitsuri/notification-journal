@@ -18,6 +18,7 @@ import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -144,6 +145,12 @@ class JournalEntryViewModel(
         }
     }
 
+    fun sync() {
+        viewModelScope.launch {
+            repository.sync()
+        }
+    }
+
     private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTimeOverride = entryTime))
@@ -158,24 +165,34 @@ class JournalEntryViewModel(
     private fun restartCollection() {
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
-            repository.getFlow().collect { entries ->
-                val tags = tagsDao.getAll()
-                val dayGroups = try {
-                    entries.toDayGroups(
-                        zoneId = zoneId,
-                        tagsForSort = tags,
-                    )
-                } catch (e: Exception) {
-                    listOf()
-                }
-                _state.update { previousState ->
-                    val sorted = when (getSortOrder()) {
-                        SortOrder.ASC -> dayGroups.sortedBy { it.date }
-                        SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
-                    }
-                    previousState.copy(dayGroups = sorted, tags = tags)
-                }
+            combine(
+                repository.getFlow(),
+                repository.getForUploadCountFlow()
+            ) { entries, forUploadCount ->
+                Pair(entries, forUploadCount)
             }
+                .collect { (entries, forUploadCount) ->
+                    val tags = tagsDao.getAll()
+                    val dayGroups = try {
+                        entries.toDayGroups(
+                            zoneId = zoneId,
+                            tagsForSort = tags,
+                        )
+                    } catch (e: Exception) {
+                        listOf()
+                    }
+                    _state.update { previousState ->
+                        val sorted = when (getSortOrder()) {
+                            SortOrder.ASC -> dayGroups.sortedBy { it.date }
+                            SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
+                        }
+                        previousState.copy(
+                            dayGroups = sorted,
+                            tags = tags,
+                            showSyncButton = forUploadCount > 0
+                        )
+                    }
+                }
         }
     }
 
@@ -199,4 +216,5 @@ data class ViewState(
     val dayGroups: List<DayGroup> = listOf(),
     val tags: List<Tag>,
     val loading: Boolean = false,
+    val showSyncButton: Boolean = false,
 )

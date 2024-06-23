@@ -20,6 +20,9 @@ abstract class JournalEntryDao {
     @Query("SELECT * FROM journalentry WHERE uploaded = 0")
     abstract suspend fun getForUpload(): List<JournalEntry>
 
+    @Query("SELECT COUNT(*) FROM journalentry WHERE uploaded = 0")
+    abstract fun getForUploadCountFlow(): Flow<Int>
+
     @Query("SELECT * FROM journalentry WHERE id = :id")
     abstract suspend fun get(id: String): JournalEntry
 
