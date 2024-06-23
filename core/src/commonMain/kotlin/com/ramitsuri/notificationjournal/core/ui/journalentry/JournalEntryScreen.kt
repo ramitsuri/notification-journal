@@ -128,7 +128,7 @@ fun JournalEntryScreen(
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
-    onUploadClicked: () -> Unit,
+    onSyncClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -202,7 +202,7 @@ fun JournalEntryScreen(
 
                 Toolbar(
                     showSyncButton = state.showSyncButton,
-                    onSyncClicked = onUploadClicked,
+                    onSyncClicked = onSyncClicked,
                     onSettingsClicked = onSettingsClicked
                 )
 
