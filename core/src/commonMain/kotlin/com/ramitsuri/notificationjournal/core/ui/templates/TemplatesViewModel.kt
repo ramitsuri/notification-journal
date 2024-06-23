@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -20,6 +21,7 @@ class TemplatesViewModel(
     private val dao: JournalEntryTemplateDao,
     private val tagsDao: TagsDao,
     private val wearDataSharingClient: WearDataSharingClient,
+    private val dataSendHelper: DataSendHelper?,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TemplatesViewState())
@@ -90,7 +92,7 @@ class TemplatesViewModel(
             dao.insertOrUpdate(idBeingEdited, text, tag)
             idBeingEdited = null
             _state.update {
-                it.copy(isLoading = false, text = "", selectedTag = null, showSync = true)
+                it.copy(isLoading = false, text = "", selectedTag = null)
             }
         }
     }
@@ -108,7 +110,7 @@ class TemplatesViewModel(
         }
     }
 
-    fun syncWithWear() {
+    fun sync() {
         viewModelScope.launch {
             val templates = _state.value.templates
             templates.forEach { template ->
@@ -118,6 +120,7 @@ class TemplatesViewModel(
                     tag = template.tag
                 )
             }
+            dataSendHelper?.sendTemplates(templates)
         }
     }
 
@@ -129,6 +132,7 @@ class TemplatesViewModel(
                     dao = ServiceLocator.templatesDao,
                     tagsDao = ServiceLocator.tagsDao,
                     wearDataSharingClient = ServiceLocator.wearDataSharingClient,
+                    dataSendHelper = ServiceLocator.dataSendHelper,
                 ) as T
             }
         }
@@ -144,7 +148,6 @@ data class TemplatesViewState(
     val selectedTag: String? = null,
     val templates: List<JournalEntryTemplate> = listOf(),
     val canAddMore: Boolean = false,
-    val showSync: Boolean = false,
 ) {
     val canSave: Boolean
         get() {

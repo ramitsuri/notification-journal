@@ -35,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -84,6 +85,7 @@ import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.menu_content_description
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
+import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.tag_delete_fail_message
 import notificationjournal.core.generated.resources.tag_info
 import notificationjournal.core.generated.resources.tag_insert_fail_message
@@ -101,6 +103,7 @@ fun TagsScreen(
     onEditOrder: (Int, Int) -> Unit,
     onBack: () -> Unit,
     onErrorAcknowledged: () -> Unit,
+    onSyncRequested: () -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -163,14 +166,10 @@ fun TagsScreen(
                     WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                 )
             )
-            IconButton(
-                onClick = onBack
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back)
-                )
-            }
+            TopRow(
+                onBack = onBack,
+                onSyncClicked = onSyncRequested
+            )
             if (state.tags.isEmpty()) {
                 Column(
                     modifier = Modifier
@@ -201,6 +200,37 @@ fun TagsScreen(
                         .padding(start = 16.dp, end = 16.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun TopRow(
+    onBack: () -> Unit,
+    onSyncClicked: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        IconButton(
+            onClick = onBack
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(Res.string.back)
+            )
+        }
+        IconButton(
+            onClick = onSyncClicked,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Sync,
+                contentDescription = stringResource(Res.string.settings_upload_title)
+            )
         }
     }
 }

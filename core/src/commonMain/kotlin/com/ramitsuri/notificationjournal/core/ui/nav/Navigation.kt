@@ -206,6 +206,7 @@ fun NavGraph(
                 onBack = { navController.navigateUp() },
                 onAddOrEditApproved = viewModel::save,
                 onAddOrEditCanceled = viewModel::onAddOrEditCanceled,
+                onSyncRequested = viewModel::sync,
             )
         }
 
@@ -219,7 +220,7 @@ fun NavGraph(
                 onEditRequested = viewModel::editClicked,
                 onDeleteRequested = viewModel::delete,
                 onAddRequested = viewModel::addClicked,
-                onSyncWithWearRequested = viewModel::syncWithWear,
+                onSyncRequested = viewModel::sync,
                 onAddOrEditApproved = viewModel::save,
                 onAddOrEditCanceled = viewModel::onAddOrEditCanceled,
                 onBack = { navController.navigateUp() },

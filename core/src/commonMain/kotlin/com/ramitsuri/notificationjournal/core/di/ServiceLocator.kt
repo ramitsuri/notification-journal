@@ -48,9 +48,17 @@ object ServiceLocator {
         coroutineScope.launch {
             dataReceiveHelper?.startListening {
                 when (it) {
-                    is Payload.Entries -> coroutineScope.launch { repository.handlePayload(it) }
-                    is Payload.Tags -> TODO()
-                    is Payload.Templates -> TODO()
+                    is Payload.Entries -> {
+                        coroutineScope.launch { repository.handlePayload(it) }
+                    }
+
+                    is Payload.Tags -> {
+                        coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
+                    }
+
+                    is Payload.Templates -> {
+                        coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
+                    }
                 }
             }
         }

@@ -56,6 +56,14 @@ abstract class TagsDao {
         }
     }
 
+    @Transaction
+    open suspend fun clearAndInsert(tags: List<Tag>) {
+        deleteAll()
+        tags.forEach {
+            insert(it)
+        }
+    }
+
     @Query("SELECT * FROM tags ORDER BY `order` ASC")
     abstract fun getAllFlow(): Flow<List<Tag>>
 
@@ -76,6 +84,9 @@ abstract class TagsDao {
 
     @Query("SELECT COUNT(id) from journalentrytemplate WHERE tag = :tag")
     protected abstract suspend fun getTemplateCountForTag(tag: String): Int
+
+    @Query("DELETE FROM tags")
+    protected abstract suspend fun deleteAll()
 
     @Update(entity = Tag::class)
     protected abstract suspend fun updateOrder(tagOrderUpdate: TagOrderUpdate)

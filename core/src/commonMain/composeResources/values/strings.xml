@@ -51,8 +51,6 @@
 
     <string name="template_info">When done with changes, sync to make them available on watch</string>
 
-    <string name="sync_with_wear">Sync</string>
-
     <string name="tags">Tags</string>
     <string name="add_from_template">Add from template</string>
 
