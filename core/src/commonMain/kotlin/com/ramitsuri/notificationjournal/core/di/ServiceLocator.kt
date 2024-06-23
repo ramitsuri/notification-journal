@@ -2,10 +2,10 @@ package com.ramitsuri.notificationjournal.core.di
 
 import androidx.navigation.NavBackStackEntry
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
@@ -47,7 +47,11 @@ object ServiceLocator {
     fun onAppStart() {
         coroutineScope.launch {
             dataReceiveHelper?.startListening {
-
+                when (it) {
+                    is Payload.Entries -> coroutineScope.launch { repository.handlePayload(it) }
+                    is Payload.Tags -> TODO()
+                    is Payload.Templates -> TODO()
+                }
             }
         }
     }
@@ -60,7 +64,9 @@ object ServiceLocator {
 
     val repository: JournalRepository by lazy {
         JournalRepository(
-            dao = AppDatabase.getJournalEntryDao(factory)
+            coroutineScope = coroutineScope,
+            dao = AppDatabase.getJournalEntryDao(factory),
+            dataSendHelper = dataSendHelper,
         )
     }
 

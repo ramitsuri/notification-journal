@@ -2,21 +2,25 @@ package com.ramitsuri.notificationjournal.core.repository
 
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.sync.Action
+import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 
 class JournalRepository(
+    private val coroutineScope: CoroutineScope,
     private val dao: JournalEntryDao,
     private val clock: Clock = Clock.System,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    private val dataSendHelper: DataSendHelper?,
 ) {
     fun getFlow(): Flow<List<JournalEntry>> {
-        return dao.getAllFlow().map { list ->
-            list.sortedBy { it.entryTime }
-        }
+        return dao.getAllFlow()
     }
 
     suspend fun getAll() = dao.getAll()
@@ -26,7 +30,8 @@ class JournalRepository(
     }
 
     suspend fun update(journalEntry: JournalEntry) {
-        dao.update(journalEntry)
+        val updated = dao.update(journalEntry)
+        sendAndMarkUploaded(updated, Action.UPDATE)
     }
 
     suspend fun insert(text: String, tag: String? = null, originalEntryTime: Instant? = null) {
@@ -48,11 +53,13 @@ class JournalRepository(
     }
 
     suspend fun insert(entry: JournalEntry) {
-        dao.insert(entry)
+        val inserted = dao.insert(entry)
+        sendAndMarkUploaded(inserted, Action.CREATE)
     }
 
     suspend fun delete(entry: JournalEntry) {
-        dao.delete(listOf(entry))
+        val deleted = markAsDeleted(entry)
+        sendAndMarkUploaded(deleted, Action.DELETE)
     }
 
     suspend fun upload(): String? {
@@ -71,5 +78,37 @@ class JournalRepository(
         } else {
             "Message: ${response.bodyAsText()}, Code: ${response.status}"
         }*/
+    }
+
+    suspend fun handlePayload(payload: Payload.Entries) {
+        when (payload.action) {
+            Action.CREATE,
+            Action.UPDATE -> {
+                payload.data.forEach {
+                    // Since they're coming from a different client, they should be considered
+                    // uploaded for this client so that we don't upload them again.
+                    dao.upsert(it.copy(uploaded = true))
+                }
+            }
+
+            Action.DELETE -> payload.data.forEach { markAsDeleted(it) }
+        }
+    }
+
+    private suspend fun markAsUploaded(entry: JournalEntry) {
+        dao.updateUploaded(listOf(entry))
+    }
+
+    private suspend fun markAsDeleted(entry: JournalEntry): JournalEntry {
+        return dao.update(entry.copy(deleted = true))
+    }
+
+    private fun sendAndMarkUploaded(entry: JournalEntry, action: Action) {
+        coroutineScope.launch {
+            val sent = dataSendHelper?.sendEntry(entry, action) == true
+            if (sent) {
+                markAsUploaded(entry)
+            }
+        }
     }
 }
