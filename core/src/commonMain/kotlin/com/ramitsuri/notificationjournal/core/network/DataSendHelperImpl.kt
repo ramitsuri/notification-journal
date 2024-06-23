@@ -6,7 +6,6 @@ import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.MessageProperties
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.sync.Action
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
@@ -31,10 +30,9 @@ internal class DataSendHelperImpl(
     private var channel: Channel? = null
     private val mutex: Mutex = Mutex()
 
-    override suspend fun sendEntry(entry: JournalEntry, action: Action): Boolean {
+    override suspend fun sendEntry(entries: List<JournalEntry>): Boolean {
         return Payload.Entries(
-            data = listOf(entry),
-            action = action,
+            data = entries,
             sender = Sender(name = deviceName, id = deviceId)
         ).send()
     }
@@ -42,7 +40,6 @@ internal class DataSendHelperImpl(
     override suspend fun sendTags(tags: List<Tag>): Boolean {
         return Payload.Tags(
             data = tags,
-            action = Action.UPDATE,
             sender = Sender(name = deviceName, id = deviceId)
         ).send()
     }
@@ -50,7 +47,6 @@ internal class DataSendHelperImpl(
     override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
         return Payload.Templates(
             data = templates,
-            action = Action.UPDATE,
             sender = Sender(name = deviceName, id = deviceId)
         ).send()
     }

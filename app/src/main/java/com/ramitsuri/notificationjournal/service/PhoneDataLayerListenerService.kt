@@ -1,7 +1,6 @@
 package com.ramitsuri.notificationjournal.service
 
 import android.annotation.SuppressLint
-import android.util.Log
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -70,13 +69,8 @@ class PhoneDataLayerListenerService : WearableListenerService() {
 
         if (uploadEvents.isNotEmpty()) {
             ServiceLocator.coroutineScope.launch {
-                val error = ServiceLocator.repository.upload() ?: return@launch
-                Log.d(TAG, "Failed to upload: $error")
+                ServiceLocator.repository.upload()
             }
         }
-    }
-
-    companion object {
-        private const val TAG = "PhoneDataLayerListenerService"
     }
 }
