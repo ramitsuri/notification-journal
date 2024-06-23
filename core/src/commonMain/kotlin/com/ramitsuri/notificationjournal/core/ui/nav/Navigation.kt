@@ -116,6 +116,7 @@ fun NavGraph(
                 onSettingsClicked = {
                     navController.navigate(Destination.SETTINGS.routeWithArgValues())
                 },
+                onUploadClicked = viewModel::sync
             )
         }
 

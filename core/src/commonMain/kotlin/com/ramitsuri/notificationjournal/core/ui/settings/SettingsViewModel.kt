@@ -49,7 +49,7 @@ class SettingsViewModel(
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                repository.upload()
+                repository.sync()
                 _state.update {
                     it.copy(uploadLoading = false)
                 }

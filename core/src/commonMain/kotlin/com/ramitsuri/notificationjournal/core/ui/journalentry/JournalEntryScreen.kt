@@ -36,6 +36,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -105,8 +107,8 @@ import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.settings
+import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -126,6 +128,7 @@ fun JournalEntryScreen(
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
+    onUploadClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -197,7 +200,11 @@ fun JournalEntryScreen(
                     )
                 )
 
-                MoreMenu(onSettingsClicked = onSettingsClicked)
+                Toolbar(
+                    showSyncButton = state.showSyncButton,
+                    onSyncClicked = onUploadClicked,
+                    onSettingsClicked = onSettingsClicked
+                )
 
                 if (state.dayGroups.isEmpty()) {
                     Column(
@@ -247,39 +254,35 @@ fun JournalEntryScreen(
 }
 
 @Composable
-private fun MoreMenu(
+private fun Toolbar(
+    showSyncButton: Boolean,
+    onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        Box {
+        if (showSyncButton) {
             IconButton(
-                onClick = {
-                    expanded = !expanded
-                },
+                onClick = onSyncClicked,
                 modifier = Modifier
                     .size(48.dp)
                     .padding(4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = stringResource(Res.string.menu_content_description)
+                    imageVector = Icons.Filled.Sync,
+                    contentDescription = stringResource(Res.string.settings_upload_title)
                 )
             }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-
-                DropdownMenuItem(
-                    text = { Text(stringResource(JournalMenuItem.SETTINGS.textResId)) },
-                    onClick = {
-                        expanded = false
-                        onSettingsClicked()
-                    }
-                )
-            }
+        }
+        IconButton(
+            onClick = onSettingsClicked,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = stringResource(Res.string.settings)
+            )
         }
     }
 }
@@ -749,10 +752,6 @@ private fun SubHeaderItemMenu(
             )
         }
     }
-}
-
-enum class JournalMenuItem(val textResId: StringResource) {
-    SETTINGS(Res.string.settings),
 }
 
 @Preview

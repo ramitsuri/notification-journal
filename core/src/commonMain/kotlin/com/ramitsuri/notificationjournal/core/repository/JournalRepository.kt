@@ -22,6 +22,8 @@ class JournalRepository(
         return dao.getAllFlow()
     }
 
+    fun getForUploadCountFlow() = dao.getForUploadCountFlow()
+
     suspend fun getAll() = dao.getAll()
 
     suspend fun get(id: String): JournalEntry {
@@ -72,7 +74,7 @@ class JournalRepository(
         sendAndMarkUploaded(listOf(deleted))
     }
 
-    suspend fun upload() {
+    suspend fun sync() {
         val entries = dao.getForUpload()
         if (entries.isEmpty()) {
             return
