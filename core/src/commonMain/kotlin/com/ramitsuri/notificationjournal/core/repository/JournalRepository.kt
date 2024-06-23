@@ -95,10 +95,6 @@ class JournalRepository(
         }
     }
 
-    private suspend fun markAsUploaded(entry: JournalEntry) {
-        dao.updateUploaded(listOf(entry))
-    }
-
     private suspend fun markAsDeleted(entry: JournalEntry): JournalEntry {
         return dao.update(entry.copy(deleted = true))
     }
@@ -107,7 +103,7 @@ class JournalRepository(
         coroutineScope.launch {
             val sent = dataSendHelper?.sendEntry(entry, action) == true
             if (sent) {
-                markAsUploaded(entry)
+                dao.updateUploaded(listOf(entry))
             }
         }
     }
