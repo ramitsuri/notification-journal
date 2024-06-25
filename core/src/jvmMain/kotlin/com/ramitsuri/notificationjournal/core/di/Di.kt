@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
@@ -23,11 +24,13 @@ import kotlin.reflect.KClass
 
 actual class Factory {
     actual fun getSettings(): Settings {
-        return PreferencesSettings(Preferences.userRoot().node("com.ramitsuri.notificationjournal"))
+        // File located at ~/Library/Preferences/com.apple.java.util.prefs
+        return PreferencesSettings(Preferences.userRoot().node(packageName))
     }
 
     actual fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
-        val dbFile = File(System.getProperty("java.io.tmpdir"), "app_database")
+        val fileName = "${packageName}_database"
+        val dbFile = File(System.getProperty("java.io.tmpdir"), fileName)
         return Room.databaseBuilder<AppDatabase>(
             name = dbFile.absolutePath,
         )
@@ -108,6 +111,14 @@ actual class Factory {
             ): T {
                 return getVMInstance(handle) as T
             }
+        }
+    }
+
+    companion object {
+        private val packageName = if (BuildKonfig.IS_DEBUG) {
+            "com.ramitsuri.notificationjournal.debug"
+        } else {
+            "com.ramitsuri.notificationjournal.release"
         }
     }
 }
