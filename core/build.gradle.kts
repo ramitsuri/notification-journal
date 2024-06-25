@@ -1,4 +1,7 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,6 +10,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.buildKonfig)
 }
 
 kotlin {
@@ -109,5 +113,37 @@ compose.desktop {
             packageName = "com.ramitsuri.notificationjournal.desktop"
             packageVersion = "1.0.0"
         }
+    }
+}
+
+buildkonfig {
+    packageName = "com.ramitsuri.notificationjournal.core"
+
+    val isDebug = getLocalProperty("isDebug", "false") ?: "false"
+
+    defaultConfigs {
+        buildConfigField(type = BOOLEAN, name = "IS_DEBUG", value = isDebug, const = true)
+    }
+}
+
+fun getLocalProperty(
+    key: String,
+    defaultValue: String? = null,
+): String? {
+    val file = "local.properties"
+    return getProperty(file, key, defaultValue)
+}
+
+fun getProperty(
+    fileName: String,
+    key: String,
+    defaultValue: String? = null,
+): String? {
+    return if (file(rootProject.file(fileName)).exists()) {
+        val properties = Properties()
+        properties.load(FileInputStream(file(rootProject.file(fileName))))
+        properties.getProperty(key, defaultValue)
+    } else {
+        defaultValue
     }
 }
