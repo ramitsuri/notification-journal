@@ -23,6 +23,8 @@ internal class DataSendHelperImpl(
     private val exchangeName: String,
     private val deviceName: String,
     private val deviceId: String,
+    private val username: String,
+    private val password: String,
     private val json: Json,
 ) : DataSendHelper {
 
@@ -33,21 +35,21 @@ internal class DataSendHelperImpl(
     override suspend fun sendEntry(entries: List<JournalEntry>): Boolean {
         return Payload.Entries(
             data = entries,
-            sender = Sender(name = deviceName, id = deviceId)
+            sender = getSender()
         ).send()
     }
 
     override suspend fun sendTags(tags: List<Tag>): Boolean {
         return Payload.Tags(
             data = tags,
-            sender = Sender(name = deviceName, id = deviceId)
+            sender = getSender()
         ).send()
     }
 
     override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
         return Payload.Templates(
             data = templates,
-            sender = Sender(name = deviceName, id = deviceId)
+            sender = getSender()
         ).send()
     }
 
@@ -84,11 +86,15 @@ internal class DataSendHelperImpl(
         }
     }
 
+    private fun getSender() = Sender(name = deviceName, id = deviceId)
+
     private suspend fun createChannelIfNecessary() {
         try {
             if (connection == null) {
                 connection = ConnectionFactory().apply {
                     host = hostName
+                    username = this@DataSendHelperImpl.username
+                    password = this@DataSendHelperImpl.password
                     isAutomaticRecoveryEnabled = true
                     isTopologyRecoveryEnabled = true
                 }.newConnection()

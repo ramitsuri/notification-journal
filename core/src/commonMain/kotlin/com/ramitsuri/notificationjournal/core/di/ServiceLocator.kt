@@ -66,7 +66,12 @@ object ServiceLocator {
 
     fun onAppStop() {
         coroutineScope.launch {
-            dataReceiveHelper?.closeConnection()
+            launch {
+                dataReceiveHelper?.closeConnection()
+            }
+            launch {
+                dataSendHelper?.closeConnection()
+            }
         }
     }
 
@@ -136,10 +141,14 @@ object ServiceLocator {
         val exchangeName = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "")
         val deviceName = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "")
         val deviceId = keyValueStore.getString(Constants.PREF_KEY_DEVICE_ID, "")
+        val username = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "")
+        val password = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "")
         if (hostName.isNullOrEmpty() ||
             exchangeName.isNullOrEmpty() ||
             deviceName.isNullOrEmpty() ||
-            deviceId.isNullOrEmpty()
+            deviceId.isNullOrEmpty() ||
+            username.isNullOrEmpty() ||
+            password.isNullOrEmpty()
         ) {
             null
         } else {
@@ -149,6 +158,8 @@ object ServiceLocator {
                 exchangeName = exchangeName,
                 deviceName = deviceName,
                 deviceId = deviceId,
+                username = username,
+                password = password,
                 json = json,
             )
         }
@@ -159,10 +170,14 @@ object ServiceLocator {
         val exchangeName = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "")
         val deviceName = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "")
         val deviceId = keyValueStore.getString(Constants.PREF_KEY_DEVICE_ID, "")
+        val username = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "")
+        val password = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "")
         if (hostName.isNullOrEmpty() ||
             exchangeName.isNullOrEmpty() ||
             deviceName.isNullOrEmpty() ||
-            deviceId.isNullOrEmpty()
+            deviceId.isNullOrEmpty() ||
+            username.isNullOrEmpty() ||
+            password.isNullOrEmpty()
         ) {
             null
         } else {
@@ -172,6 +187,8 @@ object ServiceLocator {
                 exchangeName = exchangeName,
                 deviceName = deviceName,
                 deviceId = deviceId,
+                username = username,
+                password = password,
                 json = json,
             )
         }
