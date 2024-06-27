@@ -18,6 +18,8 @@ internal class DataReceiveHelperImpl(
     private val exchangeName: String,
     private val deviceName: String,
     private val deviceId: String,
+    private val username: String,
+    private val password: String,
     private val json: Json,
 ) : DataReceiveHelper {
 
@@ -62,6 +64,8 @@ internal class DataReceiveHelperImpl(
             if (connection == null) {
                 connection = ConnectionFactory().apply {
                     host = hostName
+                    username = this@DataReceiveHelperImpl.username
+                    password = this@DataReceiveHelperImpl.password
                     isAutomaticRecoveryEnabled = true
                     isTopologyRecoveryEnabled = true
                 }.newConnection()

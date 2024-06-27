@@ -10,6 +10,8 @@ object Constants {
     const val PREF_KEY_DEVICE_NAME = "device_name"
     const val PREF_KEY_DEVICE_ID = "device_id"
     const val PREF_KEY_EXCHANGE_NAME = "exchange_name"
+    const val PREF_KEY_USERNAME = "username"
+    const val PREF_KEY_PASSWORD = "password"
 
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"

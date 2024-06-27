@@ -25,18 +25,16 @@ class SettingsViewModel(
     val state: StateFlow<SettingsViewState>
 
     init {
-        val dataHost = getDataHost()
-        val exchangeName = getExchangeName()
-        val deviceName = getDeviceName()
-
         _state = MutableStateFlow(
             SettingsViewState(
                 uploadLoading = false,
                 sortOrder = getSortOrder(),
                 error = null,
-                dataHost = DataHost(dataHost),
-                exchangeName = ExchangeName(exchangeName),
-                deviceName = DeviceName(deviceName),
+                dataHost = DataHost(getDataHost()),
+                exchangeName = ExchangeName(getExchangeName()),
+                deviceName = DeviceName(getDeviceName()),
+                username = Username(getUsername()),
+                password = Password(getPassword()),
             )
         )
         state = _state
@@ -60,11 +58,15 @@ class SettingsViewModel(
     fun setDataSharingProperties(
         dataHost: DataHost,
         exchangeName: ExchangeName,
-        deviceName: DeviceName
+        deviceName: DeviceName,
+        username: Username,
+        password: Password,
     ) {
         keyValueStore.putString(Constants.PREF_KEY_DATA_HOST, dataHost.host)
         keyValueStore.putString(Constants.PREF_KEY_EXCHANGE_NAME, exchangeName.name)
         keyValueStore.putString(Constants.PREF_KEY_DEVICE_NAME, deviceName.name)
+        keyValueStore.putString(Constants.PREF_KEY_USERNAME, username.username)
+        keyValueStore.putString(Constants.PREF_KEY_PASSWORD, password.password)
         _state.update {
             it.copy(
                 exchangeName = exchangeName,
@@ -109,6 +111,10 @@ class SettingsViewModel(
 
     private fun getDataHost() = keyValueStore.getString(Constants.PREF_KEY_DATA_HOST, "") ?: ""
 
+    private fun getUsername() = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "") ?: ""
+
+    private fun getPassword() = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "") ?: ""
+
     companion object {
         fun factory() = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -132,4 +138,6 @@ data class SettingsViewState(
     val dataHost: DataHost = DataHost(""),
     val exchangeName: ExchangeName = ExchangeName(""),
     val deviceName: DeviceName = DeviceName(""),
+    val username: Username = Username(""),
+    val password: Password = Password(""),
 )
