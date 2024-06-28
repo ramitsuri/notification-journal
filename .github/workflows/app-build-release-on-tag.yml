@@ -85,5 +85,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
+          automatic_release_tag: ${{ github.ref_name }}
           files: |
             core/build/compose/binaries/main/dmg/Journal-1.0.0.dmg
