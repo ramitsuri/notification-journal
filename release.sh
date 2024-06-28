@@ -11,17 +11,8 @@ new_version_code_length=${#new_version_code}
 # Add back '.' by printing chars from index 0 for (length - 1) then '.' and then the last char
 new_version_name="${new_version_code:0:$((new_version_code_length-1))}.${new_version_code: -1}"
 
-# Replace old version code line with new version code
-old_version_code_phone=$((old_version_code * 10))
-new_version_code_phone=$((new_version_code * 10))
-sed -i '' "s/versionCode = $old_version_code_phone/versionCode = $new_version_code_phone/g" ./app/build.gradle.kts
-old_version_code_wear=$((old_version_code * 10 + 1))
-new_version_code_wear=$((new_version_code * 10 + 1))
-sed -i '' "s/versionCode = $old_version_code_wear/versionCode = $new_version_code_wear/g" ./wearos/build.gradle.kts
-
-# Replace old version name line with new version name
-sed -i '' "s/versionName = \"$old_version_name\"/versionName = \"$new_version_name\"/g" ./app/build.gradle.kts
-sed -i '' "s/versionName = \"$old_version_name\"/versionName = \"$new_version_name\"/g" ./wearos/build.gradle.kts
+# Replace old appVersion line with new appVersion
+sed -i '' "s/appVersion = \"$old_version_name\"/appVersion = \"$new_version_name\"/g" ./gradle/libs.versions.toml
 
 git add -A
 git commit -am "Release $new_version_name"

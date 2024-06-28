@@ -1,4 +1,5 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.io.FileInputStream
 import java.util.Properties
@@ -120,9 +121,11 @@ buildkonfig {
     packageName = "com.ramitsuri.notificationjournal.core"
 
     val isDebug = getLocalProperty("isDebug", "false") ?: "false"
+    val appVersion = libs.versions.appVersion.get()
 
     defaultConfigs {
         buildConfigField(type = BOOLEAN, name = "IS_DEBUG", value = isDebug, const = true)
+        buildConfigField(type = STRING, name = "APP_VERSION", value = appVersion, const = true)
     }
 }
 

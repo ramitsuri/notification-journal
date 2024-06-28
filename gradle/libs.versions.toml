@@ -1,5 +1,7 @@
 [versions]
 
+appVersion = "4.2"
+
 compose-compiler = "1.5.11"
 
 activityCompose = "1.9.0"

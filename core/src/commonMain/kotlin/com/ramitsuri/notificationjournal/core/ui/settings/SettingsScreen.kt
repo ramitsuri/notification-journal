@@ -46,6 +46,7 @@ import notificationjournal.core.generated.resources.error
 import notificationjournal.core.generated.resources.exchange_name
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.password
+import notificationjournal.core.generated.resources.settings_app_version
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
 import notificationjournal.core.generated.resources.settings_data_sharing_title
 import notificationjournal.core.generated.resources.settings_sort_order_asc
@@ -164,6 +165,14 @@ fun SettingsScreen(
                             SortOrder.DESC -> stringResource(Res.string.settings_sort_order_desc)
                         },
                         onClick = onSortOrderClicked,
+                        showProgress = false
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = stringResource(Res.string.settings_app_version),
+                        subtitle = state.appVersion,
+                        onClick = { },
                         showProgress = false
                     )
                 }
