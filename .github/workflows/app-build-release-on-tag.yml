@@ -10,14 +10,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build_phone_and_wear_app:
+    name: "Build phone and wear app"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -46,7 +47,7 @@ jobs:
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Publish phone app to Play Console
-        uses: r0adkll/upload-google-play@v1.0.19
+        uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_SERVICE_ACCOUNT_JSON }}
           packageName: com.ramitsuri.notificationjournal
@@ -55,10 +56,34 @@ jobs:
           status: completed
 
       - name: Publish wear OS app to Play Console
-        uses: r0adkll/upload-google-play@v1.0.19
+        uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_SERVICE_ACCOUNT_JSON }}
           packageName: com.ramitsuri.notificationjournal
           releaseFiles: wearos/build/outputs/bundle/release/wearos-release.aab
           track: wear:internal
           status: completed
+
+  build_desktop_app:
+    name: "Build macOS app"
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Generate package
+        run: ./gradlew packageDistributionForCurrentOS
+
+      - name: Create github release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          files: |
+            core/build/compose/binaries/main/dmg/Journal-1.0.0.dmg

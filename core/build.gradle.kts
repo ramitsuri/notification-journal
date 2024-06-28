@@ -111,7 +111,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.ramitsuri.notificationjournal.desktop"
+            packageName = "Journal"
             packageVersion = "1.0.0"
         }
     }
