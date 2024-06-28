@@ -1,6 +1,7 @@
 package com.ramitsuri.notificationjournal.core.di
 
 import androidx.navigation.NavBackStackEntry
+import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
@@ -134,6 +135,11 @@ object ServiceLocator {
             repository = repository,
             tagsDao = tagsDao,
         )
+    }
+
+    fun getAppVersion(): String {
+        val suffix = if (BuildKonfig.IS_DEBUG) "_debug" else ""
+        return "${BuildKonfig.APP_VERSION}$suffix"
     }
 
     val dataSendHelper: DataSendHelper? by lazy {

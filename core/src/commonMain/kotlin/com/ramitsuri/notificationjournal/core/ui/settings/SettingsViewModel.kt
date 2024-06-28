@@ -20,6 +20,7 @@ import kotlin.reflect.KClass
 class SettingsViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
+    private val getAppVersion: () -> String,
 ) : ViewModel() {
     private val _state: MutableStateFlow<SettingsViewState>
     val state: StateFlow<SettingsViewState>
@@ -35,6 +36,7 @@ class SettingsViewModel(
                 deviceName = DeviceName(getDeviceName()),
                 username = Username(getUsername()),
                 password = Password(getPassword()),
+                appVersion = getAppVersion()
             )
         )
         state = _state
@@ -125,6 +127,7 @@ class SettingsViewModel(
                 return SettingsViewModel(
                     keyValueStore = ServiceLocator.keyValueStore,
                     repository = ServiceLocator.repository,
+                    getAppVersion = ServiceLocator::getAppVersion,
                 ) as T
             }
         }
@@ -140,4 +143,5 @@ data class SettingsViewState(
     val deviceName: DeviceName = DeviceName(""),
     val username: Username = Username(""),
     val password: Password = Password(""),
+    val appVersion: String = ""
 )
