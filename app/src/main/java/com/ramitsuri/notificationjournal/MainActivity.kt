@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
             }
 
             NotificationJournalTheme(
+                darkTheme = isSystemInDarkTheme(),
                 dynamicDarkColorScheme = dynamicDarkColorScheme(this),
                 dynamicLightColorScheme = dynamicLightColorScheme(this)
             ) {
