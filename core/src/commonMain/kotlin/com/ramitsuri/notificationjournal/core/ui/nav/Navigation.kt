@@ -116,7 +116,8 @@ fun NavGraph(
                 onSettingsClicked = {
                     navController.navigate(Destination.SETTINGS.routeWithArgValues())
                 },
-                onSyncClicked = viewModel::sync
+                onSyncClicked = viewModel::sync,
+                onTagGroupReconcileRequested = viewModel::reconcile,
             )
         }
 
