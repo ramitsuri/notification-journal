@@ -106,6 +106,7 @@ import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.previous_day
+import notificationjournal.core.generated.resources.reconcile
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
@@ -127,6 +128,7 @@ fun JournalEntryScreen(
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
+    onTagGroupReconcileRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
     onSyncClicked: () -> Unit,
 ) {
@@ -246,6 +248,7 @@ fun JournalEntryScreen(
                         },
                         onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
+                        onTagGroupReconcileRequested = onTagGroupReconcileRequested,
                     )
                 }
             }
@@ -298,6 +301,7 @@ private fun List(
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
+    onTagGroupReconcileRequested: (TagGroup) -> Unit,
     onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
     onMoveDownRequested: (JournalEntry, TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
@@ -333,6 +337,7 @@ private fun List(
                         onDeleteRequested = onTagGroupDeleteRequested,
                         onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
+                        onReconcileRequested = onTagGroupReconcileRequested,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(topShape)
@@ -415,6 +420,7 @@ private fun SubHeaderItem(
     onDeleteRequested: (TagGroup) -> Unit,
     onMoveToNextDayRequested: (TagGroup) -> Unit,
     onMoveToPreviousDayRequested: (TagGroup) -> Unit,
+    onReconcileRequested: (TagGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -440,6 +446,7 @@ private fun SubHeaderItem(
             onMenuButtonClicked = { showMenu = !showMenu },
             onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
             onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
+            onReconcileRequested = { onReconcileRequested(tagGroup) }
         )
     }
 }
@@ -705,6 +712,7 @@ private fun SubHeaderItemMenu(
     onMenuButtonClicked: () -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
+    onReconcileRequested: () -> Unit,
 ) {
     Box {
         IconButton(
@@ -748,6 +756,13 @@ private fun SubHeaderItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onMoveToPreviousDayRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.reconcile)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onReconcileRequested()
                 }
             )
         }

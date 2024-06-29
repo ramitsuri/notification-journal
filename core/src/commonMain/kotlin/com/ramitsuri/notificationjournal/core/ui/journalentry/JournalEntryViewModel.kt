@@ -145,6 +145,14 @@ class JournalEntryViewModel(
         }
     }
 
+    fun reconcile(tagGroup: TagGroup) {
+        viewModelScope.launch {
+            tagGroup.entries.forEach { journalEntry ->
+                repository.update(journalEntry.copy(reconciled = true))
+            }
+        }
+    }
+
     fun sync() {
         viewModelScope.launch {
             repository.sync()
