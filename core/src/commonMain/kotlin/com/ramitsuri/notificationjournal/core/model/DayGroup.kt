@@ -11,4 +11,13 @@ data class DayGroup(
 
     @SerialName("tag_groups")
     val tagGroups: List<TagGroup>
-)
+) {
+    val untaggedCount: Int
+        get() = tagGroups
+            .firstOrNull {
+                it.tag == Tag.NO_TAG.value
+            }
+            ?.entries
+            ?.size
+            ?: 0
+}

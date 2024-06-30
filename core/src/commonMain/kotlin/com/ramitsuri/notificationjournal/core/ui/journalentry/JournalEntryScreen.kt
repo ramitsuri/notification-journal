@@ -120,6 +120,7 @@ import notificationjournal.core.generated.resources.reconcile
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
+import notificationjournal.core.generated.resources.untagged_format
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -353,21 +354,22 @@ private fun List(
     val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
 
     LazyColumn {
-        items.forEach { (date, tagGroups) ->
-            stickyHeader(key = date) {
+        items.forEach { dayGroup ->
+            stickyHeader(key = dayGroup.date.toString()) {
                 HeaderItem(
-                    text = getDay(
-                        toFormat = date,
+                    headerText = getDay(
+                        toFormat = dayGroup.date,
                         monthNames = stringArrayResource(Res.array.month_names),
                         dayOfWeekNames = stringArrayResource(Res.array.day_of_week_names),
-                    ).string()
+                    ).string(),
+                    untaggedCount = dayGroup.untaggedCount,
                 )
             }
-            tagGroups.forEach { tagGroup ->
+            dayGroup.tagGroups.forEach { tagGroup ->
                 val entries = tagGroup.entries
                 var shape: Shape
                 var borderModifier: Modifier
-                item(key = date.toString().plus(tagGroup.tag)) {
+                item(key = dayGroup.date.toString().plus(tagGroup.tag)) {
                     SubHeaderItem(
                         tagGroup = tagGroup,
                         onCopyRequested = onTagGroupCopyRequested,
@@ -434,13 +436,19 @@ private fun List(
 }
 
 @Composable
-private fun HeaderItem(text: String) {
+private fun HeaderItem(headerText: String, untaggedCount: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colorScheme.background)
             .padding(vertical = 8.dp)
     ) {
+        val text = buildString {
+            append(headerText)
+            if (untaggedCount > 0) {
+                append(stringResource(Res.string.untagged_format, untaggedCount))
+            }
+        }
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
