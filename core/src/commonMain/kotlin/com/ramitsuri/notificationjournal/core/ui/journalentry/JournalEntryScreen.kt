@@ -354,7 +354,7 @@ private fun List(
 
     LazyColumn {
         items.forEach { (date, tagGroups) ->
-            stickyHeader {
+            stickyHeader(key = date) {
                 HeaderItem(
                     text = getDay(
                         toFormat = date,
@@ -367,7 +367,7 @@ private fun List(
                 val entries = tagGroup.entries
                 var shape: Shape
                 var borderModifier: Modifier
-                item {
+                item(key = date.toString().plus(tagGroup.tag)) {
                     SubHeaderItem(
                         tagGroup = tagGroup,
                         onCopyRequested = onTagGroupCopyRequested,
@@ -420,7 +420,6 @@ private fun List(
                             .fillMaxWidth()
                             .clip(shape)
                             .then(borderModifier)
-                            .padding(horizontal = 8.dp)
                     )
                 }
                 item {
