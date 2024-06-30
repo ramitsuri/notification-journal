@@ -38,12 +38,6 @@ class TileRenderer(context: Context) :
                             launchActivityClickable(action = MainActivity.ADD)
                         )
                     )
-                    .addButtonContent(
-                        iconButton(
-                            icon = Icon.UPLOAD,
-                            launchActivityClickable(action = MainActivity.UPLOAD)
-                        )
-                    )
                     .build()
             )
             .build()
