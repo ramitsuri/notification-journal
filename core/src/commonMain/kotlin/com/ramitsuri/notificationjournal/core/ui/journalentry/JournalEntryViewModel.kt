@@ -25,7 +25,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 class JournalEntryViewModel(
     receivedText: String?,
@@ -109,7 +109,7 @@ class JournalEntryViewModel(
             return
         }
         val nextEntry = tagGroup.entries[indexOfEntry + 1]
-        val newDateTime = (nextEntry.entryTimeOverride ?: nextEntry.entryTime).plus(1.seconds)
+        val newDateTime = (nextEntry.entryTimeOverride ?: nextEntry.entryTime).plus(1.milliseconds)
         setDate(journalEntry, newDateTime)
     }
 
@@ -121,7 +121,7 @@ class JournalEntryViewModel(
         }
         val previousEntry = tagGroup.entries[indexOfEntry - 1]
         val newDateTime =
-            (previousEntry.entryTimeOverride ?: previousEntry.entryTime).minus(1.seconds)
+            (previousEntry.entryTimeOverride ?: previousEntry.entryTime).minus(1.milliseconds)
         setDate(journalEntry, newDateTime)
     }
 
