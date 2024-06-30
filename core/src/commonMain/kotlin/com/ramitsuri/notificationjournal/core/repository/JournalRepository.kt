@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlin.time.Duration.Companion.milliseconds
 
 class JournalRepository(
     private val coroutineScope: CoroutineScope,
@@ -41,16 +42,17 @@ class JournalRepository(
         originalEntryTime: Instant? = null,
         send: Boolean = true,
     ) {
-        val entryTime = clock.now()
+        val now = clock.now()
         text
             .split("\n")
             .filter { it.isNotBlank() }
-            .forEach {
+            .forEachIndexed { index, entry ->
+                val entryTime = now.plus(index.times(10).milliseconds)
                 insert(
                     entry = JournalEntry(
                         entryTime = entryTime,
                         timeZone = timeZone,
-                        text = it.trim(),
+                        text = entry.trim(),
                         tag = tag,
                         entryTimeOverride = originalEntryTime
                     ),

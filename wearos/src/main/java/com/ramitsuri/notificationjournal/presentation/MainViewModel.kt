@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
     private val repository: JournalRepository,
@@ -33,7 +34,12 @@ class MainViewModel(
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MainViewModel(repository, templateDao, wearDataSharingClient, coroutineScope) as T
+            return MainViewModel(
+                repository,
+                templateDao,
+                wearDataSharingClient,
+                coroutineScope
+            ) as T
         }
     }
 
@@ -73,13 +79,20 @@ class MainViewModel(
         time: Instant = Clock.System.now(),
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
     ) {
-        val entries = value.split(". ")
+        value.split(". ")
             .filter { it.isNotBlank() }
-        longLivingCoroutineScope.launch {
-            for (entry in entries) {
-                postToClient(value = entry, time, timeZone, tag, exitOnDone)
+            .forEachIndexed { index, entry ->
+                longLivingCoroutineScope.launch {
+                    val entryTime = time.plus(index.times(10).milliseconds)
+                    postToClient(
+                        value = entry,
+                        time = entryTime,
+                        timeZone = timeZone,
+                        tag = tag,
+                        exitOnDone = exitOnDone
+                    )
+                }
             }
-        }
     }
 
     fun transferLocallySaved() {
