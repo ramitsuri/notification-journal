@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.ui.journalentry
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +56,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,10 +65,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.Role
@@ -135,6 +145,12 @@ fun JournalEntryScreen(
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
+    // The view needs to be focussed for it to receive keyboard events
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(focusRequester) {
+        focusRequester.requestFocus()
+    }
+
     if (journalEntryForDelete != null) {
         AlertDialog(
             onDismissRequest = { journalEntryForDelete = null },
@@ -168,7 +184,28 @@ fun JournalEntryScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .focusRequester(focusRequester)
+            .focusable()
+            .onKeyEvent {
+                if (
+                    it.isMetaPressed &&
+                    it.key == Key.N &&
+                    it.type == KeyEventType.KeyUp
+                ) {
+                    onAddRequested()
+                    true
+                } else if (
+                    it.isMetaPressed &&
+                    it.key == Key.Comma &&
+                    it.type == KeyEventType.KeyUp
+                ) {
+                    onSettingsClicked()
+                    true
+                } else {
+                    false
+                }
+            },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 32.dp),

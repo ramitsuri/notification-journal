@@ -35,6 +35,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -79,7 +86,32 @@ fun AddEditEntryDialog(
             dismissOnClickOutside = false
         )
     ) {
-        Card {
+        Card(modifier = Modifier.onKeyEvent {
+            if (
+                it.isMetaPressed &&
+                it.isShiftPressed &&
+                it.key == Key.Enter &&
+                it.type == KeyEventType.KeyUp
+            ) {
+                onAddAnother()
+                true
+            } else if (
+                it.isMetaPressed &&
+                it.key == Key.Enter &&
+                it.type == KeyEventType.KeyUp
+            ) {
+                onSave()
+                true
+            } else if (
+                it.key == Key.Escape &&
+                it.type == KeyEventType.KeyUp
+            ) {
+                onCancel()
+                true
+            } else {
+                false
+            }
+        }) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
