@@ -101,7 +101,8 @@ fun WearApp(
                         horizontalArrangement = Arrangement.SpaceAround,
                     ) {
                         AddButton(onAddRequested)
-                        RequestUploadFromPhoneButton(onUploadRequested)
+                        // Hiding because upload is not a thing anymore
+                        // RequestUploadFromPhoneButton(onUploadRequested)
                     }
                 }
                 if (showOnDeviceEntries) {
