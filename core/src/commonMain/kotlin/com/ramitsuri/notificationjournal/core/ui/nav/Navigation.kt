@@ -146,6 +146,11 @@ fun NavGraph(
                 onSave = viewModel::save,
                 onAddAnother = viewModel::saveAndAddAnother,
                 onCancel = { navController.navigateUp() },
+                onPreviousDateRequested = viewModel::previousDay,
+                onNextDateRequested = viewModel::nextDay,
+                onHourUpdated = viewModel::setHour,
+                onMinuteUpdated = viewModel::setMinute,
+                onResetDateTime = viewModel::resetDateTime,
             )
         }
 
@@ -171,6 +176,11 @@ fun NavGraph(
                 onTagClicked = viewModel::tagClicked,
                 onSave = viewModel::save,
                 onCancel = { navController.navigateUp() },
+                onPreviousDateRequested = viewModel::previousDay,
+                onNextDateRequested = viewModel::nextDay,
+                onHourUpdated = viewModel::setHour,
+                onMinuteUpdated = viewModel::setMinute,
+                onResetDateTime = viewModel::resetDateTime,
             )
         }
 

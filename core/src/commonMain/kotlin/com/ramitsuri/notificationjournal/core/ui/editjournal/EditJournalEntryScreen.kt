@@ -10,6 +10,11 @@ fun EditJournalEntryScreen(
     onTagClicked: (String) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    onPreviousDateRequested: () -> Unit,
+    onNextDateRequested: () -> Unit,
+    onHourUpdated: (String) -> Unit,
+    onMinuteUpdated: (String) -> Unit,
+    onResetDateTime: () -> Unit,
 ) {
     AddEditEntryDialog(
         isLoading = state.isLoading,
@@ -18,6 +23,7 @@ fun EditJournalEntryScreen(
         selectedTag = state.selectedTag,
         suggestedText = state.suggestedText,
         templates = listOf(),
+        dateTime = state.localDateTime,
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
         onUseSuggestedText = { },
@@ -26,5 +32,10 @@ fun EditJournalEntryScreen(
         onAddAnother = { },
         onCancel = onCancel,
         onTemplateClicked = { },
+        onPreviousDateRequested = onPreviousDateRequested,
+        onNextDateRequested = onNextDateRequested,
+        onHourUpdated = onHourUpdated,
+        onMinuteUpdated = onMinuteUpdated,
+        onResetDateTime = onResetDateTime,
     )
 }

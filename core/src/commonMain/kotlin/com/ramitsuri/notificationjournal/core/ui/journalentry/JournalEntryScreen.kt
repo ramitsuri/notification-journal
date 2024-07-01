@@ -92,7 +92,6 @@ import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.bottomBorder
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
-import com.ramitsuri.notificationjournal.core.ui.string
 import com.ramitsuri.notificationjournal.core.ui.topBorder
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import kotlinx.datetime.Clock
@@ -103,12 +102,10 @@ import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.copy
-import notificationjournal.core.generated.resources.day_of_week_names
 import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.menu_content_description
-import notificationjournal.core.generated.resources.month_names
 import notificationjournal.core.generated.resources.move_down
 import notificationjournal.core.generated.resources.move_up
 import notificationjournal.core.generated.resources.next_day
@@ -121,7 +118,6 @@ import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
-import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -357,11 +353,7 @@ private fun List(
         items.forEach { dayGroup ->
             stickyHeader(key = dayGroup.date.toString()) {
                 HeaderItem(
-                    headerText = getDay(
-                        toFormat = dayGroup.date,
-                        monthNames = stringArrayResource(Res.array.month_names),
-                        dayOfWeekNames = stringArrayResource(Res.array.day_of_week_names),
-                    ).string(),
+                    headerText = getDay(toFormat = dayGroup.date),
                     untaggedCount = dayGroup.untaggedCount,
                 )
             }

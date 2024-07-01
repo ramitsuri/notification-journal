@@ -11,6 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.days
 
 class EditJournalEntryViewModel(
     savedStateHandle: SavedStateHandle,
@@ -29,8 +37,15 @@ class EditJournalEntryViewModel(
     init {
         viewModelScope.launch {
             entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG]))
+            val entryTime = entry.entryTimeOverride ?: entry.entryTime
             _state.update {
-                it.copy(isLoading = false, text = entry.text, selectedTag = entry.tag)
+                it.copy(
+                    isLoading = false,
+                    text = entry.text,
+                    selectedTag = entry.tag,
+                    dateTime = entryTime,
+                    timeZone = entry.timeZone,
+                )
             }
         }
         loadTags()
@@ -57,13 +72,69 @@ class EditJournalEntryViewModel(
         if (text.isEmpty()) {
             return
         }
+        val dateTime = currentState.dateTime
         _state.update { it.copy(isLoading = true) }
         val tag = currentState.selectedTag
         viewModelScope.launch {
-            repository.update(entry.copy(text = text, tag = tag))
+            repository.update(entry.copy(text = text, tag = tag, entryTimeOverride = dateTime))
             _saved.update {
                 true
             }
+        }
+    }
+
+    fun nextDay() {
+        _state.update {
+            it.copy(
+                dateTime = it.dateTime.plus(1.days)
+            )
+        }
+    }
+
+    fun previousDay() {
+        _state.update {
+            it.copy(
+                dateTime = it.dateTime.minus(1.days)
+            )
+        }
+    }
+
+    fun setHour(hourString: String) {
+        val hour = hourString.ifEmpty { "0" }.toIntOrNull() ?: return
+
+        if ((0..23).contains(hour).not()) {
+            return
+        }
+        setHourAndMinute(hour = hour)
+    }
+
+    fun setMinute(minuteString: String) {
+        val minute = minuteString.ifEmpty { "0" }.toIntOrNull() ?: return
+
+        if ((0..59).contains(minute).not()) {
+            return
+        }
+        setHourAndMinute(minute = minute)
+    }
+
+    fun resetDateTime() {
+        _state.update { it.copy(dateTime = entry.entryTimeOverride ?: entry.entryTime) }
+    }
+
+    private fun setHourAndMinute(hour: Int? = null, minute: Int? = null) {
+        _state.update {
+            val previousDateTime = it.dateTime.toLocalDateTime(it.timeZone)
+            val previousTime = previousDateTime.time
+
+            val newTime = LocalTime(
+                hour = hour ?: previousTime.hour,
+                minute = minute ?: previousTime.minute,
+                second = previousTime.second,
+                nanosecond = previousTime.nanosecond,
+            )
+            it.copy(
+                dateTime = LocalDateTime(previousDateTime.date, newTime).toInstant(it.timeZone)
+            )
         }
     }
 
@@ -86,7 +157,13 @@ data class EditJournalEntryViewState(
     val tags: List<Tag>,
     val selectedTag: String?,
     val suggestedText: String?,
+    val dateTime: Instant,
+    val timeZone: TimeZone,
 ) {
+
+    val localDateTime: LocalDateTime
+        get() = dateTime.toLocalDateTime(timeZone)
+
     companion object {
         fun default() = EditJournalEntryViewState(
             isLoading = true,
@@ -94,6 +171,8 @@ data class EditJournalEntryViewState(
             tags = listOf(),
             selectedTag = null,
             suggestedText = null,
+            dateTime = Clock.System.now(),
+            timeZone = TimeZone.currentSystemDefault(),
         )
     }
 }
