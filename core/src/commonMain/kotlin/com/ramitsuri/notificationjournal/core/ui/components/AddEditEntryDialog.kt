@@ -402,8 +402,9 @@ private fun DateTimeEntry(
             OutlinedIconButton(
                 onClick = onPreviousDateRequested,
                 modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                    .size(64.dp)
+                    .padding(4.dp),
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
@@ -414,8 +415,9 @@ private fun DateTimeEntry(
             OutlinedIconButton(
                 onClick = onNextDateRequested,
                 modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                    .size(64.dp)
+                    .padding(4.dp),
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowRight,
@@ -444,8 +446,9 @@ private fun DateTimeEntry(
             OutlinedIconButton(
                 onClick = onResetDateTime,
                 modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                    .size(64.dp)
+                    .padding(4.dp),
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Refresh,
