@@ -104,19 +104,31 @@ class AddJournalEntryViewModel(
     fun setHour(hourString: String) {
         val hour = hourString.ifEmpty { "0" }.toIntOrNull() ?: return
 
-        if ((0..23).contains(hour).not()) {
-            return
+        val hourToSet = if ((0..23).contains(hour).not()) {
+            if (hour % 10 == 0) {
+                hour / 10
+            } else {
+                hour % 10
+            }
+        } else {
+            hour
         }
-        setHourAndMinute(hour = hour)
+        setHourAndMinute(hour = hourToSet)
     }
 
     fun setMinute(minuteString: String) {
         val minute = minuteString.ifEmpty { "0" }.toIntOrNull() ?: return
 
-        if ((0..59).contains(minute).not()) {
-            return
+        val minuteToSet = if ((0..59).contains(minute).not()) {
+            if (minute % 10 == 0) {
+                minute / 10
+            } else {
+                minute % 10
+            }
+        } else {
+            minute
         }
-        setHourAndMinute(minute = minute)
+        setHourAndMinute(minute = minuteToSet)
     }
 
     fun resetDateTime() {
