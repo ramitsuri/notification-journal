@@ -1,7 +1,6 @@
 package com.ramitsuri.notificationjournal.core.utils
 
-import com.ramitsuri.notificationjournal.core.text.LocalizedString
-import com.ramitsuri.notificationjournal.core.text.TextValue
+import androidx.compose.runtime.Composable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -14,6 +13,14 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import notificationjournal.core.generated.resources.Res
+import notificationjournal.core.generated.resources.day_of_week_names
+import notificationjournal.core.generated.resources.month_names
+import notificationjournal.core.generated.resources.today
+import notificationjournal.core.generated.resources.tomorrow
+import notificationjournal.core.generated.resources.yesterday
+import org.jetbrains.compose.resources.stringArrayResource
+import org.jetbrains.compose.resources.stringResource
 
 fun formatForDisplay(
     toFormat: Instant,
@@ -34,26 +41,27 @@ fun formatForDisplay(
 }
 
 @Suppress("MoveVariableDeclarationIntoWhen")
+@Composable
 fun getDay(
     toFormat: LocalDate,
     now: Instant = Clock.System.now(),
     timeZone: TimeZone = TimeZone.currentSystemDefault(),
-    monthNames: List<String>,
-    dayOfWeekNames: List<String>,
-): TextValue {
+    monthNames: List<String> = stringArrayResource(Res.array.month_names),
+    dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
+): String {
     val nowLocalDate = now.toLocalDateTime(timeZone).date
     val daysBetweenNowAndToFormat = nowLocalDate.minus(toFormat).days
     return when (daysBetweenNowAndToFormat) {
         0 -> {
-            TextValue.ForKey(LocalizedString.TODAY)
+            stringResource(Res.string.today)
         }
 
         1 -> {
-            TextValue.ForKey(LocalizedString.YESTERDAY)
+            stringResource(Res.string.tomorrow)
         }
 
         -1 -> {
-            TextValue.ForKey(LocalizedString.TOMORROW)
+            stringResource(Res.string.yesterday)
         }
 
         else -> {
@@ -65,11 +73,9 @@ fun getDay(
                 char(' ')
                 dayOfMonth()
             }
-            return TextValue.ForString(
-                toFormat
-                    .atTime(hour = 0, minute = 0)
-                    .format(format)
-            )
+            return toFormat
+                .atTime(hour = 0, minute = 0)
+                .format(format)
         }
     }
 }

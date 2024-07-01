@@ -39,15 +39,15 @@ class JournalRepository(
     suspend fun insert(
         text: String,
         tag: String? = null,
+        time: Instant = clock.now(),
         originalEntryTime: Instant? = null,
         send: Boolean = true,
     ) {
-        val now = clock.now()
         text
             .split("\n")
             .filter { it.isNotBlank() }
             .forEachIndexed { index, entry ->
-                val entryTime = now.plus(index.times(10).milliseconds)
+                val entryTime = time.plus(index.times(10).milliseconds)
                 insert(
                     entry = JournalEntry(
                         entryTime = entryTime,

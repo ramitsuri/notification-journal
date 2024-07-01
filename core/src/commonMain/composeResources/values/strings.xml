@@ -91,4 +91,5 @@
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="untagged_format"> (%1$s untagged)</string>
+    <string name="reset_date_time">Reset date time</string>
 </resources>
