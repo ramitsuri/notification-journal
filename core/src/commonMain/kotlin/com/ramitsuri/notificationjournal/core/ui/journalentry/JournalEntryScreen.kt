@@ -56,6 +56,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,6 +80,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -86,6 +88,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
@@ -147,6 +151,22 @@ fun JournalEntryScreen(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(focusRequester) {
         focusRequester.requestFocus()
+    }
+
+    var showContent by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, lifecycleEvent ->
+            if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
+                showContent = true
+            } else if (lifecycleEvent == Lifecycle.Event.ON_PAUSE) {
+                showContent = false
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     if (journalEntryForDelete != null) {
@@ -230,7 +250,7 @@ fun JournalEntryScreen(
         ) {
             if (state.loading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            } else {
+            } else if (showContent) {
                 Spacer(
                     modifier = Modifier.height(
                         WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
