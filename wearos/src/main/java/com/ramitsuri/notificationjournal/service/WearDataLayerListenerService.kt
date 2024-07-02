@@ -30,11 +30,19 @@ class WearDataLayerListenerService : WearableListenerService() {
             val templateId = dataMap.getString(Constants.WearDataSharing.TEMPLATE_ID)
             val templateValue = dataMap.getString(Constants.WearDataSharing.TEMPLATE_VALUE)
             val templateTag = dataMap.getString(Constants.WearDataSharing.TEMPLATE_TAG)
-            if (templateId != null && templateValue != null && templateTag != null) {
+            val templateDisplayText =
+                dataMap.getString(Constants.WearDataSharing.TEMPLATE_DISPLAY_TEXT)
+            val templateShortDisplayText =
+                dataMap.getString(Constants.WearDataSharing.TEMPLATE_SHORT_DISPLAY_TEXT)
+            if (templateId != null && templateValue != null && templateTag != null &&
+                templateDisplayText != null && templateShortDisplayText != null
+            ) {
                 val template = JournalEntryTemplate(
                     id = templateId,
                     text = templateValue,
-                    tag = templateTag
+                    tag = templateTag,
+                    displayText = templateDisplayText,
+                    shortDisplayText = templateShortDisplayText,
                 )
                 journalEntryTemplates.add(template)
             }

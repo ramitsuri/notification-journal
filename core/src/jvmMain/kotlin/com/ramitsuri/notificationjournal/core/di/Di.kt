@@ -9,6 +9,7 @@ import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
@@ -52,7 +53,7 @@ actual class Factory {
                 // Not supported
             }
 
-            override suspend fun postTemplate(id: String, value: String, tag: String): Boolean {
+            override suspend fun postTemplate(template: JournalEntryTemplate): Boolean {
                 // Not supported
                 return true
             }

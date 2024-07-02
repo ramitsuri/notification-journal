@@ -51,7 +51,7 @@ class TemplatesViewModel(
         idBeingEdited = journalEntryTemplate.id
         viewModelScope.launch {
             _state.update {
-                it.copy(text = journalEntryTemplate.text, selectedTag = journalEntryTemplate.tag)
+                it.copy(templateBeingAddedOrEdited = TemplateValues(journalEntryTemplate))
             }
         }
     }
@@ -59,19 +59,31 @@ class TemplatesViewModel(
     fun addClicked() {
         idBeingEdited = null
         _state.update {
-            it.copy(text = "")
+            it.copy(templateBeingAddedOrEdited = TemplateValues())
         }
     }
 
     fun textUpdated(text: String) {
         _state.update {
-            it.copy(text = text)
+            it.updateText(text)
+        }
+    }
+
+    fun displayTextUpdated(text: String) {
+        _state.update {
+            it.updateDisplayText(text)
+        }
+    }
+
+    fun shortDisplayTextUpdated(text: String) {
+        _state.update {
+            it.updateShortDisplayText(text)
         }
     }
 
     fun tagClicked(tag: String) {
         _state.update {
-            it.copy(selectedTag = tag)
+            it.updateTag(tag)
         }
     }
 
@@ -80,19 +92,21 @@ class TemplatesViewModel(
         if (!currentState.canSave) {
             return
         }
-        val text = currentState.text
-        val tag = currentState.selectedTag
-        if (text.isEmpty() || tag.isNullOrEmpty()) {
-            return
-        }
+        val tag = currentState.templateBeingAddedOrEdited.tag ?: return
 
         _state.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            dao.insertOrUpdate(idBeingEdited, text, tag)
+            dao.insertOrUpdate(
+                id = idBeingEdited,
+                text = currentState.templateBeingAddedOrEdited.text,
+                tag = tag,
+                displayText = currentState.templateBeingAddedOrEdited.displayText,
+                shortDisplayText = currentState.templateBeingAddedOrEdited.shortDisplayText,
+            )
             idBeingEdited = null
             _state.update {
-                it.copy(isLoading = false, text = "", selectedTag = null)
+                it.copy(isLoading = false, templateBeingAddedOrEdited = TemplateValues())
             }
         }
     }
@@ -100,7 +114,7 @@ class TemplatesViewModel(
     fun onAddOrEditCanceled() {
         idBeingEdited = null
         _state.update {
-            it.copy(text = "", selectedTag = null)
+            it.copy(templateBeingAddedOrEdited = TemplateValues())
         }
     }
 
@@ -114,11 +128,7 @@ class TemplatesViewModel(
         viewModelScope.launch {
             val templates = _state.value.templates
             templates.forEach { template ->
-                wearDataSharingClient.postTemplate(
-                    id = template.id,
-                    value = template.text,
-                    tag = template.tag
-                )
+                wearDataSharingClient.postTemplate(template)
             }
             dataSendHelper?.sendTemplates(templates)
         }
@@ -143,14 +153,45 @@ class TemplatesViewModel(
 
 data class TemplatesViewState(
     val isLoading: Boolean = false,
-    val text: String = "",
+    val templateBeingAddedOrEdited: TemplateValues = TemplateValues(),
     val tags: List<Tag> = listOf(),
-    val selectedTag: String? = null,
     val templates: List<JournalEntryTemplate> = listOf(),
     val canAddMore: Boolean = false,
 ) {
     val canSave: Boolean
         get() {
-            return text.isNotEmpty() && !selectedTag.isNullOrEmpty()
+            return templateBeingAddedOrEdited.isValid
         }
+
+    fun updateText(text: String) =
+        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(text = text))
+
+    fun updateTag(tag: String) =
+        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(tag = tag))
+
+    fun updateDisplayText(text: String) =
+        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(displayText = text))
+
+    fun updateShortDisplayText(text: String) =
+        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(shortDisplayText = text))
+
+}
+
+data class TemplateValues(
+    val text: String = "",
+    val displayText: String = "",
+    val shortDisplayText: String = "",
+    val tag: String? = null,
+) {
+    val isValid: Boolean
+        get() {
+            return text.isNotEmpty() && !tag.isNullOrEmpty() && displayText.isNotEmpty()
+        }
+
+    constructor(template: JournalEntryTemplate) : this(
+        text = template.text,
+        displayText = template.displayText,
+        shortDisplayText = template.shortDisplayText,
+        tag = template.tag,
+    )
 }
