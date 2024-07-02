@@ -114,6 +114,11 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Journal"
             packageVersion = "1.0.0"
+
+            val iconsRoot = project.file("desktop-icons")
+            macOS {
+                iconFile.set(iconsRoot.resolve("macos.icns"))
+            }
         }
     }
 }
