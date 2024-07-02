@@ -57,11 +57,11 @@ fun getDay(
         }
 
         1 -> {
-            stringResource(Res.string.tomorrow)
+            stringResource(Res.string.yesterday)
         }
 
         -1 -> {
-            stringResource(Res.string.yesterday)
+            stringResource(Res.string.tomorrow)
         }
 
         else -> {
