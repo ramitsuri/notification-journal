@@ -48,6 +48,12 @@ class MainActivity : ComponentActivity() {
                 viewModel.triggerUpload()
             }
 
+            TEMPLATE -> {
+                intent.extras?.getString(TEMPLATE_ID)?.let { templateId ->
+                    viewModel.addFromTemplate(templateId)
+                }
+            }
+
             else -> {
                 // Do nothing
             }
@@ -65,7 +71,8 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_KEY = "EXTRA_KEY"
         const val ADD = "ADD_JOURNAL_ENTRY"
         const val UPLOAD = "UPLOAD"
-        const val OPEN_APP = "OPEN_APP"
+        const val TEMPLATE = "TEMPLATE"
+        const val TEMPLATE_ID = "TEMPLATE_ID"
     }
 }
 

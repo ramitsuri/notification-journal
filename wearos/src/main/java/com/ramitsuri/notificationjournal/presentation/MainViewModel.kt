@@ -68,8 +68,10 @@ class MainViewModel(
     }
 
     fun addFromTemplate(templateId: String) {
-        val entry = _state.value.journalEntryTemplates.firstOrNull { it.id == templateId } ?: return
-        add(entry.text, entry.tag, exitOnDone = true)
+        viewModelScope.launch {
+            val entry = templateDao.getAll().firstOrNull { it.id == templateId } ?: return@launch
+            add(entry.text, entry.tag, exitOnDone = true)
+        }
     }
 
     fun add(
