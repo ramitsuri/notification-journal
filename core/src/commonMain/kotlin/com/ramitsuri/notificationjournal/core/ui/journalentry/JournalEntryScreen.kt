@@ -102,6 +102,7 @@ import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.copy
+import notificationjournal.core.generated.resources.copy_reconcile
 import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.edit
@@ -767,17 +768,11 @@ private fun SubHeaderItemMenu(
             onDismissRequest = onMenuButtonClicked,
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(Res.string.copy)) },
+                text = { Text(stringResource(Res.string.copy_reconcile)) },
                 onClick = {
                     onMenuButtonClicked()
                     onCopyRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.delete)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onDeleteRequested()
+                    onReconcileRequested()
                 }
             )
             DropdownMenuItem(
@@ -795,10 +790,24 @@ private fun SubHeaderItemMenu(
                 }
             )
             DropdownMenuItem(
+                text = { Text(stringResource(Res.string.copy)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onCopyRequested()
+                }
+            )
+            DropdownMenuItem(
                 text = { Text(stringResource(Res.string.reconcile)) },
                 onClick = {
                     onMenuButtonClicked()
                     onReconcileRequested()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.delete)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onDeleteRequested()
                 }
             )
         }

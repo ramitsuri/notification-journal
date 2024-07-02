@@ -29,6 +29,7 @@
     <string name="move_down">Move down</string>
     <string name="move_up">Move up</string>
     <string name="reconcile">Reconcile</string>
+    <string name="copy_reconcile">Copy &amp; reconcile</string>
 
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>
