@@ -19,3 +19,10 @@ internal val wearColorPalette: Colors = Colors(
     onSecondary = Color.Black,
     onError = Color.Black
 )
+
+internal val tileColors = androidx.wear.protolayout.material.Colors(
+    /* primary = */ 0xFFE76767.toInt(),
+    /* onPrimary = */ 0xFFFFFFFF.toInt(),
+    /* surface = */ 0xFFE76767.toInt(),
+    /* onSurface = */ 0xFFFFFFFF.toInt(),
+)

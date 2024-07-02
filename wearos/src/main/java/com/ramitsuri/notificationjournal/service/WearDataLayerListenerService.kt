@@ -8,6 +8,7 @@ import com.google.android.gms.wearable.WearableListenerService
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.tile.JournalTileService
 import kotlinx.coroutines.launch
 
 class WearDataLayerListenerService : WearableListenerService() {
@@ -45,6 +46,7 @@ class WearDataLayerListenerService : WearableListenerService() {
         ServiceLocator.coroutineScope.launch {
             // Use ones received from the phone app as the single source of truth
             dao.clearAndInsert(journalEntryTemplates)
+            JournalTileService.update(applicationContext)
         }
     }
 }
