@@ -34,7 +34,7 @@ class TileRenderer(context: Context) :
                     .apply {
                         // This layout can only comfortably show 5 items
                         state.templates.take(5).forEach {
-                            addTextButton(it.text, templateAction(it))
+                            addTextButton(it.shortDisplayText, templateAction(it))
                         }
                     }
                     .build()
