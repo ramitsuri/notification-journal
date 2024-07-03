@@ -9,6 +9,7 @@ import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.material.Button
 import androidx.wear.protolayout.material.ButtonColors
+import androidx.wear.protolayout.material.ButtonDefaults
 import androidx.wear.protolayout.material.ChipColors
 import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.protolayout.material.layouts.MultiButtonLayout
@@ -19,7 +20,6 @@ import com.google.android.horologist.tiles.render.SingleTileLayoutRenderer
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.presentation.MainActivity
-import com.ramitsuri.notificationjournal.presentation.theme.tileColors
 
 @OptIn(ExperimentalHorologistApi::class)
 class TileRenderer(context: Context) :
@@ -46,7 +46,7 @@ class TileRenderer(context: Context) :
                     launchActivityClickable(launchActivityAction()),
                     deviceParameters
                 )
-                    .setChipColors(ChipColors.primaryChipColors(tileColors))
+                    .setChipColors(ChipColors.secondaryChipColors(theme))
                     .build()
             )
             .build()
@@ -94,6 +94,7 @@ class TileRenderer(context: Context) :
         addButtonContent(
             Button.Builder(context, clickable)
                 .setTextContent(text)
+                .setSize(ButtonDefaults.LARGE_SIZE)
                 .setButtonColors(ButtonColors.secondaryButtonColors(theme))
                 .build()
         )

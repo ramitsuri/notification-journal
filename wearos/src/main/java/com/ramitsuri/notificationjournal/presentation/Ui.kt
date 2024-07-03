@@ -18,7 +18,6 @@ import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -31,6 +30,7 @@ import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
+import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
@@ -179,7 +179,7 @@ private fun SmallButton(
     Button(
         modifier = Modifier
             .size(ButtonDefaults.LargeButtonSize),
-        colors = ButtonDefaults.primaryButtonColors(backgroundColor = Color(0xFFE76767)),
+        colors = ButtonDefaults.secondaryButtonColors(),
         onClick = onClick,
     ) {
         val iconModifier = Modifier
@@ -202,10 +202,10 @@ private fun LargeButton(
     Button(
         modifier = modifier
             .padding(bottom = 8.dp),
-        colors = ButtonDefaults.primaryButtonColors(backgroundColor = Color(0xFFE76767)),
+        colors = ButtonDefaults.secondaryButtonColors(),
         onClick = onClick,
     ) {
-        Text(text = text, maxLines = 1)
+        Text(text = text, maxLines = 1, style = MaterialTheme.typography.display3)
     }
 }
 
