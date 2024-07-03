@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 abstract class JournalEntryTemplateDao {
@@ -26,12 +27,20 @@ abstract class JournalEntryTemplateDao {
     }
 
     @Transaction
-    open suspend fun insertOrUpdate(id: String? = null, text: String, tag: String) {
-        val template = if (id != null) {
-            JournalEntryTemplate(id = id, text = text, tag = tag)
-        } else {
-            JournalEntryTemplate(text = text, tag = tag)
-        }
+    open suspend fun insertOrUpdate(
+        id: String? = null,
+        text: String,
+        tag: String,
+        shortDisplayText: String,
+        displayText: String
+    ) {
+        val template = JournalEntryTemplate(
+            id = id ?: UUID.randomUUID().toString(),
+            text = text,
+            tag = tag,
+            shortDisplayText = shortDisplayText,
+            displayText = displayText
+        )
         insertOrUpdate(template)
     }
 

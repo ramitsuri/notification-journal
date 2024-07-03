@@ -6,6 +6,7 @@ import android.util.Log
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.tasks.await
 import kotlinx.datetime.Instant
@@ -35,7 +36,10 @@ class WearDataSharingClientImpl(
                         Constants.WearDataSharing.JOURNAL_ENTRY_TIME,
                         time.toEpochMilliseconds()
                     )
-                    dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TIME_ZONE, timeZoneId.id)
+                    dataMap.putString(
+                        Constants.WearDataSharing.JOURNAL_ENTRY_TIME_ZONE,
+                        timeZoneId.id
+                    )
                     if (tag != null) {
                         dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG, tag)
                     }
@@ -73,15 +77,25 @@ class WearDataSharingClientImpl(
     }
 
     @SuppressLint("VisibleForTests")
-    override suspend fun postTemplate(id: String, value: String, tag: String): Boolean {
+    override suspend fun postTemplate(template: JournalEntryTemplate): Boolean {
         return try {
             val requestId = System.currentTimeMillis()
             val path = "${Constants.WearDataSharing.TEMPLATE_ROUTE}/$requestId"
             val request = PutDataMapRequest.create(path)
                 .apply {
-                    dataMap.putString(Constants.WearDataSharing.TEMPLATE_ID, id)
-                    dataMap.putString(Constants.WearDataSharing.TEMPLATE_VALUE, value)
-                    dataMap.putString(Constants.WearDataSharing.TEMPLATE_TAG, tag)
+                    dataMap.apply {
+                        putString(Constants.WearDataSharing.TEMPLATE_ID, template.id)
+                        putString(Constants.WearDataSharing.TEMPLATE_VALUE, template.text)
+                        putString(Constants.WearDataSharing.TEMPLATE_TAG, template.tag)
+                        putString(
+                            Constants.WearDataSharing.TEMPLATE_DISPLAY_TEXT,
+                            template.displayText
+                        )
+                        putString(
+                            Constants.WearDataSharing.TEMPLATE_SHORT_DISPLAY_TEXT,
+                            template.shortDisplayText
+                        )
+                    }
                 }
                 .asPutDataRequest()
                 .setUrgent()

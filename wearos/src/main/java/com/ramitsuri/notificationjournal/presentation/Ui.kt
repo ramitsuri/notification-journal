@@ -87,7 +87,9 @@ fun WearApp(
                 }
                 viewState.journalEntryTemplates
                     .map {
-                        TemplateButton(text = it.text, onClick = { onTemplateAddRequested(it.id) })
+                        TemplateButton(
+                            text = it.shortDisplayText,
+                            onClick = { onTemplateAddRequested(it.id) })
                     }
                     .chunked(2)
                     .forEach { templateButtons ->

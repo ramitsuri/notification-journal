@@ -19,6 +19,14 @@ data class JournalEntryTemplate(
     @SerialName("text")
     val text: String,
 
+    @ColumnInfo(name = "display_text")
+    @SerialName("display_text")
+    val displayText: String,
+
+    @ColumnInfo(name = "short_display_text")
+    @SerialName("short_display_text")
+    val shortDisplayText: String,
+
     @ColumnInfo(name = "tag")
     @SerialName("tag")
     val tag: String,

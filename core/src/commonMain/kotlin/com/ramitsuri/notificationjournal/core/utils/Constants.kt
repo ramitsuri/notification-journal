@@ -24,5 +24,7 @@ object Constants {
         const val TEMPLATE_ID = "template_id"
         const val TEMPLATE_VALUE = "template_value"
         const val TEMPLATE_TAG = "template_tag"
+        const val TEMPLATE_DISPLAY_TEXT = "template_display_text"
+        const val TEMPLATE_SHORT_DISPLAY_TEXT = "template_short_display_text"
     }
 }

@@ -227,6 +227,8 @@ fun NavGraph(
             TemplatesScreen(
                 state = viewState,
                 onTextUpdated = viewModel::textUpdated,
+                onDisplayTextUpdated = viewModel::displayTextUpdated,
+                onShortDisplayTextUpdated = viewModel::shortDisplayTextUpdated,
                 onTagClicked = viewModel::tagClicked,
                 onEditRequested = viewModel::editClicked,
                 onDeleteRequested = viewModel::delete,

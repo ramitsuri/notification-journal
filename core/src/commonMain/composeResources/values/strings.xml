@@ -93,4 +93,7 @@
     <string name="password">Password</string>
     <string name="untagged_format"> (%1$s untagged)</string>
     <string name="reset_date_time">Reset date time</string>
+    <string name="text">Text</string>
+    <string name="display_text">Display text</string>
+    <string name="short_display_text">Short display text</string>
 </resources>
