@@ -210,6 +210,14 @@ private fun Content(
                 keyboard?.show()
             }
         }
+        DateTimeEntry(
+            dateTime = dateTime,
+            onPreviousDateRequested = onPreviousDateRequested,
+            onNextDateRequested = onNextDateRequested,
+            onHourUpdated = onHourUpdated,
+            onMinuteUpdated = onMinuteUpdated,
+            onResetDateTime = onResetDateTime,
+        )
         BasicTextField(
             value = TextFieldValue(text = text, selection = selection),
             onValueChange = {
@@ -306,15 +314,6 @@ private fun Content(
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
-        DateTimeEntry(
-            dateTime = dateTime,
-            onPreviousDateRequested = onPreviousDateRequested,
-            onNextDateRequested = onNextDateRequested,
-            onHourUpdated = onHourUpdated,
-            onMinuteUpdated = onMinuteUpdated,
-            onResetDateTime = onResetDateTime,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
         if (templates.isNotEmpty()) {
             Templates(
                 templates = templates,
@@ -402,7 +401,7 @@ private fun DateTimeEntry(
             OutlinedIconButton(
                 onClick = onPreviousDateRequested,
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(48.dp)
                     .padding(4.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -415,7 +414,7 @@ private fun DateTimeEntry(
             OutlinedIconButton(
                 onClick = onNextDateRequested,
                 modifier = Modifier
-                    .size(64.dp)
+                .size(48.dp)
                     .padding(4.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -425,6 +424,7 @@ private fun DateTimeEntry(
                 )
             }
         }
+        /* Hiding because it doesn't get frequent use. Might remove it in the future.
         Spacer(modifier = Modifier.height(16.dp))
         Row(
             modifier = Modifier
@@ -455,7 +455,7 @@ private fun DateTimeEntry(
                     contentDescription = stringResource(Res.string.reset_date_time)
                 )
             }
-        }
+        }*/
     }
 }
 
