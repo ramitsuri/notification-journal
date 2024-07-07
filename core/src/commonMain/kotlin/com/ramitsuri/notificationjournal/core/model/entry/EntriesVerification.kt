@@ -10,17 +10,10 @@ data class EntriesVerification(
     val isComplete: Boolean
         get() = sentEntries.isNotEmpty() && receivedEntries.isNotEmpty()
 
-    fun partitionByMatching(): Pair<List<JournalEntry>, List<JournalEntry>> {
-        val matching = mutableListOf<JournalEntry>()
-        val notMatching = mutableListOf<JournalEntry>()
-        sentEntries.forEach { sent ->
-            val received = receivedEntries.firstOrNull { it.id == sent.id } ?: return@forEach
-            if (received == sent) {
-                matching.add(sent)
-            } else {
-                notMatching.add(sent)
-            }
+    fun getMismatchedEntries(): List<JournalEntry> {
+        return receivedEntries.filter { receivedEntry ->
+            val sentEntry = sentEntries.firstOrNull { it.id == receivedEntry.id }
+            sentEntry != receivedEntry
         }
-        return Pair(matching, notMatching)
     }
 }

@@ -284,7 +284,6 @@ fun JournalEntryScreen(
                 } else {
                     List(
                         items = state.dayGroups,
-                        matchingEntries = state.matchingEntries,
                         notMatchingEntries = state.notMatchingEntries,
                         tags = state.tags,
                         onCopyRequested = { item ->
@@ -357,7 +356,6 @@ private fun Toolbar(
 @Composable
 private fun List(
     items: List<DayGroup>,
-    matchingEntries: List<JournalEntry>,
     notMatchingEntries: List<JournalEntry>,
     tags: List<Tag>,
     onCopyRequested: (JournalEntry) -> Unit,

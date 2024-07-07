@@ -59,8 +59,8 @@ class JournalEntryViewModel(
                     return@collect
                 }
                 _state.update { previousState ->
-                    val (matching, notMatching) = entriesVerification.partitionByMatching()
-                    previousState.copy(matchingEntries = matching, notMatchingEntries = notMatching)
+                    val notMatching = entriesVerification.getMismatchedEntries()
+                    previousState.copy(notMatchingEntries = notMatching)
                 }
             }
         }
@@ -178,7 +178,6 @@ class JournalEntryViewModel(
             repository.update(journalEntry)
             _state.update {
                 it.copy(
-                    matchingEntries = it.matchingEntries.toMutableList().plus(journalEntry),
                     notMatchingEntries = it.notMatchingEntries.toMutableList().minus(journalEntry),
                 )
             }
@@ -253,6 +252,5 @@ data class ViewState(
     val tags: List<Tag>,
     val loading: Boolean = false,
     val showSyncButton: Boolean = false,
-    val matchingEntries: List<JournalEntry> = listOf(),
     val notMatchingEntries: List<JournalEntry> = listOf(),
 )
