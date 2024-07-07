@@ -8,6 +8,9 @@ interface KeyValueStore {
 
     fun getInt(key: String, fallback: Int): Int
     fun putInt(key: String, value: Int)
+
+    fun getBoolean(key: String, fallback: Boolean): Boolean
+    fun putBoolean(key: String, value: Boolean)
 }
 
 class PrefsKeyValueStore(factory: Factory) : KeyValueStore {
@@ -35,5 +38,17 @@ class PrefsKeyValueStore(factory: Factory) : KeyValueStore {
 
     override fun putInt(key: String, value: Int) {
         prefs.putInt(key, value)
+    }
+
+    override fun getBoolean(key: String, fallback: Boolean): Boolean {
+        return try {
+            prefs.getBoolean(key, fallback)
+        } catch (e: ClassCastException) {
+            fallback
+        }
+    }
+
+    override fun putBoolean(key: String, value: Boolean) {
+        prefs.putBoolean(key, value)
     }
 }

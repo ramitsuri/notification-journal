@@ -36,7 +36,8 @@ class SettingsViewModel(
                 deviceName = DeviceName(getDeviceName()),
                 username = Username(getUsername()),
                 password = Password(getPassword()),
-                appVersion = getAppVersion()
+                appVersion = getAppVersion(),
+                showReconciled = getShowReconciled(),
             )
         )
         state = _state
@@ -88,6 +89,13 @@ class SettingsViewModel(
         setSortOrder(newSortOrder)
     }
 
+    fun toggleShowReconciled() {
+        keyValueStore.putBoolean(Constants.PREF_KEY_SHOW_RECONCILED, !getShowReconciled())
+        _state.update {
+            it.copy(showReconciled = getShowReconciled())
+        }
+    }
+
     fun onErrorAcknowledged() {
         _state.update {
             it.copy(error = null)
@@ -117,6 +125,9 @@ class SettingsViewModel(
 
     private fun getPassword() = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "") ?: ""
 
+    private fun getShowReconciled() =
+        keyValueStore.getBoolean(Constants.PREF_KEY_SHOW_RECONCILED, false)
+
     companion object {
         fun factory() = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -143,5 +154,6 @@ data class SettingsViewState(
     val deviceName: DeviceName = DeviceName(""),
     val username: Username = Username(""),
     val password: Password = Password(""),
-    val appVersion: String = ""
+    val appVersion: String = "",
+    val showReconciled: Boolean = false,
 )

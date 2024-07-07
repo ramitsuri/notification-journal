@@ -12,6 +12,7 @@ object Constants {
     const val PREF_KEY_EXCHANGE_NAME = "exchange_name"
     const val PREF_KEY_USERNAME = "username"
     const val PREF_KEY_PASSWORD = "password"
+    const val PREF_KEY_SHOW_RECONCILED = "show_reconciled"
 
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"

@@ -173,8 +173,9 @@ class JournalEntryViewModel(
     private fun restartCollection() {
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
+            val showReconciled = keyValueStore.getBoolean(Constants.PREF_KEY_SHOW_RECONCILED, false)
             combine(
-                repository.getFlow(),
+                repository.getFlow(showReconciled = showReconciled),
                 repository.getForUploadCountFlow()
             ) { entries, forUploadCount ->
                 Pair(entries, forUploadCount)
