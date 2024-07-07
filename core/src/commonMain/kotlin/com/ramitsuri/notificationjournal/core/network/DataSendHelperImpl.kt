@@ -59,14 +59,18 @@ internal class DataSendHelperImpl(
                 createChannelIfNecessary()
                 try {
                     val message = json.encodeToString(this@send).toByteArray()
-                    channel?.basicPublish(
-                        exchangeName,
-                        "",
-                        MessageProperties.PERSISTENT_TEXT_PLAIN,
-                        message
-                    )
-                    channel?.waitForConfirmsOrDie(5.seconds.inWholeMilliseconds);
-                    true
+                    channel?.let {
+                        it.basicPublish(
+                            exchangeName,
+                            "",
+                            MessageProperties.PERSISTENT_TEXT_PLAIN,
+                            message
+                        )
+                        it.waitForConfirmsOrDie(5.seconds.inWholeMilliseconds)
+                        true
+                    } ?: run {
+                        false
+                    }
                 } catch (e: Exception) {
                     log("failed to send message: $e")
                     false
@@ -77,18 +81,22 @@ internal class DataSendHelperImpl(
 
     override suspend fun closeConnection() {
         mutex.withLock {
-            runCatching {
-                connection?.close()
-                connection = null
-                channel?.close()
-                channel = null
-            }
+            closeConnectionInternal()
+        }
+    }
+
+    private fun closeConnectionInternal() {
+        runCatching {
+            connection?.close()
+            connection = null
+            channel?.close()
+            channel = null
         }
     }
 
     private fun getSender() = Sender(name = deviceName, id = deviceId)
 
-    private suspend fun createChannelIfNecessary() {
+    private fun createChannelIfNecessary() {
         try {
             if (connection == null) {
                 connection = ConnectionFactory().apply {
@@ -103,7 +111,7 @@ internal class DataSendHelperImpl(
             }
         } catch (e: Exception) {
             log("Failed to connect to RabbitMQ: $e")
-            closeConnection()
+            closeConnectionInternal()
         }
     }
 
