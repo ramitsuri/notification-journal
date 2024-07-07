@@ -25,6 +25,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -49,6 +51,7 @@ import notificationjournal.core.generated.resources.password
 import notificationjournal.core.generated.resources.settings_app_version
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
 import notificationjournal.core.generated.resources.settings_data_sharing_title
+import notificationjournal.core.generated.resources.settings_showReconciled
 import notificationjournal.core.generated.resources.settings_sort_order_asc
 import notificationjournal.core.generated.resources.settings_sort_order_desc
 import notificationjournal.core.generated.resources.settings_sort_order_title
@@ -72,6 +75,7 @@ fun SettingsScreen(
     onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
+    onToggleShowReconciled: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -149,6 +153,13 @@ fun SettingsScreen(
                     )
                 }
                 item {
+                    SettingsItemWithToggle(
+                        title = stringResource(Res.string.settings_showReconciled),
+                        value = state.showReconciled,
+                        onClick = onToggleShowReconciled,
+                    )
+                }
+                item {
                     SettingsItem(
                         title = stringResource(Res.string.settings_upload_title),
                         subtitle = stringResource(Res.string.settings_upload_subtitle),
@@ -216,6 +227,34 @@ private fun SettingsItem(
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun SettingsItemWithToggle(
+    title: String,
+    value: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 64.dp)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(4.dp)
+        )
+        Switch(
+            checked = value,
+            onCheckedChange = null,
+        )
     }
 }
 

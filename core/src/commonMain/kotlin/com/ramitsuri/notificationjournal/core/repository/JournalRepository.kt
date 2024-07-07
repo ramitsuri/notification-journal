@@ -19,8 +19,14 @@ class JournalRepository(
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
     private val dataSendHelper: DataSendHelper?,
 ) {
-    fun getFlow(): Flow<List<JournalEntry>> {
-        return dao.getAllFlow()
+    fun getFlow(
+        showReconciled: Boolean = false,
+    ): Flow<List<JournalEntry>> {
+        return if (showReconciled) {
+            dao.getAllFlow()
+        } else {
+            dao.getAllFlowNotReconciled()
+        }
     }
 
     fun getForUploadCountFlow() = dao.getForUploadCountFlow()

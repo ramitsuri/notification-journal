@@ -200,6 +200,7 @@ fun NavGraph(
                 onTemplatesClicked = {
                     navController.navigate(Destination.TEMPLATES.routeWithArgValues())
                 },
+                onToggleShowReconciled = viewModel::toggleShowReconciled,
             )
         }
 

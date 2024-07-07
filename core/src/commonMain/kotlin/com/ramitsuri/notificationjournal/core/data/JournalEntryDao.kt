@@ -11,8 +11,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class JournalEntryDao {
-    @Query("SELECT * FROM journalentry WHERE reconciled = 0 AND deleted = 0")
+    @Query("SELECT * FROM journalentry WHERE deleted = 0")
     abstract fun getAllFlow(): Flow<List<JournalEntry>>
+
+    @Query("SELECT * FROM journalentry WHERE reconciled = 0 AND deleted = 0")
+    abstract fun getAllFlowNotReconciled(): Flow<List<JournalEntry>>
 
     @Query("SELECT * FROM journalentry WHERE reconciled = 0 AND deleted = 0 ORDER BY entry_time ASC")
     abstract suspend fun getAll(): List<JournalEntry>
