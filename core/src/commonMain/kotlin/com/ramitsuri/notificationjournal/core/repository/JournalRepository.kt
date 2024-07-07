@@ -95,9 +95,7 @@ class JournalRepository(
     private fun sendAndMarkUploaded(entries: List<JournalEntry>) {
         coroutineScope.launch {
             val sent = dataSendHelper?.sendEntry(entries) == true
-            if (sent) {
-                dao.updateUploaded(entries)
-            }
+            dao.updateUploaded(entries = entries, uploaded = sent)
         }
     }
 }

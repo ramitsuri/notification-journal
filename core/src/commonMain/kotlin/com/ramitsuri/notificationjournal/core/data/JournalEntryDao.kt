@@ -39,10 +39,10 @@ abstract class JournalEntryDao {
     }
 
     @Transaction
-    open suspend fun updateUploaded(entries: List<JournalEntry>) {
+    open suspend fun updateUploaded(entries: List<JournalEntry>, uploaded: Boolean) {
         entries
             .forEach {
-                update(it.copy(uploaded = true))
+                update(it.copy(uploaded = uploaded))
             }
     }
 
