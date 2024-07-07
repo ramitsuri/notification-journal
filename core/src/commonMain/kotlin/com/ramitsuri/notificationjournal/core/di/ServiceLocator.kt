@@ -60,6 +60,12 @@ object ServiceLocator {
                     is Payload.Templates -> {
                         coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
                     }
+
+                    is Payload.VerifyEntries -> {
+                        coroutineScope.launch {
+                            repository.onVerifyEntriesReceived(it.data, it.sender)
+                        }
+                    }
                 }
             }
         }
@@ -204,7 +210,7 @@ object ServiceLocator {
         CoroutineScope(SupervisorJob())
     }
 
-    private val ioDispatcher by lazy {
+    val ioDispatcher by lazy {
         Dispatchers.IO
     }
 

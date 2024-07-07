@@ -53,6 +53,13 @@ internal class DataSendHelperImpl(
         ).send()
     }
 
+    override suspend fun sendVerifyEntries(entries: List<JournalEntry>): Boolean {
+        return Payload.VerifyEntries(
+            data = entries,
+            sender = getSender(),
+        ).send()
+    }
+
     private suspend fun Payload.send(): Boolean {
         return withContext(ioDispatcher) {
             mutex.withLock {

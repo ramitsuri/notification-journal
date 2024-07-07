@@ -12,5 +12,7 @@ interface DataSendHelper {
 
     suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean
 
+    suspend fun sendVerifyEntries(entries: List<JournalEntry>): Boolean
+
     suspend fun closeConnection()
 }

@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.data
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
@@ -19,6 +20,9 @@ abstract class JournalEntryDao {
 
     @Query("SELECT * FROM journalentry WHERE reconciled = 0 AND deleted = 0 ORDER BY entry_time ASC")
     abstract suspend fun getAll(): List<JournalEntry>
+
+    @Query("SELECT * FROM journalentry WHERE id IN (:ids)")
+    abstract suspend fun getAll(ids: List<String>): List<JournalEntry>
 
     @Query("SELECT * FROM journalentry WHERE uploaded = 0")
     abstract suspend fun getForUpload(): List<JournalEntry>
@@ -51,6 +55,9 @@ abstract class JournalEntryDao {
 
     @Upsert
     abstract suspend fun upsert(journalEntry: JournalEntry)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insertOrIgnoreIfPresent(journalEntries: List<JournalEntry>)
 
     @Insert
     protected abstract suspend fun insertInternal(journalEntry: JournalEntry)

@@ -98,4 +98,5 @@
     <string name="text">Text</string>
     <string name="display_text">Display text</string>
     <string name="short_display_text">Short display text</string>
+    <string name="not_matched_entry">Show mismatch</string>
 </resources>

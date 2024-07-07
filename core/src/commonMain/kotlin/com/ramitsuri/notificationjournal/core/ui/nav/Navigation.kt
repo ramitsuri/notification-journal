@@ -118,6 +118,7 @@ fun NavGraph(
                 },
                 onSyncClicked = viewModel::sync,
                 onTagGroupReconcileRequested = viewModel::reconcile,
+                onMismatchEntryResolved = viewModel::mismatchedEntryResolved,
             )
         }
 

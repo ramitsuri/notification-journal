@@ -15,6 +15,7 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +34,7 @@ class JournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private var collectionJob: Job? = null
@@ -51,6 +53,17 @@ class JournalEntryViewModel(
 
     init {
         restartCollection()
+        viewModelScope.launch(ioDispatcher) {
+            repository.entriesVerification.collect { entriesVerification ->
+                if (entriesVerification.isComplete.not()) {
+                    return@collect
+                }
+                _state.update { previousState ->
+                    val (matching, notMatching) = entriesVerification.partitionByMatching()
+                    previousState.copy(matchingEntries = matching, notMatchingEntries = notMatching)
+                }
+            }
+        }
     }
 
     fun setReceivedText(text: String?) {
@@ -147,15 +160,28 @@ class JournalEntryViewModel(
 
     fun reconcile(tagGroup: TagGroup) {
         viewModelScope.launch {
-            tagGroup.entries.forEach { journalEntry ->
+            repository.sendForVerification(tagGroup.entries)
+            /*tagGroup.entries.forEach { journalEntry ->
                 repository.update(journalEntry.copy(reconciled = true))
-            }
+            }*/
         }
     }
 
     fun sync() {
         viewModelScope.launch {
             repository.sync()
+        }
+    }
+
+    fun mismatchedEntryResolved(journalEntry: JournalEntry) {
+        viewModelScope.launch {
+            repository.update(journalEntry)
+            _state.update {
+                it.copy(
+                    matchingEntries = it.matchingEntries.toMutableList().plus(journalEntry),
+                    notMatchingEntries = it.notMatchingEntries.toMutableList().minus(journalEntry),
+                )
+            }
         }
     }
 
@@ -211,10 +237,11 @@ class JournalEntryViewModel(
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
                 return JournalEntryViewModel(
-                    receivedText,
-                    ServiceLocator.keyValueStore,
-                    ServiceLocator.repository,
-                    ServiceLocator.tagsDao,
+                    receivedText = receivedText,
+                    keyValueStore = ServiceLocator.keyValueStore,
+                    repository = ServiceLocator.repository,
+                    tagsDao = ServiceLocator.tagsDao,
+                    ioDispatcher = ServiceLocator.ioDispatcher,
                 ) as T
             }
         }
@@ -226,4 +253,6 @@ data class ViewState(
     val tags: List<Tag>,
     val loading: Boolean = false,
     val showSyncButton: Boolean = false,
+    val matchingEntries: List<JournalEntry> = listOf(),
+    val notMatchingEntries: List<JournalEntry> = listOf(),
 )

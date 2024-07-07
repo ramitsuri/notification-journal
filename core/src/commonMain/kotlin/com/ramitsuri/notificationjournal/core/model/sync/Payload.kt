@@ -30,4 +30,11 @@ sealed class Payload {
         val data: List<JournalEntryTemplate>,
         override val sender: Sender
     ) : Payload()
+
+    @Serializable
+    @SerialName("verify_entries")
+    data class VerifyEntries(
+        val data: List<JournalEntry>,
+        override val sender: Sender
+    ) : Payload()
 }

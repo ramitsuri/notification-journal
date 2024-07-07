@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DoubleArrow
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
@@ -116,6 +117,7 @@ import notificationjournal.core.generated.resources.move_down
 import notificationjournal.core.generated.resources.move_up
 import notificationjournal.core.generated.resources.next_day
 import notificationjournal.core.generated.resources.no_items
+import notificationjournal.core.generated.resources.not_matched_entry
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.previous_day
@@ -144,6 +146,7 @@ fun JournalEntryScreen(
     onTagGroupReconcileRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
     onSyncClicked: () -> Unit,
+    onMismatchEntryResolved: (JournalEntry) -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -281,6 +284,8 @@ fun JournalEntryScreen(
                 } else {
                     List(
                         items = state.dayGroups,
+                        matchingEntries = state.matchingEntries,
+                        notMatchingEntries = state.notMatchingEntries,
                         tags = state.tags,
                         onCopyRequested = { item ->
                             clipboardManager.setText(AnnotatedString(item.text))
@@ -305,6 +310,7 @@ fun JournalEntryScreen(
                         onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         onTagGroupReconcileRequested = onTagGroupReconcileRequested,
+                        onMismatchEntryResolved = onMismatchEntryResolved,
                         modifier = Modifier.alpha(if (showContent) 1f else 0f)
                     )
                 }
@@ -351,6 +357,8 @@ private fun Toolbar(
 @Composable
 private fun List(
     items: List<DayGroup>,
+    matchingEntries: List<JournalEntry>,
+    notMatchingEntries: List<JournalEntry>,
     tags: List<Tag>,
     onCopyRequested: (JournalEntry) -> Unit,
     onTagClicked: (JournalEntry, String) -> Unit,
@@ -365,6 +373,7 @@ private fun List(
     onDeleteRequested: (JournalEntry) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    onMismatchEntryResolved: (JournalEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strokeWidth: Dp = 1.dp
@@ -420,6 +429,7 @@ private fun List(
                     val entry = entries[index]
                     ListItem(
                         item = entry,
+                        notMatchedEntry = notMatchingEntries.firstOrNull { it.id == entry.id },
                         onCopyRequested = { onCopyRequested(entry) },
                         onDeleteRequested = { onDeleteRequested(entry) },
                         onEditRequested = { onEditRequested(entry) },
@@ -434,6 +444,7 @@ private fun List(
                         onTagClicked = { onTagClicked(entry, it) },
                         onMoveToNextDayRequested = { onMoveToNextDayRequested(entry) },
                         onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(entry) },
+                        onMismatchEntryResolved = onMismatchEntryResolved,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(shape)
@@ -514,6 +525,7 @@ private fun SubHeaderItem(
 @Composable
 private fun ListItem(
     item: JournalEntry,
+    notMatchedEntry: JournalEntry?,
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
@@ -524,9 +536,11 @@ private fun ListItem(
     onTagClicked: (String) -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
+    onMismatchEntryResolved: (JournalEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDetails by remember { mutableStateOf(false) }
+    var showMismatched by remember { mutableStateOf(false) }
 
     Row(
         horizontalArrangement = Arrangement.End,
@@ -540,6 +554,29 @@ private fun ListItem(
             modifier = Modifier
                 .weight(1f)
                 .padding(16.dp)
+        )
+        if (notMatchedEntry != null) {
+            IconButton(
+                onClick = { showMismatched = true },
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.DoubleArrow,
+                    contentDescription = stringResource(Res.string.not_matched_entry)
+                )
+            }
+        }
+    }
+
+    if (notMatchedEntry != null) {
+        MismatchedDialog(
+            showMismatched = showMismatched,
+            currentEntry = item,
+            mismatchedEntry = notMatchedEntry,
+            onEntryPicked = onMismatchEntryResolved,
+            onDismiss = { showMismatched = false },
         )
     }
 
@@ -560,6 +597,54 @@ private fun ListItem(
         onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
         onTagClicked = { tag -> onTagClicked(tag) },
         onDismiss = { showDetails = false })
+}
+
+@Composable
+private fun MismatchedDialog(
+    showMismatched: Boolean,
+    currentEntry: JournalEntry,
+    mismatchedEntry: JournalEntry,
+    onEntryPicked: (JournalEntry) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (showMismatched) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(16.dp)
+                ) {
+                    Text("Current Entry")
+                    Text(currentEntry.text)
+                    currentEntry.tag?.let {
+                        Text(it)
+                    }
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth())
+                    Text("Mismatched Entry")
+                    Text(mismatchedEntry.text)
+                    mismatchedEntry.tag?.let {
+                        Text(it)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        TextButton(onClick = { onEntryPicked(mismatchedEntry) }) {
+                            Text("Use other")
+                        }
+                        TextButton(onClick = { onEntryPicked(currentEntry) }) {
+                            Text("Use current")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -847,6 +932,7 @@ private fun ListItemPreview() {
                 timeZone = TimeZone.currentSystemDefault(),
                 text = "Test text"
             ),
+            notMatchedEntry = null,
             onCopyRequested = {},
             onEditRequested = {},
             onDeleteRequested = {},
@@ -857,6 +943,7 @@ private fun ListItemPreview() {
             onMoveToPreviousDayRequested = { },
             onMoveUpRequested = { },
             onMoveDownRequested = { },
+            onMismatchEntryResolved = { },
         )
     }
 }
