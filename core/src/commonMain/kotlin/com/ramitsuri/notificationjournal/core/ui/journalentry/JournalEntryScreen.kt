@@ -65,6 +65,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -250,7 +251,7 @@ fun JournalEntryScreen(
         ) {
             if (state.loading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            } else if (showContent) {
+            } else {
                 Spacer(
                     modifier = Modifier.height(
                         WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -304,6 +305,7 @@ fun JournalEntryScreen(
                         onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         onTagGroupReconcileRequested = onTagGroupReconcileRequested,
+                        modifier = Modifier.alpha(if (showContent) 1f else 0f)
                     )
                 }
             }
@@ -363,6 +365,7 @@ private fun List(
     onDeleteRequested: (JournalEntry) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -370,7 +373,7 @@ private fun List(
     val topShape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
     val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
 
-    LazyColumn {
+    LazyColumn(modifier = modifier) {
         items.forEach { dayGroup ->
             stickyHeader(key = dayGroup.date.toString()) {
                 HeaderItem(
