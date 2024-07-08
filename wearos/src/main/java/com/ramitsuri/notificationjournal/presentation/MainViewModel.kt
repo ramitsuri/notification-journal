@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -81,20 +82,28 @@ class MainViewModel(
         time: Instant = Clock.System.now(),
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
     ) {
-        value.split(". ")
-            .filter { it.isNotBlank() }
-            .forEachIndexed { index, entry ->
-                longLivingCoroutineScope.launch {
+        longLivingCoroutineScope.launch {
+            value.split(". ")
+                .filter { it.isNotBlank() }
+                .mapIndexed { index, entry ->
                     val entryTime = time.plus(index.times(10).milliseconds)
-                    postToClient(
-                        value = entry,
-                        time = entryTime,
-                        timeZone = timeZone,
-                        tag = tag,
-                        exitOnDone = exitOnDone
-                    )
+                    launch {
+                        postToClient(
+                            value = entry,
+                            time = entryTime,
+                            timeZone = timeZone,
+                            tag = tag,
+                        )
+                    }
+                }
+                .joinAll()
+
+            if (exitOnDone) {
+                _state.update {
+                    it.copy(shouldExit = true)
                 }
             }
+        }
     }
 
     fun transferLocallySaved() {
@@ -125,15 +134,9 @@ class MainViewModel(
         time: Instant,
         timeZone: TimeZone,
         tag: String?,
-        exitOnDone: Boolean = false
     ) {
         val posted = wearDataSharingClient.postJournalEntry(value, time, timeZone, tag)
         if (posted) { // Shared with phone client, so no need to save to local db
-            if (exitOnDone) {
-                _state.update {
-                    it.copy(shouldExit = true)
-                }
-            }
             return
         }
         val entry = JournalEntry(
@@ -144,11 +147,6 @@ class MainViewModel(
             entryTimeOverride = null,
         )
         repository.insert(entry)
-        if (exitOnDone) {
-            _state.update {
-                it.copy(shouldExit = true)
-            }
-        }
     }
 }
 
