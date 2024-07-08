@@ -11,6 +11,7 @@ import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.tasks.await
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
 class WearDataSharingClientImpl(
@@ -27,7 +28,7 @@ class WearDataSharingClientImpl(
         tag: String?,
     ): Boolean {
         return try {
-            val id = System.currentTimeMillis()
+            val id = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.JOURNAL_ENTRY_ROUTE}/$id"
             val request = PutDataMapRequest.create(path)
                 .apply {
@@ -61,7 +62,7 @@ class WearDataSharingClientImpl(
     @SuppressLint("VisibleForTests")
     override suspend fun requestUpload() {
         try {
-            val id = System.currentTimeMillis()
+            val id = UUID.randomUUID().toString()
             // Even though there's only going to be one upload event, somehow not providing a unique
             // id every time, makes it work only the first time.
             // Receiving client should resolve receiving multiple upload events.
@@ -79,7 +80,7 @@ class WearDataSharingClientImpl(
     @SuppressLint("VisibleForTests")
     override suspend fun postTemplate(template: JournalEntryTemplate): Boolean {
         return try {
-            val requestId = System.currentTimeMillis()
+            val requestId = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.TEMPLATE_ROUTE}/$requestId"
             val request = PutDataMapRequest.create(path)
                 .apply {

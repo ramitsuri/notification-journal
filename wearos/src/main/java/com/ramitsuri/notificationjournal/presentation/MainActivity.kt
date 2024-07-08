@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.presentation
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
@@ -11,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import com.ramitsuri.notificationjournal.MainApplication
+import com.ramitsuri.notificationjournal.R
 
 class MainActivity : ComponentActivity() {
 
@@ -51,6 +53,12 @@ class MainActivity : ComponentActivity() {
             TEMPLATE -> {
                 intent.extras?.getString(TEMPLATE_ID)?.let { templateId ->
                     viewModel.addFromTemplate(templateId)
+                } ?: run {
+                    Toast.makeText(
+                        this,
+                        getString(R.string.template_id_not_found),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
 

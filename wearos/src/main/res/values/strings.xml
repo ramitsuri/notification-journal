@@ -10,4 +10,5 @@
     <string name="transfer_to_phone">Transfer</string>
     <string name="upload">Upload</string>
 
+    <string name="template_id_not_found">Template not found</string>
 </resources>
