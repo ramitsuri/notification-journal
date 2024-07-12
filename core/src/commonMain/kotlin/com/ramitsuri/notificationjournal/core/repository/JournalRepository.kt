@@ -128,14 +128,14 @@ class JournalRepository(
         sender: Sender,
     ) {
         if (_entriesVerification.value.sentEntries.isEmpty()) {
-            // Verification initiated by another device
+            // Verification initiated by another client
 
             // Insert missing ones and then respond with
             // what we have so that other device can complete verification
             dao.insertOrIgnoreIfPresent(entries)
             dataSendHelper?.sendVerifyEntries(dao.getAll(entries.map { it.id }))
         } else {
-            // Verification initiated by this device
+            // Verification initiated by this client
 
             // Verification already in progress as we've received some entries
             if (_entriesVerification.value.receivedEntries.isNotEmpty()) {
@@ -145,6 +145,12 @@ class JournalRepository(
             _entriesVerification.update {
                 it.copy(receivedEntries = entries, verifiedBy = sender)
             }
+        }
+    }
+
+    fun resetVerification() {
+        _entriesVerification.update {
+            EntriesVerification()
         }
     }
 }

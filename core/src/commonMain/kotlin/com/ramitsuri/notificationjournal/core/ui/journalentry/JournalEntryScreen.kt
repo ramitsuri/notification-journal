@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.ui.journalentry
 
+import androidx.annotation.ColorRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,6 +38,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DoubleArrow
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
@@ -561,7 +563,7 @@ private fun ListItem(
                     .padding(4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.DoubleArrow,
+                    imageVector = Icons.Filled.Error,
                     contentDescription = stringResource(Res.string.not_matched_entry)
                 )
             }
@@ -602,6 +604,7 @@ private fun MismatchedDialog(
     showMismatched: Boolean,
     currentEntry: JournalEntry,
     mismatchedEntry: JournalEntry,
+    mismatchedEntrySender: String,
     onEntryPicked: (JournalEntry) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -619,25 +622,27 @@ private fun MismatchedDialog(
                         .fillMaxWidth(0.9f)
                         .padding(16.dp)
                 ) {
-                    Text("Current Entry")
-                    Text(currentEntry.text)
+                    Text("Entry on this device", style = MaterialTheme.typography.titleSmall)
                     currentEntry.tag?.let {
-                        Text(it)
+                        Text(it, style = MaterialTheme.typography.bodySmall)
                     }
+                    Text(currentEntry.text, style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = { onEntryPicked(currentEntry) }) {
+                        Text("Use")
+                    }
+
                     HorizontalDivider(modifier = Modifier.fillMaxWidth())
-                    Text("Mismatched Entry")
-                    Text(mismatchedEntry.text)
+
+                    Text(
+                        "Entry from: $mismatchedEntrySender",
+                        style = MaterialTheme.typography.titleSmall
+                    )
                     mismatchedEntry.tag?.let {
-                        Text(it)
+                        Text(it, style = MaterialTheme.typography.bodySmall)
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        TextButton(onClick = { onEntryPicked(mismatchedEntry) }) {
-                            Text("Use other")
-                        }
-                        TextButton(onClick = { onEntryPicked(currentEntry) }) {
-                            Text("Use current")
-                        }
+                    Text(mismatchedEntry.text, style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = { onEntryPicked(mismatchedEntry) }) {
+                        Text("Use")
                     }
                 }
             }

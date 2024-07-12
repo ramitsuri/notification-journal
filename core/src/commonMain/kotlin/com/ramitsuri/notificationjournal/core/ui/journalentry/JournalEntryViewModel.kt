@@ -10,7 +10,9 @@ import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
+import com.ramitsuri.notificationjournal.core.model.entry.EntriesVerificationResponse
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -58,9 +60,18 @@ class JournalEntryViewModel(
                 if (entriesVerification.isComplete.not()) {
                     return@collect
                 }
-                _state.update { previousState ->
-                    val notMatching = entriesVerification.getMismatchedEntries()
-                    previousState.copy(notMatchingEntries = notMatching)
+                val notMatching = entriesVerification.getMismatchedEntries()
+                if (entriesVerification.verifiedBy != null && notMatching.isNotEmpty()) {
+                    _state.update { previousState ->
+                        previousState.copy(
+                            notMatchingEntries = NotMatchEntries(
+                                sender = entriesVerification.verifiedBy,
+                                entries = notMatching
+                            )
+                        )
+                    }
+                } else {
+                    repository.resetVerification()
                 }
             }
         }
@@ -176,8 +187,11 @@ class JournalEntryViewModel(
     fun mismatchedEntryResolved(journalEntry: JournalEntry) {
         viewModelScope.launch {
             repository.update(journalEntry)
-            _state.update {
-                it.copy(
+            _state.update { previousState ->
+                previousState.copy(
+                    entriesVerificationResponse = previousState.entriesVerificationResponse?.copy(
+                        entries = previousState.entriesVerificationResponse?.entries
+                    ),
                     notMatchingEntries = it.notMatchingEntries.toMutableList().minus(journalEntry),
                 )
             }
@@ -252,5 +266,5 @@ data class ViewState(
     val tags: List<Tag>,
     val loading: Boolean = false,
     val showSyncButton: Boolean = false,
-    val notMatchingEntries: List<JournalEntry> = listOf(),
+    val entriesVerificationResponse: EntriesVerificationResponse? = null,
 )
