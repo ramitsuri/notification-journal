@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -259,7 +260,7 @@ fun JournalEntryScreen(
                 )
 
                 Toolbar(
-                    showSyncButton = state.showSyncButton,
+                    notUploadedCount = state.notUploadedCount,
                     onSyncClicked = onSyncClicked,
                     onSettingsClicked = onSettingsClicked
                 )
@@ -315,22 +316,30 @@ fun JournalEntryScreen(
 
 @Composable
 private fun Toolbar(
-    showSyncButton: Boolean,
+    notUploadedCount: Int,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        if (showSyncButton) {
-            IconButton(
-                onClick = onSyncClicked,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Sync,
-                    contentDescription = stringResource(Res.string.settings_upload_title)
-                )
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+                .clickable(onClick = onSyncClicked),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Sync,
+                contentDescription = stringResource(Res.string.settings_upload_title),
+                modifier = Modifier.align(Alignment.Center)
+            )
+            if (notUploadedCount > 0) {
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text("$notUploadedCount")
+                }
             }
         }
         IconButton(

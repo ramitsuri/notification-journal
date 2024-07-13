@@ -38,8 +38,7 @@ class JournalRepository(
     }
 
     suspend fun update(journalEntry: JournalEntry) {
-        val updated = dao.update(journalEntry)
-        sendAndMarkUploaded(listOf(updated))
+        dao.update(journalEntry.copy(uploaded = false))
     }
 
     suspend fun insert(
@@ -47,7 +46,6 @@ class JournalRepository(
         tag: String? = null,
         time: Instant = clock.now(),
         originalEntryTime: Instant? = null,
-        send: Boolean = true,
     ) {
         text
             .split("\n")
@@ -62,24 +60,18 @@ class JournalRepository(
                         tag = tag,
                         entryTimeOverride = originalEntryTime
                     ),
-                    send = send,
                 )
             }
     }
 
     suspend fun insert(
         entry: JournalEntry,
-        send: Boolean = true,
     ) {
-        val inserted = dao.insert(entry)
-        if (send) {
-            sendAndMarkUploaded(listOf(inserted))
-        }
+        dao.insert(entry)
     }
 
     suspend fun delete(entry: JournalEntry) {
-        val deleted = dao.update(entry.copy(deleted = true))
-        sendAndMarkUploaded(listOf(deleted))
+        dao.update(entry.copy(deleted = true, uploaded = false))
     }
 
     suspend fun sync() {

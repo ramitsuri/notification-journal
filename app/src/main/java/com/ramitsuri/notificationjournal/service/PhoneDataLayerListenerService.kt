@@ -62,7 +62,7 @@ class PhoneDataLayerListenerService : WearableListenerService() {
 
                 val repository = ServiceLocator.repository
                 ServiceLocator.coroutineScope.launch {
-                    repository.insert(entry = journalEntry, send = false)
+                    repository.insert(entry = journalEntry)
                 }
             }
         }
