@@ -10,6 +10,9 @@ buildKonfig = "0.15.1"
 composeBom = "2024.05.00"
 compose-plugin = "1.6.10"
 coreSplashscreen = "1.0.1"
+firebase = "33.1.2"
+firebaseCrashlytics = "3.0.2"
+googleServices = "4.4.2"
 horologist = "0.4.11"
 jsystemthemedetector = "3.6"
 kotlin-datetime = "0.6.0"
@@ -56,6 +59,8 @@ compose-material3-windowSize = { module = "androidx.compose.material3:material3-
 compose-runtime = { module = "androidx.compose.runtime:runtime", version = "1.7.0-beta02" }
 compose-ui = { module = "androidx.compose.ui:ui", version = "1.7.0-beta02" }
 compose-ui-toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
+firebaseBom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase" }
+firebaseCrashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 horologist-compose-tools = { module = "com.google.android.horologist:horologist-compose-tools", version.ref = "horologist" }
 horologist-tiles = { module = "com.google.android.horologist:horologist-tiles", version.ref = "horologist" }
 jsystemthemedetector = { module = "com.github.Dansoftowner:jSystemThemeDetector", version.ref = "jsystemthemedetector" }
@@ -90,6 +95,8 @@ junit = { module = "junit:junit", version.ref = "junit" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android-gradle" }
 android-library = { id = "com.android.library", version.ref = "android-gradle" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

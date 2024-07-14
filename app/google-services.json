@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "942221687286",
+    "project_id": "notificationjournal-c9eba",
+    "storage_bucket": "notificationjournal-c9eba.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:942221687286:android:1ce1856a2bed4dd4e82fd7",
+        "android_client_info": {
+          "package_name": "com.ramitsuri.notificationjournal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAajzXqHtYZQ00Uo6DBiQGTA0tG44k-OEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:942221687286:android:d646d151b2fdf72de82fd7",
+        "android_client_info": {
+          "package_name": "com.ramitsuri.notificationjournal.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAajzXqHtYZQ00Uo6DBiQGTA0tG44k-OEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
