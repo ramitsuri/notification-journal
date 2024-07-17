@@ -142,7 +142,6 @@ fun NavGraph(
                 onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
                 onUseSuggestedText = viewModel::useSuggestedText,
-                onTemplateClicked = viewModel::templateClicked,
                 onSave = viewModel::save,
                 onAddAnother = viewModel::saveAndAddAnother,
                 onCancel = { navController.navigateUp() },
