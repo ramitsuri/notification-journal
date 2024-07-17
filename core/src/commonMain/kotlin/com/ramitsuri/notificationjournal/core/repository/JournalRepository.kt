@@ -79,7 +79,9 @@ class JournalRepository(
         if (entries.isEmpty()) {
             return
         }
-        sendAndMarkUploaded(entries)
+        entries.chunked(10).forEach {
+            sendAndMarkUploaded(it)
+        }
     }
 
     suspend fun handlePayload(payload: Payload.Entries) {
