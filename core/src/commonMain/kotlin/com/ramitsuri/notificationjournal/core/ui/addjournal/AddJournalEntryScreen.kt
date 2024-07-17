@@ -1,7 +1,6 @@
 package com.ramitsuri.notificationjournal.core.ui.addjournal
 
 import androidx.compose.runtime.Composable
-import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.components.AddEditEntryDialog
 
 @Composable
@@ -10,7 +9,6 @@ fun AddJournalEntryScreen(
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
-    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
@@ -32,7 +30,6 @@ fun AddJournalEntryScreen(
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
         onUseSuggestedText = onUseSuggestedText,
-        onTemplateClicked = onTemplateClicked,
         onSave = onSave,
         onAddAnother = onAddAnother,
         onCancel = onCancel,
