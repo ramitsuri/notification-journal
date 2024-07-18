@@ -313,9 +313,14 @@ private fun Content(
             Templates(
                 templates = templates,
                 onTemplateClicked = {
-                    onTextUpdated(it.text)
-                    selection = TextRange(it.text.length)
-                    onTagClicked(it.tag)
+                    val newText = if (it.replacesExistingValues) {
+                        onTagClicked(it.tag)
+                        it.text
+                    } else {
+                        text + it.text
+                    }
+                    onTextUpdated(newText)
+                    selection = TextRange(newText.length)
                     textFieldFocusRequester.requestFocus()
                 },
                 modifier = Modifier.onKeyEvent {
@@ -414,7 +419,7 @@ private fun DateTimeEntry(
             OutlinedIconButton(
                 onClick = onNextDateRequested,
                 modifier = Modifier
-                .size(48.dp)
+                    .size(48.dp)
                     .padding(4.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -525,7 +530,7 @@ private fun Templates(
                     selected = false,
                     onClick = { onTemplateClicked(it) },
                     label = {
-                        Text(text = it.text)
+                        Text(text = it.displayText)
                     })
             }
         }
