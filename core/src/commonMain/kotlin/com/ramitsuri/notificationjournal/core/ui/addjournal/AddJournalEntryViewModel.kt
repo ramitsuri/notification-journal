@@ -8,6 +8,7 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -68,13 +69,6 @@ class AddJournalEntryViewModel(
                 it.copy(text = suggestedText, suggestedText = null)
             }
         }
-    }
-
-    fun templateClicked(template: JournalEntryTemplate) {
-        _state.update {
-            it.copy(text = template.text, selectedTag = template.tag)
-        }
-        save(exitOnSave = true)
     }
 
     fun save() {
@@ -189,10 +183,20 @@ class AddJournalEntryViewModel(
     private fun loadTemplates() {
         viewModelScope.launch {
             _state.update {
-                it.copy(templates = templatesDao.getAll())
+                it.copy(templates = templatesDao.getAll().plus(getShortcutTemplates()))
             }
         }
     }
+
+    private fun getShortcutTemplates() = listOf(
+        JournalEntryTemplate(
+            text = " ${Constants.TEMPLATED_TIME}",
+            displayText = "Time",
+            shortDisplayText = "\uD83D\uDD5B",
+            tag = Tag.NO_TAG.value,
+            replacesExistingValues = false,
+        )
+    )
 
     companion object {
         const val RECEIVED_TEXT_ARG = "received_text"
