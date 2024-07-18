@@ -6,7 +6,6 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -53,16 +52,14 @@ class PhoneDataLayerListenerService : WearableListenerService() {
                 }
                 val tag = dataMap.getString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG)
 
-                val journalEntry = JournalEntry(
-                    entryTime = journalEntryTime,
-                    timeZone = journalEntryTimeZone,
-                    text = journalEntryText,
-                    tag = tag,
-                )
-
                 val repository = ServiceLocator.repository
                 ServiceLocator.coroutineScope.launch {
-                    repository.insert(entry = journalEntry)
+                    repository.insert(
+                        text = journalEntryText,
+                        time = journalEntryTime,
+                        tag = tag,
+                        timeZone = journalEntryTimeZone
+                    )
                 }
             }
         }
