@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.utils
 object Constants {
     const val REMOTE_INPUT_JOURNAL_KEY = "remote_input_journal_text"
     const val ACTION_JOURNAL = "action_journal"
+    const val TEMPLATED_TIME = "{{hh:mm aa}}"
 
     const val PREF_FILE = "com.ramitsuri.notificationjournal.prefs"
     const val PREF_KEY_SORT_ORDER = "sort_order"

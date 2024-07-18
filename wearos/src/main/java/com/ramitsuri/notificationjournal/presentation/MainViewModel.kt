@@ -139,14 +139,7 @@ class MainViewModel(
         if (posted) { // Shared with phone client, so no need to save to local db
             return
         }
-        val entry = JournalEntry(
-            entryTime = time,
-            timeZone = timeZone,
-            text = value,
-            tag = null,
-            entryTimeOverride = null,
-        )
-        repository.insert(entry)
+        repository.insert(text = value, time = time, timeZone = timeZone)
     }
 }
 

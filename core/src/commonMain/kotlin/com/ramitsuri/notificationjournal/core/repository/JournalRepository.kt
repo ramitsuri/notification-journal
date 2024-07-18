@@ -4,12 +4,18 @@ import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import notificationjournal.core.generated.resources.Res
+import notificationjournal.core.generated.resources.am
+import notificationjournal.core.generated.resources.pm
+import org.jetbrains.compose.resources.getString
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalRepository(
@@ -45,29 +51,36 @@ class JournalRepository(
         text: String,
         tag: String? = null,
         time: Instant = clock.now(),
-        originalEntryTime: Instant? = null,
+        timeZone: TimeZone = this.timeZone,
     ) {
         text
             .split("\n")
             .filter { it.isNotBlank() }
             .forEachIndexed { index, entry ->
                 val entryTime = time.plus(index.times(10).milliseconds)
-                insert(
+                val entryText = if (entry.contains(Constants.TEMPLATED_TIME)) {
+                    entry.replace(
+                        Constants.TEMPLATED_TIME,
+                        formatForDisplay(
+                            toFormat = entryTime,
+                            timeZone = timeZone,
+                            amString = getString(Res.string.am),
+                            pmString = getString(Res.string.pm),
+                        )
+                    )
+                } else {
+                    entry
+                }
+                dao.insert(
                     entry = JournalEntry(
-                        entryTime = entryTime,
+                        entryTime = time,
                         timeZone = timeZone,
-                        text = entry.trim(),
+                        text = entryText.trim(),
                         tag = tag,
-                        entryTimeOverride = originalEntryTime
+                        entryTimeOverride = entryTime,
                     ),
                 )
             }
-    }
-
-    suspend fun insert(
-        entry: JournalEntry,
-    ) {
-        dao.insert(entry)
     }
 
     suspend fun delete(entry: JournalEntry) {
