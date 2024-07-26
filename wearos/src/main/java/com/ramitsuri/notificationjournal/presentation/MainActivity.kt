@@ -25,7 +25,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewState = viewModel.state.collectAsState().value
             LaunchedEffect(key1 = viewState) {
-                if (viewState.shouldExit) {
+                val showToast = viewState.addStatus == AddStatus.SUCCESS_EXIT ||
+                        viewState.addStatus == AddStatus.SUCCESS
+                val finish = viewState.addStatus == AddStatus.SUCCESS_EXIT
+                if (showToast) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        getString(R.string.add_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    viewModel.addStatusAcknowledged()
+                }
+                if (finish) {
                     finish()
                 }
             }
@@ -34,15 +45,15 @@ class MainActivity : ComponentActivity() {
                 onAddRequested = viewModel::add,
                 onTemplateAddRequested = viewModel::addFromTemplate,
                 onTransferRequested = viewModel::transferLocallySaved,
-                onUploadRequested = viewModel::triggerUpload
+                onUploadRequested = viewModel::triggerUpload,
+                onLoadThingsRequested = viewModel::loadTemplatesAndEntries,
             )
         }
         // From tile
         when (intent.extras?.getString(EXTRA_KEY)) {
             ADD -> {
                 launchForInput { entry ->
-                    viewModel.add(entry)
-                    finish()
+                    viewModel.add(entry, exitOnDone = true)
                 }
             }
 

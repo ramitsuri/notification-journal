@@ -447,6 +447,14 @@ private fun List(
                             .fillMaxWidth()
                             .clip(shape)
                             .then(borderModifier)
+                            .onKeyEvent {
+                                if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
+                                    onEditRequested(entry)
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
                     )
                 }
                 item {
