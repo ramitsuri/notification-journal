@@ -11,6 +11,8 @@ interface KeyValueStore {
 
     fun getBoolean(key: String, fallback: Boolean): Boolean
     fun putBoolean(key: String, value: Boolean)
+
+    fun hasKey(key: String): Boolean
 }
 
 class PrefsKeyValueStore(factory: Factory) : KeyValueStore {
@@ -50,5 +52,9 @@ class PrefsKeyValueStore(factory: Factory) : KeyValueStore {
 
     override fun putBoolean(key: String, value: Boolean) {
         prefs.putBoolean(key, value)
+    }
+
+    override fun hasKey(key: String): Boolean {
+        return prefs.hasKey(key)
     }
 }

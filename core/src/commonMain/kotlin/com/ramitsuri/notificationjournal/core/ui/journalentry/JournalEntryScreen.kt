@@ -68,6 +68,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -82,6 +83,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -148,6 +150,7 @@ fun JournalEntryScreen(
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
+    val focusManager = LocalFocusManager.current
 
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -222,6 +225,14 @@ fun JournalEntryScreen(
                 ) {
                     onSettingsClicked()
                     true
+                } else if (it.key == Key.DirectionDown &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    focusManager.moveFocus(FocusDirection.Down)
+                } else if (it.key == Key.DirectionUp &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    focusManager.moveFocus(FocusDirection.Up)
                 } else {
                     false
                 }
