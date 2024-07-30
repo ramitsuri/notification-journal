@@ -233,9 +233,9 @@ private fun Content(
                 .onKeyEvent {
                     when {
                         // Tab -> Focus next
-                        it.key == Key.Tab &&
+                        it.key == Key.T &&
                                 it.type == KeyEventType.KeyUp &&
-                                !it.isShiftPressed -> {
+                                it.isMetaPressed -> {
                             focusManager.moveFocus(FocusDirection.Next)
                         }
 

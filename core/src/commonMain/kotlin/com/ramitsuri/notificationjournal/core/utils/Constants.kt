@@ -14,6 +14,10 @@ object Constants {
     const val PREF_KEY_USERNAME = "username"
     const val PREF_KEY_PASSWORD = "password"
     const val PREF_KEY_SHOW_RECONCILED = "show_reconciled"
+    const val PREF_WINDOW_SIZE_HEIGHT = "window_size_height"
+    const val PREF_WINDOW_SIZE_WIDTH = "window_size_width"
+    const val PREF_WINDOW_POSITION_X = "window_position_x"
+    const val PREF_WINDOW_POSITION_Y = "window_position_y"
 
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"
