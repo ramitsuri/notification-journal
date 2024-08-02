@@ -115,6 +115,7 @@ import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.menu_content_description
+import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.move_down
 import notificationjournal.core.generated.resources.move_up
 import notificationjournal.core.generated.resources.next_day
@@ -802,6 +803,8 @@ private fun SubHeaderItemMenu(
     onMoveToPreviousDayRequested: () -> Unit,
     onReconcileRequested: () -> Unit,
 ) {
+    var showingMoreMenu by remember { mutableStateOf(false) }
+
     Box {
         IconButton(
             onClick = onMenuButtonClicked,
@@ -816,51 +819,63 @@ private fun SubHeaderItemMenu(
         }
         DropdownMenu(
             expanded = showMenu,
-            onDismissRequest = onMenuButtonClicked,
+            onDismissRequest = {
+                onMenuButtonClicked()
+                showingMoreMenu = false
+            },
         ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.copy_reconcile)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onCopyRequested()
-                    onReconcileRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.next_day)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onMoveToNextDayRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.previous_day)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onMoveToPreviousDayRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.copy)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onCopyRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.reconcile)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onReconcileRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.delete)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onDeleteRequested()
-                }
-            )
+            if (showingMoreMenu.not()) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.copy_reconcile)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onCopyRequested()
+                        onReconcileRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.more)) },
+                    onClick = {
+                        showingMoreMenu = true
+                    }
+                )
+            } else {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.next_day)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onMoveToNextDayRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.previous_day)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onMoveToPreviousDayRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.copy)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onCopyRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.reconcile)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onReconcileRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.delete)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onDeleteRequested()
+                    }
+                )
+            }
         }
     }
 }
