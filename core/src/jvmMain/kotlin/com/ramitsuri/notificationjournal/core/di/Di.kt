@@ -20,6 +20,8 @@ import com.russhwolf.settings.Settings
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.prefs.Preferences
 import kotlin.reflect.KClass
 
@@ -30,8 +32,9 @@ actual class Factory {
     }
 
     actual fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
-        val fileName = "${packageName}_database"
-        val dbFile = File(System.getProperty("java.io.tmpdir"), fileName)
+        Files.createDirectories(Paths.get(appDir))
+        val fileName = "database"
+        val dbFile = File(appDir, fileName)
         return Room.databaseBuilder<AppDatabase>(
             name = dbFile.absolutePath,
         )
@@ -121,5 +124,17 @@ actual class Factory {
         } else {
             "com.ramitsuri.notificationjournal.release"
         }
+
+        // TODO make compatible with other desktop OSs
+        private val appDir = System.getProperty("user.home")
+            .plus("/Library")
+            .plus("/com.ramitsuri.notificationjournal")
+            .plus(
+                if (BuildKonfig.IS_DEBUG) {
+                    "/debug"
+                } else {
+                    "/release"
+                }
+            )
     }
 }
