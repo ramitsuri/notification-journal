@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -40,6 +42,7 @@ import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.material.scrollAway
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.presentation.theme.NotificationJournalTheme
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -50,7 +53,8 @@ fun WearApp(
     onAddRequested: (String) -> Unit,
     onTemplateAddRequested: (String) -> Unit,
     onUploadRequested: () -> Unit,
-    onTransferRequested: () -> Unit
+    onTransferRequested: () -> Unit,
+    onLoadThingsRequested: () -> Unit
 ) {
     NotificationJournalTheme {
         val listState = rememberScalingLazyListState()
@@ -85,28 +89,17 @@ fun WearApp(
                         )
                     }
                 }
-                viewState.journalEntryTemplates
-                    .map {
-                        TemplateButton(
-                            text = it.shortDisplayText,
-                            onClick = { onTemplateAddRequested(it.id) })
-                    }
-                    .chunked(2)
-                    .forEach { templateButtons ->
-                        item {
-                            TemplateButtonRow(templateButtons)
-                        }
-                    }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                    ) {
-                        AddButton(onAddRequested)
-                        // Hiding because upload is not a thing anymore
-                        // RequestUploadFromPhoneButton(onUploadRequested)
-                    }
+                if (viewState.journalEntryTemplates.isEmpty()) {
+                    loadButton(onLoadThingsRequested)
+                } else {
+                    templateItems(
+                        templates = viewState.journalEntryTemplates,
+                        onTemplateAddRequested = onTemplateAddRequested,
+                    )
                 }
+                addButton(onAddRequested)
+                // Hiding because upload is not a thing anymore
+                // RequestUploadFromPhoneButton(onUploadRequested)
                 if (showOnDeviceEntries) {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -114,6 +107,60 @@ fun WearApp(
                     }
                 }
             }
+        }
+    }
+}
+
+private fun ScalingLazyListScope.templateItems(
+    templates: List<JournalEntryTemplate>,
+    onTemplateAddRequested: (String) -> Unit,
+) {
+    templates
+        .map {
+            TemplateButton(
+                text = it.shortDisplayText,
+                onClick = { onTemplateAddRequested(it.id) })
+        }
+        .chunked(2)
+        .forEach { templateButtons ->
+            item {
+                TemplateButtonRow(templateButtons)
+            }
+        }
+}
+
+private fun ScalingLazyListScope.addButton(onAddRequested: (String) -> Unit) {
+    item {
+        val launcher =
+            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                it.processResult(onAddRequested)
+            }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround,
+        ) {
+            SmallButton(
+                onClick = {
+                    launcher.launchInputActivity()
+                },
+                contentDescriptionRes = R.string.add_new,
+                icon = Icons.Rounded.Add
+            )
+        }
+    }
+}
+
+private fun ScalingLazyListScope.loadButton(onLoadRequested: () -> Unit) {
+    item {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround,
+        ) {
+            SmallButton(
+                onClick = onLoadRequested,
+                contentDescriptionRes = R.string.load_things,
+                icon = Icons.Rounded.Sync
+            )
         }
     }
 }
@@ -132,21 +179,6 @@ private fun TemplateButtonRow(templateButtons: List<TemplateButton>) {
             )
         }
     }
-}
-
-@Composable
-private fun AddButton(onAddRequested: (String) -> Unit) {
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            it.processResult(onAddRequested)
-        }
-    SmallButton(
-        onClick = {
-            launcher.launchInputActivity()
-        },
-        contentDescriptionRes = R.string.add_new,
-        icon = Icons.Rounded.Add
-    )
 }
 
 @Composable
@@ -214,29 +246,32 @@ private data class TemplateButton(val text: String, val onClick: () -> Unit)
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
-    WearApp(viewState = ViewState(), { }, { }, { }, { })
+    WearApp(viewState = ViewState(), { }, { }, { }, { }, { })
 }
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 private fun JournalEntriesPresentPreview() {
-    WearApp(viewState = ViewState(
-        journalEntries = listOf(
-            JournalEntry(
-                entryTime = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
-                text = "Text1"
-            ),
-            JournalEntry(
-                entryTime = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
-                text = "Text2"
-            ),
-            JournalEntry(
-                entryTime = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
-                text = "Text3"
+    WearApp(
+        viewState = ViewState(
+            journalEntries = listOf(
+                JournalEntry(
+                    entryTime = Clock.System.now(),
+                    timeZone = TimeZone.currentSystemDefault(),
+                    text = "Text1"
+                ),
+                JournalEntry(
+                    entryTime = Clock.System.now(),
+                    timeZone = TimeZone.currentSystemDefault(),
+                    text = "Text2"
+                ),
+                JournalEntry(
+                    entryTime = Clock.System.now(),
+                    timeZone = TimeZone.currentSystemDefault(),
+                    text = "Text3"
+                )
             )
-        )
-    ), { }, { }, { }, { })
+        ),
+        { }, { }, { }, { }, { },
+    )
 }

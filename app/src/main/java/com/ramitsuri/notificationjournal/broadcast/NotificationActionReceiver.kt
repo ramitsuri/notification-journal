@@ -35,9 +35,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         val repository = ServiceLocator.repository
         ServiceLocator.coroutineScope.launch {
-            // Because app is probably in background at this time, so we can't use too many
-            // resources
-            repository.insert(text = text, send = false)
+            repository.insert(text = text)
             pendingResult.finish()
         }
         (context.applicationContext as MainApplication).showJournalNotification()

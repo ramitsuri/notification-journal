@@ -21,7 +21,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -72,7 +71,6 @@ import notificationjournal.core.generated.resources.add_from_template
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.next_day
 import notificationjournal.core.generated.resources.previous_day
-import notificationjournal.core.generated.resources.reset_date_time
 import notificationjournal.core.generated.resources.tags
 import notificationjournal.core.generated.resources.use
 import org.jetbrains.compose.resources.stringResource
@@ -90,7 +88,6 @@ fun AddEditEntryDialog(
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
-    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
@@ -158,7 +155,6 @@ fun AddEditEntryDialog(
                         onTextUpdated = onTextUpdated,
                         onTagClicked = onTagClicked,
                         onUseSuggestedText = onUseSuggestedText,
-                        onTemplateClicked = onTemplateClicked,
                         onSave = onSave,
                         onAddAnother = onAddAnother,
                         onCancel = onCancel,
@@ -186,7 +182,6 @@ private fun Content(
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onUseSuggestedText: () -> Unit,
-    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
@@ -197,16 +192,16 @@ private fun Content(
     onResetDateTime: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    val focusRequester = remember { FocusRequester() }
+    val textFieldFocusRequester = remember { FocusRequester() }
     val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
 
     var selection by remember { mutableStateOf(TextRange(text.length)) }
     Column {
-        LaunchedEffect(focusRequester) {
+        LaunchedEffect(textFieldFocusRequester) {
             if (showKeyboard) {
                 delay(100)
-                focusRequester.requestFocus()
+                textFieldFocusRequester.requestFocus()
                 keyboard?.show()
             }
         }
@@ -234,13 +229,13 @@ private fun Content(
             modifier = Modifier
                 .padding(top = 32.dp)
                 .fillMaxWidth()
-                .focusRequester(focusRequester = focusRequester)
+                .focusRequester(focusRequester = textFieldFocusRequester)
                 .onKeyEvent {
                     when {
                         // Tab -> Focus next
-                        it.key == Key.Tab &&
+                        it.key == Key.T &&
                                 it.type == KeyEventType.KeyUp &&
-                                !it.isShiftPressed -> {
+                                it.isMetaPressed -> {
                             focusManager.moveFocus(FocusDirection.Next)
                         }
 
@@ -317,7 +312,17 @@ private fun Content(
         if (templates.isNotEmpty()) {
             Templates(
                 templates = templates,
-                onTemplateClicked = onTemplateClicked,
+                onTemplateClicked = {
+                    val newText = if (it.replacesExistingValues) {
+                        onTagClicked(it.tag)
+                        it.text
+                    } else {
+                        text + it.text
+                    }
+                    onTextUpdated(newText)
+                    selection = TextRange(newText.length)
+                    textFieldFocusRequester.requestFocus()
+                },
                 modifier = Modifier.onKeyEvent {
                     when {
                         // Shift + Tab -> Focus up
@@ -414,7 +419,7 @@ private fun DateTimeEntry(
             OutlinedIconButton(
                 onClick = onNextDateRequested,
                 modifier = Modifier
-                .size(48.dp)
+                    .size(48.dp)
                     .padding(4.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -525,7 +530,7 @@ private fun Templates(
                     selected = false,
                     onClick = { onTemplateClicked(it) },
                     label = {
-                        Text(text = it.text)
+                        Text(text = it.displayText)
                     })
             }
         }

@@ -6,6 +6,8 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +17,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import notificationjournal.core.generated.resources.Res
+import notificationjournal.core.generated.resources.am
+import notificationjournal.core.generated.resources.pm
+import org.jetbrains.compose.resources.getString
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalRepository(
@@ -47,48 +53,47 @@ class JournalRepository(
     }
 
     suspend fun update(journalEntry: JournalEntry) {
-        val updated = dao.update(journalEntry)
-        sendAndMarkUploaded(listOf(updated))
+        dao.update(journalEntry.copy(uploaded = false))
     }
 
     suspend fun insert(
         text: String,
         tag: String? = null,
         time: Instant = clock.now(),
-        originalEntryTime: Instant? = null,
-        send: Boolean = true,
+        timeZone: TimeZone = this.timeZone,
     ) {
         text
             .split("\n")
             .filter { it.isNotBlank() }
             .forEachIndexed { index, entry ->
                 val entryTime = time.plus(index.times(10).milliseconds)
-                insert(
+                val entryText = if (entry.contains(Constants.TEMPLATED_TIME)) {
+                    entry.replace(
+                        Constants.TEMPLATED_TIME,
+                        formatForDisplay(
+                            toFormat = entryTime,
+                            timeZone = timeZone,
+                            amString = getString(Res.string.am),
+                            pmString = getString(Res.string.pm),
+                        )
+                    )
+                } else {
+                    entry
+                }
+                dao.insert(
                     entry = JournalEntry(
-                        entryTime = entryTime,
+                        entryTime = time,
                         timeZone = timeZone,
-                        text = entry.trim(),
+                        text = entryText.trim(),
                         tag = tag,
-                        entryTimeOverride = originalEntryTime
+                        entryTimeOverride = entryTime,
                     ),
-                    send = send,
                 )
             }
     }
 
-    suspend fun insert(
-        entry: JournalEntry,
-        send: Boolean = true,
-    ) {
-        val inserted = dao.insert(entry)
-        if (send) {
-            sendAndMarkUploaded(listOf(inserted))
-        }
-    }
-
     suspend fun delete(entry: JournalEntry) {
-        val deleted = dao.update(entry.copy(deleted = true))
-        sendAndMarkUploaded(listOf(deleted))
+        dao.update(entry.copy(deleted = true, uploaded = false))
     }
 
     suspend fun sync() {
@@ -96,7 +101,9 @@ class JournalRepository(
         if (entries.isEmpty()) {
             return
         }
-        sendAndMarkUploaded(entries)
+        entries.chunked(10).forEach {
+            sendAndMarkUploaded(it)
+        }
     }
 
     suspend fun handlePayload(payload: Payload.Entries) {

@@ -31,7 +31,6 @@ fun EditJournalEntryScreen(
         showAddAnother = false,
         onAddAnother = { },
         onCancel = onCancel,
-        onTemplateClicked = { },
         onPreviousDateRequested = onPreviousDateRequested,
         onNextDateRequested = onNextDateRequested,
         onHourUpdated = onHourUpdated,

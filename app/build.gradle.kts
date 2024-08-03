@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -75,6 +77,10 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.material3)
     implementation(libs.compose.material3.windowSize)
+
+    val firebaseBom = platform(libs.firebaseBom)
+    implementation(firebaseBom)
+    implementation(libs.firebaseCrashlytics)
 
     implementation(libs.androidx.navigation.compose)
 

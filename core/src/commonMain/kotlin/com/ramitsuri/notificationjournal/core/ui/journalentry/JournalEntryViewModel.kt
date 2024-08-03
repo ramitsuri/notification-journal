@@ -237,7 +237,7 @@ class JournalEntryViewModel(
                         previousState.copy(
                             dayGroups = sorted,
                             tags = tags,
-                            showSyncButton = forUploadCount > 0
+                            notUploadedCount = forUploadCount
                         )
                     }
                 }
@@ -265,6 +265,6 @@ data class ViewState(
     val dayGroups: List<DayGroup> = listOf(),
     val tags: List<Tag>,
     val loading: Boolean = false,
-    val showSyncButton: Boolean = false,
+    val notUploadedCount: Int = 0,
     val entriesVerificationResponse: EntriesVerificationResponse? = null,
 )

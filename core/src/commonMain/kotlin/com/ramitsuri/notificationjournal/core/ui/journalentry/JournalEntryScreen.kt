@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -70,6 +71,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -84,6 +86,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -115,6 +118,7 @@ import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.menu_content_description
+import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.move_down
 import notificationjournal.core.generated.resources.move_up
 import notificationjournal.core.generated.resources.next_day
@@ -152,6 +156,7 @@ fun JournalEntryScreen(
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
+    val focusManager = LocalFocusManager.current
 
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -226,6 +231,14 @@ fun JournalEntryScreen(
                 ) {
                     onSettingsClicked()
                     true
+                } else if (it.key == Key.DirectionDown &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    focusManager.moveFocus(FocusDirection.Down)
+                } else if (it.key == Key.DirectionUp &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    focusManager.moveFocus(FocusDirection.Up)
                 } else {
                     false
                 }
@@ -264,7 +277,7 @@ fun JournalEntryScreen(
                 )
 
                 Toolbar(
-                    showSyncButton = state.showSyncButton,
+                    notUploadedCount = state.notUploadedCount,
                     onSyncClicked = onSyncClicked,
                     onSettingsClicked = onSettingsClicked
                 )
@@ -322,22 +335,30 @@ fun JournalEntryScreen(
 
 @Composable
 private fun Toolbar(
-    showSyncButton: Boolean,
+    notUploadedCount: Int,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        if (showSyncButton) {
-            IconButton(
-                onClick = onSyncClicked,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Sync,
-                    contentDescription = stringResource(Res.string.settings_upload_title)
-                )
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+                .clickable(onClick = onSyncClicked),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Sync,
+                contentDescription = stringResource(Res.string.settings_upload_title),
+                modifier = Modifier.align(Alignment.Center)
+            )
+            if (notUploadedCount > 0) {
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text("$notUploadedCount")
+                }
             }
         }
         IconButton(
@@ -449,6 +470,14 @@ private fun List(
                             .fillMaxWidth()
                             .clip(shape)
                             .then(borderModifier)
+                            .onKeyEvent {
+                                if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
+                                    onEditRequested(entry)
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
                     )
                 }
                 item {
@@ -862,6 +891,8 @@ private fun SubHeaderItemMenu(
     onMoveToPreviousDayRequested: () -> Unit,
     onReconcileRequested: () -> Unit,
 ) {
+    var showingMoreMenu by remember { mutableStateOf(false) }
+
     Box {
         IconButton(
             onClick = onMenuButtonClicked,
@@ -876,51 +907,63 @@ private fun SubHeaderItemMenu(
         }
         DropdownMenu(
             expanded = showMenu,
-            onDismissRequest = onMenuButtonClicked,
+            onDismissRequest = {
+                onMenuButtonClicked()
+                showingMoreMenu = false
+            },
         ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.copy_reconcile)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onCopyRequested()
-                    onReconcileRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.next_day)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onMoveToNextDayRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.previous_day)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onMoveToPreviousDayRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.copy)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onCopyRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.reconcile)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onReconcileRequested()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.delete)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onDeleteRequested()
-                }
-            )
+            if (showingMoreMenu.not()) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.copy_reconcile)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onCopyRequested()
+                        onReconcileRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.more)) },
+                    onClick = {
+                        showingMoreMenu = true
+                    }
+                )
+            } else {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.next_day)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onMoveToNextDayRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.previous_day)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onMoveToPreviousDayRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.copy)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onCopyRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.reconcile)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onReconcileRequested()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.delete)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onDeleteRequested()
+                    }
+                )
+            }
         }
     }
 }

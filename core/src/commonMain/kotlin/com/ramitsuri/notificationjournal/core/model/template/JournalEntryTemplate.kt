@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.model.template
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,4 +31,22 @@ data class JournalEntryTemplate(
     @ColumnInfo(name = "tag")
     @SerialName("tag")
     val tag: String,
-)
+
+    @Ignore
+    val replacesExistingValues: Boolean = true
+) {
+    constructor(
+        id: String,
+        text: String,
+        displayText: String,
+        shortDisplayText: String,
+        tag: String
+    ) : this(
+        id = id,
+        text = text,
+        displayText = displayText,
+        shortDisplayText = shortDisplayText,
+        tag = tag,
+        replacesExistingValues = true,
+    )
+}

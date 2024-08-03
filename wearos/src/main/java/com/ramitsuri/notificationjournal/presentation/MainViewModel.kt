@@ -51,7 +51,7 @@ class MainViewModel(
     )
     val state: StateFlow<ViewState> = _state
 
-    init {
+    fun loadTemplatesAndEntries() {
         viewModelScope.launch {
             repository.getFlow().collect { entries ->
                 _state.update {
@@ -98,10 +98,8 @@ class MainViewModel(
                 }
                 .joinAll()
 
-            if (exitOnDone) {
-                _state.update {
-                    it.copy(shouldExit = true)
-                }
+            _state.update {
+                it.copy(addStatus = if (exitOnDone) AddStatus.SUCCESS_EXIT else AddStatus.SUCCESS)
             }
         }
     }
@@ -129,6 +127,12 @@ class MainViewModel(
         }
     }
 
+    fun addStatusAcknowledged() {
+        _state.update {
+            it.copy(addStatus = AddStatus.NONE)
+        }
+    }
+
     private suspend fun postToClient(
         value: String,
         time: Instant,
@@ -139,19 +143,18 @@ class MainViewModel(
         if (posted) { // Shared with phone client, so no need to save to local db
             return
         }
-        val entry = JournalEntry(
-            entryTime = time,
-            timeZone = timeZone,
-            text = value,
-            tag = null,
-            entryTimeOverride = null,
-        )
-        repository.insert(entry)
+        repository.insert(text = value, time = time, timeZone = timeZone)
     }
 }
 
 data class ViewState(
     val journalEntries: List<JournalEntry> = listOf(),
     val journalEntryTemplates: List<JournalEntryTemplate> = listOf(),
-    val shouldExit: Boolean = false,
+    val addStatus: AddStatus = AddStatus.NONE,
 )
+
+enum class AddStatus {
+    NONE,
+    SUCCESS_EXIT,
+    SUCCESS,
+}
