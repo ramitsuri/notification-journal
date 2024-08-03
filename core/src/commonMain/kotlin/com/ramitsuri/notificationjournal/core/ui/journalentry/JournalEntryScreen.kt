@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -113,7 +114,9 @@ import notificationjournal.core.generated.resources.copy
 import notificationjournal.core.generated.resources.copy_reconcile
 import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.delete_warning_message
+import notificationjournal.core.generated.resources.duplicate
 import notificationjournal.core.generated.resources.edit
+import notificationjournal.core.generated.resources.force_upload
 import notificationjournal.core.generated.resources.menu_content_description
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.move_down
@@ -140,12 +143,15 @@ fun JournalEntryScreen(
     onEditTagRequested: (JournalEntry, String) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    onDuplicateRequested: (JournalEntry) -> Unit,
+    onForceUploadRequested: (JournalEntry) -> Unit,
     onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
     onMoveDownRequested: (JournalEntry, TagGroup) -> Unit,
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onTagGroupReconcileRequested: (TagGroup) -> Unit,
+    onTagGroupForceUploadRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
     onSyncClicked: () -> Unit,
 ) {
@@ -318,6 +324,9 @@ fun JournalEntryScreen(
                         onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         onTagGroupReconcileRequested = onTagGroupReconcileRequested,
+                        onTagGroupForceUploadRequested = onTagGroupForceUploadRequested,
+                        onForceUploadRequested = onForceUploadRequested,
+                        onDuplicateRequested = onDuplicateRequested,
                         modifier = Modifier.alpha(if (showContent) 1f else 0f)
                     )
                 }
@@ -380,12 +389,15 @@ private fun List(
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupReconcileRequested: (TagGroup) -> Unit,
+    onTagGroupForceUploadRequested: (TagGroup) -> Unit,
     onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
     onMoveDownRequested: (JournalEntry, TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
+    onForceUploadRequested: (JournalEntry) -> Unit,
+    onDuplicateRequested: (JournalEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strokeWidth: Dp = 1.dp
@@ -414,6 +426,7 @@ private fun List(
                         onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         onReconcileRequested = onTagGroupReconcileRequested,
+                        onForceUploadRequested = onTagGroupForceUploadRequested,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(topShape)
@@ -455,6 +468,8 @@ private fun List(
                         onTagClicked = { onTagClicked(entry, it) },
                         onMoveToNextDayRequested = { onMoveToNextDayRequested(entry) },
                         onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(entry) },
+                        onDuplicateRequested = { onDuplicateRequested(entry) },
+                        onForceUploadRequested = { onForceUploadRequested(entry) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(shape)
@@ -510,6 +525,7 @@ private fun SubHeaderItem(
     onMoveToNextDayRequested: (TagGroup) -> Unit,
     onMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onReconcileRequested: (TagGroup) -> Unit,
+    onForceUploadRequested: (TagGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -535,7 +551,8 @@ private fun SubHeaderItem(
             onMenuButtonClicked = { showMenu = !showMenu },
             onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
             onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
-            onReconcileRequested = { onReconcileRequested(tagGroup) }
+            onReconcileRequested = { onReconcileRequested(tagGroup) },
+            onForceUploadRequested = { onForceUploadRequested(tagGroup) }
         )
     }
 }
@@ -553,6 +570,8 @@ private fun ListItem(
     onTagClicked: (String) -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
+    onDuplicateRequested: () -> Unit,
+    onForceUploadRequested: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDetails by remember { mutableStateOf(false) }
@@ -588,6 +607,8 @@ private fun ListItem(
         onMoveToNextDayRequested = onMoveToNextDayRequested,
         onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
         onTagClicked = { tag -> onTagClicked(tag) },
+        onDuplicateRequested = onDuplicateRequested,
+        onForceUploadRequested = onForceUploadRequested,
         onDismiss = { showDetails = false })
 }
 
@@ -606,6 +627,8 @@ private fun DetailsDialog(
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
     onTagClicked: (String) -> Unit,
+    onDuplicateRequested: () -> Unit,
+    onForceUploadRequested: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     if (showDetails) {
@@ -657,7 +680,7 @@ private fun DetailsDialog(
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    ButtonRow(
+                    FirstButtonRow(
                         onCopyRequested = {
                             onCopyRequested()
                             onDismiss()
@@ -669,7 +692,19 @@ private fun DetailsDialog(
                         onDeleteRequested = {
                             onDeleteRequested()
                             onDismiss()
-                        })
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SecondButtonRow(
+                        onDuplicateRequested = {
+                            onDuplicateRequested()
+                            onDismiss()
+                        },
+                        onForceUploadRequested = {
+                            onForceUploadRequested()
+                            onDismiss()
+                        },
+                    )
                 }
             }
         }
@@ -743,7 +778,7 @@ private fun TimeModifierActionButton(
 }
 
 @Composable
-private fun ButtonRow(
+private fun FirstButtonRow(
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
@@ -767,6 +802,29 @@ private fun ButtonRow(
             icon = Icons.Filled.Delete,
             contentDescription = stringResource(Res.string.delete),
             onClick = onDeleteRequested,
+            modifier = Modifier
+                .weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun SecondButtonRow(
+    onDuplicateRequested: () -> Unit,
+    onForceUploadRequested: () -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        ActionButton(
+            icon = Icons.Filled.CopyAll,
+            contentDescription = stringResource(Res.string.duplicate),
+            onClick = onDuplicateRequested,
+            modifier = Modifier
+                .weight(1f)
+        )
+        ActionButton(
+            icon = Icons.Filled.Sync,
+            contentDescription = stringResource(Res.string.force_upload),
+            onClick = onForceUploadRequested,
             modifier = Modifier
                 .weight(1f)
         )
@@ -802,6 +860,7 @@ private fun SubHeaderItemMenu(
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
     onReconcileRequested: () -> Unit,
+    onForceUploadRequested: () -> Unit
 ) {
     var showingMoreMenu by remember { mutableStateOf(false) }
 
@@ -875,6 +934,13 @@ private fun SubHeaderItemMenu(
                         onDeleteRequested()
                     }
                 )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.force_upload)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onForceUploadRequested()
+                    }
+                )
             }
         }
     }
@@ -900,6 +966,8 @@ private fun ListItemPreview() {
             onMoveToPreviousDayRequested = { },
             onMoveUpRequested = { },
             onMoveDownRequested = { },
+            onForceUploadRequested = { },
+            onDuplicateRequested = { },
         )
     }
 }
