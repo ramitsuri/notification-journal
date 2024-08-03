@@ -118,6 +118,9 @@ fun NavGraph(
                 },
                 onSyncClicked = viewModel::sync,
                 onTagGroupReconcileRequested = viewModel::reconcile,
+                onTagGroupForceUploadRequested = viewModel::forceUpload,
+                onForceUploadRequested = viewModel::forceUpload,
+                onDuplicateRequested = { /* TODO */ }
             )
         }
 

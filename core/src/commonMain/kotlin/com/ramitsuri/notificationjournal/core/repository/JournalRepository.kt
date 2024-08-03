@@ -92,6 +92,10 @@ class JournalRepository(
         if (entries.isEmpty()) {
             return
         }
+        upload(entries)
+    }
+
+    fun upload(entries: List<JournalEntry>) {
         entries.chunked(10).forEach {
             sendAndMarkUploaded(it)
         }
