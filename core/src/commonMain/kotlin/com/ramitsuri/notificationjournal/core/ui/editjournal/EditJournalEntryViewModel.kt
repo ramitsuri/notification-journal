@@ -37,13 +37,12 @@ class EditJournalEntryViewModel(
     init {
         viewModelScope.launch {
             entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG]))
-            val entryTime = entry.entryTimeOverride ?: entry.entryTime
             _state.update {
                 it.copy(
                     isLoading = false,
                     text = entry.text,
                     selectedTag = entry.tag,
-                    dateTime = entryTime,
+                    dateTime = entry.entryTime,
                     timeZone = entry.timeZone,
                 )
             }
@@ -76,7 +75,7 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(isLoading = true) }
         val tag = currentState.selectedTag
         viewModelScope.launch {
-            repository.update(entry.copy(text = text, tag = tag, entryTimeOverride = dateTime))
+            repository.update(entry.copy(text = text, tag = tag, entryTime = dateTime))
             _saved.update {
                 true
             }
@@ -130,7 +129,7 @@ class EditJournalEntryViewModel(
     }
 
     fun resetDateTime() {
-        _state.update { it.copy(dateTime = entry.entryTimeOverride ?: entry.entryTime) }
+        _state.update { it.copy(dateTime = entry.entryTime) }
     }
 
     private fun setHourAndMinute(hour: Int? = null, minute: Int? = null) {

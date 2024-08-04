@@ -73,11 +73,10 @@ class JournalRepository(
                 }
                 dao.insert(
                     entry = JournalEntry(
-                        entryTime = time,
+                        entryTime = entryTime,
                         timeZone = timeZone,
                         text = entryText.trim(),
                         tag = tag,
-                        entryTimeOverride = entryTime,
                     ),
                 )
             }

@@ -34,10 +34,6 @@ data class JournalEntry(
     @SerialName("tag")
     val tag: String? = null,
 
-    @ColumnInfo(name = "entry_time_override")
-    @SerialName("entryTimeOverride")
-    val entryTimeOverride: Instant? = null,
-
     @ColumnInfo(name = "uploaded", defaultValue = "0")
     @SerialName("uploaded")
     val uploaded: Boolean = false,
@@ -56,7 +52,7 @@ data class JournalEntry(
 ) {
     fun formattedTime(am: String, pm: String): String =
         formatForDisplay(
-            toFormat = entryTimeOverride ?: entryTime,
+            toFormat = entryTime,
             timeZone = timeZone,
             amString = am,
             pmString = pm,
