@@ -22,7 +22,12 @@ enum class Destination(private val route: String) {
             }
 
             this == ADD_ENTRY -> {
-                route.plus("/${args[AddJournalEntryViewModel.RECEIVED_TEXT_ARG]}")
+                route
+                    .plus("?${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}")
+                    .plus("=${args[AddJournalEntryViewModel.RECEIVED_TEXT_ARG]}")
+                    .plus("&${AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG}")
+                    .plus("=${args[AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG]}")
+
             }
 
             else -> {
@@ -38,7 +43,11 @@ enum class Destination(private val route: String) {
             }
 
             this == ADD_ENTRY -> {
-                route.plus("/{${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}}")
+                route
+                    .plus("?${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}")
+                    .plus("={${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}}")
+                    .plus("&${AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG}")
+                    .plus("={${AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG}}")
             }
 
             else -> {
@@ -61,6 +70,10 @@ enum class Destination(private val route: String) {
             this == ADD_ENTRY -> {
                 listOf(
                     navArgument(AddJournalEntryViewModel.RECEIVED_TEXT_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                    },
+                    navArgument(AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG) {
                         type = NavType.StringType
                         nullable = true
                     },

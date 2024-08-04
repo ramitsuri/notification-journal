@@ -36,6 +36,7 @@ class AddJournalEntryViewModel(
         } else {
             URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
         }
+    private val duplicateFromEntryId: String? = savedStateHandle[DUPLICATE_FROM_ENTRY_ID_ARG]
 
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
@@ -48,6 +49,7 @@ class AddJournalEntryViewModel(
     init {
         loadTags()
         loadTemplates()
+        loadFromDuplicateEntryId()
     }
 
     fun textUpdated(text: String) {
@@ -188,6 +190,16 @@ class AddJournalEntryViewModel(
         }
     }
 
+    private fun loadFromDuplicateEntryId() {
+        val id = duplicateFromEntryId ?: return
+        viewModelScope.launch {
+            val fromEntry = repository.get(id)
+            _state.update {
+                it.copy(text = fromEntry.text, selectedTag = fromEntry.tag)
+            }
+        }
+    }
+
     private fun getShortcutTemplates() = listOf(
         JournalEntryTemplate(
             text = " ${Constants.TEMPLATED_TIME}",
@@ -200,6 +212,7 @@ class AddJournalEntryViewModel(
 
     companion object {
         const val RECEIVED_TEXT_ARG = "received_text"
+        const val DUPLICATE_FROM_ENTRY_ID_ARG = "duplicate_from_entry_id"
     }
 }
 
