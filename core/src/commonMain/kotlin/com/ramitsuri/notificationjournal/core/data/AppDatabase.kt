@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
         JournalEntryTemplate::class,
         Tag::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
