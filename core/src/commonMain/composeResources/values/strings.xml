@@ -31,6 +31,8 @@
     <string name="reconcile">Reconcile</string>
     <string name="copy_reconcile">Copy &amp; reconcile</string>
     <string name="more">More</string>
+    <string name="force_upload">Force upload</string>
+    <string name="duplicate">Duplicate</string>
 
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>

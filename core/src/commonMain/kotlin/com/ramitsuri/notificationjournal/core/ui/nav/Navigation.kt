@@ -118,6 +118,15 @@ fun NavGraph(
                 },
                 onSyncClicked = viewModel::sync,
                 onTagGroupReconcileRequested = viewModel::reconcile,
+                onTagGroupForceUploadRequested = viewModel::forceUpload,
+                onForceUploadRequested = viewModel::forceUpload,
+                onDuplicateRequested = {
+                    navController.navigate(
+                        Destination.ADD_ENTRY.routeWithArgValues(
+                            mapOf(AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG to it.id),
+                        )
+                    )
+                }
                 onMismatchEntryResolved = viewModel::mismatchedEntryResolved,
             )
         }
