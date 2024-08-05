@@ -120,6 +120,7 @@ fun NavGraph(
                 onTagGroupReconcileRequested = viewModel::reconcile,
                 onTagGroupForceUploadRequested = viewModel::forceUpload,
                 onForceUploadRequested = viewModel::forceUpload,
+                onConflictResolved = viewModel::resolveConflict,
                 onDuplicateRequested = {
                     navController.navigate(
                         Destination.ADD_ENTRY.routeWithArgValues(

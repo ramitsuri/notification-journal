@@ -36,7 +36,7 @@ class EditJournalEntryViewModel(
 
     init {
         viewModelScope.launch {
-            entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG]))
+            entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG])) ?: return@launch
             _state.update {
                 it.copy(
                     isLoading = false,

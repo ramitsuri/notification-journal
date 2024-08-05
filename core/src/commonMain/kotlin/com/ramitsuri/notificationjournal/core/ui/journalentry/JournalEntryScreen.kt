@@ -27,7 +27,9 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -37,6 +39,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
@@ -96,6 +99,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.ramitsuri.notificationjournal.core.model.DayGroup
+import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -110,6 +114,9 @@ import notificationjournal.core.generated.resources.add_entry_content_descriptio
 import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.cancel
+import notificationjournal.core.generated.resources.conflict_from_other_device
+import notificationjournal.core.generated.resources.conflict_this_device
+import notificationjournal.core.generated.resources.conflicts
 import notificationjournal.core.generated.resources.copy
 import notificationjournal.core.generated.resources.copy_reconcile
 import notificationjournal.core.generated.resources.delete
@@ -131,6 +138,7 @@ import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
+import notificationjournal.core.generated.resources.use
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -153,6 +161,7 @@ fun JournalEntryScreen(
     onTagGroupReconcileRequested: (TagGroup) -> Unit,
     onTagGroupForceUploadRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
+    onConflictResolved: (JournalEntry, EntryConflict?) -> Unit,
     onSyncClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
@@ -300,6 +309,7 @@ fun JournalEntryScreen(
                 } else {
                     List(
                         items = state.dayGroups,
+                        conflicts = state.entryConflicts,
                         tags = state.tags,
                         onCopyRequested = { item ->
                             clipboardManager.setText(AnnotatedString(item.text))
@@ -327,6 +337,7 @@ fun JournalEntryScreen(
                         onTagGroupForceUploadRequested = onTagGroupForceUploadRequested,
                         onForceUploadRequested = onForceUploadRequested,
                         onDuplicateRequested = onDuplicateRequested,
+                        onConflictResolved = onConflictResolved,
                         modifier = Modifier.alpha(if (showContent) 1f else 0f)
                     )
                 }
@@ -381,6 +392,7 @@ private fun Toolbar(
 @Composable
 private fun List(
     items: List<DayGroup>,
+    conflicts: List<EntryConflict>,
     tags: List<Tag>,
     onCopyRequested: (JournalEntry) -> Unit,
     onTagClicked: (JournalEntry, String) -> Unit,
@@ -398,6 +410,7 @@ private fun List(
     onMoveToPreviousDayRequested: (JournalEntry) -> Unit,
     onForceUploadRequested: (JournalEntry) -> Unit,
     onDuplicateRequested: (JournalEntry) -> Unit,
+    onConflictResolved: (JournalEntry, EntryConflict?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strokeWidth: Dp = 1.dp
@@ -454,6 +467,7 @@ private fun List(
                     val entry = entries[index]
                     ListItem(
                         item = entry,
+                        conflicts = conflicts.filter { it.entryId == entry.id },
                         onCopyRequested = { onCopyRequested(entry) },
                         onDeleteRequested = { onDeleteRequested(entry) },
                         onEditRequested = { onEditRequested(entry) },
@@ -470,6 +484,7 @@ private fun List(
                         onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(entry) },
                         onDuplicateRequested = { onDuplicateRequested(entry) },
                         onForceUploadRequested = { onForceUploadRequested(entry) },
+                        onConflictResolved = { onConflictResolved(entry, it) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(shape)
@@ -560,6 +575,7 @@ private fun SubHeaderItem(
 @Composable
 private fun ListItem(
     item: JournalEntry,
+    conflicts: List<EntryConflict>,
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
@@ -572,9 +588,11 @@ private fun ListItem(
     onMoveToPreviousDayRequested: () -> Unit,
     onDuplicateRequested: () -> Unit,
     onForceUploadRequested: () -> Unit,
+    onConflictResolved: (EntryConflict?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDetails by remember { mutableStateOf(false) }
+    var showConflictResolutionDialog by remember { mutableStateOf(false) }
 
     Row(
         horizontalArrangement = Arrangement.End,
@@ -589,6 +607,19 @@ private fun ListItem(
                 .weight(1f)
                 .padding(16.dp)
         )
+        if (conflicts.isNotEmpty()) {
+            IconButton(
+                onClick = { showConflictResolutionDialog = true },
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Error,
+                    contentDescription = stringResource(Res.string.conflicts)
+                )
+            }
+        }
     }
 
     DetailsDialog(
@@ -609,7 +640,80 @@ private fun ListItem(
         onTagClicked = { tag -> onTagClicked(tag) },
         onDuplicateRequested = onDuplicateRequested,
         onForceUploadRequested = onForceUploadRequested,
-        onDismiss = { showDetails = false })
+        onDismiss = { showDetails = false }
+    )
+
+    ConflictResolutionDialog(
+        showDialog = showConflictResolutionDialog,
+        entry = item,
+        conflicts = conflicts,
+        onConflictResolved = onConflictResolved,
+        onDismiss = { showConflictResolutionDialog = false },
+    )
+}
+
+@Composable
+private fun ConflictResolutionDialog(
+    showDialog: Boolean,
+    entry: JournalEntry,
+    conflicts: List<EntryConflict>,
+    onConflictResolved: (EntryConflict?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (showDialog) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        stringResource(Res.string.conflict_this_device),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    entry.tag?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text(entry.text, style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = {
+                        onDismiss()
+                        onConflictResolved(null)
+                    }) {
+                        Text(stringResource(Res.string.use))
+                    }
+
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth())
+                    conflicts.forEach { conflict ->
+                        Text(
+                            stringResource(
+                                Res.string.conflict_from_other_device,
+                                conflict.senderName
+                            ),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        conflict.tag?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text(conflict.text, style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = {
+                            onDismiss()
+                            onConflictResolved(conflict)
+                        }) {
+                            Text(stringResource(Res.string.use))
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -956,6 +1060,7 @@ private fun ListItemPreview() {
                 timeZone = TimeZone.currentSystemDefault(),
                 text = "Test text"
             ),
+            conflicts = listOf(),
             onCopyRequested = {},
             onEditRequested = {},
             onDeleteRequested = {},
@@ -968,6 +1073,7 @@ private fun ListItemPreview() {
             onMoveDownRequested = { },
             onForceUploadRequested = { },
             onDuplicateRequested = { },
+            onConflictResolved = { },
         )
     }
 }

@@ -193,7 +193,7 @@ class AddJournalEntryViewModel(
     private fun loadFromDuplicateEntryId() {
         val id = duplicateFromEntryId ?: return
         viewModelScope.launch {
-            val fromEntry = repository.get(id)
+            val fromEntry = repository.get(id) ?: return@launch
             _state.update {
                 it.copy(text = fromEntry.text, selectedTag = fromEntry.tag)
             }

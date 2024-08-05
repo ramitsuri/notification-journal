@@ -33,6 +33,7 @@
     <string name="more">More</string>
     <string name="force_upload">Force upload</string>
     <string name="duplicate">Duplicate</string>
+    <string name="conflicts">Conflicts</string>
 
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>
@@ -101,4 +102,7 @@
     <string name="text">Text</string>
     <string name="display_text">Display text</string>
     <string name="short_display_text">Short display text</string>
+
+    <string name="conflict_this_device">On this device</string>
+    <string name="conflict_from_other_device">On %1$s</string>
 </resources>

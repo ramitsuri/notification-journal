@@ -1,8 +1,11 @@
 package com.ramitsuri.notificationjournal.core.repository
 
+import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
+import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
@@ -21,6 +24,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class JournalRepository(
     private val coroutineScope: CoroutineScope,
     private val dao: JournalEntryDao,
+    private val conflictDao: EntryConflictDao,
     private val clock: Clock = Clock.System,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
     private val dataSendHelper: DataSendHelper?,
@@ -39,7 +43,7 @@ class JournalRepository(
 
     suspend fun getAll() = dao.getAll()
 
-    suspend fun get(id: String): JournalEntry {
+    suspend fun get(id: String): JournalEntry? {
         return dao.get(id)
     }
 
@@ -101,17 +105,77 @@ class JournalRepository(
     }
 
     suspend fun handlePayload(payload: Payload.Entries) {
-        payload.data.forEach {
+        payload.data.forEach { payloadEntry ->
             // Since they're coming from a different client, they should be considered
             // uploaded for this client so that we don't upload them again.
-            dao.upsert(it.copy(uploaded = true))
+
+            // Doesn't exist locally or sender asked to replace local entry
+            val existing = dao.get(payloadEntry.id)
+            if (existing == null || payload.replacesLocal) {
+                dao.upsert(payloadEntry.copy(uploaded = true))
+                return
+            }
+
+            // No conflict between entries, save received entry
+            val entryConflict = existing.getEntryConflict(payloadEntry, payload.sender)
+            if (entryConflict == null) {
+                dao.upsert(payloadEntry.copy(uploaded = true))
+                return
+            }
+
+            // Conflict between local and received entries, leave saved entry alone, save conflict
+            conflictDao.insert(entryConflict)
         }
     }
 
-    private fun sendAndMarkUploaded(entries: List<JournalEntry>) {
+    fun getConflicts(): Flow<List<EntryConflict>> {
+        return conflictDao.getAllFlow()
+    }
+
+    suspend fun resolveConflict(entry: JournalEntry, selectedConflict: EntryConflict?) {
+        val newEntry = if (selectedConflict == null) { // No conflict selected, retain local entry
+            entry
+        } else {
+            entry.copy(
+                text = selectedConflict.text,
+                entryTime = selectedConflict.entryTime,
+                tag = selectedConflict.tag
+            )
+        }
+
+        if (selectedConflict != null) {
+            update(newEntry)
+        }
+
+        conflictDao.deleteForEntryId(newEntry.id)
+        sendAndMarkUploaded(listOf(newEntry), replacesLocal = true)
+    }
+
+    private fun sendAndMarkUploaded(entries: List<JournalEntry>, replacesLocal: Boolean = false) {
         coroutineScope.launch {
-            val sent = dataSendHelper?.sendEntry(entries) == true
+            val sent = dataSendHelper?.sendEntry(entries, replacesLocal) == true
             dao.updateUploaded(entries = entries, uploaded = sent)
         }
+    }
+
+
+    private fun JournalEntry.getEntryConflict(
+        withEntry: JournalEntry,
+        withEntrySender: Sender
+    ): EntryConflict? {
+        if (entryTime == withEntry.entryTime &&
+            text == withEntry.text &&
+            tag == withEntry.tag
+        ) {
+            return null
+        }
+
+        return EntryConflict(
+            entryId = withEntry.id,
+            entryTime = withEntry.entryTime,
+            text = withEntry.text,
+            tag = withEntry.tag,
+            senderName = withEntrySender.name,
+        )
     }
 }

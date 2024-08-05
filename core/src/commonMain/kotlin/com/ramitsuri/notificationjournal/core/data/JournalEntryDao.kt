@@ -27,18 +27,16 @@ abstract class JournalEntryDao {
     abstract fun getForUploadCountFlow(): Flow<Int>
 
     @Query("SELECT * FROM journalentry WHERE id = :id")
-    abstract suspend fun get(id: String): JournalEntry
+    abstract suspend fun get(id: String): JournalEntry?
 
     @Transaction
-    open suspend fun insert(entry: JournalEntry): JournalEntry {
+    open suspend fun insert(entry: JournalEntry) {
         insertInternal(entry)
-        return get(entry.id)
     }
 
     @Transaction
-    open suspend fun update(entry: JournalEntry): JournalEntry {
+    open suspend fun update(entry: JournalEntry) {
         updateInternal(entry)
-        return get(entry.id)
     }
 
     @Transaction
