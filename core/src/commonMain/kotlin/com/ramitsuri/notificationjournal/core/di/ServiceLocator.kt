@@ -81,6 +81,7 @@ object ServiceLocator {
             coroutineScope = coroutineScope,
             dao = AppDatabase.getJournalEntryDao(factory),
             dataSendHelper = dataSendHelper,
+            conflictDao = AppDatabase.getConflictsDao(factory)
         )
     }
 

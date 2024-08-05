@@ -32,10 +32,11 @@ internal class DataSendHelperImpl(
     private var channel: Channel? = null
     private val mutex: Mutex = Mutex()
 
-    override suspend fun sendEntry(entries: List<JournalEntry>): Boolean {
+    override suspend fun sendEntry(entries: List<JournalEntry>, replacesLocal: Boolean): Boolean {
         return Payload.Entries(
             data = entries,
-            sender = getSender()
+            sender = getSender(),
+            replacesLocal = replacesLocal,
         ).send()
     }
 

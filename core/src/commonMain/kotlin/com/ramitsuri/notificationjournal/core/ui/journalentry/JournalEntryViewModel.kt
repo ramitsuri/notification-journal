@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DayGroup
+import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
@@ -166,6 +167,12 @@ class JournalEntryViewModel(
         }
     }
 
+    fun resolveConflict(entry: JournalEntry, selectedConflict: EntryConflict?) {
+        viewModelScope.launch {
+            repository.resolveConflict(entry, selectedConflict)
+        }
+    }
+
     private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
@@ -183,11 +190,12 @@ class JournalEntryViewModel(
             val showReconciled = keyValueStore.getBoolean(Constants.PREF_KEY_SHOW_RECONCILED, false)
             combine(
                 repository.getFlow(showReconciled = showReconciled),
-                repository.getForUploadCountFlow()
-            ) { entries, forUploadCount ->
-                Pair(entries, forUploadCount)
+                repository.getForUploadCountFlow(),
+                repository.getConflicts(),
+            ) { entries, forUploadCount, entryConflicts ->
+                Triple(entries, forUploadCount, entryConflicts)
             }
-                .collect { (entries, forUploadCount) ->
+                .collect { (entries, forUploadCount, entryConflicts) ->
                     val tags = tagsDao.getAll()
                     val dayGroups = try {
                         entries.toDayGroups(
@@ -205,7 +213,8 @@ class JournalEntryViewModel(
                         previousState.copy(
                             dayGroups = sorted,
                             tags = tags,
-                            notUploadedCount = forUploadCount
+                            notUploadedCount = forUploadCount,
+                            entryConflicts = entryConflicts,
                         )
                     }
                 }
@@ -233,4 +242,5 @@ data class ViewState(
     val tags: List<Tag>,
     val loading: Boolean = false,
     val notUploadedCount: Int = 0,
+    val entryConflicts: List<EntryConflict> = listOf(),
 )

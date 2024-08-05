@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom9To10
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
@@ -11,7 +12,9 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom4To5
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom5To6
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom6To7
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom7To8
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom8To9
 import com.ramitsuri.notificationjournal.core.di.Factory
+import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
@@ -23,8 +26,9 @@ import kotlinx.coroutines.Dispatchers
         JournalEntry::class,
         JournalEntryTemplate::class,
         Tag::class,
+        EntryConflict::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
@@ -34,6 +38,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tagsDao(): TagsDao
 
     abstract fun templateDao(): JournalEntryTemplateDao
+
+    abstract fun entryConflictDao(): EntryConflictDao
 
     companion object {
         @Volatile
@@ -52,6 +58,8 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MigrationFrom5To6())
                     .addMigrations(MigrationFrom6To7())
                     .addMigrations(MigrationFrom7To8())
+                    .addMigrations(MigrationFrom8To9())
+                    .addMigrations(MigrationFrom9To10())
                     .build()
             }
             return INSTANCE as AppDatabase
@@ -62,6 +70,8 @@ abstract class AppDatabase : RoomDatabase() {
         fun getJournalEntryTemplateDao(factory: Factory) = getInstance(factory).templateDao()
 
         fun getTagsDao(factory: Factory) = getInstance(factory).tagsDao()
+
+        fun getConflictsDao(factory: Factory) = getInstance(factory).entryConflictDao()
     }
 }
 
