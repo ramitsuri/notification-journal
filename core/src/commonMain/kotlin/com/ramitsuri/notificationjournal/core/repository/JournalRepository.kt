@@ -113,14 +113,14 @@ class JournalRepository(
             val existing = dao.get(payloadEntry.id)
             if (existing == null || payload.replacesLocal) {
                 dao.upsert(payloadEntry.copy(uploaded = true))
-                return
+                return@forEach
             }
 
             // No conflict between entries, save received entry
             val entryConflict = existing.getEntryConflict(payloadEntry, payload.sender)
             if (entryConflict == null) {
                 dao.upsert(payloadEntry.copy(uploaded = true))
-                return
+                return@forEach
             }
 
             // Conflict between local and received entries, leave saved entry alone, save conflict
