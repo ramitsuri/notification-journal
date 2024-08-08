@@ -151,6 +151,7 @@ fun NavGraph(
                 state = viewState,
                 onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
+                onTemplateClicked = viewModel::templateClicked,
                 onUseSuggestedText = viewModel::useSuggestedText,
                 onSave = viewModel::save,
                 onAddAnother = viewModel::saveAndAddAnother,

@@ -73,6 +73,18 @@ class AddJournalEntryViewModel(
         }
     }
 
+    fun templateClicked(template: JournalEntryTemplate) {
+        _state.update { previousState ->
+            val newText = if (template.replacesExistingValues) {
+                tagClicked(template.tag)
+                template.text
+            } else {
+                previousState.text + template.text
+            }
+            previousState.copy(text = newText)
+        }
+    }
+
     fun save() {
         save(exitOnSave = true)
     }
