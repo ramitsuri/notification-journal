@@ -26,6 +26,7 @@ fun EditJournalEntryScreen(
         dateTime = state.localDateTime,
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
+        onTemplateClicked = { },
         onUseSuggestedText = { },
         onSave = onSave,
         showAddAnother = false,

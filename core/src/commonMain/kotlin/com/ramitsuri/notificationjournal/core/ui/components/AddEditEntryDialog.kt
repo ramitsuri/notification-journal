@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -45,6 +46,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
@@ -87,6 +89,7 @@ fun AddEditEntryDialog(
     templates: List<JournalEntryTemplate>,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
+    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
@@ -98,6 +101,10 @@ fun AddEditEntryDialog(
     onResetDateTime: () -> Unit,
 ) {
 
+    var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
+    var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
+    var showDateKeyboardShortcutHints by remember { mutableStateOf(false) }
+
     Dialog(
         onDismissRequest = { },
         properties = DialogProperties(
@@ -106,6 +113,10 @@ fun AddEditEntryDialog(
         )
     ) {
         Card(modifier = Modifier.onKeyEvent {
+            showTemplatesKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed
+            showTagsKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed.not()
+            showDateKeyboardShortcutHints = it.isMetaPressed
+
             when {
                 // Meta + Shift + S -> AddAnother
                 it.isMetaPressed &&
@@ -124,10 +135,269 @@ fun AddEditEntryDialog(
                     true
                 }
 
+                // Meta + (Left or J) -> Previous day
+                it.isMetaPressed &&
+                        (it.key == Key.DirectionLeft || it.key == Key.J) &&
+                        it.type == KeyEventType.KeyDown -> {
+                    onPreviousDateRequested()
+                    true
+                }
+
+                // Meta + (Right or K) -> Next day
+                it.isMetaPressed &&
+                        (it.key == Key.DirectionRight || it.key == Key.K) &&
+                        it.type == KeyEventType.KeyDown -> {
+                    onNextDateRequested()
+                    true
+                }
+
                 // Escape -> Cancel
                 it.key == Key.Escape &&
                         it.type == KeyEventType.KeyUp -> {
-                    onCancel()
+                    if (text.isEmpty()) {
+                        // To prevent accidental cancel
+                        onCancel()
+                    }
+                    true
+                }
+
+                it.key == Key.One &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 0
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Two &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 1
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Three &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 2
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Four &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 3
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Five &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 4
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Six &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 5
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Seven &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 6
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Eight &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 7
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Nine &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 8
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.Zero &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 9
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.One &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 0
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Two &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 1
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Three &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 2
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Four &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 3
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Five &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 4
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Six &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 5
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Seven &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 6
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Eight &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 7
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Nine &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 8
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
+                    true
+                }
+
+                it.key == Key.Zero &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed &&
+                        it.isMetaPressed -> {
+                    val index = 9
+                    val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                    if (template != null) {
+                        onTemplateClicked(template)
+                    }
                     true
                 }
 
@@ -152,8 +422,12 @@ fun AddEditEntryDialog(
                         showAddAnother = showAddAnother,
                         templates = templates,
                         dateTime = dateTime,
+                        showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
+                        showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
+                        showDateKeyboardShortcutHint = showDateKeyboardShortcutHints,
                         onTextUpdated = onTextUpdated,
                         onTagClicked = onTagClicked,
+                        onTemplateClicked = onTemplateClicked,
                         onUseSuggestedText = onUseSuggestedText,
                         onSave = onSave,
                         onAddAnother = onAddAnother,
@@ -179,8 +453,12 @@ private fun Content(
     showAddAnother: Boolean,
     dateTime: LocalDateTime,
     templates: List<JournalEntryTemplate>,
+    showTagsKeyboardShortcutHint: Boolean,
+    showTemplatesKeyboardShortcutHint: Boolean,
+    showDateKeyboardShortcutHint: Boolean,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
+    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
@@ -207,6 +485,7 @@ private fun Content(
         }
         DateTimeEntry(
             dateTime = dateTime,
+            showKeyboardShortcutHint = showDateKeyboardShortcutHint,
             onPreviousDateRequested = onPreviousDateRequested,
             onNextDateRequested = onNextDateRequested,
             onHourUpdated = onHourUpdated,
@@ -229,21 +508,7 @@ private fun Content(
             modifier = Modifier
                 .padding(top = 32.dp)
                 .fillMaxWidth()
-                .focusRequester(focusRequester = textFieldFocusRequester)
-                .onKeyEvent {
-                    when {
-                        // Tab -> Focus next
-                        it.key == Key.T &&
-                                it.type == KeyEventType.KeyUp &&
-                                it.isMetaPressed -> {
-                            focusManager.moveFocus(FocusDirection.Next)
-                        }
-
-                        else -> {
-                            false
-                        }
-                    }
-                },
+                .focusRequester(focusRequester = textFieldFocusRequester),
             decorationBox = { innerTextField ->
                 Box(
                     modifier = Modifier
@@ -270,6 +535,7 @@ private fun Content(
                 tags = tags,
                 selectedTag = selectedTag,
                 onTagClicked = onTagClicked,
+                showKeyboardShortcutHint = showTagsKeyboardShortcutHint,
                 modifier = Modifier.onKeyEvent {
                     when {
                         // Shift + Tab -> Focus up
@@ -312,15 +578,9 @@ private fun Content(
         if (templates.isNotEmpty()) {
             Templates(
                 templates = templates,
+                showKeyboardShortcutHint = showTemplatesKeyboardShortcutHint,
                 onTemplateClicked = {
-                    val newText = if (it.replacesExistingValues) {
-                        onTagClicked(it.tag)
-                        it.text
-                    } else {
-                        text + it.text
-                    }
-                    onTextUpdated(newText)
-                    selection = TextRange(newText.length)
+                    onTemplateClicked(it)
                     textFieldFocusRequester.requestFocus()
                 },
                 modifier = Modifier.onKeyEvent {
@@ -386,6 +646,7 @@ private fun Content(
 @Composable
 private fun DateTimeEntry(
     dateTime: LocalDateTime,
+    showKeyboardShortcutHint: Boolean,
     onPreviousDateRequested: () -> Unit,
     onNextDateRequested: () -> Unit,
     onHourUpdated: (String) -> Unit,
@@ -403,30 +664,44 @@ private fun DateTimeEntry(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            OutlinedIconButton(
-                onClick = onPreviousDateRequested,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
-                    contentDescription = stringResource(Res.string.previous_day)
-                )
+            Box {
+                OutlinedIconButton(
+                    onClick = onPreviousDateRequested,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
+                        contentDescription = stringResource(Res.string.previous_day)
+                    )
+                }
+                if (showKeyboardShortcutHint) {
+                    Badge(modifier = Modifier.align(Alignment.TopEnd)) {
+                        Text("J")
+                    }
+                }
             }
             Text(getDay(toFormat = dateTime.date))
-            OutlinedIconButton(
-                onClick = onNextDateRequested,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowRight,
-                    contentDescription = stringResource(Res.string.next_day)
-                )
+            Box {
+                OutlinedIconButton(
+                    onClick = onNextDateRequested,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowRight,
+                        contentDescription = stringResource(Res.string.next_day)
+                    )
+                }
+                if (showKeyboardShortcutHint) {
+                    Badge(modifier = Modifier.align(Alignment.TopEnd)) {
+                        Text("K")
+                    }
+                }
             }
         }
         /* Hiding because it doesn't get frequent use. Might remove it in the future.
@@ -493,6 +768,7 @@ private fun NumberTextField(
 private fun Tags(
     tags: List<Tag>,
     selectedTag: String?,
+    showKeyboardShortcutHint: Boolean,
     onTagClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -502,11 +778,26 @@ private fun Tags(
             style = MaterialTheme.typography.bodySmall,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            tags.forEach {
-                FilterChip(
-                    selected = it.value == selectedTag,
-                    onClick = { onTagClicked(it.value) },
-                    label = { Text(text = it.value) })
+            tags.forEachIndexed { index, tag ->
+                Box {
+                    FilterChip(
+                        selected = tag.value == selectedTag,
+                        onClick = { onTagClicked(tag.value) },
+                        label = { Text(text = tag.value) })
+
+                    val hint = if (index == 9) {
+                        "0"
+                    } else if (index < 9) {
+                        (index + 1).toString()
+                    } else {
+                        null
+                    }
+                    if (showKeyboardShortcutHint && hint != null) {
+                        Badge(modifier = Modifier.align(Alignment.TopEnd)) {
+                            Text(hint)
+                        }
+                    }
+                }
             }
         }
     }
@@ -517,6 +808,7 @@ private fun Tags(
 private fun Templates(
     templates: List<JournalEntryTemplate>,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
+    showKeyboardShortcutHint: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -525,13 +817,28 @@ private fun Templates(
             style = MaterialTheme.typography.bodySmall,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            templates.forEach {
-                FilterChip(
-                    selected = false,
-                    onClick = { onTemplateClicked(it) },
-                    label = {
-                        Text(text = it.displayText)
-                    })
+            templates.forEachIndexed { index, template ->
+                Box {
+                    FilterChip(
+                        selected = false,
+                        onClick = { onTemplateClicked(template) },
+                        label = {
+                            Text(text = template.displayText)
+                        })
+
+                    val hint = if (index == 9) {
+                        "0"
+                    } else if (index < 9) {
+                        (index + 1).toString()
+                    } else {
+                        null
+                    }
+                    if (showKeyboardShortcutHint && hint != null) {
+                        Badge(modifier = Modifier.align(Alignment.TopEnd)) {
+                            Text(hint)
+                        }
+                    }
+                }
             }
         }
     }
