@@ -281,6 +281,66 @@ fun AddEditEntryDialog(
                     true
                 }
 
+                it.key == Key.Y &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 10
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.U &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 11
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.I &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 12
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.O &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 13
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
+                it.key == Key.P &&
+                        it.type == KeyEventType.KeyUp &&
+                        it.isAltPressed.not() &&
+                        it.isMetaPressed -> {
+                    val index = 14
+                    val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                    if (tag != null) {
+                        onTagClicked(tag.value)
+                    }
+                    true
+                }
+
                 it.key == Key.One &&
                         it.type == KeyEventType.KeyUp &&
                         it.isAltPressed &&
@@ -772,6 +832,7 @@ private fun Tags(
     onTagClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val additionalKeys = listOf("Y", "U", "I", "O", "P")
     Column(modifier = modifier) {
         Text(
             text = stringResource(Res.string.tags),
@@ -789,6 +850,8 @@ private fun Tags(
                         "0"
                     } else if (index < 9) {
                         (index + 1).toString()
+                    } else if (index <= 14) {
+                        additionalKeys[index - 10]
                     } else {
                         null
                     }
