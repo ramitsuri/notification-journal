@@ -3,9 +3,9 @@ package com.ramitsuri.notificationjournal.core.model.entry
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -50,12 +50,5 @@ data class JournalEntry(
     @SerialName("reconciled")
     val reconciled: Boolean = false,
 ) {
-    fun formattedTime(am: String, pm: String): String =
-        formatForDisplay(
-            toFormat = entryTime,
-            timeZone = timeZone,
-            amString = am,
-            pmString = pm,
-        )
-
+    fun localDateTime() = entryTime.toLocalDateTime(timeZone)
 }
