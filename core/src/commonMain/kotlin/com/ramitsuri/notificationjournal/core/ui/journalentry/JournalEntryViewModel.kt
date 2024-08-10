@@ -114,6 +114,17 @@ class JournalEntryViewModel(
         setDate(journalEntry, newDateTime)
     }
 
+    // Move it to bottom of the list of entries that are ordered by ascending of display time
+    fun moveToBottom(journalEntry: JournalEntry, tagGroup: TagGroup) {
+        val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
+        if (indexOfEntry == -1 || indexOfEntry == tagGroup.entries.lastIndex) {
+            return
+        }
+        val lastEntry = tagGroup.entries.last()
+        val newDateTime = lastEntry.entryTime.plus(1.milliseconds)
+        setDate(journalEntry, newDateTime)
+    }
+
     // Move it up in the list of entries that are ordered by ascending of display time
     fun moveUp(journalEntry: JournalEntry, tagGroup: TagGroup) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
@@ -122,6 +133,17 @@ class JournalEntryViewModel(
         }
         val previousEntry = tagGroup.entries[indexOfEntry - 1]
         val newDateTime = previousEntry.entryTime.minus(1.milliseconds)
+        setDate(journalEntry, newDateTime)
+    }
+
+    // Move it to top of the list of entries that are ordered by ascending of display time
+    fun moveToTop(journalEntry: JournalEntry, tagGroup: TagGroup) {
+        val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
+        if (indexOfEntry == -1 || indexOfEntry == 0) {
+            return
+        }
+        val firstEntry = tagGroup.entries.first()
+        val newDateTime = firstEntry.entryTime.minus(1.milliseconds)
         setDate(journalEntry, newDateTime)
     }
 

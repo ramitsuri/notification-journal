@@ -31,6 +31,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardTab
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -43,6 +44,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
@@ -72,6 +74,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -126,8 +129,6 @@ import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.force_upload
 import notificationjournal.core.generated.resources.menu_content_description
 import notificationjournal.core.generated.resources.more
-import notificationjournal.core.generated.resources.move_down
-import notificationjournal.core.generated.resources.move_up
 import notificationjournal.core.generated.resources.next_day
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
@@ -154,7 +155,9 @@ fun JournalEntryScreen(
     onDuplicateRequested: (JournalEntry) -> Unit,
     onForceUploadRequested: (JournalEntry) -> Unit,
     onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
+    onMoveToTopRequested: (JournalEntry, TagGroup) -> Unit,
     onMoveDownRequested: (JournalEntry, TagGroup) -> Unit,
+    onMoveToBottomRequested: (JournalEntry, TagGroup) -> Unit,
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
@@ -324,7 +327,9 @@ fun JournalEntryScreen(
                         onMoveToNextDayRequested = onMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
                         onMoveUpRequested = onMoveUpRequested,
+                        onMoveToTopRequested = onMoveToTopRequested,
                         onMoveDownRequested = onMoveDownRequested,
+                        onMoveToBottomRequested = onMoveToBottomRequested,
                         onEditRequested = { item ->
                             onEditRequested(item.id)
                         },
@@ -403,7 +408,9 @@ private fun List(
     onTagGroupReconcileRequested: (TagGroup) -> Unit,
     onTagGroupForceUploadRequested: (TagGroup) -> Unit,
     onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
+    onMoveToTopRequested: (JournalEntry, TagGroup) -> Unit,
     onMoveDownRequested: (JournalEntry, TagGroup) -> Unit,
+    onMoveToBottomRequested: (JournalEntry, TagGroup) -> Unit,
     onEditRequested: (JournalEntry) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onMoveToNextDayRequested: (JournalEntry) -> Unit,
@@ -474,8 +481,14 @@ private fun List(
                         onMoveUpRequested = {
                             onMoveUpRequested(entry, tagGroup)
                         },
+                        onMoveToTopRequested = {
+                            onMoveToTopRequested(entry, tagGroup)
+                        },
                         onMoveDownRequested = {
                             onMoveDownRequested(entry, tagGroup)
+                        },
+                        onMoveToBottomRequested = {
+                            onMoveToBottomRequested(entry, tagGroup)
                         },
                         tags = tags,
                         selectedTag = entry.tag,
@@ -580,7 +593,9 @@ private fun ListItem(
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
     onMoveUpRequested: () -> Unit,
+    onMoveToTopRequested: () -> Unit,
     onMoveDownRequested: () -> Unit,
+    onMoveToBottomRequested: () -> Unit,
     tags: List<Tag>,
     selectedTag: String?,
     onTagClicked: (String) -> Unit,
@@ -634,7 +649,9 @@ private fun ListItem(
         onEditRequested = onEditRequested,
         onDeleteRequested = onDeleteRequested,
         onMoveUpRequested = onMoveUpRequested,
+        onMoveToTopRequested = onMoveToTopRequested,
         onMoveDownRequested = onMoveDownRequested,
+        onMoveToBottomRequested = onMoveToBottomRequested,
         onMoveToNextDayRequested = onMoveToNextDayRequested,
         onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
         onTagClicked = { tag -> onTagClicked(tag) },
@@ -727,7 +744,9 @@ private fun DetailsDialog(
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
     onMoveUpRequested: () -> Unit,
+    onMoveToTopRequested: () -> Unit,
     onMoveDownRequested: () -> Unit,
+    onMoveToBottomRequested: () -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
     onTagClicked: (String) -> Unit,
@@ -778,8 +797,16 @@ private fun DetailsDialog(
                             onMoveDownRequested()
                             onDismiss()
                         },
+                        onMoveToBottomRequested = {
+                            onMoveToBottomRequested()
+                            onDismiss()
+                        },
                         onMoveUpRequested = {
                             onMoveUpRequested()
+                            onDismiss()
+                        },
+                        onMoveToTopRequested = {
+                            onMoveToTopRequested()
                             onDismiss()
                         }
                     )
@@ -821,21 +848,33 @@ private fun TimeModifiers(
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
     onMoveUpRequested: () -> Unit,
+    onMoveToTopRequested: () -> Unit,
     onMoveDownRequested: () -> Unit,
+    onMoveToBottomRequested: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
             TimeModifierActionButton(
                 modifier = Modifier.weight(1f),
+                icon = Icons.AutoMirrored.Filled.KeyboardTab,
+                rotateDegrees = 90F,
+                onClick = onMoveToBottomRequested,
+            )
+            TimeModifierActionButton(
+                modifier = Modifier.weight(1f),
                 icon = Icons.Filled.ArrowDownward,
-                text = stringResource(Res.string.move_down),
                 onClick = onMoveDownRequested,
             )
             TimeModifierActionButton(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Filled.ArrowUpward,
-                text = stringResource(Res.string.move_up),
                 onClick = onMoveUpRequested,
+            )
+            TimeModifierActionButton(
+                modifier = Modifier.weight(1f),
+                icon = Icons.AutoMirrored.Filled.KeyboardTab,
+                rotateDegrees = 270F,
+                onClick = onMoveToTopRequested,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -859,7 +898,8 @@ private fun TimeModifiers(
 @Composable
 private fun TimeModifierActionButton(
     icon: ImageVector,
-    text: String,
+    text: String? = null,
+    rotateDegrees: Float? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -873,11 +913,12 @@ private fun TimeModifierActionButton(
         Icon(
             modifier = Modifier
                 .size(24.dp)
-                .padding(4.dp),
+                .padding(4.dp)
+                .rotate(rotateDegrees ?: 0F),
             imageVector = icon,
             contentDescription = text
         )
-        Text(text)
+        text?.let { Text(it) }
     }
 }
 
@@ -1074,6 +1115,8 @@ private fun ListItemPreview() {
             onForceUploadRequested = { },
             onDuplicateRequested = { },
             onConflictResolved = { },
+            onMoveToTopRequested = { },
+            onMoveToBottomRequested = { },
         )
     }
 }
