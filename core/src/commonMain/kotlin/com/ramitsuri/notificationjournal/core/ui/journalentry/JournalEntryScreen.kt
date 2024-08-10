@@ -31,20 +31,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowLeft
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material.icons.automirrored.filled.KeyboardTab
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
@@ -95,6 +94,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -111,11 +111,11 @@ import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.topBorder
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.alert
-import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.conflict_from_other_device
 import notificationjournal.core.generated.resources.conflict_this_device
@@ -125,14 +125,12 @@ import notificationjournal.core.generated.resources.copy_reconcile
 import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.duplicate
-import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.force_upload
 import notificationjournal.core.generated.resources.menu_content_description
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.next_day
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
-import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.reconcile
 import notificationjournal.core.generated.resources.settings
@@ -639,12 +637,10 @@ private fun ListItem(
 
     DetailsDialog(
         showDetails = showDetails,
+        text = item.text,
         tags = tags,
         selectedTag = selectedTag,
-        time = item.formattedTime(
-            am = stringResource(Res.string.am),
-            pm = stringResource(Res.string.pm)
-        ),
+        time = item.localDateTime(),
         onCopyRequested = onCopyRequested,
         onEditRequested = onEditRequested,
         onDeleteRequested = onDeleteRequested,
@@ -737,9 +733,10 @@ private fun ConflictResolutionDialog(
 @Composable
 private fun DetailsDialog(
     showDetails: Boolean,
+    text: String,
     tags: List<Tag>,
     selectedTag: String?,
-    time: String,
+    time: LocalDateTime,
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
@@ -768,7 +765,52 @@ private fun DetailsDialog(
                         .fillMaxWidth(0.9f)
                         .padding(16.dp)
                 ) {
-                    Text(time)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        OutlinedIconButton(
+                            onClick = onMoveToPreviousDayRequested,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
+                                contentDescription = stringResource(Res.string.previous_day)
+                            )
+                        }
+                        Text(getDay(toFormat = time.date))
+                        OutlinedIconButton(
+                            onClick = onMoveToNextDayRequested,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowRight,
+                                contentDescription = stringResource(Res.string.next_day)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onEditRequested),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         tags.forEach {
@@ -782,17 +824,7 @@ private fun DetailsDialog(
                         }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground)
-                    Spacer(modifier = Modifier.height(24.dp))
                     TimeModifiers(
-                        onMoveToNextDayRequested = {
-                            onMoveToNextDayRequested()
-                            onDismiss()
-                        },
-                        onMoveToPreviousDayRequested = {
-                            onMoveToPreviousDayRequested()
-                            onDismiss()
-                        },
                         onMoveDownRequested = {
                             onMoveDownRequested()
                             onDismiss()
@@ -811,22 +843,15 @@ private fun DetailsDialog(
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    FirstButtonRow(
+                    ButtonRow(
                         onCopyRequested = {
                             onCopyRequested()
-                            onDismiss()
-                        },
-                        onEditRequested = {
-                            onEditRequested()
                             onDismiss()
                         },
                         onDeleteRequested = {
                             onDeleteRequested()
                             onDismiss()
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SecondButtonRow(
+                        },
                         onDuplicateRequested = {
                             onDuplicateRequested()
                             onDismiss()
@@ -845,8 +870,6 @@ private fun DetailsDialog(
 @Composable
 private fun TimeModifiers(
     modifier: Modifier = Modifier,
-    onMoveToNextDayRequested: () -> Unit,
-    onMoveToPreviousDayRequested: () -> Unit,
     onMoveUpRequested: () -> Unit,
     onMoveToTopRequested: () -> Unit,
     onMoveDownRequested: () -> Unit,
@@ -854,51 +877,36 @@ private fun TimeModifiers(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            TimeModifierActionButton(
+            Button(
                 modifier = Modifier.weight(1f),
                 icon = Icons.AutoMirrored.Filled.KeyboardTab,
                 rotateDegrees = 90F,
                 onClick = onMoveToBottomRequested,
             )
-            TimeModifierActionButton(
+            Button(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Filled.ArrowDownward,
                 onClick = onMoveDownRequested,
             )
-            TimeModifierActionButton(
+            Button(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Filled.ArrowUpward,
                 onClick = onMoveUpRequested,
             )
-            TimeModifierActionButton(
+            Button(
                 modifier = Modifier.weight(1f),
                 icon = Icons.AutoMirrored.Filled.KeyboardTab,
                 rotateDegrees = 270F,
                 onClick = onMoveToTopRequested,
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth()) {
-            TimeModifierActionButton(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Filled.CalendarMonth,
-                text = stringResource(Res.string.previous_day),
-                onClick = onMoveToPreviousDayRequested,
-            )
-            TimeModifierActionButton(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Filled.CalendarMonth,
-                text = stringResource(Res.string.next_day),
-                onClick = onMoveToNextDayRequested,
-            )
-        }
     }
 }
 
 @Composable
-private fun TimeModifierActionButton(
+private fun Button(
     icon: ImageVector,
-    text: String? = null,
+    contentDescription: String? = null,
     rotateDegrees: Float? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -916,82 +924,46 @@ private fun TimeModifierActionButton(
                 .padding(4.dp)
                 .rotate(rotateDegrees ?: 0F),
             imageVector = icon,
-            contentDescription = text
+            contentDescription = contentDescription,
         )
-        text?.let { Text(it) }
     }
 }
 
 @Composable
-private fun FirstButtonRow(
+private fun ButtonRow(
     onCopyRequested: () -> Unit,
-    onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
+    onDuplicateRequested: () -> Unit,
+    onForceUploadRequested: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        ActionButton(
+        Button(
             icon = Icons.Filled.ContentCopy,
             contentDescription = stringResource(Res.string.copy),
             onClick = onCopyRequested,
             modifier = Modifier
                 .weight(1f)
         )
-        ActionButton(
-            icon = Icons.Filled.Edit,
-            contentDescription = stringResource(Res.string.edit),
-            onClick = onEditRequested,
-            modifier = Modifier
-                .weight(1f)
-        )
-        ActionButton(
+        Button(
             icon = Icons.Filled.Delete,
             contentDescription = stringResource(Res.string.delete),
             onClick = onDeleteRequested,
             modifier = Modifier
                 .weight(1f)
         )
-    }
-}
-
-@Composable
-private fun SecondButtonRow(
-    onDuplicateRequested: () -> Unit,
-    onForceUploadRequested: () -> Unit,
-) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        ActionButton(
+        Button(
             icon = Icons.Filled.CopyAll,
             contentDescription = stringResource(Res.string.duplicate),
             onClick = onDuplicateRequested,
             modifier = Modifier
                 .weight(1f)
         )
-        ActionButton(
+        Button(
             icon = Icons.Filled.Sync,
             contentDescription = stringResource(Res.string.force_upload),
             onClick = onForceUploadRequested,
             modifier = Modifier
                 .weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun ActionButton(
-    icon: ImageVector,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    OutlinedIconButton(
-        onClick = onClick,
-        modifier = modifier
-            .size(48.dp)
-            .padding(4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription
         )
     }
 }
