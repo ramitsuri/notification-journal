@@ -751,6 +751,14 @@ private fun DetailsDialog(
     onForceUploadRequested: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // The view needs to be focussed for it to receive keyboard events
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(showDetails, focusRequester) {
+        if (showDetails) {
+            focusRequester.requestFocus()
+        }
+    }
+
     if (showDetails) {
         Dialog(
             onDismissRequest = onDismiss,
@@ -764,6 +772,16 @@ private fun DetailsDialog(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .padding(16.dp)
+                        .focusRequester(focusRequester)
+                        .onKeyEvent {
+                            if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
+                                onDismiss()
+                                onEditRequested()
+                                true
+                            } else {
+                                false
+                            }
+                        }
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -800,7 +818,11 @@ private fun DetailsDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = onEditRequested),
+                            .clickable(onClick = {
+                                onDismiss()
+                                onEditRequested()
+                            })
+                            .padding(vertical = 16.dp, horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
