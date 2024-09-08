@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -732,7 +731,7 @@ private fun ConflictResolutionDialog(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DetailsDialog(
     showDetails: Boolean,
@@ -817,7 +816,11 @@ private fun DetailsDialog(
                             } else {
                                 getDay(toFormat = time.date)
                             },
-                            modifier = Modifier.onClick { showTime = !showTime }
+                            modifier = Modifier
+                                .clickable {
+                                    showTime = !showTime
+                                }
+                                .padding(8.dp),
                         )
                         OutlinedIconButton(
                             onClick = onMoveToNextDayRequested,
