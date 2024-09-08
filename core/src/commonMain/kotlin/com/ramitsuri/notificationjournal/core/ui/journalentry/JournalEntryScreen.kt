@@ -110,6 +110,8 @@ import com.ramitsuri.notificationjournal.core.ui.bottomBorder
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.topBorder
 import com.ramitsuri.notificationjournal.core.utils.getDay
+import com.ramitsuri.notificationjournal.core.utils.getTime
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -759,6 +761,14 @@ private fun DetailsDialog(
         }
     }
 
+    var showTime by remember { mutableStateOf(false) }
+    LaunchedEffect(showTime) {
+        if (showTime) {
+            delay(2000)
+            showTime = false
+        }
+    }
+
     if (showDetails) {
         Dialog(
             onDismissRequest = onDismiss,
@@ -800,7 +810,18 @@ private fun DetailsDialog(
                                 contentDescription = stringResource(Res.string.previous_day)
                             )
                         }
-                        Text(getDay(toFormat = time.date))
+                        Text(
+                            if (showTime) {
+                                getTime(toFormat = time.time)
+                            } else {
+                                getDay(toFormat = time.date)
+                            },
+                            modifier = Modifier
+                                .clickable {
+                                    showTime = !showTime
+                                }
+                                .padding(8.dp),
+                        )
                         OutlinedIconButton(
                             onClick = onMoveToNextDayRequested,
                             modifier = Modifier
