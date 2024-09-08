@@ -5,6 +5,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
 import kotlinx.datetime.format
@@ -15,8 +16,10 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import notificationjournal.core.generated.resources.Res
+import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.day_of_week_names
 import notificationjournal.core.generated.resources.month_names
+import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.today
 import notificationjournal.core.generated.resources.tomorrow
 import notificationjournal.core.generated.resources.yesterday
@@ -78,6 +81,21 @@ fun getDay(
                 .format(format)
         }
     }
+}
+
+@Composable
+fun getTime(
+    toFormat: LocalTime,
+    amString: String = stringResource(Res.string.am),
+    pmString: String = stringResource(Res.string.pm),
+): String {
+    val format = LocalTime.Format {
+        amPmHour(padding = Padding.NONE)
+        char(':')
+        minute()
+        amPmMarker(am = amString, pm = pmString)
+    }
+    return toFormat.format(format)
 }
 
 fun getLocalDate(

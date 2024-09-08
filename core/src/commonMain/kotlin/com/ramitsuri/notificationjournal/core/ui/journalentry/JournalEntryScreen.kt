@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -110,6 +111,8 @@ import com.ramitsuri.notificationjournal.core.ui.bottomBorder
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.topBorder
 import com.ramitsuri.notificationjournal.core.utils.getDay
+import com.ramitsuri.notificationjournal.core.utils.getTime
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -729,7 +732,7 @@ private fun ConflictResolutionDialog(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun DetailsDialog(
     showDetails: Boolean,
@@ -756,6 +759,14 @@ private fun DetailsDialog(
     LaunchedEffect(showDetails, focusRequester) {
         if (showDetails) {
             focusRequester.requestFocus()
+        }
+    }
+
+    var showTime by remember { mutableStateOf(false) }
+    LaunchedEffect(showTime) {
+        if (showTime) {
+            delay(2000)
+            showTime = false
         }
     }
 
@@ -800,7 +811,14 @@ private fun DetailsDialog(
                                 contentDescription = stringResource(Res.string.previous_day)
                             )
                         }
-                        Text(getDay(toFormat = time.date))
+                        Text(
+                            if (showTime) {
+                                getTime(toFormat = time.time)
+                            } else {
+                                getDay(toFormat = time.date)
+                            },
+                            modifier = Modifier.onClick { showTime = !showTime }
+                        )
                         OutlinedIconButton(
                             onClick = onMoveToNextDayRequested,
                             modifier = Modifier
