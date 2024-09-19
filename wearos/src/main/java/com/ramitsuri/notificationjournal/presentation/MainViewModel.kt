@@ -63,13 +63,17 @@ class MainViewModel(
             templateDao.getAllFlow().collect { templates ->
                 _state.update {
                     // First 4 templates are shown in the tile, so show other templates first
-                    val templatesWithLaterOnesFirst = templates.subList(
-                        fromIndex = 4,
-                        toIndex = templates.size,
-                    ) + templates.subList(
-                        fromIndex = 0,
-                        toIndex = 4,
-                    )
+                    val templatesWithLaterOnesFirst = if (templates.size > 4) {
+                        templates.subList(
+                            fromIndex = 4,
+                            toIndex = templates.size,
+                        ) + templates.subList(
+                            fromIndex = 0,
+                            toIndex = 4,
+                        )
+                    } else {
+                        templates
+                    }
                     it.copy(journalEntryTemplates = templatesWithLaterOnesFirst)
                 }
             }
