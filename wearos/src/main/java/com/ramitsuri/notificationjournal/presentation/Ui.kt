@@ -54,7 +54,6 @@ fun WearApp(
     onTemplateAddRequested: (String) -> Unit,
     onUploadRequested: () -> Unit,
     onTransferRequested: () -> Unit,
-    onLoadThingsRequested: () -> Unit
 ) {
     NotificationJournalTheme {
         val listState = rememberScalingLazyListState()
@@ -89,14 +88,10 @@ fun WearApp(
                         )
                     }
                 }
-                if (viewState.journalEntryTemplates.isEmpty()) {
-                    loadButton(onLoadThingsRequested)
-                } else {
-                    templateItems(
-                        templates = viewState.journalEntryTemplates,
-                        onTemplateAddRequested = onTemplateAddRequested,
-                    )
-                }
+                templateItems(
+                    templates = viewState.journalEntryTemplates,
+                    onTemplateAddRequested = onTemplateAddRequested,
+                )
                 addButton(onAddRequested)
                 // Hiding because upload is not a thing anymore
                 // RequestUploadFromPhoneButton(onUploadRequested)
@@ -246,7 +241,7 @@ private data class TemplateButton(val text: String, val onClick: () -> Unit)
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
-    WearApp(viewState = ViewState(), { }, { }, { }, { }, { })
+    WearApp(viewState = ViewState(), { }, { }, { }, { })
 }
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
@@ -272,6 +267,6 @@ private fun JournalEntriesPresentPreview() {
                 )
             )
         ),
-        { }, { }, { }, { }, { },
+        { }, { }, { }, { },
     )
 }

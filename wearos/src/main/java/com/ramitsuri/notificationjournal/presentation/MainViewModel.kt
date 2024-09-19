@@ -62,7 +62,15 @@ class MainViewModel(
         viewModelScope.launch {
             templateDao.getAllFlow().collect { templates ->
                 _state.update {
-                    it.copy(journalEntryTemplates = templates)
+                    // First 4 templates are shown in the tile, so show other templates first
+                    val templatesWithLaterOnesFirst = templates.subList(
+                        fromIndex = 4,
+                        toIndex = templates.size,
+                    ) + templates.subList(
+                        fromIndex = 0,
+                        toIndex = 4,
+                    )
+                    it.copy(journalEntryTemplates = templatesWithLaterOnesFirst)
                 }
             }
         }
