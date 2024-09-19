@@ -11,6 +11,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.HapticFeedbackConstantsCompat
 import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.R
 
@@ -24,6 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val viewState = viewModel.state.collectAsState().value
+            val view = LocalView.current
             LaunchedEffect(key1 = viewState) {
                 val showToast = viewState.addStatus == AddStatus.SUCCESS_EXIT ||
                         viewState.addStatus == AddStatus.SUCCESS
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                     viewModel.addStatusAcknowledged()
+                    view.performHapticFeedback(HapticFeedbackConstantsCompat.LONG_PRESS)
                 }
                 if (finish) {
                     finish()
@@ -46,7 +50,6 @@ class MainActivity : ComponentActivity() {
                 onTemplateAddRequested = viewModel::addFromTemplate,
                 onTransferRequested = viewModel::transferLocallySaved,
                 onUploadRequested = viewModel::triggerUpload,
-                onLoadThingsRequested = viewModel::loadTemplatesAndEntries,
             )
         }
         // From tile
@@ -73,6 +76,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            SHOW_ADDITIONAL_TEMPLATES -> {
+                viewModel.loadTemplatesAndEntries()
+            }
+
             else -> {
                 // Do nothing
             }
@@ -92,6 +99,7 @@ class MainActivity : ComponentActivity() {
         const val UPLOAD = "UPLOAD"
         const val TEMPLATE = "TEMPLATE"
         const val TEMPLATE_ID = "TEMPLATE_ID"
+        const val SHOW_ADDITIONAL_TEMPLATES = "SHOW_ADDITIONAL_TEMPLATES"
     }
 }
 

@@ -32,10 +32,15 @@ class TileRenderer(context: Context) :
             .setContent(
                 MultiButtonLayout.Builder()
                     .apply {
-                        // This layout can only comfortably show 5 items
-                        state.templates.take(5).forEach {
+                        // This layout can only comfortably show 5 items. Show 4 templates and 1
+                        // button to launch into the app
+                        state.templates.take(4).forEach {
                             addTextButton(it.shortDisplayText, templateAction(it))
                         }
+                        addTextButton(
+                            "\uD83D\uDCF2",
+                            launchActivityAction(MainActivity.SHOW_ADDITIONAL_TEMPLATES)
+                        )
                     }
                     .build()
             )
