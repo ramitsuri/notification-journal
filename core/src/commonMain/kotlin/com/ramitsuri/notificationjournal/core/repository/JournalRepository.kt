@@ -170,6 +170,11 @@ class JournalRepository(
             return null
         }
 
+        // Assume that local entry is older because the other entry now has a tag
+        if (tag == null && withEntry.tag != null) {
+            return null
+        }
+
         return EntryConflict(
             entryId = withEntry.id,
             entryTime = withEntry.entryTime,
