@@ -1,12 +1,6 @@
 package com.ramitsuri.notificationjournal
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -15,7 +9,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.jthemedetecor.OsThemeDetector
 import com.ramitsuri.notificationjournal.core.di.Factory
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
@@ -24,8 +17,6 @@ import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.jetbrains.skiko.SystemTheme
-import org.jetbrains.skiko.currentSystemTheme
 import kotlin.math.roundToInt
 
 fun main() = application {
@@ -43,8 +34,7 @@ fun main() = application {
         title = "Journal",
         state = windowState,
     ) {
-        val darkTheme = rememberTheme()
-        NotificationJournalTheme(darkTheme = darkTheme) {
+        NotificationJournalTheme {
             NavGraph()
         }
         LaunchedEffect(windowState) {
@@ -101,27 +91,4 @@ private fun getDpValue(key: String): Dp? {
     } else {
         ServiceLocator.keyValueStore.getInt(key, 0).dp
     }
-}
-
-@Composable
-private fun rememberTheme(): Boolean {
-    var darkTheme by remember {
-        mutableStateOf(currentSystemTheme == SystemTheme.DARK)
-    }
-
-    DisposableEffect(Unit) {
-        val darkThemeListener: (Boolean) -> Unit = {
-            darkTheme = it
-        }
-
-        val detector = OsThemeDetector.getDetector().apply {
-            registerListener(darkThemeListener)
-        }
-
-        onDispose {
-            detector.removeListener(darkThemeListener)
-        }
-    }
-
-    return darkTheme
 }
