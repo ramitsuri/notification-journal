@@ -1,7 +1,9 @@
 package com.ramitsuri.notificationjournal.core.ui.journalentry
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +53,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -109,10 +110,12 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.bottomBorder
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.topBorder
+import com.ramitsuri.notificationjournal.core.utils.getDateTime
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.core.utils.getTime
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import notificationjournal.core.generated.resources.Res
@@ -139,7 +142,6 @@ import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
-import notificationjournal.core.generated.resources.use
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -690,43 +692,92 @@ private fun ConflictResolutionDialog(
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    Text(
-                        stringResource(Res.string.conflict_this_device),
-                        style = MaterialTheme.typography.bodyLarge
+                    EntryConflictView(
+                        device = stringResource(Res.string.conflict_this_device),
+                        entryTime = entry.entryTime,
+                        timeZone = entry.timeZone,
+                        text = entry.text,
+                        tag = entry.tag,
+                        onClick = {
+                            onDismiss()
+                            onConflictResolved(null)
+                        }
                     )
-                    entry.tag?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall)
-                    }
-                    Text(entry.text, style = MaterialTheme.typography.bodyMedium)
-                    TextButton(onClick = {
-                        onDismiss()
-                        onConflictResolved(null)
-                    }) {
-                        Text(stringResource(Res.string.use))
-                    }
-
-                    HorizontalDivider(modifier = Modifier.fillMaxWidth())
                     conflicts.forEach { conflict ->
-                        Text(
+                        Spacer(modifier = Modifier.height(16.dp))
+                        EntryConflictView(
+                            device =
                             stringResource(
                                 Res.string.conflict_from_other_device,
                                 conflict.senderName
                             ),
-                            style = MaterialTheme.typography.titleSmall
+                            entryTime = if (conflict.entryTime != entry.entryTime) {
+                                conflict.entryTime
+                            } else {
+                                null
+                            },
+                            timeZone = entry.timeZone,
+                            text = if (conflict.text != entry.text) {
+                                conflict.text
+                            } else {
+                                null
+                            },
+                            tag = if (conflict.tag != null && conflict.tag != entry.tag) {
+                                conflict.tag
+                            } else {
+                                null
+                            },
+                            onClick = {
+                                onDismiss()
+                                onConflictResolved(conflict)
+                            }
                         )
-                        conflict.tag?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall)
-                        }
-                        Text(conflict.text, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = {
-                            onDismiss()
-                            onConflictResolved(conflict)
-                        }) {
-                            Text(stringResource(Res.string.use))
-                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EntryConflictView(
+    device: String,
+    entryTime: Instant?,
+    timeZone: TimeZone,
+    text: String?,
+    tag: String?,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .border(
+                BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                RoundedCornerShape(8.dp)
+            )
+            .padding(8.dp),
+    ) {
+        Text(device, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            entryTime?.let {
+                Text(getDateTime(it, timeZone), style = MaterialTheme.typography.bodySmall)
+            }
+            tag?.let {
+                Text(
+                    "\u00B7",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                Text(it, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        if (entryTime != null || tag != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+        text?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
