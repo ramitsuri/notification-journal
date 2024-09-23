@@ -20,6 +20,7 @@ import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.day_of_week_names
 import notificationjournal.core.generated.resources.month_names
 import notificationjournal.core.generated.resources.pm
+import notificationjournal.core.generated.resources.month_names_short
 import notificationjournal.core.generated.resources.today
 import notificationjournal.core.generated.resources.tomorrow
 import notificationjournal.core.generated.resources.yesterday
@@ -33,6 +34,30 @@ fun formatForDisplay(
     pmString: String,
 ): String {
     val format = LocalDateTime.Format {
+        amPmHour(padding = Padding.NONE)
+        char(':')
+        minute()
+        amPmMarker(am = amString, pm = pmString)
+    }
+    return toFormat
+        .toLocalDateTime(timeZone)
+        .format(format)
+}
+
+@Composable
+fun getDateTime(
+    toFormat: Instant,
+    timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    monthNames: List<String> = stringArrayResource(Res.array.month_names_short),
+    amString: String = stringResource(Res.string.am),
+    pmString: String = stringResource(Res.string.pm),
+): String {
+    val format = LocalDateTime.Format {
+        monthName(MonthNames(monthNames))
+        char(' ')
+        dayOfMonth()
+        char(',')
+        char(' ')
         amPmHour(padding = Padding.NONE)
         char(':')
         minute()
