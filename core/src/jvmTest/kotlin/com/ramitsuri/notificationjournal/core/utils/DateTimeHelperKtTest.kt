@@ -14,16 +14,16 @@ class DateTimeHelperKtTest {
     @Test
     fun testFormatForDisplay() {
         toFormat = "2024-07-18T01:00:00"
-        assertFormattedEquals("1:00am")
+        assertFormattedEquals("1am")
 
         toFormat = "2024-07-18T13:00:00"
-        assertFormattedEquals("1:00pm")
+        assertFormattedEquals("1pm")
 
         toFormat = "2024-07-18T23:00:00"
-        assertFormattedEquals("11:00pm")
+        assertFormattedEquals("11pm")
 
         toFormat = "2024-07-18T00:00:00"
-        assertFormattedEquals("12:00am")
+        assertFormattedEquals("12am")
 
         toFormat = "2024-07-18T00:30:00"
         assertFormattedEquals("12:30am")

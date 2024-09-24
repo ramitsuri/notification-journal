@@ -213,6 +213,7 @@ fun NavGraph(
                     navController.navigate(Destination.TEMPLATES.routeWithArgValues())
                 },
                 onToggleShowReconciled = viewModel::toggleShowReconciled,
+                onToggleShowConflictDiffInline = viewModel::toggleShowConflictDiffInline,
             )
         }
 

@@ -36,6 +36,8 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
 
+            implementation(libs.intellijMarkdown)
+            implementation(libs.diffUtils)
             implementation(libs.androidx.navigation.compose)
             implementation(libs.androidx.lifecycle.runtime)
             implementation(libs.androidx.lifecycle.viewmodel.ktx)
