@@ -51,6 +51,7 @@ import notificationjournal.core.generated.resources.password
 import notificationjournal.core.generated.resources.settings_app_version
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
 import notificationjournal.core.generated.resources.settings_data_sharing_title
+import notificationjournal.core.generated.resources.settings_showConflictDiffInline
 import notificationjournal.core.generated.resources.settings_showReconciled
 import notificationjournal.core.generated.resources.settings_sort_order_asc
 import notificationjournal.core.generated.resources.settings_sort_order_desc
@@ -76,6 +77,7 @@ fun SettingsScreen(
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
     onToggleShowReconciled: () -> Unit,
+    onToggleShowConflictDiffInline: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -157,6 +159,13 @@ fun SettingsScreen(
                         title = stringResource(Res.string.settings_showReconciled),
                         value = state.showReconciled,
                         onClick = onToggleShowReconciled,
+                    )
+                }
+                item {
+                    SettingsItemWithToggle(
+                        title = stringResource(Res.string.settings_showConflictDiffInline),
+                        value = state.showConflictDiffInline,
+                        onClick = onToggleShowConflictDiffInline,
                     )
                 }
                 item {

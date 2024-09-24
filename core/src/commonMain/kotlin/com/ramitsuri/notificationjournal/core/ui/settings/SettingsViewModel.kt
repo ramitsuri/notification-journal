@@ -38,6 +38,7 @@ class SettingsViewModel(
                 password = Password(getPassword()),
                 appVersion = getAppVersion(),
                 showReconciled = getShowReconciled(),
+                showConflictDiffInline = getShowConflictDiffInline(),
             )
         )
         state = _state
@@ -96,6 +97,16 @@ class SettingsViewModel(
         }
     }
 
+    fun toggleShowConflictDiffInline() {
+        keyValueStore.putBoolean(
+            Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
+            !getShowConflictDiffInline()
+        )
+        _state.update {
+            it.copy(showConflictDiffInline = getShowConflictDiffInline())
+        }
+    }
+
     fun onErrorAcknowledged() {
         _state.update {
             it.copy(error = null)
@@ -128,6 +139,9 @@ class SettingsViewModel(
     private fun getShowReconciled() =
         keyValueStore.getBoolean(Constants.PREF_KEY_SHOW_RECONCILED, false)
 
+    private fun getShowConflictDiffInline() =
+        keyValueStore.getBoolean(Constants.PREF_SHOW_CONFLICT_DIFF_INLINE, false)
+
     companion object {
         fun factory() = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -156,4 +170,5 @@ data class SettingsViewState(
     val password: Password = Password(""),
     val appVersion: String = "",
     val showReconciled: Boolean = false,
+    val showConflictDiffInline: Boolean = false,
 )

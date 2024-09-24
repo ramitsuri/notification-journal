@@ -1,3 +1,5 @@
+package com.ramitsuri.notificationjournal.core.utils
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue

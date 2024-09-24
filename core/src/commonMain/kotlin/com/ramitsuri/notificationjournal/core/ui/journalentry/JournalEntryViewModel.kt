@@ -237,6 +237,10 @@ class JournalEntryViewModel(
                             tags = tags,
                             notUploadedCount = forUploadCount,
                             entryConflicts = entryConflicts,
+                            showConflictDiffInline = keyValueStore.getBoolean(
+                                Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
+                                false
+                            )
                         )
                     }
                 }
@@ -265,4 +269,5 @@ data class ViewState(
     val loading: Boolean = false,
     val notUploadedCount: Int = 0,
     val entryConflicts: List<EntryConflict> = listOf(),
+    val showConflictDiffInline: Boolean = false,
 )

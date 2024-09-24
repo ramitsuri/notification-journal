@@ -94,6 +94,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -108,10 +109,14 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.bottomBorder
+import com.ramitsuri.notificationjournal.core.ui.markdown.Markdown
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
+import com.ramitsuri.notificationjournal.core.ui.theme.green
+import com.ramitsuri.notificationjournal.core.ui.theme.red
 import com.ramitsuri.notificationjournal.core.ui.topBorder
 import com.ramitsuri.notificationjournal.core.utils.getDateTime
 import com.ramitsuri.notificationjournal.core.utils.getDay
+import com.ramitsuri.notificationjournal.core.utils.getDiffTextAsMarkdown
 import com.ramitsuri.notificationjournal.core.utils.getTime
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
@@ -122,7 +127,6 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.cancel
-import notificationjournal.core.generated.resources.conflict_from_other_device
 import notificationjournal.core.generated.resources.conflict_this_device
 import notificationjournal.core.generated.resources.conflicts
 import notificationjournal.core.generated.resources.copy
@@ -142,6 +146,9 @@ import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
+import org.intellij.markdown.MarkdownElementTypes
+import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.parser.MarkdownParser
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -345,6 +352,7 @@ fun JournalEntryScreen(
                         onForceUploadRequested = onForceUploadRequested,
                         onDuplicateRequested = onDuplicateRequested,
                         onConflictResolved = onConflictResolved,
+                        showConflictDiffInline = state.showConflictDiffInline,
                         modifier = Modifier.alpha(if (showContent) 1f else 0f)
                     )
                 }
@@ -420,6 +428,7 @@ private fun List(
     onForceUploadRequested: (JournalEntry) -> Unit,
     onDuplicateRequested: (JournalEntry) -> Unit,
     onConflictResolved: (JournalEntry, EntryConflict?) -> Unit,
+    showConflictDiffInline: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val strokeWidth: Dp = 1.dp
@@ -500,6 +509,7 @@ private fun List(
                         onDuplicateRequested = { onDuplicateRequested(entry) },
                         onForceUploadRequested = { onForceUploadRequested(entry) },
                         onConflictResolved = { onConflictResolved(entry, it) },
+                        showConflictDiffInline = showConflictDiffInline,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(shape)
@@ -606,6 +616,7 @@ private fun ListItem(
     onDuplicateRequested: () -> Unit,
     onForceUploadRequested: () -> Unit,
     onConflictResolved: (EntryConflict?) -> Unit,
+    showConflictDiffInline: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var showDetails by remember { mutableStateOf(false) }
@@ -665,6 +676,7 @@ private fun ListItem(
         entry = item,
         conflicts = conflicts,
         onConflictResolved = onConflictResolved,
+        showDiffInline = showConflictDiffInline,
         onDismiss = { showConflictResolutionDialog = false },
     )
 }
@@ -675,6 +687,7 @@ private fun ConflictResolutionDialog(
     entry: JournalEntry,
     conflicts: List<EntryConflict>,
     onConflictResolved: (EntryConflict?) -> Unit,
+    showDiffInline: Boolean,
     onDismiss: () -> Unit,
 ) {
     if (showDialog) {
@@ -706,11 +719,7 @@ private fun ConflictResolutionDialog(
                     conflicts.forEach { conflict ->
                         Spacer(modifier = Modifier.height(16.dp))
                         EntryConflictView(
-                            device =
-                            stringResource(
-                                Res.string.conflict_from_other_device,
-                                conflict.senderName
-                            ),
+                            device = conflict.senderName,
                             entryTime = if (conflict.entryTime != entry.entryTime) {
                                 conflict.entryTime
                             } else {
@@ -718,7 +727,13 @@ private fun ConflictResolutionDialog(
                             },
                             timeZone = entry.timeZone,
                             text = if (conflict.text != entry.text) {
-                                conflict.text
+                                if (showDiffInline) {
+                                    remember(conflict.id) {
+                                        getDiffTextAsMarkdown(entry.text, conflict.text)
+                                    }
+                                } else {
+                                    conflict.text
+                                }
                             } else {
                                 null
                             },
@@ -727,6 +742,7 @@ private fun ConflictResolutionDialog(
                             } else {
                                 null
                             },
+                            showDiffInline = showDiffInline,
                             onClick = {
                                 onDismiss()
                                 onConflictResolved(conflict)
@@ -746,6 +762,7 @@ private fun EntryConflictView(
     timeZone: TimeZone,
     text: String?,
     tag: String?,
+    showDiffInline: Boolean = false,
     onClick: () -> Unit,
 ) {
     Column(
@@ -777,7 +794,21 @@ private fun EntryConflictView(
             Spacer(modifier = Modifier.height(4.dp))
         }
         text?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium)
+            if (showDiffInline) {
+                val markdown = remember(text) {
+                    MarkdownParser(CommonMarkFlavourDescriptor())
+                        .parse(MarkdownElementTypes.MARKDOWN_FILE, text, true)
+                }
+                Markdown(
+                    text = text,
+                    markdown = markdown,
+                    style = MaterialTheme.typography.bodyMedium,
+                    boldStyleOverride = SpanStyle(background = MaterialTheme.colorScheme.green),
+                    italicStyleOverride = SpanStyle(background = MaterialTheme.colorScheme.red),
+                )
+            } else {
+                Text(it, style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }
@@ -1183,6 +1214,7 @@ private fun ListItemPreview() {
             onConflictResolved = { },
             onMoveToTopRequested = { },
             onMoveToBottomRequested = { },
+            showConflictDiffInline = false,
         )
     }
 }
