@@ -94,7 +94,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -109,14 +108,13 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.bottomBorder
-import com.ramitsuri.notificationjournal.core.ui.markdown.Markdown
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.theme.green
 import com.ramitsuri.notificationjournal.core.ui.theme.red
 import com.ramitsuri.notificationjournal.core.ui.topBorder
 import com.ramitsuri.notificationjournal.core.utils.getDateTime
 import com.ramitsuri.notificationjournal.core.utils.getDay
-import com.ramitsuri.notificationjournal.core.utils.getDiffTextAsMarkdown
+import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
 import com.ramitsuri.notificationjournal.core.utils.getTime
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
@@ -146,9 +144,6 @@ import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
-import org.intellij.markdown.MarkdownElementTypes
-import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
-import org.intellij.markdown.parser.MarkdownParser
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -690,6 +685,8 @@ private fun ConflictResolutionDialog(
     showDiffInline: Boolean,
     onDismiss: () -> Unit,
 ) {
+    val leftColor = MaterialTheme.colorScheme.red
+    val rightColor = MaterialTheme.colorScheme.green
     if (showDialog) {
         Dialog(
             onDismissRequest = onDismiss,
@@ -709,7 +706,7 @@ private fun ConflictResolutionDialog(
                         device = stringResource(Res.string.conflict_this_device),
                         entryTime = entry.entryTime,
                         timeZone = entry.timeZone,
-                        text = entry.text,
+                        text = AnnotatedString(entry.text),
                         tag = entry.tag,
                         onClick = {
                             onDismiss()
@@ -729,10 +726,15 @@ private fun ConflictResolutionDialog(
                             text = if (conflict.text != entry.text) {
                                 if (showDiffInline) {
                                     remember(conflict.id) {
-                                        getDiffTextAsMarkdown(entry.text, conflict.text)
+                                        getDiffAsAnnotatedText(
+                                            entry.text,
+                                            conflict.text,
+                                            leftColor,
+                                            rightColor
+                                        )
                                     }
                                 } else {
-                                    conflict.text
+                                    AnnotatedString(conflict.text)
                                 }
                             } else {
                                 null
@@ -760,7 +762,7 @@ private fun EntryConflictView(
     device: String,
     entryTime: Instant?,
     timeZone: TimeZone,
-    text: String?,
+    text: AnnotatedString?,
     tag: String?,
     showDiffInline: Boolean = false,
     onClick: () -> Unit,
@@ -795,16 +797,9 @@ private fun EntryConflictView(
         }
         text?.let {
             if (showDiffInline) {
-                val markdown = remember(text) {
-                    MarkdownParser(CommonMarkFlavourDescriptor())
-                        .parse(MarkdownElementTypes.MARKDOWN_FILE, text, true)
-                }
-                Markdown(
+                Text(
                     text = text,
-                    markdown = markdown,
                     style = MaterialTheme.typography.bodyMedium,
-                    boldStyleOverride = SpanStyle(background = MaterialTheme.colorScheme.green),
-                    italicStyleOverride = SpanStyle(background = MaterialTheme.colorScheme.red),
                 )
             } else {
                 Text(it, style = MaterialTheme.typography.bodyMedium)
