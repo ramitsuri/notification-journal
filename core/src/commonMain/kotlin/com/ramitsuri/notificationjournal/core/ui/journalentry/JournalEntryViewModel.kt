@@ -252,17 +252,17 @@ class JournalEntryViewModel(
                     } catch (e: Exception) {
                         listOf()
                     }
-                    val selectedDayGroupIndex = dayGroups
-                        .indexOfFirst {
-                            it.date == getLocalDate(clock.now(), zoneId)
-                        }
-                        .takeIf { it >= 0 }
-                        ?: dayGroups.lastIndex
                     _state.update { previousState ->
                         val sorted = when (getSortOrder()) {
                             SortOrder.ASC -> dayGroups.sortedBy { it.date }
                             SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
                         }
+                        val selectedDayGroupIndex = sorted
+                            .indexOfFirst {
+                                it.date == getLocalDate(clock.now(), zoneId)
+                            }
+                            .takeIf { it >= 0 }
+                            ?: sorted.lastIndex
                         previousState.copy(
                             dayGroups = sorted,
                             tags = tags,

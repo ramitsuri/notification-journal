@@ -8,12 +8,12 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
-import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
@@ -82,7 +82,7 @@ fun getDay(
     dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
 ): String {
     val nowLocalDate = now.toLocalDateTime(timeZone).date
-    val daysBetweenNowAndToFormat = nowLocalDate.minus(toFormat).days
+    val daysBetweenNowAndToFormat = toFormat.daysUntil(nowLocalDate)
     return when (daysBetweenNowAndToFormat) {
         0 -> {
             stringResource(Res.string.today)

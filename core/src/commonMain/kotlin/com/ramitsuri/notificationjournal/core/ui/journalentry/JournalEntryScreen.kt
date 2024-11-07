@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,13 +24,13 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -51,8 +50,10 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -64,6 +65,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -91,6 +95,8 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
@@ -153,6 +159,7 @@ import notificationjournal.core.generated.resources.untagged_format
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalEntryScreen(
     state: ViewState,
@@ -298,16 +305,15 @@ fun JournalEntryScreen(
                         .padding(start = 16.dp, end = 16.dp),
                 )
             } else {
-                Spacer(
-                    modifier = Modifier.height(
-                        WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-                    )
+                val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
+                    rememberTopAppBarState()
                 )
 
                 Toolbar(
                     notUploadedCount = state.notUploadedCount,
                     onSyncClicked = onSyncClicked,
-                    onSettingsClicked = onSettingsClicked
+                    onSettingsClicked = onSettingsClicked,
+                    scrollBehavior = scrollBehavior,
                 )
 
                 if (state.dayGroups.isEmpty()) {
@@ -362,7 +368,8 @@ fun JournalEntryScreen(
                         showConflictDiffInline = state.showConflictDiffInline,
                         onShowNextDayClicked = onShowNextDayClicked,
                         onShowPreviousDayClicked = onShowPreviousDayClicked,
-                        modifier = Modifier.fillMaxSize().alpha(if (showContent) 1f else 0f)
+                        scrollConnection = scrollBehavior.nestedScrollConnection,
+                        modifier = Modifier.fillMaxSize().alpha(if (showContent) 1f else 0f),
                     )
                 }
             }
@@ -370,46 +377,57 @@ fun JournalEntryScreen(
     }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Toolbar(
+fun Toolbar(
+    scrollBehavior: TopAppBarScrollBehavior? = null,
     notUploadedCount: Int,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
-                .clickable(onClick = onSyncClicked),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Sync,
-                contentDescription = stringResource(Res.string.settings_upload_title),
-                modifier = Modifier.align(Alignment.Center)
-            )
-            if (notUploadedCount > 0) {
-                Badge(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    contentColor = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.align(Alignment.BottomEnd)
-                ) {
-                    Text("$notUploadedCount")
+    CenterAlignedTopAppBar(
+        colors = TopAppBarDefaults
+            .centerAlignedTopAppBarColors()
+            .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
+        title = { },
+        actions = {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onSyncClicked),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Sync,
+                    contentDescription = stringResource(Res.string.settings_upload_title),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+                if (notUploadedCount > 0) {
+                    Badge(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    ) {
+                        Text("$notUploadedCount", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
-        }
-        IconButton(
-            onClick = onSettingsClicked,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Settings,
-                contentDescription = stringResource(Res.string.settings)
-            )
-        }
-    }
+            IconButton(
+                onClick = onSettingsClicked,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = stringResource(Res.string.settings)
+                )
+            }
+        },
+        scrollBehavior = scrollBehavior,
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -442,6 +460,7 @@ private fun List(
     onShowPreviousDayClicked: () -> Unit,
     showConflictDiffInline: Boolean,
     modifier: Modifier = Modifier,
+    scrollConnection: NestedScrollConnection,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -461,10 +480,15 @@ private fun List(
     }
     HorizontalPager(
         state = pagerState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
     ) { page ->
         val dayGroup = items[page]
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .nestedScroll(scrollConnection)
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+        ) {
             stickyHeader(key = dayGroup.date.toString()) {
                 HeaderItem(
                     headerText = getDay(toFormat = dayGroup.date),
@@ -556,6 +580,9 @@ private fun List(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
+            item {
+                Spacer(modifier = Modifier.height(96.dp))
+            }
         }
     }
 }
@@ -589,14 +616,14 @@ private fun HeaderItem(
         }
         val text = buildAnnotatedString {
             withStyle(
-                MaterialTheme.typography.bodyMedium
+                MaterialTheme.typography.bodyLarge
                     .toSpanStyle()
                     .copy(fontWeight = FontWeight.Bold),
             ) {
                 append(headerText)
             }
             if (untaggedCount > 0) {
-                withStyle(MaterialTheme.typography.bodySmall.toSpanStyle()) {
+                withStyle(MaterialTheme.typography.labelSmall.toSpanStyle()) {
                     append(stringResource(Res.string.untagged_format, untaggedCount))
                 }
             }
