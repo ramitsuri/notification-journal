@@ -129,7 +129,9 @@ fun NavGraph(
                             mapOf(AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG to it.id),
                         )
                     )
-                }
+                },
+                onShowPreviousDayClicked = viewModel::showPreviousDayClicked,
+                onShowNextDayClicked = viewModel::showNextDayClicked,
             )
         }
 

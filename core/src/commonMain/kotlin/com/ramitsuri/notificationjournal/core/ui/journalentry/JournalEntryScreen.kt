@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -68,6 +70,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -94,8 +97,10 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -117,6 +122,7 @@ import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
 import com.ramitsuri.notificationjournal.core.utils.getTime
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
@@ -170,6 +176,8 @@ fun JournalEntryScreen(
     onSettingsClicked: () -> Unit,
     onConflictResolved: (JournalEntry, EntryConflict?) -> Unit,
     onSyncClicked: () -> Unit,
+    onShowNextDayClicked: () -> Unit,
+    onShowPreviousDayClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -276,7 +284,6 @@ fun JournalEntryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
-                .padding(start = 16.dp, end = 16.dp)
                 .windowInsetsPadding(
                     WindowInsets.safeDrawing.only(
                         WindowInsetsSides.Horizontal,
@@ -285,7 +292,11 @@ fun JournalEntryScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (state.loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp),
+                )
             } else {
                 Spacer(
                     modifier = Modifier.height(
@@ -304,7 +315,7 @@ fun JournalEntryScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .navigationBarsPadding()
-                            .padding(bottom = 64.dp),
+                            .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -315,6 +326,7 @@ fun JournalEntryScreen(
                     }
                 } else {
                     List(
+                        selectedDayIndex = state.selectedDayGroupIndex,
                         items = state.dayGroups,
                         conflicts = state.entryConflicts,
                         tags = state.tags,
@@ -348,7 +360,9 @@ fun JournalEntryScreen(
                         onDuplicateRequested = onDuplicateRequested,
                         onConflictResolved = onConflictResolved,
                         showConflictDiffInline = state.showConflictDiffInline,
-                        modifier = Modifier.alpha(if (showContent) 1f else 0f)
+                        onShowNextDayClicked = onShowNextDayClicked,
+                        onShowPreviousDayClicked = onShowPreviousDayClicked,
+                        modifier = Modifier.fillMaxSize().alpha(if (showContent) 1f else 0f)
                     )
                 }
             }
@@ -401,6 +415,7 @@ private fun Toolbar(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun List(
+    selectedDayIndex: Int,
     items: List<DayGroup>,
     conflicts: List<EntryConflict>,
     tags: List<Tag>,
@@ -423,6 +438,8 @@ private fun List(
     onForceUploadRequested: (JournalEntry) -> Unit,
     onDuplicateRequested: (JournalEntry) -> Unit,
     onConflictResolved: (JournalEntry, EntryConflict?) -> Unit,
+    onShowNextDayClicked: () -> Unit,
+    onShowPreviousDayClicked: () -> Unit,
     showConflictDiffInline: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -431,13 +448,29 @@ private fun List(
     val cornerRadius: Dp = 16.dp
     val topShape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
     val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
+    val coroutineScope = rememberCoroutineScope()
 
-    LazyColumn(modifier = modifier) {
-        items.forEach { dayGroup ->
+    val pagerState = rememberPagerState(
+        pageCount = { items.size },
+        initialPage = selectedDayIndex,
+    )
+    LaunchedEffect(selectedDayIndex) {
+        coroutineScope.launch {
+            pagerState.animateScrollToPage(selectedDayIndex)
+        }
+    }
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxSize(),
+    ) { page ->
+        val dayGroup = items[page]
+        LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             stickyHeader(key = dayGroup.date.toString()) {
                 HeaderItem(
                     headerText = getDay(toFormat = dayGroup.date),
                     untaggedCount = dayGroup.untaggedCount,
+                    onShowPreviousDayClicked = onShowPreviousDayClicked,
+                    onShowNextDayClicked = onShowNextDayClicked,
                 )
             }
             dayGroup.tagGroups.forEach { tagGroup ->
@@ -524,31 +557,63 @@ private fun List(
                 }
             }
         }
-        item {
-            Spacer(modifier = Modifier.height(96.dp))
-        }
     }
 }
 
 @Composable
-private fun HeaderItem(headerText: String, untaggedCount: Int) {
+private fun HeaderItem(
+    headerText: String,
+    untaggedCount: Int,
+    onShowPreviousDayClicked: () -> Unit,
+    onShowNextDayClicked: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colorScheme.background)
-            .padding(vertical = 8.dp)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        val text = buildString {
-            append(headerText)
+        OutlinedIconButton(
+            onClick = onShowPreviousDayClicked,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
+                contentDescription = stringResource(Res.string.previous_day)
+            )
+        }
+        val text = buildAnnotatedString {
+            withStyle(
+                MaterialTheme.typography.bodyMedium
+                    .toSpanStyle()
+                    .copy(fontWeight = FontWeight.Bold),
+            ) {
+                append(headerText)
+            }
             if (untaggedCount > 0) {
-                append(stringResource(Res.string.untagged_format, untaggedCount))
+                withStyle(MaterialTheme.typography.bodySmall.toSpanStyle()) {
+                    append(stringResource(Res.string.untagged_format, untaggedCount))
+                }
             }
         }
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        Text(text = text)
+        OutlinedIconButton(
+            onClick = onShowNextDayClicked,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowRight,
+                contentDescription = stringResource(Res.string.previous_day)
+            )
+        }
     }
 }
 

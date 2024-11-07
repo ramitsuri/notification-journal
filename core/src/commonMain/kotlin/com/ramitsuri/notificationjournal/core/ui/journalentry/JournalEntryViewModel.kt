@@ -16,12 +16,14 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.getLocalDate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlin.reflect.KClass
@@ -34,6 +36,7 @@ class JournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
+    private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
     private var collectionJob: Job? = null
@@ -195,6 +198,28 @@ class JournalEntryViewModel(
         }
     }
 
+    fun showNextDayClicked() {
+        _state.update { existing ->
+            val newIndex = if (existing.selectedDayGroupIndex == existing.dayGroups.lastIndex) {
+                0
+            } else {
+                existing.selectedDayGroupIndex + 1
+            }
+            existing.copy(selectedDayGroupIndex = newIndex)
+        }
+    }
+
+    fun showPreviousDayClicked() {
+        _state.update { existing ->
+            val newIndex = if (existing.selectedDayGroupIndex == 0) {
+                existing.dayGroups.lastIndex
+            } else {
+                existing.selectedDayGroupIndex - 1
+            }
+            existing.copy(selectedDayGroupIndex = newIndex)
+        }
+    }
+
     private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
@@ -227,6 +252,12 @@ class JournalEntryViewModel(
                     } catch (e: Exception) {
                         listOf()
                     }
+                    val selectedDayGroupIndex = dayGroups
+                        .indexOfFirst {
+                            it.date == getLocalDate(clock.now(), zoneId)
+                        }
+                        .takeIf { it >= 0 }
+                        ?: dayGroups.lastIndex
                     _state.update { previousState ->
                         val sorted = when (getSortOrder()) {
                             SortOrder.ASC -> dayGroups.sortedBy { it.date }
@@ -240,7 +271,8 @@ class JournalEntryViewModel(
                             showConflictDiffInline = keyValueStore.getBoolean(
                                 Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
                                 false
-                            )
+                            ),
+                            selectedDayGroupIndex = selectedDayGroupIndex,
                         )
                     }
                 }
@@ -270,4 +302,5 @@ data class ViewState(
     val notUploadedCount: Int = 0,
     val entryConflicts: List<EntryConflict> = listOf(),
     val showConflictDiffInline: Boolean = false,
+    val selectedDayGroupIndex: Int = 0,
 )
