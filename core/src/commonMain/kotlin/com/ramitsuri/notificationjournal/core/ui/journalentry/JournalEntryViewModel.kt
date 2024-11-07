@@ -262,7 +262,7 @@ class JournalEntryViewModel(
                                 it.date == getLocalDate(clock.now(), zoneId)
                             }
                             .takeIf { it >= 0 }
-                            ?: dayGroups.lastIndex
+                            ?: sorted.lastIndex
                         previousState.copy(
                             dayGroups = sorted,
                             tags = tags,
