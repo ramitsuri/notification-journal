@@ -226,11 +226,6 @@ class JournalEntryViewModel(
         }
     }
 
-    private fun getSortOrder(): SortOrder {
-        val preferredSortOrderKey = keyValueStore.getInt(Constants.PREF_KEY_SORT_ORDER, 0)
-        return SortOrder.fromKey(preferredSortOrderKey)
-    }
-
     private fun restartCollection() {
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
@@ -253,10 +248,7 @@ class JournalEntryViewModel(
                         listOf()
                     }
                     _state.update { previousState ->
-                        val sorted = when (getSortOrder()) {
-                            SortOrder.ASC -> dayGroups.sortedBy { it.date }
-                            SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
-                        }
+                        val sorted = dayGroups.sortedBy { it.date }
                         val selectedDayGroupIndex = sorted
                             .indexOfFirst {
                                 it.date == getLocalDate(clock.now(), zoneId)
