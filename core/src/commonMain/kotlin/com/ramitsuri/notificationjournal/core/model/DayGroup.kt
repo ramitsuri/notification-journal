@@ -23,16 +23,16 @@ data class DayGroup(
 
 
     fun getConflictsCount(conflicts: List<EntryConflict>): Int {
+        val entries = entries()
         return conflicts
             .distinctBy { it.entryId }
             .count {
-                entriesInSelectedDayGroup.contains(it.entryId)
+                entries.contains(it.entryId)
             }
     }
 
-    private val entriesInSelectedDayGroup
-        get() = tagGroups
-            .map { it.entries }
-            .flatten()
-            .map { it.id }
+    private fun entries() = tagGroups
+        .map { it.entries }
+        .flatten()
+        .map { it.id }
 }

@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.onClick
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -630,7 +629,7 @@ private fun HeaderItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.onClick(onClick = onShowAllDaysClicked),
+            modifier = Modifier.clickable(onClick = onShowAllDaysClicked),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -648,7 +647,6 @@ private fun HeaderItem(
                     )
                 }
                 if (conflictCount > 0) {
-
                     append(", ")
                     append(
                         stringResource(
