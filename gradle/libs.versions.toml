@@ -1,6 +1,6 @@
 [versions]
 
-appVersion = "6.8"
+appVersion = "6.9"
 
 compose-compiler = "1.5.11"
 
