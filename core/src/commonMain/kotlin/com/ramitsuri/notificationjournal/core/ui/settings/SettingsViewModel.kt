@@ -29,7 +29,6 @@ class SettingsViewModel(
         _state = MutableStateFlow(
             SettingsViewState(
                 uploadLoading = false,
-                sortOrder = getSortOrder(),
                 error = null,
                 dataHost = DataHost(getDataHost()),
                 exchangeName = ExchangeName(getExchangeName()),
@@ -80,16 +79,6 @@ class SettingsViewModel(
         }
     }
 
-    fun reverseSortOrder() {
-        val currentSortOrder = getSortOrder()
-        val newSortOrder = if (currentSortOrder == SortOrder.ASC) {
-            SortOrder.DESC
-        } else {
-            SortOrder.ASC
-        }
-        setSortOrder(newSortOrder)
-    }
-
     fun toggleShowReconciled() {
         keyValueStore.putBoolean(Constants.PREF_KEY_SHOW_RECONCILED, !getShowReconciled())
         _state.update {
@@ -111,18 +100,6 @@ class SettingsViewModel(
         _state.update {
             it.copy(error = null)
         }
-    }
-
-    private fun setSortOrder(sortOrder: SortOrder) {
-        keyValueStore.putInt(Constants.PREF_KEY_SORT_ORDER, sortOrder.key)
-        _state.update {
-            it.copy(sortOrder = sortOrder)
-        }
-    }
-
-    private fun getSortOrder(): SortOrder {
-        val preferredSortOrderKey = keyValueStore.getInt(Constants.PREF_KEY_SORT_ORDER, 0)
-        return SortOrder.fromKey(preferredSortOrderKey)
     }
 
     private fun getDeviceName() = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "") ?: ""
@@ -161,7 +138,6 @@ class SettingsViewModel(
 
 data class SettingsViewState(
     val uploadLoading: Boolean,
-    val sortOrder: SortOrder,
     val error: String? = null,
     val dataHost: DataHost = DataHost(""),
     val exchangeName: ExchangeName = ExchangeName(""),

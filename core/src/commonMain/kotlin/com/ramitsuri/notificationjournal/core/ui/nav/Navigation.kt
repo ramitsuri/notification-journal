@@ -207,7 +207,6 @@ fun NavGraph(
                 onBack = { navController.navigateUp() },
                 onUploadClicked = viewModel::upload,
                 onDataSharingPropertiesSet = viewModel::setDataSharingProperties,
-                onSortOrderClicked = viewModel::reverseSortOrder,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
                 onTagsClicked = {
                     navController.navigate(Destination.TAGS.routeWithArgValues())

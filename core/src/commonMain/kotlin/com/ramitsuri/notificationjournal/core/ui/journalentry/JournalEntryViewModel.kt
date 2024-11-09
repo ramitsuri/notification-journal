@@ -284,11 +284,6 @@ class JournalEntryViewModel(
         }
     }
 
-    private fun getSortOrder(): SortOrder {
-        val preferredSortOrderKey = keyValueStore.getInt(Constants.PREF_KEY_SORT_ORDER, 0)
-        return SortOrder.fromKey(preferredSortOrderKey)
-    }
-
     private fun dayGroupIndexToPage(index: Int, totalPages: Int): Int {
         return totalPages
             .div(2)

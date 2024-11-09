@@ -72,7 +72,6 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onUploadClicked: () -> Unit,
     onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName, Username, Password) -> Unit,
-    onSortOrderClicked: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
@@ -175,17 +174,6 @@ fun SettingsScreen(
                         onClick = onUploadClicked,
                         showProgress = state.uploadLoading,
                         modifier = modifier
-                    )
-                }
-                item {
-                    SettingsItem(
-                        title = stringResource(Res.string.settings_sort_order_title),
-                        subtitle = when (state.sortOrder) {
-                            SortOrder.ASC -> stringResource(Res.string.settings_sort_order_asc)
-                            SortOrder.DESC -> stringResource(Res.string.settings_sort_order_desc)
-                        },
-                        onClick = onSortOrderClicked,
-                        showProgress = false
                     )
                 }
                 item {
