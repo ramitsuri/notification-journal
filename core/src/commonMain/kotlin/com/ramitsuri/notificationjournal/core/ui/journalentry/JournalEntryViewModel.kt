@@ -66,10 +66,7 @@ class JournalEntryViewModel(
         } catch (e: Exception) {
             listOf()
         }
-        val sorted = when (getSortOrder()) {
-            SortOrder.ASC -> dayGroups.sortedBy { it.date }
-            SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
-        }
+        val sorted = dayGroups.sortedBy { it.date }
         // Show either today or the biggest date as initially selected
         if (selectedPage == null) {
             _selectedPage.update {
