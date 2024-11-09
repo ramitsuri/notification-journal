@@ -117,6 +117,7 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.bottomBorder
+import com.ramitsuri.notificationjournal.core.ui.fullBorder
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.theme.green
 import com.ramitsuri.notificationjournal.core.ui.theme.red
@@ -494,6 +495,12 @@ private fun List(
             pagerState.animateScrollToPage(selectedPage)
         }
     }
+    HeaderItem(
+        headerText = getDay(toFormat = dayGroup.date),
+        untaggedCount = dayGroup.untaggedCount,
+        conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
+        onShowAllDaysClicked = { onShowHideAllDays(true) },
+    )
     HorizontalPager(
         state = pagerState,
         modifier = modifier.fillMaxSize(),
@@ -504,21 +511,13 @@ private fun List(
             modifier = Modifier
                 .nestedScroll(scrollConnection)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 4.dp),
         ) {
-            stickyHeader(key = dayGroup.date.toString()) {
-                HeaderItem(
-                    headerText = getDay(toFormat = dayGroup.date),
-                    untaggedCount = dayGroup.untaggedCount,
-                    conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
-                    onShowAllDaysClicked = { onShowHideAllDays(true) },
-                )
-            }
             dayGroup.tagGroups.forEach { tagGroup ->
                 val entries = tagGroup.entries
                 var shape: Shape
                 var borderModifier: Modifier
-                item(key = dayGroup.date.toString().plus(tagGroup.tag)) {
+                stickyHeader(key = dayGroup.date.toString().plus(tagGroup.tag)) {
                     SubHeaderItem(
                         tagGroup = tagGroup,
                         onCopyRequested = onTagGroupCopyRequested,
@@ -529,17 +528,26 @@ private fun List(
                         onForceUploadRequested = onTagGroupForceUploadRequested,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(topShape)
                             .background(color = MaterialTheme.colorScheme.background)
-                            .then(Modifier.topBorder(strokeWidth, strokeColor, cornerRadius))
-                            .padding(8.dp)
                     )
                 }
                 items(
                     count = entries.size,
                     key = { index -> entries[index].id }) { index ->
-                    when (index) {
-                        entries.size - 1 -> {
+                    when {
+                        entries.size == 1 -> {
+                            shape = RoundedCornerShape(16.dp)
+                            borderModifier =
+                                Modifier.fullBorder(strokeWidth, strokeColor, cornerRadius)
+                        }
+
+                        index == 0 -> {
+                            shape = topShape
+                            borderModifier =
+                                Modifier.topBorder(strokeWidth, strokeColor, cornerRadius)
+                        }
+
+                        index == entries.lastIndex -> {
                             shape = bottomShape
                             borderModifier =
                                 Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
@@ -548,7 +556,7 @@ private fun List(
                         else -> {
                             shape = RectangleShape
                             borderModifier =
-                                Modifier.sideBorder(strokeWidth, strokeColor, cornerRadius)
+                                Modifier.sideBorder(strokeWidth, strokeColor)
                         }
                     }
                     val entry = entries[index]
@@ -580,6 +588,7 @@ private fun List(
                         onConflictResolved = { onConflictResolved(entry, it) },
                         showConflictDiffInline = showConflictDiffInline,
                         modifier = Modifier
+                            .padding(horizontal = 12.dp)
                             .fillMaxWidth()
                             .clip(shape)
                             .then(borderModifier)
@@ -594,7 +603,7 @@ private fun List(
                     )
                 }
                 item {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
             item {
@@ -612,7 +621,6 @@ private fun List(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HeaderItem(
     headerText: String,
@@ -624,12 +632,15 @@ private fun HeaderItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colorScheme.background)
-            .padding(16.dp),
+            .padding(horizontal = 8.dp)
+            .padding(bottom = 8.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.clickable(onClick = onShowAllDaysClicked),
+            modifier = Modifier
+                .clickable(onClick = onShowAllDaysClicked)
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -678,11 +689,11 @@ private fun SubHeaderItem(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
         var showMenu by remember { mutableStateOf(false) }
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = if (tagGroup.tag == Tag.NO_TAG.value) {
                 stringResource(Res.string.untagged)
@@ -692,7 +703,7 @@ private fun SubHeaderItem(
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.weight(1f))
         SubHeaderItemMenu(
             showMenu = showMenu,
             onCopyRequested = { onCopyRequested(tagGroup) },
@@ -1133,7 +1144,7 @@ private fun ShowAllDaysDialog(
                 ) {
                     items(
                         count = dayGroups.size,
-                        key = { index -> dayGroups[index].date }) { index ->
+                        key = { index -> dayGroups[index].date.toString() }) { index ->
                         val dayGroup = dayGroups[index]
                         Column(
                             modifier = Modifier
@@ -1308,7 +1319,6 @@ private fun SubHeaderItemMenu(
             onClick = onMenuButtonClicked,
             modifier = Modifier
                 .size(48.dp)
-                .padding(4.dp)
         ) {
             Icon(
                 imageVector = Icons.Filled.MoreVert,
