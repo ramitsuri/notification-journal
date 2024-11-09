@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -56,9 +57,9 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
@@ -103,10 +104,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -139,6 +138,7 @@ import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.conflict_this_device
 import notificationjournal.core.generated.resources.conflicts
+import notificationjournal.core.generated.resources.conflicts_format
 import notificationjournal.core.generated.resources.copy
 import notificationjournal.core.generated.resources.copy_reconcile
 import notificationjournal.core.generated.resources.delete
@@ -153,7 +153,6 @@ import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.reconcile
 import notificationjournal.core.generated.resources.settings
-import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
 import org.jetbrains.compose.resources.stringResource
@@ -185,6 +184,7 @@ fun JournalEntryScreen(
     onSyncClicked: () -> Unit,
     onShowNextDayClicked: () -> Unit,
     onShowPreviousDayClicked: () -> Unit,
+    onShowDayGroupClicked: (DayGroup) -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -211,6 +211,8 @@ fun JournalEntryScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
+
+    var showAllDays by remember { mutableStateOf(false) }
 
     if (journalEntryForDelete != null) {
         AlertDialog(
@@ -271,6 +273,26 @@ fun JournalEntryScreen(
                     it.type == KeyEventType.KeyDown
                 ) {
                     focusManager.moveFocus(FocusDirection.Up)
+                } else if ((it.key == Key.J || it.key == Key.DirectionLeft) &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    onShowPreviousDayClicked()
+                    true
+                } else if ((it.key == Key.K || it.key == Key.DirectionRight) &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    onShowNextDayClicked()
+                    true
+                } else if (it.key == Key.D &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    showAllDays = true
+                    true
+                } else if (it.key == Key.S &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    onSyncClicked()
+                    true
                 } else {
                     false
                 }
@@ -298,80 +320,76 @@ fun JournalEntryScreen(
                 ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (state.loading) {
-                LinearProgressIndicator(
+            val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
+                rememberTopAppBarState()
+            )
+
+            Toolbar(
+                notUploadedCount = state.notUploadedCount,
+                onSyncClicked = onSyncClicked,
+                onSettingsClicked = onSettingsClicked,
+                scrollBehavior = scrollBehavior,
+            )
+
+            if (state.dayGroups.isEmpty()) {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp),
-                )
-            } else {
-                val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-                    rememberTopAppBarState()
-                )
-
-                Toolbar(
-                    notUploadedCount = state.notUploadedCount,
-                    onSyncClicked = onSyncClicked,
-                    onSettingsClicked = onSettingsClicked,
-                    scrollBehavior = scrollBehavior,
-                )
-
-                if (state.dayGroups.isEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .navigationBarsPadding()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.no_items),
-                            style = MaterialTheme.typography.displaySmall
-                        )
-                    }
-                } else {
-                    List(
-                        selectedDayIndex = state.selectedDayGroupIndex,
-                        items = state.dayGroups,
-                        conflicts = state.entryConflicts,
-                        tags = state.tags,
-                        onCopyRequested = { item ->
-                            clipboardManager.setText(AnnotatedString(item.text))
-                        },
-                        onTagClicked = onEditTagRequested,
-                        onTagGroupCopyRequested = { tagGroup ->
-                            val text = tagGroup.entries
-                                .joinToString(separator = "\n") { "- ${it.text}" }
-                            clipboardManager.setText(AnnotatedString(text))
-                        },
-                        onTagGroupDeleteRequested = onTagGroupDeleteRequested,
-                        onMoveToNextDayRequested = onMoveToNextDayRequested,
-                        onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
-                        onMoveUpRequested = onMoveUpRequested,
-                        onMoveToTopRequested = onMoveToTopRequested,
-                        onMoveDownRequested = onMoveDownRequested,
-                        onMoveToBottomRequested = onMoveToBottomRequested,
-                        onEditRequested = { item ->
-                            onEditRequested(item.id)
-                        },
-                        onDeleteRequested = { item ->
-                            journalEntryForDelete = item
-                        },
-                        onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
-                        onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
-                        onTagGroupReconcileRequested = onTagGroupReconcileRequested,
-                        onTagGroupForceUploadRequested = onTagGroupForceUploadRequested,
-                        onForceUploadRequested = onForceUploadRequested,
-                        onDuplicateRequested = onDuplicateRequested,
-                        onConflictResolved = onConflictResolved,
-                        showConflictDiffInline = state.showConflictDiffInline,
-                        onShowNextDayClicked = onShowNextDayClicked,
-                        onShowPreviousDayClicked = onShowPreviousDayClicked,
-                        scrollConnection = scrollBehavior.nestedScrollConnection,
-                        modifier = Modifier.fillMaxSize().alpha(if (showContent) 1f else 0f),
+                        .fillMaxSize()
+                        .navigationBarsPadding()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(Res.string.no_items),
+                        style = MaterialTheme.typography.displaySmall
                     )
                 }
+            } else {
+                List(
+                    showAllDays = showAllDays,
+                    dayGroup = state.selectedDayGroup,
+                    numOfPages = state.horizontalPagerNumOfPages,
+                    selectedPage = state.selectedPage,
+                    items = state.dayGroups,
+                    conflicts = state.entryConflicts,
+                    tags = state.tags,
+                    dayGroupConflictCountMap = state.dayGroupConflictCountMap,
+                    onCopyRequested = { item ->
+                        clipboardManager.setText(AnnotatedString(item.text))
+                    },
+                    onTagClicked = onEditTagRequested,
+                    onTagGroupCopyRequested = { tagGroup ->
+                        val text = tagGroup.entries
+                            .joinToString(separator = "\n") { "- ${it.text}" }
+                        clipboardManager.setText(AnnotatedString(text))
+                    },
+                    onTagGroupDeleteRequested = onTagGroupDeleteRequested,
+                    onMoveToNextDayRequested = onMoveToNextDayRequested,
+                    onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
+                    onMoveUpRequested = onMoveUpRequested,
+                    onMoveToTopRequested = onMoveToTopRequested,
+                    onMoveDownRequested = onMoveDownRequested,
+                    onMoveToBottomRequested = onMoveToBottomRequested,
+                    onEditRequested = { item ->
+                        onEditRequested(item.id)
+                    },
+                    onDeleteRequested = { item ->
+                        journalEntryForDelete = item
+                    },
+                    onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
+                    onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
+                    onTagGroupReconcileRequested = onTagGroupReconcileRequested,
+                    onTagGroupForceUploadRequested = onTagGroupForceUploadRequested,
+                    onForceUploadRequested = onForceUploadRequested,
+                    onDuplicateRequested = onDuplicateRequested,
+                    onConflictResolved = onConflictResolved,
+                    showConflictDiffInline = state.showConflictDiffInline,
+                    onShowDayGroupClicked = onShowDayGroupClicked,
+                    onShowHideAllDays = { showAllDays = it },
+                    scrollConnection = scrollBehavior.nestedScrollConnection,
+                    modifier = Modifier.fillMaxSize().alpha(if (showContent) 1f else 0f),
+                )
             }
         }
     }
@@ -399,18 +417,13 @@ fun Toolbar(
                     .clip(CircleShape)
                     .clickable(onClick = onSyncClicked),
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Sync,
-                    contentDescription = stringResource(Res.string.settings_upload_title),
-                    modifier = Modifier.align(Alignment.Center)
-                )
                 if (notUploadedCount > 0) {
                     Badge(
                         containerColor = MaterialTheme.colorScheme.background,
                         contentColor = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.align(Alignment.BottomCenter),
+                        modifier = Modifier.align(Alignment.Center),
                     ) {
-                        Text("$notUploadedCount", style = MaterialTheme.typography.labelSmall)
+                        Text("$notUploadedCount", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -433,10 +446,14 @@ fun Toolbar(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun List(
-    selectedDayIndex: Int,
+    showAllDays: Boolean,
+    dayGroup: DayGroup,
+    numOfPages: Int,
+    selectedPage: Int,
     items: List<DayGroup>,
     conflicts: List<EntryConflict>,
     tags: List<Tag>,
+    dayGroupConflictCountMap: Map<DayGroup, Int>,
     onCopyRequested: (JournalEntry) -> Unit,
     onTagClicked: (JournalEntry, String) -> Unit,
     onTagGroupCopyRequested: (TagGroup) -> Unit,
@@ -456,11 +473,11 @@ private fun List(
     onForceUploadRequested: (JournalEntry) -> Unit,
     onDuplicateRequested: (JournalEntry) -> Unit,
     onConflictResolved: (JournalEntry, EntryConflict?) -> Unit,
-    onShowNextDayClicked: () -> Unit,
-    onShowPreviousDayClicked: () -> Unit,
     showConflictDiffInline: Boolean,
     modifier: Modifier = Modifier,
     scrollConnection: NestedScrollConnection,
+    onShowDayGroupClicked: (DayGroup) -> Unit,
+    onShowHideAllDays: (Boolean) -> Unit,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -470,19 +487,20 @@ private fun List(
     val coroutineScope = rememberCoroutineScope()
 
     val pagerState = rememberPagerState(
-        pageCount = { items.size },
-        initialPage = selectedDayIndex,
+        pageCount = { numOfPages },
+        initialPage = selectedPage,
     )
-    LaunchedEffect(selectedDayIndex) {
+    LaunchedEffect(selectedPage) {
         coroutineScope.launch {
-            pagerState.animateScrollToPage(selectedDayIndex)
+            pagerState.animateScrollToPage(selectedPage)
         }
     }
     HorizontalPager(
         state = pagerState,
         modifier = modifier.fillMaxSize(),
-    ) { page ->
-        val dayGroup = items[page]
+        // It's not playing nice with manual page change. Somehow keeps getting out of sync
+        userScrollEnabled = false,
+    ) {
         LazyColumn(
             modifier = Modifier
                 .nestedScroll(scrollConnection)
@@ -493,8 +511,8 @@ private fun List(
                 HeaderItem(
                     headerText = getDay(toFormat = dayGroup.date),
                     untaggedCount = dayGroup.untaggedCount,
-                    onShowPreviousDayClicked = onShowPreviousDayClicked,
-                    onShowNextDayClicked = onShowNextDayClicked,
+                    conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
+                    onShowAllDaysClicked = { onShowHideAllDays(true) },
                 )
             }
             dayGroup.tagGroups.forEach { tagGroup ->
@@ -585,61 +603,67 @@ private fun List(
             }
         }
     }
+
+    ShowAllDaysDialog(
+        showAllDays = showAllDays,
+        dayGroups = items,
+        dayGroupConflictCountMap = dayGroupConflictCountMap,
+        onDismiss = { onShowHideAllDays(false) },
+        onDayGroupSelected = onShowDayGroupClicked,
+    )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HeaderItem(
     headerText: String,
     untaggedCount: Int,
-    onShowPreviousDayClicked: () -> Unit,
-    onShowNextDayClicked: () -> Unit,
+    conflictCount: Int,
+    onShowAllDaysClicked: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colorScheme.background)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedIconButton(
-            onClick = onShowPreviousDayClicked,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp),
-            shape = RoundedCornerShape(16.dp),
+        Column(
+            modifier = Modifier.onClick(onClick = onShowAllDaysClicked),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
-                contentDescription = stringResource(Res.string.previous_day)
+            Text(
+                text = headerText,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
             )
-        }
-        val text = buildAnnotatedString {
-            withStyle(
-                MaterialTheme.typography.bodyLarge
-                    .toSpanStyle()
-                    .copy(fontWeight = FontWeight.Bold),
-            ) {
-                append(headerText)
-            }
-            if (untaggedCount > 0) {
-                withStyle(MaterialTheme.typography.labelSmall.toSpanStyle()) {
-                    append(stringResource(Res.string.untagged_format, untaggedCount))
+            val text = buildString {
+                if (untaggedCount > 0) {
+                    append(
+                        stringResource(
+                            Res.string.untagged_format,
+                            untaggedCount,
+                        )
+                    )
+                }
+                if (conflictCount > 0) {
+
+                    append(", ")
+                    append(
+                        stringResource(
+                            Res.string.conflicts_format,
+                            conflictCount,
+                        )
+                    )
                 }
             }
-        }
-        Text(text = text)
-        OutlinedIconButton(
-            onClick = onShowNextDayClicked,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowRight,
-                contentDescription = stringResource(Res.string.previous_day)
-            )
+            if (text.isNotEmpty()) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
         }
     }
 }
@@ -1073,6 +1097,94 @@ private fun DetailsDialog(
                             onDismiss()
                         },
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShowAllDaysDialog(
+    showAllDays: Boolean,
+    dayGroups: List<DayGroup>,
+    dayGroupConflictCountMap: Map<DayGroup, Int>,
+    onDismiss: () -> Unit,
+    onDayGroupSelected: (DayGroup) -> Unit,
+) {
+    // The view needs to be focussed for it to receive keyboard events
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(showAllDays, focusRequester) {
+        if (showAllDays) {
+            focusRequester.requestFocus()
+        }
+    }
+    if (showAllDays) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Card {
+                LazyColumn(
+                    modifier = Modifier
+                        .focusRequester(focusRequester)
+                        .fillMaxWidth(0.9f)
+                        .padding(16.dp)
+                ) {
+                    items(
+                        count = dayGroups.size,
+                        key = { index -> dayGroups[index].date }) { index ->
+                        val dayGroup = dayGroups[index]
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    onClick = {
+                                        onDismiss()
+                                        onDayGroupSelected(dayGroup)
+                                    }
+                                )
+                                .padding(8.dp)
+                            ) {
+                                Text(getDay(toFormat = dayGroup.date))
+                                val text = buildString {
+                                    if (dayGroup.untaggedCount > 0) {
+                                        append(
+                                            stringResource(
+                                                Res.string.untagged_format,
+                                                dayGroup.untaggedCount,
+                                            )
+                                        )
+                                    }
+                                    dayGroupConflictCountMap[dayGroup]
+                                        ?.takeIf { it > 0 }
+                                        ?.let {
+                                            append(", ")
+                                            append(
+                                                stringResource(
+                                                    Res.string.conflicts_format,
+                                                    it,
+                                                )
+                                            )
+                                        }
+                                }
+                                if (text.isNotEmpty()) {
+                                    Text(
+                                        text = text,
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                }
+                            }
+                            if (index != dayGroups.lastIndex) {
+                                HorizontalDivider()
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -17,14 +17,16 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.days
@@ -39,23 +41,71 @@ class JournalEntryViewModel(
     private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
-    private var collectionJob: Job? = null
-
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
 
-    private val _state = MutableStateFlow(
-        ViewState(
-            dayGroups = listOf(),
-            tags = listOf(),
-            loading = false,
-        )
-    )
-    val state: StateFlow<ViewState> = _state
+    private val _selectedPage: MutableStateFlow<Int?> = MutableStateFlow(null)
 
-    init {
-        restartCollection()
-    }
+    val state: StateFlow<ViewState> = combine(
+        _selectedPage,
+        repository.getFlow(
+            showReconciled = keyValueStore.getBoolean(
+                Constants.PREF_KEY_SHOW_RECONCILED,
+                false
+            )
+        ),
+        repository.getForUploadCountFlow(),
+        repository.getConflicts(),
+    ) { selectedPage, entries, forUploadCount, entryConflicts ->
+        val tags = tagsDao.getAll()
+        val dayGroups = try {
+            entries.toDayGroups(
+                zoneId = zoneId,
+                tagsForSort = tags,
+            )
+        } catch (e: Exception) {
+            listOf()
+        }
+        val sorted = when (getSortOrder()) {
+            SortOrder.ASC -> dayGroups.sortedBy { it.date }
+            SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
+        }
+        // Show either today or the biggest date as initially selected
+        if (selectedPage == null) {
+            _selectedPage.update {
+                val initialIndex = sorted
+                    .indexOfFirst {
+                        it.date == getLocalDate(clock.now(), zoneId)
+                    }
+                    .takeIf { it >= 0 }
+                    ?: sorted.lastIndex
+
+                // To start somewhere around the middle of all the pages so we don't run
+                // out of scrolling capability on either end
+                dayGroupIndexToPage(
+                    index = initialIndex,
+                    totalPages = sorted.size.times(PAGES_MULTIPLIER),
+                )
+            }
+            ViewState()
+        } else {
+            ViewState(
+                dayGroups = sorted,
+                tags = tags,
+                notUploadedCount = forUploadCount,
+                entryConflicts = entryConflicts,
+                showConflictDiffInline = keyValueStore.getBoolean(
+                    Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
+                    false
+                ),
+                selectedPage = selectedPage,
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = ViewState(),
+    )
 
     fun setReceivedText(text: String?) {
         if (!text.isNullOrEmpty()) {
@@ -198,25 +248,33 @@ class JournalEntryViewModel(
         }
     }
 
-    fun showNextDayClicked() {
-        _state.update { existing ->
-            val newIndex = if (existing.selectedDayGroupIndex == existing.dayGroups.lastIndex) {
-                0
-            } else {
-                existing.selectedDayGroupIndex + 1
+    fun goToNextDay() {
+        _selectedPage.update { existing ->
+            if (existing == null) {
+                return
             }
-            existing.copy(selectedDayGroupIndex = newIndex)
+            existing + 1
         }
     }
 
-    fun showPreviousDayClicked() {
-        _state.update { existing ->
-            val newIndex = if (existing.selectedDayGroupIndex == 0) {
-                existing.dayGroups.lastIndex
-            } else {
-                existing.selectedDayGroupIndex - 1
+    fun goToPreviousDay() {
+        _selectedPage.update { existing ->
+            if (existing == null) {
+                return
             }
-            existing.copy(selectedDayGroupIndex = newIndex)
+            existing - 1
+        }
+    }
+
+    fun showDayGroupClicked(dayGroup: DayGroup) {
+        val existing = state.value
+        val index = existing.dayGroups.indexOf(dayGroup)
+        val page = dayGroupIndexToPage(
+            index = index,
+            totalPages = existing.horizontalPagerNumOfPages,
+        )
+        _selectedPage.update {
+            page
         }
     }
 
@@ -231,52 +289,10 @@ class JournalEntryViewModel(
         return SortOrder.fromKey(preferredSortOrderKey)
     }
 
-    private fun restartCollection() {
-        collectionJob?.cancel()
-        collectionJob = viewModelScope.launch {
-            val showReconciled = keyValueStore.getBoolean(Constants.PREF_KEY_SHOW_RECONCILED, false)
-            combine(
-                repository.getFlow(showReconciled = showReconciled),
-                repository.getForUploadCountFlow(),
-                repository.getConflicts(),
-            ) { entries, forUploadCount, entryConflicts ->
-                Triple(entries, forUploadCount, entryConflicts)
-            }
-                .collect { (entries, forUploadCount, entryConflicts) ->
-                    val tags = tagsDao.getAll()
-                    val dayGroups = try {
-                        entries.toDayGroups(
-                            zoneId = zoneId,
-                            tagsForSort = tags,
-                        )
-                    } catch (e: Exception) {
-                        listOf()
-                    }
-                    _state.update { previousState ->
-                        val sorted = when (getSortOrder()) {
-                            SortOrder.ASC -> dayGroups.sortedBy { it.date }
-                            SortOrder.DESC -> dayGroups.sortedByDescending { it.date }
-                        }
-                        val selectedDayGroupIndex = sorted
-                            .indexOfFirst {
-                                it.date == getLocalDate(clock.now(), zoneId)
-                            }
-                            .takeIf { it >= 0 }
-                            ?: sorted.lastIndex
-                        previousState.copy(
-                            dayGroups = sorted,
-                            tags = tags,
-                            notUploadedCount = forUploadCount,
-                            entryConflicts = entryConflicts,
-                            showConflictDiffInline = keyValueStore.getBoolean(
-                                Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
-                                false
-                            ),
-                            selectedDayGroupIndex = selectedDayGroupIndex,
-                        )
-                    }
-                }
-        }
+    private fun dayGroupIndexToPage(index: Int, totalPages: Int): Int {
+        return totalPages
+            .div(2)
+            .plus(index)
     }
 
     companion object {
@@ -297,10 +313,30 @@ class JournalEntryViewModel(
 
 data class ViewState(
     val dayGroups: List<DayGroup> = listOf(),
-    val tags: List<Tag>,
-    val loading: Boolean = false,
+    val tags: List<Tag> = listOf(),
     val notUploadedCount: Int = 0,
     val entryConflicts: List<EntryConflict> = listOf(),
     val showConflictDiffInline: Boolean = false,
-    val selectedDayGroupIndex: Int = 0,
-)
+    val selectedPage: Int = 0,
+) {
+    // To enable infinite scrolling, will have PAGES_MULTIPLIER times total
+    // number of pages, so that can keep scrolling on either side
+    val horizontalPagerNumOfPages: Int = dayGroups.size.times(PAGES_MULTIPLIER)
+    val selectedDayGroup: DayGroup
+        get() {
+            if (dayGroups.isEmpty()) {
+                return DayGroup(
+                    LocalDate(1970, 1, 1),
+                    listOf(),
+                )
+            }
+            val index = selectedPage % dayGroups.size
+            return dayGroups[index]
+        }
+
+    val dayGroupConflictCountMap
+        get() = dayGroups
+            .associateWith { it.getConflictsCount(entryConflicts) }
+}
+
+private const val PAGES_MULTIPLIER = 10

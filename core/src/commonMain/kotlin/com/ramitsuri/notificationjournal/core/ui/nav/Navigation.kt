@@ -130,8 +130,9 @@ fun NavGraph(
                         )
                     )
                 },
-                onShowPreviousDayClicked = viewModel::showPreviousDayClicked,
-                onShowNextDayClicked = viewModel::showNextDayClicked,
+                onShowPreviousDayClicked = viewModel::goToPreviousDay,
+                onShowNextDayClicked = viewModel::goToNextDay,
+                onShowDayGroupClicked = viewModel::showDayGroupClicked,
             )
         }
 
