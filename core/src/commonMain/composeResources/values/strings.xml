@@ -112,7 +112,8 @@
     <string name="exchange_name">Exchange</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
-    <string name="untagged_format"> (%1$s untagged)</string>
+    <string name="untagged_format">Untagged: %1$s</string>
+    <string name="conflicts_format">Conflicts: %1$s</string>
     <string name="reset_date_time">Reset date time</string>
     <string name="text">Text</string>
     <string name="display_text">Display text</string>
