@@ -24,6 +24,7 @@ import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.today
 import notificationjournal.core.generated.resources.tomorrow
 import notificationjournal.core.generated.resources.yesterday
+import org.jetbrains.compose.resources.getStringArray
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -132,4 +133,22 @@ fun getLocalDate(
     zoneId: TimeZone = TimeZone.currentSystemDefault(),
 ): LocalDate {
     return time.toLocalDateTime(zoneId).date
+}
+
+// Saturday, November 16 2024
+suspend fun dayMonthDateWithYear(
+    toFormat: LocalDate,
+): String {
+    val monthNames = getStringArray(Res.array.month_names)
+    val dayOfWeekNames = getStringArray(Res.array.day_of_week_names)
+    return LocalDate.Format {
+        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
+        char(',')
+        char(' ')
+        monthName(MonthNames(monthNames))
+        char(' ')
+        dayOfMonth()
+        char(' ')
+        year()
+    }.format(toFormat)
 }

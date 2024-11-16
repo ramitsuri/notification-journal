@@ -48,7 +48,11 @@ class JournalRepository(
     }
 
     suspend fun update(journalEntry: JournalEntry) {
-        dao.update(journalEntry.copy(uploaded = false))
+        update(listOf(journalEntry))
+    }
+
+    suspend fun update(journalEntries: List<JournalEntry>) {
+        dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
 
     suspend fun insert(
@@ -87,7 +91,11 @@ class JournalRepository(
     }
 
     suspend fun delete(entry: JournalEntry) {
-        dao.update(entry.copy(deleted = true, uploaded = false))
+        delete(listOf(entry))
+    }
+
+    suspend fun delete(entries: List<JournalEntry>) {
+        update(entries.map { it.copy(deleted = true) })
     }
 
     suspend fun sync() {

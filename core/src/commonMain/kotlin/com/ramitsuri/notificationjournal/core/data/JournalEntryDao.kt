@@ -35,16 +35,13 @@ abstract class JournalEntryDao {
     }
 
     @Transaction
-    open suspend fun update(entry: JournalEntry) {
-        updateInternal(entry)
+    open suspend fun update(entries: List<JournalEntry>) {
+        updateInternal(entries)
     }
 
     @Transaction
     open suspend fun updateUploaded(entries: List<JournalEntry>, uploaded: Boolean) {
-        entries
-            .forEach {
-                update(it.copy(uploaded = uploaded))
-            }
+        update(entries.map { it.copy(uploaded = uploaded) })
     }
 
     @Upsert
@@ -54,5 +51,5 @@ abstract class JournalEntryDao {
     protected abstract suspend fun insertInternal(journalEntry: JournalEntry)
 
     @Update
-    protected abstract suspend fun updateInternal(journalEntry: JournalEntry)
+    protected abstract suspend fun updateInternal(journalEntries: List<JournalEntry>)
 }

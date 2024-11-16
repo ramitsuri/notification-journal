@@ -133,6 +133,11 @@ fun NavGraph(
                 onShowPreviousDayClicked = viewModel::goToPreviousDay,
                 onShowNextDayClicked = viewModel::goToNextDay,
                 onShowDayGroupClicked = viewModel::showDayGroupClicked,
+                onDayGroupReconcileRequested = viewModel::reconcile,
+                onCopyEntryRequested = viewModel::onCopy,
+                onCopyTagGroupRequested = viewModel::onCopy,
+                onCopyDayGroupRequested = viewModel::onCopy,
+                onCopied = viewModel::onContentCopied,
             )
         }
 
