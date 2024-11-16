@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -185,6 +186,11 @@ fun JournalEntryScreen(
     onShowNextDayClicked: () -> Unit,
     onShowPreviousDayClicked: () -> Unit,
     onShowDayGroupClicked: (DayGroup) -> Unit,
+    onDayGroupReconcileRequested: () -> Unit,
+    onCopyEntryRequested: (JournalEntry) -> Unit,
+    onCopyTagGroupRequested: (TagGroup) -> Unit,
+    onCopyDayGroupRequested: () -> Unit,
+    onCopied: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -194,6 +200,13 @@ fun JournalEntryScreen(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(focusRequester) {
         focusRequester.requestFocus()
+    }
+
+    LaunchedEffect(state.contentForCopy) {
+        if (state.contentForCopy.isNotEmpty()) {
+            clipboardManager.setText(AnnotatedString(state.contentForCopy))
+            onCopied()
+        }
     }
 
     var showContent by remember { mutableStateOf(false) }
@@ -355,15 +368,9 @@ fun JournalEntryScreen(
                     conflicts = state.entryConflicts,
                     tags = state.tags,
                     dayGroupConflictCountMap = state.dayGroupConflictCountMap,
-                    onCopyRequested = { item ->
-                        clipboardManager.setText(AnnotatedString(item.text))
-                    },
+                    onCopyRequested = onCopyEntryRequested,
                     onTagClicked = onEditTagRequested,
-                    onTagGroupCopyRequested = { tagGroup ->
-                        val text = tagGroup.entries
-                            .joinToString(separator = "\n") { "- ${it.text}" }
-                        clipboardManager.setText(AnnotatedString(text))
-                    },
+                    onTagGroupCopyRequested = onCopyTagGroupRequested,
                     onTagGroupDeleteRequested = onTagGroupDeleteRequested,
                     onMoveToNextDayRequested = onMoveToNextDayRequested,
                     onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
@@ -388,7 +395,15 @@ fun JournalEntryScreen(
                     onShowDayGroupClicked = onShowDayGroupClicked,
                     onShowHideAllDays = { showAllDays = it },
                     scrollConnection = scrollBehavior.nestedScrollConnection,
-                    modifier = Modifier.fillMaxSize().alpha(if (showContent) 1f else 0f),
+                    onDayGroupCopyRequested = onCopyDayGroupRequested,
+                    onDayGroupReconcileRequested = onDayGroupReconcileRequested,
+                    modifier = Modifier.fillMaxSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}, enabled = !showContent
+                        )
+                        .alpha(if (showContent) 1f else 0f),
                 )
             }
         }
@@ -478,6 +493,8 @@ private fun List(
     scrollConnection: NestedScrollConnection,
     onShowDayGroupClicked: (DayGroup) -> Unit,
     onShowHideAllDays: (Boolean) -> Unit,
+    onDayGroupCopyRequested: () -> Unit,
+    onDayGroupReconcileRequested: () -> Unit,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -499,6 +516,8 @@ private fun List(
         headerText = getDay(toFormat = dayGroup.date),
         untaggedCount = dayGroup.untaggedCount,
         conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
+        onCopyRequested = onDayGroupCopyRequested,
+        onReconcileRequested = onDayGroupReconcileRequested,
         onShowAllDaysClicked = { onShowHideAllDays(true) },
     )
     HorizontalPager(
@@ -626,8 +645,11 @@ private fun HeaderItem(
     headerText: String,
     untaggedCount: Int,
     conflictCount: Int,
+    onCopyRequested: () -> Unit,
+    onReconcileRequested: () -> Unit,
     onShowAllDaysClicked: () -> Unit,
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -658,7 +680,9 @@ private fun HeaderItem(
                     )
                 }
                 if (conflictCount > 0) {
-                    append(", ")
+                    if (isNotEmpty()) {
+                        append(", ")
+                    }
                     append(
                         stringResource(
                             Res.string.conflicts_format,
@@ -673,6 +697,47 @@ private fun HeaderItem(
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        HeaderMenu(
+            showMenu = showMenu,
+            onCopyRequested = onCopyRequested,
+            onMenuButtonClicked = { showMenu = !showMenu },
+            onReconcileRequested = onReconcileRequested,
+        )
+    }
+}
+
+@Composable
+private fun HeaderMenu(
+    showMenu: Boolean,
+    onCopyRequested: () -> Unit,
+    onMenuButtonClicked: () -> Unit,
+    onReconcileRequested: () -> Unit,
+) {
+    Box {
+        IconButton(
+            onClick = onMenuButtonClicked,
+            modifier = Modifier
+                .size(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = stringResource(Res.string.menu_content_description)
+            )
+        }
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = onMenuButtonClicked,
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.copy_reconcile)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onCopyRequested()
+                    onReconcileRequested()
+                }
+            )
         }
     }
 }
@@ -1173,7 +1238,9 @@ private fun ShowAllDaysDialog(
                                     dayGroupConflictCountMap[dayGroup]
                                         ?.takeIf { it > 0 }
                                         ?.let {
-                                            append(", ")
+                                            if (isNotEmpty()) {
+                                                append(", ")
+                                            }
                                             append(
                                                 stringResource(
                                                     Res.string.conflicts_format,

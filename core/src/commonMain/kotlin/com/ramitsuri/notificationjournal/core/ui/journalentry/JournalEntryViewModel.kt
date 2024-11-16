@@ -8,7 +8,6 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
-import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -16,7 +15,9 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,8 +47,11 @@ class JournalEntryViewModel(
 
     private val _selectedPage: MutableStateFlow<Int?> = MutableStateFlow(null)
 
+    private val _contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
+
     val state: StateFlow<ViewState> = combine(
         _selectedPage,
+        _contentForCopy,
         repository.getFlow(
             showReconciled = keyValueStore.getBoolean(
                 Constants.PREF_KEY_SHOW_RECONCILED,
@@ -56,7 +60,7 @@ class JournalEntryViewModel(
         ),
         repository.getForUploadCountFlow(),
         repository.getConflicts(),
-    ) { selectedPage, entries, forUploadCount, entryConflicts ->
+    ) { selectedPage, contentForCopy, entries, forUploadCount, entryConflicts ->
         val tags = tagsDao.getAll()
         val dayGroups = try {
             entries.toDayGroups(
@@ -69,20 +73,22 @@ class JournalEntryViewModel(
         val sorted = dayGroups.sortedBy { it.date }
         // Show either today or the biggest date as initially selected
         if (selectedPage == null) {
-            _selectedPage.update {
-                val initialIndex = sorted
-                    .indexOfFirst {
-                        it.date == getLocalDate(clock.now(), zoneId)
-                    }
-                    .takeIf { it >= 0 }
-                    ?: sorted.lastIndex
+            if (sorted.isNotEmpty()) {
+                _selectedPage.update {
+                    val initialIndex = sorted
+                        .indexOfFirst {
+                            it.date == getLocalDate(clock.now(), zoneId)
+                        }
+                        .takeIf { it >= 0 }
+                        ?: sorted.lastIndex
 
-                // To start somewhere around the middle of all the pages so we don't run
-                // out of scrolling capability on either end
-                dayGroupIndexToPage(
-                    index = initialIndex,
-                    totalPages = sorted.size.times(PAGES_MULTIPLIER),
-                )
+                    // To start somewhere around the middle of all the pages so we don't run
+                    // out of scrolling capability on either end
+                    dayGroupIndexToPage(
+                        index = initialIndex,
+                        totalPages = sorted.size.times(PAGES_MULTIPLIER),
+                    )
+                }
             }
             ViewState()
         } else {
@@ -96,6 +102,7 @@ class JournalEntryViewModel(
                     false
                 ),
                 selectedPage = selectedPage,
+                contentForCopy = contentForCopy,
             )
         }
     }.stateIn(
@@ -126,9 +133,7 @@ class JournalEntryViewModel(
 
     fun delete(tagGroup: TagGroup) {
         viewModelScope.launch {
-            tagGroup.entries.forEach { journalEntry ->
-                repository.delete(journalEntry)
-            }
+            repository.delete(tagGroup.entries)
         }
     }
 
@@ -225,6 +230,18 @@ class JournalEntryViewModel(
         }
     }
 
+    fun reconcile() {
+        val dayGroup = state.value.selectedDayGroup
+        viewModelScope.launch {
+            dayGroup
+                .tagGroups
+                .map { it.entries }
+                .flatten()
+                .map { it.copy(reconciled = true) }
+                .let { repository.update(it) }
+        }
+    }
+
     fun forceUpload(tagGroup: TagGroup) {
         repository.upload(tagGroup.entries)
     }
@@ -275,6 +292,47 @@ class JournalEntryViewModel(
         }
     }
 
+    fun onCopy(entry: JournalEntry) {
+        _contentForCopy.update { entry.text }
+    }
+
+    fun onCopy(tagGroup: TagGroup) {
+        _contentForCopy.update {
+            tagGroup
+                .entries
+                .joinToString(separator = "\n") { it.text }
+        }
+    }
+
+    fun onCopy() {
+        val dayGroup = state.value.selectedDayGroup
+        if (dayGroup.untaggedCount > 0) {
+            return
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            val content = buildString {
+                append("# ")
+                append(dayMonthDateWithYear(dayGroup.date))
+                append("\n")
+                dayGroup.tagGroups.forEach { tagGroup ->
+                    append("## ")
+                    append(tagGroup.tag)
+                    append("\n")
+                    tagGroup.entries.forEach { entry ->
+                        append("- ")
+                        append(entry.text)
+                        append("\n")
+                    }
+                }
+            }
+            _contentForCopy.update { content }
+        }
+    }
+
+    fun onContentCopied() {
+        _contentForCopy.update { "" }
+    }
+
     private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
@@ -291,7 +349,10 @@ class JournalEntryViewModel(
         fun factory(receivedText: String?) = object : ViewModelProvider.Factory {
 
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
+            override fun <T : ViewModel> create(
+                modelClass: KClass<T>,
+                extras: CreationExtras
+            ): T {
                 return JournalEntryViewModel(
                     receivedText,
                     ServiceLocator.keyValueStore,
@@ -310,6 +371,7 @@ data class ViewState(
     val entryConflicts: List<EntryConflict> = listOf(),
     val showConflictDiffInline: Boolean = false,
     val selectedPage: Int = 0,
+    val contentForCopy: String = "",
 ) {
     // To enable infinite scrolling, will have PAGES_MULTIPLIER times total
     // number of pages, so that can keep scrolling on either side
