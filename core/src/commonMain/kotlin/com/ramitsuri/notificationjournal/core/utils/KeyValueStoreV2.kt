@@ -9,5 +9,7 @@ interface KeyValueStoreV2 {
 }
 
 enum class Key(val value: String) {
-
+    SHOW_EMPTY_TAGS("show_empty_tags"),
+    COPY_WITH_EMPTY_TAGS("copy_with_empty_tags"),
+    ;
 }

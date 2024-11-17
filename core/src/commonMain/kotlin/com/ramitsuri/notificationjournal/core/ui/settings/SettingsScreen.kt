@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,24 +37,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.ramitsuri.notificationjournal.core.model.SortOrder
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.back
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.data_host
 import notificationjournal.core.generated.resources.device_name
-import notificationjournal.core.generated.resources.error
 import notificationjournal.core.generated.resources.exchange_name
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.password
 import notificationjournal.core.generated.resources.settings_app_version
+import notificationjournal.core.generated.resources.settings_copy_with_empty_tags
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
 import notificationjournal.core.generated.resources.settings_data_sharing_title
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
 import notificationjournal.core.generated.resources.settings_showReconciled
-import notificationjournal.core.generated.resources.settings_sort_order_asc
-import notificationjournal.core.generated.resources.settings_sort_order_desc
-import notificationjournal.core.generated.resources.settings_sort_order_title
+import notificationjournal.core.generated.resources.settings_show_empty_tags
 import notificationjournal.core.generated.resources.settings_tags_subtitle
 import notificationjournal.core.generated.resources.settings_tags_title
 import notificationjournal.core.generated.resources.settings_templates_subtitle
@@ -72,11 +68,12 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onUploadClicked: () -> Unit,
     onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName, Username, Password) -> Unit,
-    onErrorAcknowledged: () -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
     onToggleShowReconciled: () -> Unit,
     onToggleShowConflictDiffInline: () -> Unit,
+    onToggleShowEmptyTags: () -> Unit,
+    onToggleCopyWithEmptyTags: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -168,6 +165,20 @@ fun SettingsScreen(
                     )
                 }
                 item {
+                    SettingsItemWithToggle(
+                        title = stringResource(Res.string.settings_show_empty_tags),
+                        value = state.showEmptyTags,
+                        onClick = onToggleShowEmptyTags,
+                    )
+                }
+                item {
+                    SettingsItemWithToggle(
+                        title = stringResource(Res.string.settings_copy_with_empty_tags),
+                        value = state.copyWithEmptyTags,
+                        onClick = onToggleCopyWithEmptyTags,
+                    )
+                }
+                item {
                     SettingsItem(
                         title = stringResource(Res.string.settings_upload_title),
                         subtitle = stringResource(Res.string.settings_upload_subtitle),
@@ -184,10 +195,6 @@ fun SettingsScreen(
                         showProgress = false
                     )
                 }
-            }
-
-            state.error?.let { error ->
-                ErrorAlert(text = error, onDismiss = onErrorAcknowledged)
             }
         }
     }
@@ -355,30 +362,4 @@ private fun DataSharingPropertiesDialog(
             }
         }
     }
-}
-
-@Composable
-private fun ErrorAlert(text: String, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(Res.string.error),
-                style = MaterialTheme.typography.titleSmall,
-            )
-        },
-        text = {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(Res.string.ok),
-                )
-            }
-        }
-    )
 }
