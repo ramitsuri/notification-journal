@@ -45,12 +45,12 @@ class JournalEntryViewModel(
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
 
-    private val _selectedPage: MutableStateFlow<Int?> = MutableStateFlow(null)
+    private val _selectedIndex: MutableStateFlow<Int?> = MutableStateFlow(null)
 
     private val _contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
     val state: StateFlow<ViewState> = combine(
-        _selectedPage,
+        _selectedIndex,
         _contentForCopy,
         repository.getFlow(
             showReconciled = keyValueStore.getBoolean(
@@ -60,7 +60,7 @@ class JournalEntryViewModel(
         ),
         repository.getForUploadCountFlow(),
         repository.getConflicts(),
-    ) { selectedPage, contentForCopy, entries, forUploadCount, entryConflicts ->
+    ) { selectedIndex, contentForCopy, entries, forUploadCount, entryConflicts ->
         val tags = tagsDao.getAll()
         val dayGroups = try {
             entries.toDayGroups(
@@ -72,22 +72,15 @@ class JournalEntryViewModel(
         }
         val sorted = dayGroups.sortedBy { it.date }
         // Show either today or the biggest date as initially selected
-        if (selectedPage == null) {
+        if (selectedIndex == null) {
             if (sorted.isNotEmpty()) {
-                _selectedPage.update {
-                    val initialIndex = sorted
+                _selectedIndex.update {
+                    sorted
                         .indexOfFirst {
                             it.date == getLocalDate(clock.now(), zoneId)
                         }
                         .takeIf { it >= 0 }
                         ?: sorted.lastIndex
-
-                    // To start somewhere around the middle of all the pages so we don't run
-                    // out of scrolling capability on either end
-                    dayGroupIndexToPage(
-                        index = initialIndex,
-                        totalPages = sorted.size.times(PAGES_MULTIPLIER),
-                    )
                 }
             }
             ViewState()
@@ -101,7 +94,7 @@ class JournalEntryViewModel(
                     Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
                     false
                 ),
-                selectedPage = selectedPage,
+                selectedIndex = selectedIndex,
                 contentForCopy = contentForCopy,
             )
         }
@@ -263,33 +256,37 @@ class JournalEntryViewModel(
     }
 
     fun goToNextDay() {
-        _selectedPage.update { existing ->
+        _selectedIndex.update { existing ->
             if (existing == null) {
                 return
             }
-            existing + 1
+            val new = existing + 1
+            if (new > state.value.dayGroups.lastIndex) {
+                0
+            } else {
+                new
+            }
         }
     }
 
     fun goToPreviousDay() {
-        _selectedPage.update { existing ->
+        _selectedIndex.update { existing ->
             if (existing == null) {
                 return
             }
-            existing - 1
+            val new = existing - 1
+            if (new < 0) {
+                state.value.dayGroups.lastIndex
+            } else {
+                new
+            }
         }
     }
 
     fun showDayGroupClicked(dayGroup: DayGroup) {
         val existing = state.value
         val index = existing.dayGroups.indexOf(dayGroup)
-        val page = dayGroupIndexToPage(
-            index = index,
-            totalPages = existing.horizontalPagerNumOfPages,
-        )
-        _selectedPage.update {
-            page
-        }
+        _selectedIndex.update { index }
     }
 
     fun onCopy(entry: JournalEntry) {
@@ -339,12 +336,6 @@ class JournalEntryViewModel(
         }
     }
 
-    private fun dayGroupIndexToPage(index: Int, totalPages: Int): Int {
-        return totalPages
-            .div(2)
-            .plus(index)
-    }
-
     companion object {
         fun factory(receivedText: String?) = object : ViewModelProvider.Factory {
 
@@ -370,12 +361,9 @@ data class ViewState(
     val notUploadedCount: Int = 0,
     val entryConflicts: List<EntryConflict> = listOf(),
     val showConflictDiffInline: Boolean = false,
-    val selectedPage: Int = 0,
+    val selectedIndex: Int = 0,
     val contentForCopy: String = "",
 ) {
-    // To enable infinite scrolling, will have PAGES_MULTIPLIER times total
-    // number of pages, so that can keep scrolling on either side
-    val horizontalPagerNumOfPages: Int = dayGroups.size.times(PAGES_MULTIPLIER)
     val selectedDayGroup: DayGroup
         get() {
             if (dayGroups.isEmpty()) {
@@ -384,13 +372,10 @@ data class ViewState(
                     listOf(),
                 )
             }
-            val index = selectedPage % dayGroups.size
-            return dayGroups[index]
+            return dayGroups[selectedIndex]
         }
 
     val dayGroupConflictCountMap
         get() = dayGroups
             .associateWith { it.getConflictsCount(entryConflicts) }
 }
-
-private const val PAGES_MULTIPLIER = 10

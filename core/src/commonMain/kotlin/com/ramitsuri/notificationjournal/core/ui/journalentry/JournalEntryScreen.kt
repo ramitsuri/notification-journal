@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,8 +29,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,7 +74,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -98,6 +96,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
@@ -128,7 +127,6 @@ import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
 import com.ramitsuri.notificationjournal.core.utils.getTime
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
@@ -158,6 +156,7 @@ import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -362,8 +361,6 @@ fun JournalEntryScreen(
                 List(
                     showAllDays = showAllDays,
                     dayGroup = state.selectedDayGroup,
-                    numOfPages = state.horizontalPagerNumOfPages,
-                    selectedPage = state.selectedPage,
                     items = state.dayGroups,
                     conflicts = state.entryConflicts,
                     tags = state.tags,
@@ -397,6 +394,8 @@ fun JournalEntryScreen(
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     onDayGroupCopyRequested = onCopyDayGroupRequested,
                     onDayGroupReconcileRequested = onDayGroupReconcileRequested,
+                    onShowNextDay = onShowNextDayClicked,
+                    onShowPreviousDay = onShowPreviousDayClicked,
                     modifier = Modifier.fillMaxSize()
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -463,8 +462,6 @@ fun Toolbar(
 private fun List(
     showAllDays: Boolean,
     dayGroup: DayGroup,
-    numOfPages: Int,
-    selectedPage: Int,
     items: List<DayGroup>,
     conflicts: List<EntryConflict>,
     tags: List<Tag>,
@@ -495,23 +492,15 @@ private fun List(
     onShowHideAllDays: (Boolean) -> Unit,
     onDayGroupCopyRequested: () -> Unit,
     onDayGroupReconcileRequested: () -> Unit,
+    onShowNextDay: () -> Unit,
+    onShowPreviousDay: () -> Unit,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
     val cornerRadius: Dp = 16.dp
     val topShape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
     val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
-    val coroutineScope = rememberCoroutineScope()
 
-    val pagerState = rememberPagerState(
-        pageCount = { numOfPages },
-        initialPage = selectedPage,
-    )
-    LaunchedEffect(selectedPage) {
-        coroutineScope.launch {
-            pagerState.animateScrollToPage(selectedPage)
-        }
-    }
     HeaderItem(
         headerText = getDay(toFormat = dayGroup.date),
         untaggedCount = dayGroup.untaggedCount,
@@ -520,114 +509,133 @@ private fun List(
         onReconcileRequested = onDayGroupReconcileRequested,
         onShowAllDaysClicked = { onShowHideAllDays(true) },
     )
-    HorizontalPager(
-        state = pagerState,
-        modifier = modifier.fillMaxSize(),
-        // It's not playing nice with manual page change. Somehow keeps getting out of sync
-        userScrollEnabled = false,
+    var swipeAmount by remember { mutableStateOf(0f) }
+    LazyColumn(
+        modifier = modifier
+            .nestedScroll(scrollConnection)
+            .fillMaxSize()
+            .padding(horizontal = 4.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        swipeAmount = 0f
+                    },
+                    onDragEnd = {
+                        if (swipeAmount.absoluteValue < (size.width / 4)) {
+                            swipeAmount = 0f
+                            return@detectHorizontalDragGestures
+                        }
+                        if (swipeAmount > 0) {
+                            onShowNextDay()
+                        } else {
+                            onShowPreviousDay()
+                        }
+                        swipeAmount = 0f
+                    },
+                    onDragCancel = {
+                        swipeAmount = 0f
+                    },
+                ) { change, dragAmount ->
+                    change.consume()
+                    swipeAmount += dragAmount
+                }
+            },
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .nestedScroll(scrollConnection)
-                .fillMaxSize()
-                .padding(horizontal = 4.dp),
-        ) {
-            dayGroup.tagGroups.forEach { tagGroup ->
-                val entries = tagGroup.entries
-                var shape: Shape
-                var borderModifier: Modifier
-                stickyHeader(key = dayGroup.date.toString().plus(tagGroup.tag)) {
-                    SubHeaderItem(
-                        tagGroup = tagGroup,
-                        onCopyRequested = onTagGroupCopyRequested,
-                        onDeleteRequested = onTagGroupDeleteRequested,
-                        onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
-                        onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
-                        onReconcileRequested = onTagGroupReconcileRequested,
-                        onForceUploadRequested = onTagGroupForceUploadRequested,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(color = MaterialTheme.colorScheme.background)
-                    )
-                }
-                items(
-                    count = entries.size,
-                    key = { index -> entries[index].id }) { index ->
-                    when {
-                        entries.size == 1 -> {
-                            shape = RoundedCornerShape(16.dp)
-                            borderModifier =
-                                Modifier.fullBorder(strokeWidth, strokeColor, cornerRadius)
-                        }
-
-                        index == 0 -> {
-                            shape = topShape
-                            borderModifier =
-                                Modifier.topBorder(strokeWidth, strokeColor, cornerRadius)
-                        }
-
-                        index == entries.lastIndex -> {
-                            shape = bottomShape
-                            borderModifier =
-                                Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
-                        }
-
-                        else -> {
-                            shape = RectangleShape
-                            borderModifier =
-                                Modifier.sideBorder(strokeWidth, strokeColor)
-                        }
+        dayGroup.tagGroups.forEach { tagGroup ->
+            val entries = tagGroup.entries
+            var shape: Shape
+            var borderModifier: Modifier
+            stickyHeader(key = dayGroup.date.toString().plus(tagGroup.tag)) {
+                SubHeaderItem(
+                    tagGroup = tagGroup,
+                    onCopyRequested = onTagGroupCopyRequested,
+                    onDeleteRequested = onTagGroupDeleteRequested,
+                    onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
+                    onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
+                    onReconcileRequested = onTagGroupReconcileRequested,
+                    onForceUploadRequested = onTagGroupForceUploadRequested,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = MaterialTheme.colorScheme.background)
+                )
+            }
+            items(
+                count = entries.size,
+                key = { index -> entries[index].id }) { index ->
+                when {
+                    entries.size == 1 -> {
+                        shape = RoundedCornerShape(16.dp)
+                        borderModifier =
+                            Modifier.fullBorder(strokeWidth, strokeColor, cornerRadius)
                     }
-                    val entry = entries[index]
-                    ListItem(
-                        item = entry,
-                        conflicts = conflicts.filter { it.entryId == entry.id },
-                        onCopyRequested = { onCopyRequested(entry) },
-                        onDeleteRequested = { onDeleteRequested(entry) },
-                        onEditRequested = { onEditRequested(entry) },
-                        onMoveUpRequested = {
-                            onMoveUpRequested(entry, tagGroup)
-                        },
-                        onMoveToTopRequested = {
-                            onMoveToTopRequested(entry, tagGroup)
-                        },
-                        onMoveDownRequested = {
-                            onMoveDownRequested(entry, tagGroup)
-                        },
-                        onMoveToBottomRequested = {
-                            onMoveToBottomRequested(entry, tagGroup)
-                        },
-                        tags = tags,
-                        selectedTag = entry.tag,
-                        onTagClicked = { onTagClicked(entry, it) },
-                        onMoveToNextDayRequested = { onMoveToNextDayRequested(entry) },
-                        onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(entry) },
-                        onDuplicateRequested = { onDuplicateRequested(entry) },
-                        onForceUploadRequested = { onForceUploadRequested(entry) },
-                        onConflictResolved = { onConflictResolved(entry, it) },
-                        showConflictDiffInline = showConflictDiffInline,
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp)
-                            .fillMaxWidth()
-                            .clip(shape)
-                            .then(borderModifier)
-                            .onKeyEvent {
-                                if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
-                                    onEditRequested(entry)
-                                    true
-                                } else {
-                                    false
-                                }
+
+                    index == 0 -> {
+                        shape = topShape
+                        borderModifier =
+                            Modifier.topBorder(strokeWidth, strokeColor, cornerRadius)
+                    }
+
+                    index == entries.lastIndex -> {
+                        shape = bottomShape
+                        borderModifier =
+                            Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
+                    }
+
+                    else -> {
+                        shape = RectangleShape
+                        borderModifier =
+                            Modifier.sideBorder(strokeWidth, strokeColor)
+                    }
+                }
+                val entry = entries[index]
+                ListItem(
+                    item = entry,
+                    conflicts = conflicts.filter { it.entryId == entry.id },
+                    onCopyRequested = { onCopyRequested(entry) },
+                    onDeleteRequested = { onDeleteRequested(entry) },
+                    onEditRequested = { onEditRequested(entry) },
+                    onMoveUpRequested = {
+                        onMoveUpRequested(entry, tagGroup)
+                    },
+                    onMoveToTopRequested = {
+                        onMoveToTopRequested(entry, tagGroup)
+                    },
+                    onMoveDownRequested = {
+                        onMoveDownRequested(entry, tagGroup)
+                    },
+                    onMoveToBottomRequested = {
+                        onMoveToBottomRequested(entry, tagGroup)
+                    },
+                    tags = tags,
+                    selectedTag = entry.tag,
+                    onTagClicked = { onTagClicked(entry, it) },
+                    onMoveToNextDayRequested = { onMoveToNextDayRequested(entry) },
+                    onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(entry) },
+                    onDuplicateRequested = { onDuplicateRequested(entry) },
+                    onForceUploadRequested = { onForceUploadRequested(entry) },
+                    onConflictResolved = { onConflictResolved(entry, it) },
+                    showConflictDiffInline = showConflictDiffInline,
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .fillMaxWidth()
+                        .clip(shape)
+                        .then(borderModifier)
+                        .onKeyEvent {
+                            if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
+                                onEditRequested(entry)
+                                true
+                            } else {
+                                false
                             }
-                    )
-                }
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                        }
+                )
             }
             item {
-                Spacer(modifier = Modifier.height(96.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
+        }
+        item {
+            Spacer(modifier = Modifier.height(96.dp))
         }
     }
 
