@@ -12,6 +12,7 @@ import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
@@ -116,6 +117,10 @@ actual class Factory {
                 return getVMInstance(handle) as T
             }
         }
+    }
+
+    actual fun getDataStorePath(): String {
+        return File(appDir, DataStoreKeyValueStore.FILE).absolutePath
     }
 
     companion object {

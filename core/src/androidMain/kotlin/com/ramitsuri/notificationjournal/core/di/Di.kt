@@ -14,9 +14,9 @@ import com.ramitsuri.notificationjournal.core.data.WearDataSharingClientImpl
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
-import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 
@@ -84,5 +84,9 @@ actual class Factory(private val application: Application) {
                 return getVMInstance(handle) as T
             }
         }
+    }
+
+    actual fun getDataStorePath(): String {
+        return application.filesDir.resolve(DataStoreKeyValueStore.FILE).absolutePath
     }
 }

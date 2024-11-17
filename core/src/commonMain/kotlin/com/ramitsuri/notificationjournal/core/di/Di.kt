@@ -33,4 +33,6 @@ expect class Factory {
         navBackStackEntry: NavBackStackEntry,
         getVMInstance: (SavedStateHandle) -> EditJournalEntryViewModel,
     ): AbstractSavedStateViewModelFactory
+
+    fun getDataStorePath(): String
 }

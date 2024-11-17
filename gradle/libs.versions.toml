@@ -10,6 +10,7 @@ buildKonfig = "0.15.1"
 composeBom = "2024.05.00"
 compose-plugin = "1.6.10"
 coreSplashscreen = "1.0.1"
+datastore = "1.1.1"
 diffUtils = "4.12"
 firebase = "33.1.2"
 firebaseCrashlytics = "3.0.2"
@@ -60,6 +61,7 @@ compose-material3-windowSize = { module = "androidx.compose.material3:material3-
 compose-runtime = { module = "androidx.compose.runtime:runtime", version = "1.7.0-beta02" }
 compose-ui = { module = "androidx.compose.ui:ui", version = "1.7.0-beta02" }
 compose-ui-toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
+datastore = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 diffUtils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "diffUtils" }
 firebaseBom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase" }
 firebaseCrashlytics = { module = "com.google.firebase:firebase-crashlytics" }
