@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.di
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.navigation.NavBackStackEntry
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
@@ -15,16 +16,19 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import okio.Path.Companion.toPath
 import java.util.UUID
 
 object ServiceLocator {
@@ -141,6 +145,15 @@ object ServiceLocator {
     fun getAppVersion(): String {
         val suffix = if (BuildKonfig.IS_DEBUG) "_debug" else ""
         return "${BuildKonfig.APP_VERSION}$suffix"
+    }
+
+    val prefManager by lazy {
+        val keyValueStore = DataStoreKeyValueStore(
+            dataStore = PreferenceDataStoreFactory.createWithPath(
+                produceFile = { factory.getDataStorePath().toPath() }
+            )
+        )
+        PrefManager(keyValueStore)
     }
 
     val dataSendHelper: DataSendHelper? by lazy {

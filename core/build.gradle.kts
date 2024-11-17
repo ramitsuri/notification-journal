@@ -55,6 +55,8 @@ kotlin {
             implementation(libs.multiplatform.settings)
 
             implementation(libs.amqp.client)
+
+            implementation(libs.datastore)
         }
         androidMain.dependencies {
             implementation(libs.androidx.ktx)
