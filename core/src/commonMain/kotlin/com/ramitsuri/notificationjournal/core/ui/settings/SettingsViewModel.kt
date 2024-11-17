@@ -5,13 +5,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,39 +23,44 @@ class SettingsViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
     private val getAppVersion: () -> String,
+    private val prefManager: PrefManager,
 ) : ViewModel() {
-    private val _state: MutableStateFlow<SettingsViewState>
-    val state: StateFlow<SettingsViewState>
+    private val _uploadLoading = MutableStateFlow(false)
+    // Because some prefs are stored in non reactive storage
+    private val _prefUpdated = MutableStateFlow(0)
 
-    init {
-        _state = MutableStateFlow(
-            SettingsViewState(
-                uploadLoading = false,
-                error = null,
-                dataHost = DataHost(getDataHost()),
-                exchangeName = ExchangeName(getExchangeName()),
-                deviceName = DeviceName(getDeviceName()),
-                username = Username(getUsername()),
-                password = Password(getPassword()),
-                appVersion = getAppVersion(),
-                showReconciled = getShowReconciled(),
-                showConflictDiffInline = getShowConflictDiffInline(),
-            )
+    val state = combine(
+        _prefUpdated,
+        _uploadLoading,
+        prefManager.showEmptyTags(),
+        prefManager.copyWithEmptyTags(),
+    ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags ->
+        SettingsViewState(
+            uploadLoading = uploadLoading,
+            dataHost = DataHost(getDataHost()),
+            exchangeName = ExchangeName(getExchangeName()),
+            deviceName = DeviceName(getDeviceName()),
+            username = Username(getUsername()),
+            password = Password(getPassword()),
+            appVersion = getAppVersion(),
+            showReconciled = getShowReconciled(),
+            showConflictDiffInline = getShowConflictDiffInline(),
+            showEmptyTags = showEmptyTags,
+            copyWithEmptyTags = copyWithEmptyTags,
         )
-        state = _state
-    }
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        SettingsViewState(),
+    )
 
     fun upload() {
-        _state.update {
-            it.copy(uploadLoading = true)
-        }
+        _uploadLoading.update { true }
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 repository.sync()
-                _state.update {
-                    it.copy(uploadLoading = false)
-                }
+                _uploadLoading.update { false }
             }
         }
     }
@@ -70,20 +77,12 @@ class SettingsViewModel(
         keyValueStore.putString(Constants.PREF_KEY_DEVICE_NAME, deviceName.name)
         keyValueStore.putString(Constants.PREF_KEY_USERNAME, username.username)
         keyValueStore.putString(Constants.PREF_KEY_PASSWORD, password.password)
-        _state.update {
-            it.copy(
-                exchangeName = exchangeName,
-                dataHost = dataHost,
-                deviceName = deviceName
-            )
-        }
+        _prefUpdated.update { it + 1 }
     }
 
     fun toggleShowReconciled() {
         keyValueStore.putBoolean(Constants.PREF_KEY_SHOW_RECONCILED, !getShowReconciled())
-        _state.update {
-            it.copy(showReconciled = getShowReconciled())
-        }
+        _prefUpdated.update { it + 1 }
     }
 
     fun toggleShowConflictDiffInline() {
@@ -91,14 +90,18 @@ class SettingsViewModel(
             Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
             !getShowConflictDiffInline()
         )
-        _state.update {
-            it.copy(showConflictDiffInline = getShowConflictDiffInline())
+        _prefUpdated.update { it + 1 }
+    }
+
+    fun toggleShowEmptyTags() {
+        viewModelScope.launch {
+            prefManager.setShowEmptyTags(state.value.showEmptyTags.not())
         }
     }
 
-    fun onErrorAcknowledged() {
-        _state.update {
-            it.copy(error = null)
+    fun toggleCopyWithEmptyTags() {
+        viewModelScope.launch {
+            prefManager.setCopyWithEmptyTags(state.value.copyWithEmptyTags.not())
         }
     }
 
@@ -130,6 +133,7 @@ class SettingsViewModel(
                     keyValueStore = ServiceLocator.keyValueStore,
                     repository = ServiceLocator.repository,
                     getAppVersion = ServiceLocator::getAppVersion,
+                    prefManager = ServiceLocator.prefManager,
                 ) as T
             }
         }
@@ -137,8 +141,7 @@ class SettingsViewModel(
 }
 
 data class SettingsViewState(
-    val uploadLoading: Boolean,
-    val error: String? = null,
+    val uploadLoading: Boolean = false,
     val dataHost: DataHost = DataHost(""),
     val exchangeName: ExchangeName = ExchangeName(""),
     val deviceName: DeviceName = DeviceName(""),
@@ -147,4 +150,6 @@ data class SettingsViewState(
     val appVersion: String = "",
     val showReconciled: Boolean = false,
     val showConflictDiffInline: Boolean = false,
+    val showEmptyTags: Boolean = false,
+    val copyWithEmptyTags: Boolean = false,
 )

@@ -212,7 +212,6 @@ fun NavGraph(
                 onBack = { navController.navigateUp() },
                 onUploadClicked = viewModel::upload,
                 onDataSharingPropertiesSet = viewModel::setDataSharingProperties,
-                onErrorAcknowledged = viewModel::onErrorAcknowledged,
                 onTagsClicked = {
                     navController.navigate(Destination.TAGS.routeWithArgValues())
                 },
@@ -221,6 +220,8 @@ fun NavGraph(
                 },
                 onToggleShowReconciled = viewModel::toggleShowReconciled,
                 onToggleShowConflictDiffInline = viewModel::toggleShowConflictDiffInline,
+                onToggleCopyWithEmptyTags = viewModel::toggleCopyWithEmptyTags,
+                onToggleShowEmptyTags = viewModel::toggleShowEmptyTags,
             )
         }
 
