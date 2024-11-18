@@ -13,16 +13,27 @@ fun List<JournalEntry>.toDayGroups(
         val entryTime = it.entryTime
         getLocalDate(entryTime, zoneId)
     }.map { (date, entriesByDate) ->
-        val byTag = entriesByDate
+        val tagToEntries = entriesByDate
             .groupBy { it.tag }
             .map { (tag, entriesByTag) ->
                 val nonNullTag = tag ?: Tag.NO_TAG.value
                 val entries = entriesByTag.sortedBy { it.entryTime }
-                TagGroup(nonNullTag, entries)
+                nonNullTag to entries
             }
-            .sortedBy { (tag, _) ->
-                tags.firstOrNull { it.value == tag }?.order
-            }
-        DayGroup(date, byTag)
+            .toMap()
+        val tagGroups = if (tags.isEmpty()) {
+            tagToEntries.map { (tag, entries) -> TagGroup(tag, entries) }
+        } else {
+            tags
+                .mapNotNull { tag ->
+                    val entriesForTag = tagToEntries[tag.value] ?: listOf()
+                    if (tag.value == Tag.NO_TAG.value && entriesForTag.isEmpty()) {
+                        null
+                    } else {
+                        TagGroup(tag.value, entriesForTag)
+                    }
+                }
+        }
+        DayGroup(date, tagGroups)
     }
 }

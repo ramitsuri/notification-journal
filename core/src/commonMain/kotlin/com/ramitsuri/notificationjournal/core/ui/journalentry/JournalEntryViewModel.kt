@@ -15,13 +15,16 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,6 +41,7 @@ class JournalEntryViewModel(
     private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
+    private val prefManager: PrefManager,
     private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
     private val clock: Clock = Clock.System,
 ) : ViewModel() {
@@ -60,7 +64,8 @@ class JournalEntryViewModel(
         ),
         repository.getForUploadCountFlow(),
         repository.getConflicts(),
-    ) { selectedIndex, contentForCopy, entries, forUploadCount, entryConflicts ->
+        prefManager.showEmptyTags(),
+    ) { selectedIndex, contentForCopy, entries, forUploadCount, entryConflicts, showEmptyTags ->
         val tags = tagsDao.getAll()
         val dayGroups = try {
             entries.toDayGroups(
@@ -96,6 +101,7 @@ class JournalEntryViewModel(
                 ),
                 selectedIndex = selectedIndex,
                 contentForCopy = contentForCopy,
+                showEmptyTags = showEmptyTags,
             )
         }
     }.stateIn(
@@ -307,11 +313,15 @@ class JournalEntryViewModel(
             return
         }
         viewModelScope.launch(Dispatchers.Default) {
+            val copyEmptyTags = prefManager.copyWithEmptyTags().first()
             val content = buildString {
                 append("# ")
                 append(dayMonthDateWithYear(dayGroup.date))
                 append("\n")
                 dayGroup.tagGroups.forEach { tagGroup ->
+                    if (tagGroup.entries.isEmpty() && !copyEmptyTags) {
+                        return@forEach
+                    }
                     append("## ")
                     append(tagGroup.tag)
                     append("\n")
@@ -349,6 +359,7 @@ class JournalEntryViewModel(
                     ServiceLocator.keyValueStore,
                     ServiceLocator.repository,
                     ServiceLocator.tagsDao,
+                    prefManager = ServiceLocator.prefManager,
                 ) as T
             }
         }
@@ -363,6 +374,7 @@ data class ViewState(
     val showConflictDiffInline: Boolean = false,
     val selectedIndex: Int = 0,
     val contentForCopy: String = "",
+    val showEmptyTags: Boolean = false,
 ) {
     val selectedDayGroup: DayGroup
         get() {
@@ -378,4 +390,24 @@ data class ViewState(
     val dayGroupConflictCountMap
         get() = dayGroups
             .associateWith { it.getConflictsCount(entryConflicts) }
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun <T1, T2, T3, T4, T5, T6, R> combine(
+    flow: Flow<T1>,
+    flow2: Flow<T2>,
+    flow3: Flow<T3>,
+    flow4: Flow<T4>,
+    flow5: Flow<T5>,
+    flow6: Flow<T6>,
+    transform: suspend (T1, T2, T3, T4, T5, T6) -> R
+): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6) { args: Array<*> ->
+    transform(
+        args[0] as T1,
+        args[1] as T2,
+        args[2] as T3,
+        args[3] as T4,
+        args[4] as T5,
+        args[5] as T6,
+    )
 }
