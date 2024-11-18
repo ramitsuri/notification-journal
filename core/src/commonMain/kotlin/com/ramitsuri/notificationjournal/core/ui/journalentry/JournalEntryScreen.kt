@@ -365,6 +365,7 @@ fun JournalEntryScreen(
                     conflicts = state.entryConflicts,
                     tags = state.tags,
                     dayGroupConflictCountMap = state.dayGroupConflictCountMap,
+                    showEmptyTags = state.showEmptyTags,
                     onCopyRequested = onCopyEntryRequested,
                     onTagClicked = onEditTagRequested,
                     onTagGroupCopyRequested = onCopyTagGroupRequested,
@@ -466,6 +467,7 @@ private fun List(
     conflicts: List<EntryConflict>,
     tags: List<Tag>,
     dayGroupConflictCountMap: Map<DayGroup, Int>,
+    showEmptyTags: Boolean,
     onCopyRequested: (JournalEntry) -> Unit,
     onTagClicked: (JournalEntry, String) -> Unit,
     onTagGroupCopyRequested: (TagGroup) -> Unit,
@@ -546,18 +548,20 @@ private fun List(
             var shape: Shape
             var borderModifier: Modifier
             stickyHeader(key = dayGroup.date.toString().plus(tagGroup.tag)) {
-                SubHeaderItem(
-                    tagGroup = tagGroup,
-                    onCopyRequested = onTagGroupCopyRequested,
-                    onDeleteRequested = onTagGroupDeleteRequested,
-                    onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
-                    onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
-                    onReconcileRequested = onTagGroupReconcileRequested,
-                    onForceUploadRequested = onTagGroupForceUploadRequested,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(color = MaterialTheme.colorScheme.background)
-                )
+                if (showEmptyTags || entries.isNotEmpty()) {
+                    SubHeaderItem(
+                        tagGroup = tagGroup,
+                        onCopyRequested = onTagGroupCopyRequested,
+                        onDeleteRequested = onTagGroupDeleteRequested,
+                        onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
+                        onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
+                        onReconcileRequested = onTagGroupReconcileRequested,
+                        onForceUploadRequested = onTagGroupForceUploadRequested,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = MaterialTheme.colorScheme.background)
+                    )
+                }
             }
             items(
                 count = entries.size,
@@ -763,7 +767,7 @@ private fun SubHeaderItem(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
+        modifier = modifier.height(48.dp),
     ) {
         var showMenu by remember { mutableStateOf(false) }
         Spacer(modifier = Modifier.width(12.dp))
@@ -777,16 +781,18 @@ private fun SubHeaderItem(
             fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.weight(1f))
-        SubHeaderItemMenu(
-            showMenu = showMenu,
-            onCopyRequested = { onCopyRequested(tagGroup) },
-            onDeleteRequested = { onDeleteRequested(tagGroup) },
-            onMenuButtonClicked = { showMenu = !showMenu },
-            onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
-            onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
-            onReconcileRequested = { onReconcileRequested(tagGroup) },
-            onForceUploadRequested = { onForceUploadRequested(tagGroup) }
-        )
+        if (tagGroup.entries.isNotEmpty()) {
+            SubHeaderItemMenu(
+                showMenu = showMenu,
+                onCopyRequested = { onCopyRequested(tagGroup) },
+                onDeleteRequested = { onDeleteRequested(tagGroup) },
+                onMenuButtonClicked = { showMenu = !showMenu },
+                onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
+                onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
+                onReconcileRequested = { onReconcileRequested(tagGroup) },
+                onForceUploadRequested = { onForceUploadRequested(tagGroup) }
+            )
+        }
     }
 }
 
