@@ -1,6 +1,7 @@
 package com.ramitsuri.notificationjournal.core.ui.editjournal
 
 import androidx.compose.runtime.Composable
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.components.AddEditEntryDialog
 
 @Composable
@@ -8,6 +9,7 @@ fun EditJournalEntryScreen(
     state: EditJournalEntryViewState,
     onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
+    onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     onPreviousDateRequested: () -> Unit,
@@ -22,11 +24,11 @@ fun EditJournalEntryScreen(
         tags = state.tags,
         selectedTag = state.selectedTag,
         suggestedText = state.suggestedText,
-        templates = listOf(),
+        templates = state.templates,
         dateTime = state.localDateTime,
         onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
-        onTemplateClicked = { },
+        onTemplateClicked = onTemplateClicked,
         onUseSuggestedText = { },
         onSave = onSave,
         showAddAnother = false,

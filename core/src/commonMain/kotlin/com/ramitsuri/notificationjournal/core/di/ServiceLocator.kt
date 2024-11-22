@@ -139,6 +139,7 @@ object ServiceLocator {
             savedStateHandle = savedStateHandle,
             repository = repository,
             tagsDao = tagsDao,
+            templatesDao = templatesDao,
         )
     }
 

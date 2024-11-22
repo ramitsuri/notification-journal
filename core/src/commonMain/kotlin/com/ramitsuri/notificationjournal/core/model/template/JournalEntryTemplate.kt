@@ -4,6 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import com.ramitsuri.notificationjournal.core.model.Tag
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -50,3 +52,20 @@ data class JournalEntryTemplate(
         replacesExistingValues = true,
     )
 }
+
+fun JournalEntryTemplate.Companion.getShortcutTemplates() = listOf(
+    JournalEntryTemplate(
+        text = " ${Constants.TEMPLATED_TIME}",
+        displayText = "Time",
+        shortDisplayText = "\uD83D\uDD5B",
+        tag = Tag.NO_TAG.value,
+        replacesExistingValues = false,
+    ),
+    JournalEntryTemplate(
+        text = "${Constants.TEMPLATED_TASK} ",
+        displayText = "Task",
+        shortDisplayText = "\uD83D\uDCDD",
+        tag = Tag.NO_TAG.value,
+        replacesExistingValues = false,
+    ),
+)
