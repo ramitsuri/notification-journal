@@ -122,6 +122,8 @@ compose.desktop {
             macOS {
                 iconFile.set(iconsRoot.resolve("macos.icns"))
             }
+            // https://issuetracker.google.com/issues/342609814
+            modules("jdk.unsupported")
         }
     }
 }

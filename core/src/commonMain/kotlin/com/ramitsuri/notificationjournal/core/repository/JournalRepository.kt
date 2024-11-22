@@ -51,6 +51,21 @@ class JournalRepository(
         update(listOf(journalEntry))
     }
 
+    // Separate so that not all calls have to check if text contains template time
+    suspend fun updateText(journalEntry: JournalEntry) {
+        update(
+            listOf(
+                journalEntry.copy(
+                    text = replaceWithTimeTemplateIfNecessary(
+                        originalText = journalEntry.text,
+                        time = journalEntry.entryTime,
+                        timeZone = journalEntry.timeZone,
+                    )
+                )
+            )
+        )
+    }
+
     suspend fun update(journalEntries: List<JournalEntry>) {
         dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
@@ -66,19 +81,11 @@ class JournalRepository(
             .filter { it.isNotBlank() }
             .forEachIndexed { index, entry ->
                 val entryTime = time.plus(index.times(10).milliseconds)
-                val entryText = if (entry.contains(Constants.TEMPLATED_TIME)) {
-                    entry.replace(
-                        Constants.TEMPLATED_TIME,
-                        formatForDisplay(
-                            toFormat = entryTime,
-                            timeZone = timeZone,
-                            amString = getString(Res.string.am),
-                            pmString = getString(Res.string.pm),
-                        )
-                    )
-                } else {
-                    entry
-                }
+                val entryText = replaceWithTimeTemplateIfNecessary(
+                    originalText = entry,
+                    time = entryTime,
+                    timeZone = timeZone,
+                )
                 dao.insert(
                     entry = JournalEntry(
                         entryTime = entryTime,
@@ -157,6 +164,26 @@ class JournalRepository(
 
         conflictDao.deleteForEntryId(newEntry.id)
         sendAndMarkUploaded(listOf(newEntry), replacesLocal = true)
+    }
+
+    private suspend fun replaceWithTimeTemplateIfNecessary(
+        originalText: String,
+        time: Instant,
+        timeZone: TimeZone,
+    ): String {
+        return if (originalText.contains(Constants.TEMPLATED_TIME)) {
+            originalText.replace(
+                Constants.TEMPLATED_TIME,
+                formatForDisplay(
+                    toFormat = time,
+                    timeZone = timeZone,
+                    amString = getString(Res.string.am),
+                    pmString = getString(Res.string.pm),
+                )
+            )
+        } else {
+            originalText
+        }
     }
 
     private fun sendAndMarkUploaded(entries: List<JournalEntry>, replacesLocal: Boolean = false) {

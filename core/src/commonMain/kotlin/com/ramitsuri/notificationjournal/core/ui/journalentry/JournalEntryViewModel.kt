@@ -221,14 +221,6 @@ class JournalEntryViewModel(
         }
     }
 
-    fun reconcile(tagGroup: TagGroup) {
-        viewModelScope.launch {
-            tagGroup.entries.forEach { journalEntry ->
-                repository.update(journalEntry.copy(reconciled = true))
-            }
-        }
-    }
-
     fun reconcile() {
         val dayGroup = state.value.selectedDayGroup
         viewModelScope.launch {
@@ -310,6 +302,9 @@ class JournalEntryViewModel(
     fun onCopy() {
         val dayGroup = state.value.selectedDayGroup
         if (dayGroup.untaggedCount > 0) {
+            return
+        }
+        if ((state.value.dayGroupConflictCountMap[dayGroup] ?: 0) > 0) {
             return
         }
         viewModelScope.launch(Dispatchers.Default) {

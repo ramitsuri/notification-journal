@@ -3,9 +3,12 @@ package com.ramitsuri.notificationjournal.core.ui.editjournal
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +27,7 @@ class EditJournalEntryViewModel(
     savedStateHandle: SavedStateHandle,
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
+    private val templatesDao: JournalEntryTemplateDao,
 ) : ViewModel() {
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
@@ -48,6 +52,7 @@ class EditJournalEntryViewModel(
             }
         }
         loadTags()
+        loadTemplates()
     }
 
     fun textUpdated(text: String) {
@@ -59,6 +64,18 @@ class EditJournalEntryViewModel(
     fun tagClicked(tag: String) {
         _state.update {
             it.copy(selectedTag = tag)
+        }
+    }
+
+    fun templateClicked(template: JournalEntryTemplate) {
+        _state.update { previousState ->
+            val newText = if (template.replacesExistingValues) {
+                tagClicked(template.tag)
+                template.text
+            } else {
+                previousState.text + template.text
+            }
+            previousState.copy(text = newText)
         }
     }
 
@@ -75,7 +92,7 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(isLoading = true) }
         val tag = currentState.selectedTag
         viewModelScope.launch {
-            repository.update(entry.copy(text = text, tag = tag, entryTime = dateTime))
+            repository.updateText(entry.copy(text = text, tag = tag, entryTime = dateTime))
             _saved.update {
                 true
             }
@@ -157,6 +174,17 @@ class EditJournalEntryViewModel(
         }
     }
 
+    private fun loadTemplates() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    templates = templatesDao.getAll()
+                        .plus(JournalEntryTemplate.getShortcutTemplates())
+                )
+            }
+        }
+    }
+
     companion object {
         const val ENTRY_ID_ARG = "entry_id"
     }
@@ -168,6 +196,7 @@ data class EditJournalEntryViewState(
     val tags: List<Tag>,
     val selectedTag: String?,
     val suggestedText: String?,
+    val templates: List<JournalEntryTemplate>,
     val dateTime: Instant,
     val timeZone: TimeZone,
 ) {
@@ -182,6 +211,7 @@ data class EditJournalEntryViewState(
             tags = listOf(),
             selectedTag = null,
             suggestedText = null,
+            templates = listOf(),
             dateTime = Clock.System.now(),
             timeZone = TimeZone.currentSystemDefault(),
         )

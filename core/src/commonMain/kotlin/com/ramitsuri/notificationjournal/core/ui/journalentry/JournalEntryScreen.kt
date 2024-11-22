@@ -150,7 +150,6 @@ import notificationjournal.core.generated.resources.next_day
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.previous_day
-import notificationjournal.core.generated.resources.reconcile
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
@@ -177,7 +176,6 @@ fun JournalEntryScreen(
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
-    onTagGroupReconcileRequested: (TagGroup) -> Unit,
     onTagGroupForceUploadRequested: (TagGroup) -> Unit,
     onSettingsClicked: () -> Unit,
     onConflictResolved: (JournalEntry, EntryConflict?) -> Unit,
@@ -384,7 +382,6 @@ fun JournalEntryScreen(
                     },
                     onTagGroupMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                     onTagGroupMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
-                    onTagGroupReconcileRequested = onTagGroupReconcileRequested,
                     onTagGroupForceUploadRequested = onTagGroupForceUploadRequested,
                     onForceUploadRequested = onForceUploadRequested,
                     onDuplicateRequested = onDuplicateRequested,
@@ -474,7 +471,6 @@ private fun List(
     onTagGroupDeleteRequested: (TagGroup) -> Unit,
     onTagGroupMoveToNextDayRequested: (TagGroup) -> Unit,
     onTagGroupMoveToPreviousDayRequested: (TagGroup) -> Unit,
-    onTagGroupReconcileRequested: (TagGroup) -> Unit,
     onTagGroupForceUploadRequested: (TagGroup) -> Unit,
     onMoveUpRequested: (JournalEntry, TagGroup) -> Unit,
     onMoveToTopRequested: (JournalEntry, TagGroup) -> Unit,
@@ -528,9 +524,9 @@ private fun List(
                             return@detectHorizontalDragGestures
                         }
                         if (swipeAmount > 0) {
-                            onShowNextDay()
-                        } else {
                             onShowPreviousDay()
+                        } else {
+                            onShowNextDay()
                         }
                         swipeAmount = 0f
                     },
@@ -555,7 +551,6 @@ private fun List(
                         onDeleteRequested = onTagGroupDeleteRequested,
                         onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
-                        onReconcileRequested = onTagGroupReconcileRequested,
                         onForceUploadRequested = onTagGroupForceUploadRequested,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -761,7 +756,6 @@ private fun SubHeaderItem(
     onDeleteRequested: (TagGroup) -> Unit,
     onMoveToNextDayRequested: (TagGroup) -> Unit,
     onMoveToPreviousDayRequested: (TagGroup) -> Unit,
-    onReconcileRequested: (TagGroup) -> Unit,
     onForceUploadRequested: (TagGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -789,7 +783,6 @@ private fun SubHeaderItem(
                 onMenuButtonClicked = { showMenu = !showMenu },
                 onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
                 onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
-                onReconcileRequested = { onReconcileRequested(tagGroup) },
                 onForceUploadRequested = { onForceUploadRequested(tagGroup) }
             )
         }
@@ -1390,7 +1383,6 @@ private fun SubHeaderItemMenu(
     onMenuButtonClicked: () -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
-    onReconcileRequested: () -> Unit,
     onForceUploadRequested: () -> Unit
 ) {
     var showingMoreMenu by remember { mutableStateOf(false) }
@@ -1415,11 +1407,10 @@ private fun SubHeaderItemMenu(
         ) {
             if (showingMoreMenu.not()) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.copy_reconcile)) },
+                    text = { Text(stringResource(Res.string.copy)) },
                     onClick = {
                         onMenuButtonClicked()
                         onCopyRequested()
-                        onReconcileRequested()
                     }
                 )
                 DropdownMenuItem(
@@ -1441,20 +1432,6 @@ private fun SubHeaderItemMenu(
                     onClick = {
                         onMenuButtonClicked()
                         onMoveToPreviousDayRequested()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.copy)) },
-                    onClick = {
-                        onMenuButtonClicked()
-                        onCopyRequested()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.reconcile)) },
-                    onClick = {
-                        onMenuButtonClicked()
-                        onReconcileRequested()
                     }
                 )
                 DropdownMenuItem(

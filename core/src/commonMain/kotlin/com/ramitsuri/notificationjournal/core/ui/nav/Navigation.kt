@@ -119,7 +119,6 @@ fun NavGraph(
                     navController.navigate(Destination.SETTINGS.routeWithArgValues())
                 },
                 onSyncClicked = viewModel::sync,
-                onTagGroupReconcileRequested = viewModel::reconcile,
                 onTagGroupForceUploadRequested = viewModel::forceUpload,
                 onForceUploadRequested = viewModel::forceUpload,
                 onConflictResolved = viewModel::resolveConflict,
@@ -194,6 +193,7 @@ fun NavGraph(
                 state = viewState,
                 onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
+                onTemplateClicked = viewModel::templateClicked,
                 onSave = viewModel::save,
                 onCancel = { navController.navigateUp() },
                 onPreviousDateRequested = viewModel::previousDay,

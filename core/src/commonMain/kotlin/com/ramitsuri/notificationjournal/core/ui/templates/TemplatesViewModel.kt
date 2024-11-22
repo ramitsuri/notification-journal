@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
+import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -92,7 +92,6 @@ class TemplatesViewModel(
         if (!currentState.canSave) {
             return
         }
-        val tag = currentState.templateBeingAddedOrEdited.tag ?: return
 
         _state.update { it.copy(isLoading = true) }
 
@@ -100,7 +99,7 @@ class TemplatesViewModel(
             dao.insertOrUpdate(
                 id = idBeingEdited,
                 text = currentState.templateBeingAddedOrEdited.text,
-                tag = tag,
+                tag = currentState.templateBeingAddedOrEdited.tag ?: Tag.NO_TAG.value,
                 displayText = currentState.templateBeingAddedOrEdited.displayText,
                 shortDisplayText = currentState.templateBeingAddedOrEdited.shortDisplayText,
             )
@@ -147,7 +146,7 @@ class TemplatesViewModel(
             }
         }
 
-        private const val MAX_TEMPLATES_ALLOWED = 8
+        private const val MAX_TEMPLATES_ALLOWED = 10
     }
 }
 
@@ -166,8 +165,12 @@ data class TemplatesViewState(
     fun updateText(text: String) =
         copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(text = text))
 
-    fun updateTag(tag: String) =
+    fun updateTag(tag: String) = if (templateBeingAddedOrEdited.tag == tag) {
+        // Unselect if already selected
+        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(tag = null))
+    } else {
         copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(tag = tag))
+    }
 
     fun updateDisplayText(text: String) =
         copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(displayText = text))
@@ -185,7 +188,7 @@ data class TemplateValues(
 ) {
     val isValid: Boolean
         get() {
-            return text.isNotEmpty() && !tag.isNullOrEmpty() && displayText.isNotEmpty()
+            return text.isNotEmpty() && displayText.isNotEmpty()
         }
 
     constructor(template: JournalEntryTemplate) : this(
