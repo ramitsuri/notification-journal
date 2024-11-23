@@ -128,6 +128,7 @@ import com.ramitsuri.notificationjournal.core.utils.getTime
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import notificationjournal.core.generated.resources.Res
@@ -150,6 +151,7 @@ import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.settings
+import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.sync_down
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged
@@ -163,7 +165,7 @@ import kotlin.math.absoluteValue
 @Composable
 fun JournalEntryScreen(
     state: ViewState,
-    onAddRequested: () -> Unit,
+    onAddRequested: (LocalDate) -> Unit,
     onEditRequested: (String) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onEditTagRequested: (JournalEntry, String) -> Unit,
@@ -191,6 +193,7 @@ fun JournalEntryScreen(
     onCopyDayGroupRequested: () -> Unit,
     onCopied: () -> Unit,
     onResetReceiveHelper: () -> Unit,
+    onAddFromTagRequested: (LocalDate, String) -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -269,7 +272,7 @@ fun JournalEntryScreen(
                     it.key == Key.N &&
                     it.type == KeyEventType.KeyUp
                 ) {
-                    onAddRequested()
+                    onAddRequested(state.selectedDayGroup.date)
                     true
                 } else if (
                     it.isMetaPressed &&
@@ -313,7 +316,7 @@ fun JournalEntryScreen(
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 32.dp),
-                onClick = onAddRequested
+                onClick = { onAddRequested(state.selectedDayGroup.date) }
             ) {
                 Icon(
                     Icons.Filled.Add,
@@ -398,6 +401,7 @@ fun JournalEntryScreen(
                     onDayGroupReconcileRequested = onDayGroupReconcileRequested,
                     onShowNextDay = onShowNextDayClicked,
                     onShowPreviousDay = onShowPreviousDayClicked,
+                    onAddRequested = onAddFromTagRequested,
                     modifier = Modifier.fillMaxSize()
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -442,7 +446,7 @@ fun Toolbar(
                         Text("$notUploadedCount", style = MaterialTheme.typography.labelMedium)
                         Icon(
                             imageVector = vectorResource(Res.drawable.sync_up),
-                            contentDescription = stringResource(Res.string.settings)
+                            contentDescription = null,
                         )
                     }
                 }
@@ -455,7 +459,7 @@ fun Toolbar(
             ) {
                 Icon(
                     imageVector = vectorResource(Res.drawable.sync_down),
-                    contentDescription = stringResource(Res.string.settings)
+                    contentDescription = null,
                 )
             }
             IconButton(
@@ -511,6 +515,7 @@ private fun List(
     onDayGroupReconcileRequested: () -> Unit,
     onShowNextDay: () -> Unit,
     onShowPreviousDay: () -> Unit,
+    onAddRequested: (LocalDate, String) -> Unit,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -566,11 +571,15 @@ private fun List(
                 if (showEmptyTags || entries.isNotEmpty()) {
                     SubHeaderItem(
                         tagGroup = tagGroup,
+                        showAddButton = tagGroup.tag != Tag.NO_TAG.value,
                         onCopyRequested = onTagGroupCopyRequested,
                         onDeleteRequested = onTagGroupDeleteRequested,
                         onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         onForceUploadRequested = onTagGroupForceUploadRequested,
+                        onAddRequested = { tag ->
+                            onAddRequested(dayGroup.date, tag)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(color = MaterialTheme.colorScheme.background)
@@ -771,16 +780,18 @@ private fun HeaderMenu(
 @Composable
 private fun SubHeaderItem(
     tagGroup: TagGroup,
+    showAddButton: Boolean,
     onCopyRequested: (TagGroup) -> Unit,
     onDeleteRequested: (TagGroup) -> Unit,
     onMoveToNextDayRequested: (TagGroup) -> Unit,
     onMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onForceUploadRequested: (TagGroup) -> Unit,
+    onAddRequested: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.height(48.dp),
+        modifier = modifier,
     ) {
         var showMenu by remember { mutableStateOf(false) }
         Spacer(modifier = Modifier.width(12.dp))
@@ -794,6 +805,19 @@ private fun SubHeaderItem(
             fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.weight(1f))
+        if (showAddButton) {
+            IconButton(
+                onClick = { onAddRequested(tagGroup.tag) },
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(Res.string.add_entry_content_description)
+                )
+            }
+        }
         if (tagGroup.entries.isNotEmpty()) {
             SubHeaderItemMenu(
                 showMenu = showMenu,
