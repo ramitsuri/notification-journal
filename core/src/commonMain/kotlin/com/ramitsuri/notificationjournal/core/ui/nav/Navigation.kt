@@ -90,9 +90,11 @@ fun NavGraph(
             val viewState by viewModel.state.collectAsStateWithLifecycle()
             JournalEntryScreen(
                 state = viewState,
-                onAddRequested = {
+                onAddRequested = { date ->
                     navController.navigate(
-                        Destination.ADD_ENTRY.routeWithArgValues()
+                        Destination.ADD_ENTRY.routeWithArgValues(
+                            mapOf(AddJournalEntryViewModel.DATE_ARG to date.toString())
+                        )
                     )
                 },
                 onEditRequested = { entryId ->
@@ -138,6 +140,16 @@ fun NavGraph(
                 onCopyDayGroupRequested = viewModel::onCopy,
                 onCopied = viewModel::onContentCopied,
                 onResetReceiveHelper = viewModel::resetReceiveHelper,
+                onAddFromTagRequested = { date, tag ->
+                    navController.navigate(
+                        Destination.ADD_ENTRY.routeWithArgValues(
+                            mapOf(
+                                AddJournalEntryViewModel.DATE_ARG to date.toString(),
+                                AddJournalEntryViewModel.TAG_ARG to tag,
+                            )
+                        )
+                    )
+                }
             )
         }
 

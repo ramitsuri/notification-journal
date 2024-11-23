@@ -27,6 +27,10 @@ enum class Destination(private val route: String) {
                     .plus("=${args[AddJournalEntryViewModel.RECEIVED_TEXT_ARG]}")
                     .plus("&${AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG}")
                     .plus("=${args[AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG]}")
+                    .plus("&${AddJournalEntryViewModel.DATE_ARG}")
+                    .plus("=${args[AddJournalEntryViewModel.DATE_ARG]}")
+                    .plus("&${AddJournalEntryViewModel.TAG_ARG}")
+                    .plus("=${args[AddJournalEntryViewModel.TAG_ARG]}")
 
             }
 
@@ -48,6 +52,10 @@ enum class Destination(private val route: String) {
                     .plus("={${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}}")
                     .plus("&${AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG}")
                     .plus("={${AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG}}")
+                    .plus("&${AddJournalEntryViewModel.DATE_ARG}")
+                    .plus("={${AddJournalEntryViewModel.DATE_ARG}}")
+                    .plus("&${AddJournalEntryViewModel.TAG_ARG}")
+                    .plus("={${AddJournalEntryViewModel.TAG_ARG}}")
             }
 
             else -> {
@@ -74,6 +82,14 @@ enum class Destination(private val route: String) {
                         nullable = true
                     },
                     navArgument(AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                    },
+                    navArgument(AddJournalEntryViewModel.DATE_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                    },
+                    navArgument(AddJournalEntryViewModel.TAG_ARG) {
                         type = NavType.StringType
                         nullable = true
                     },

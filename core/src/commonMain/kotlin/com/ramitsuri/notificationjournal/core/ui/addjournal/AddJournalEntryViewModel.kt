@@ -15,9 +15,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import java.net.URLDecoder
@@ -29,6 +31,7 @@ class AddJournalEntryViewModel(
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
     private val clock: Clock = Clock.System,
+    private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
     private val receivedText: String? =
         if (savedStateHandle.get<String?>(RECEIVED_TEXT_ARG).isNullOrEmpty()) {
@@ -36,13 +39,22 @@ class AddJournalEntryViewModel(
         } else {
             URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
         }
+    private val dateTime: Instant? = savedStateHandle.get<String?>(DATE_ARG)?.let { dateString ->
+        LocalDate.parse(dateString).atStartOfDayIn(zoneId)
+    }
+    private val tag: String? = savedStateHandle[TAG_ARG]
     private val duplicateFromEntryId: String? = savedStateHandle[DUPLICATE_FROM_ENTRY_ID_ARG]
 
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
 
     private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
-        AddJournalEntryViewState.default(receivedText = receivedText)
+        AddJournalEntryViewState(
+            text = receivedText ?: "",
+            dateTime = dateTime ?: clock.now(),
+            timeZone = zoneId,
+            selectedTag = tag,
+        )
     )
     val state: StateFlow<AddJournalEntryViewState> = _state
 
@@ -218,33 +230,22 @@ class AddJournalEntryViewModel(
     companion object {
         const val RECEIVED_TEXT_ARG = "received_text"
         const val DUPLICATE_FROM_ENTRY_ID_ARG = "duplicate_from_entry_id"
+        const val DATE_ARG = "date_arg"
+        const val TAG_ARG = "tag_arg"
     }
 }
 
 data class AddJournalEntryViewState(
-    val isLoading: Boolean,
-    val text: String,
-    val tags: List<Tag>,
-    val selectedTag: String?,
-    val suggestedText: String?,
-    val templates: List<JournalEntryTemplate>,
+    val isLoading: Boolean = false,
+    val text: String = "",
+    val tags: List<Tag> = listOf(),
+    val selectedTag: String? = null,
+    val suggestedText: String? = null,
+    val templates: List<JournalEntryTemplate> = listOf(),
     val dateTime: Instant,
     val timeZone: TimeZone,
 ) {
 
     val localDateTime: LocalDateTime
         get() = dateTime.toLocalDateTime(timeZone)
-
-    companion object {
-        fun default(receivedText: String?) = AddJournalEntryViewState(
-            isLoading = false,
-            text = receivedText ?: "",
-            tags = listOf(),
-            selectedTag = null,
-            suggestedText = null,
-            templates = listOf(),
-            dateTime = Clock.System.now(),
-            timeZone = TimeZone.currentSystemDefault(),
-        )
-    }
 }
