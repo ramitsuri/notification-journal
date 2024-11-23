@@ -335,6 +335,10 @@ class JournalEntryViewModel(
         _contentForCopy.update { "" }
     }
 
+    fun resetReceiveHelper() {
+        ServiceLocator.resetReceiveHelper()
+    }
+
     private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))

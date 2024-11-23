@@ -48,7 +48,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
@@ -151,9 +150,12 @@ import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.settings
+import notificationjournal.core.generated.resources.sync_down
+import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.absoluteValue
 
@@ -188,6 +190,7 @@ fun JournalEntryScreen(
     onCopyTagGroupRequested: (TagGroup) -> Unit,
     onCopyDayGroupRequested: () -> Unit,
     onCopied: () -> Unit,
+    onResetReceiveHelper: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -338,6 +341,7 @@ fun JournalEntryScreen(
                 notUploadedCount = state.notUploadedCount,
                 onSyncClicked = onSyncClicked,
                 onSettingsClicked = onSettingsClicked,
+                onResetReceiveHelper = onResetReceiveHelper,
                 scrollBehavior = scrollBehavior,
             )
 
@@ -415,6 +419,7 @@ fun Toolbar(
     notUploadedCount: Int,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
+    onResetReceiveHelper: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults
@@ -422,22 +427,36 @@ fun Toolbar(
             .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         actions = {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onSyncClicked),
-            ) {
-                if (notUploadedCount > 0) {
-                    Badge(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        contentColor = MaterialTheme.colorScheme.onBackground,
+            if (notUploadedCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .height(48.dp)
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onSyncClicked),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.align(Alignment.Center),
                     ) {
                         Text("$notUploadedCount", style = MaterialTheme.typography.labelMedium)
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.sync_up),
+                            contentDescription = stringResource(Res.string.settings)
+                        )
                     }
                 }
+            }
+            IconButton(
+                onClick = onResetReceiveHelper,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.sync_down),
+                    contentDescription = stringResource(Res.string.settings)
+                )
             }
             IconButton(
                 onClick = onSettingsClicked,
