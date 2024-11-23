@@ -137,6 +137,7 @@ fun NavGraph(
                 onCopyTagGroupRequested = viewModel::onCopy,
                 onCopyDayGroupRequested = viewModel::onCopy,
                 onCopied = viewModel::onContentCopied,
+                onResetReceiveHelper = viewModel::resetReceiveHelper,
             )
         }
 

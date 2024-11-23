@@ -50,23 +50,7 @@ object ServiceLocator {
     }
 
     fun onAppStart() {
-        coroutineScope.launch {
-            dataReceiveHelper?.startListening {
-                when (it) {
-                    is Payload.Entries -> {
-                        coroutineScope.launch { repository.handlePayload(it) }
-                    }
-
-                    is Payload.Tags -> {
-                        coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
-                    }
-
-                    is Payload.Templates -> {
-                        coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
-                    }
-                }
-            }
-        }
+        startReceiving()
     }
 
     fun onAppStop() {
@@ -77,6 +61,14 @@ object ServiceLocator {
             launch {
                 dataSendHelper?.closeConnection()
             }
+        }
+    }
+
+    fun resetReceiveHelper() {
+        coroutineScope.launch {
+            dataReceiveHelper?.closeConnection()
+            dataReceiveHelper = null
+            startReceiving()
         }
     }
 
@@ -186,14 +178,31 @@ object ServiceLocator {
         }
     }
 
-    private val dataReceiveHelper: DataReceiveHelper? by lazy {
+    private var dataReceiveHelper: DataReceiveHelper? = null
+        get() = if (field == null) {
+            synchronized(this) {
+                return if (field == null) getReceiver() else field
+            }
+        } else {
+            field
+        }
+
+    val coroutineScope by lazy {
+        CoroutineScope(SupervisorJob())
+    }
+
+    private val ioDispatcher by lazy {
+        Dispatchers.IO
+    }
+
+    private fun getReceiver(): DataReceiveHelper? {
         val hostName = keyValueStore.getString(Constants.PREF_KEY_DATA_HOST, "")
         val exchangeName = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "")
         val deviceName = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "")
         val deviceId = keyValueStore.getString(Constants.PREF_KEY_DEVICE_ID, "")
         val username = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "")
         val password = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "")
-        if (hostName.isNullOrEmpty() ||
+        return if (hostName.isNullOrEmpty() ||
             exchangeName.isNullOrEmpty() ||
             deviceName.isNullOrEmpty() ||
             deviceId.isNullOrEmpty() ||
@@ -215,12 +224,24 @@ object ServiceLocator {
         }
     }
 
-    val coroutineScope by lazy {
-        CoroutineScope(SupervisorJob())
-    }
+    private fun startReceiving() {
+        coroutineScope.launch {
+            dataReceiveHelper?.startListening {
+                when (it) {
+                    is Payload.Entries -> {
+                        coroutineScope.launch { repository.handlePayload(it) }
+                    }
 
-    private val ioDispatcher by lazy {
-        Dispatchers.IO
+                    is Payload.Tags -> {
+                        coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
+                    }
+
+                    is Payload.Templates -> {
+                        coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
+                    }
+                }
+            }
+        }
     }
 
     private lateinit var factory: Factory
