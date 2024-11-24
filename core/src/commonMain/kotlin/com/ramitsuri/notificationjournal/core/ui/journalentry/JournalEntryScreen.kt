@@ -61,6 +61,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -73,6 +77,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -90,6 +95,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
@@ -116,6 +122,7 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.bottomBorder
+import com.ramitsuri.notificationjournal.core.ui.components.CountdownSnackbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
 import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.theme.green
@@ -126,6 +133,7 @@ import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
 import com.ramitsuri.notificationjournal.core.utils.getTime
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -139,7 +147,6 @@ import notificationjournal.core.generated.resources.conflict_this_device
 import notificationjournal.core.generated.resources.conflicts
 import notificationjournal.core.generated.resources.conflicts_format
 import notificationjournal.core.generated.resources.copy
-import notificationjournal.core.generated.resources.copy_reconcile
 import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.duplicate
@@ -151,11 +158,11 @@ import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.settings
-import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.sync_down
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
+import notificationjournal.core.generated.resources.will_reconcile
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -165,7 +172,7 @@ import kotlin.math.absoluteValue
 @Composable
 fun JournalEntryScreen(
     state: ViewState,
-    onAddRequested: (LocalDate) -> Unit,
+    onAddRequested: (LocalDate?) -> Unit,
     onEditRequested: (String) -> Unit,
     onDeleteRequested: (JournalEntry) -> Unit,
     onEditTagRequested: (JournalEntry, String) -> Unit,
@@ -187,17 +194,21 @@ fun JournalEntryScreen(
     onShowNextDayClicked: () -> Unit,
     onShowPreviousDayClicked: () -> Unit,
     onShowDayGroupClicked: (DayGroup) -> Unit,
-    onDayGroupReconcileRequested: () -> Unit,
     onCopyEntryRequested: (JournalEntry) -> Unit,
     onCopyTagGroupRequested: (TagGroup) -> Unit,
     onCopyDayGroupRequested: () -> Unit,
     onCopied: () -> Unit,
     onResetReceiveHelper: () -> Unit,
     onAddFromTagRequested: (LocalDate, String) -> Unit,
+    onCancelReconcile: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val reconcileSnackBarMessage = stringResource(Res.string.will_reconcile)
+    val reconcileSnackBarAction = stringResource(Res.string.cancel)
 
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -209,6 +220,27 @@ fun JournalEntryScreen(
         if (state.contentForCopy.isNotEmpty()) {
             clipboardManager.setText(AnnotatedString(state.contentForCopy))
             onCopied()
+        }
+    }
+
+    LaunchedEffect(state.snackBarType) {
+        if (state.snackBarType is SnackBarType.Reconcile) {
+            coroutineScope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = reconcileSnackBarMessage,
+                    actionLabel = reconcileSnackBarAction,
+                    duration = SnackbarDuration.Indefinite
+                )
+                when (result) {
+                    SnackbarResult.Dismissed -> {
+                        // Do nothing
+                    }
+
+                    SnackbarResult.ActionPerformed -> {
+                        onCancelReconcile()
+                    }
+                }
+            }
         }
     }
 
@@ -270,6 +302,15 @@ fun JournalEntryScreen(
                 if (
                     it.isMetaPressed &&
                     it.key == Key.N &&
+                    it.isShiftPressed &&
+                    it.type == KeyEventType.KeyUp
+                ) {
+                    onAddRequested(null)
+                    true
+                } else if (
+                    it.isMetaPressed &&
+                    it.key == Key.N &&
+                    !it.isShiftPressed &&
                     it.type == KeyEventType.KeyUp
                 ) {
                     onAddRequested(state.selectedDayGroup.date)
@@ -313,10 +354,17 @@ fun JournalEntryScreen(
                     false
                 }
             },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+            ) { data ->
+                CountdownSnackbar(data)
+            }
+        },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 32.dp),
-                onClick = { onAddRequested(state.selectedDayGroup.date) }
+                onClick = { onAddRequested(null) }
             ) {
                 Icon(
                     Icons.Filled.Add,
@@ -398,7 +446,6 @@ fun JournalEntryScreen(
                     onShowHideAllDays = { showAllDays = it },
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     onDayGroupCopyRequested = onCopyDayGroupRequested,
-                    onDayGroupReconcileRequested = onDayGroupReconcileRequested,
                     onShowNextDay = onShowNextDayClicked,
                     onShowPreviousDay = onShowPreviousDayClicked,
                     onAddRequested = onAddFromTagRequested,
@@ -512,7 +559,6 @@ private fun List(
     onShowDayGroupClicked: (DayGroup) -> Unit,
     onShowHideAllDays: (Boolean) -> Unit,
     onDayGroupCopyRequested: () -> Unit,
-    onDayGroupReconcileRequested: () -> Unit,
     onShowNextDay: () -> Unit,
     onShowPreviousDay: () -> Unit,
     onAddRequested: (LocalDate, String) -> Unit,
@@ -528,8 +574,8 @@ private fun List(
         untaggedCount = dayGroup.untaggedCount,
         conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
         onCopyRequested = onDayGroupCopyRequested,
-        onReconcileRequested = onDayGroupReconcileRequested,
         onShowAllDaysClicked = { onShowHideAllDays(true) },
+        onAddRequested = { onAddRequested(dayGroup.date, "") },
     )
     var swipeAmount by remember { mutableStateOf(0f) }
     LazyColumn(
@@ -681,23 +727,21 @@ private fun HeaderItem(
     untaggedCount: Int,
     conflictCount: Int,
     onCopyRequested: () -> Unit,
-    onReconcileRequested: () -> Unit,
     onShowAllDaysClicked: () -> Unit,
+    onAddRequested: () -> Unit,
 ) {
-    var showMenu by remember { mutableStateOf(false) }
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colorScheme.background)
             .padding(horizontal = 8.dp)
             .padding(bottom = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
             modifier = Modifier
                 .clickable(onClick = onShowAllDaysClicked)
-                .padding(8.dp),
+                .padding(8.dp)
+                .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -734,45 +778,29 @@ private fun HeaderItem(
             }
         }
         Spacer(modifier = Modifier.width(4.dp))
-        HeaderMenu(
-            showMenu = showMenu,
-            onCopyRequested = onCopyRequested,
-            onMenuButtonClicked = { showMenu = !showMenu },
-            onReconcileRequested = onReconcileRequested,
-        )
-    }
-}
-
-@Composable
-private fun HeaderMenu(
-    showMenu: Boolean,
-    onCopyRequested: () -> Unit,
-    onMenuButtonClicked: () -> Unit,
-    onReconcileRequested: () -> Unit,
-) {
-    Box {
-        IconButton(
-            onClick = onMenuButtonClicked,
-            modifier = Modifier
-                .size(48.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.MoreVert,
-                contentDescription = stringResource(Res.string.menu_content_description)
-            )
-        }
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = onMenuButtonClicked,
-        ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.copy_reconcile)) },
-                onClick = {
-                    onMenuButtonClicked()
-                    onCopyRequested()
-                    onReconcileRequested()
-                }
-            )
+        Row(modifier = Modifier.align(Alignment.CenterEnd)) {
+            IconButton(
+                onClick = onAddRequested,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(Res.string.add_entry_content_description)
+                )
+            }
+            IconButton(
+                onClick = onCopyRequested,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ContentCopy,
+                    contentDescription = stringResource(Res.string.add_entry_content_description)
+                )
+            }
         }
     }
 }

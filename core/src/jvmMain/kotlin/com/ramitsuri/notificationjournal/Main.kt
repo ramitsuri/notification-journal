@@ -57,10 +57,10 @@ fun main() = application {
             // Due to a bug where dialogs don't open in the center of the window but resizing the
             // window fixes it
             if (sizeIncreasedLastTime) {
-                windowState.size -= DpSize(0.1.dp, 0.1.dp)
+                windowState.size -= DpSize(1.dp, 1.dp)
                 sizeIncreasedLastTime = false
             } else {
-                windowState.size += DpSize(0.1.dp, 0.1.dp)
+                windowState.size += DpSize(1.dp, 1.dp)
                 sizeIncreasedLastTime = true
             }
             onPauseOrDispose {}
