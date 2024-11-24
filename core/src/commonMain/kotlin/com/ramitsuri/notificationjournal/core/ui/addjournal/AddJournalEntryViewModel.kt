@@ -178,7 +178,7 @@ class AddJournalEntryViewModel(
             return
         }
         _state.update { it.copy(isLoading = true) }
-        val tag = currentState.selectedTag
+        val tag = currentState.tags.firstOrNull { it.value == currentState.selectedTag }?.value
         viewModelScope.launch {
             repository.insert(
                 text = text,
