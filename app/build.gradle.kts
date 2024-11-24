@@ -7,13 +7,13 @@ plugins {
 
 android {
     namespace = "com.ramitsuri.notificationjournal"
-    compileSdk = 34
+    compileSdk = 35
 
     val appVersion = libs.versions.appVersion.get()
     defaultConfig {
         applicationId = "com.ramitsuri.notificationjournal"
         minSdk = 30
-        targetSdk = 34
+        targetSdk = 35
         versionCode = appVersion.toDouble().times(100).toInt()
         versionName = appVersion
 

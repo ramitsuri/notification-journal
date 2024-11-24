@@ -84,7 +84,7 @@ kotlin {
 
 android {
     namespace = "com.ramitsuri.notificationjournal.core"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 30
