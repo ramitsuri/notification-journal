@@ -122,4 +122,5 @@
     <string name="short_display_text">Short display text</string>
 
     <string name="conflict_this_device">This device</string>
+    <string name="will_reconcile">Will reconcile</string>
 </resources>

@@ -39,10 +39,6 @@ class AddJournalEntryViewModel(
         } else {
             URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
         }
-    private val dateTime: Instant? = savedStateHandle.get<String?>(DATE_ARG)?.let { dateString ->
-        LocalDate.parse(dateString).atStartOfDayIn(zoneId)
-    }
-    private val tag: String? = savedStateHandle[TAG_ARG]
     private val duplicateFromEntryId: String? = savedStateHandle[DUPLICATE_FROM_ENTRY_ID_ARG]
 
     private val _saved = MutableStateFlow(false)
@@ -51,9 +47,12 @@ class AddJournalEntryViewModel(
     private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
         AddJournalEntryViewState(
             text = receivedText ?: "",
-            dateTime = dateTime ?: clock.now(),
+            dateTime = savedStateHandle.get<String?>(DATE_ARG)
+                ?.let { dateString ->
+                    LocalDate.parse(dateString).atStartOfDayIn(zoneId)
+                } ?: clock.now(),
             timeZone = zoneId,
-            selectedTag = tag,
+            selectedTag = savedStateHandle[TAG_ARG],
         )
     )
     val state: StateFlow<AddJournalEntryViewState> = _state

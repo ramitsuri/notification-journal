@@ -19,6 +19,8 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,9 +55,14 @@ class JournalEntryViewModel(
 
     private val _contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
+    private val _snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
+
+    private var reconcileDayGroupJob: Job? = null
+
     val state: StateFlow<ViewState> = combine(
         _selectedIndex,
         _contentForCopy,
+        _snackBarType,
         repository.getFlow(
             showReconciled = keyValueStore.getBoolean(
                 Constants.PREF_KEY_SHOW_RECONCILED,
@@ -65,7 +72,7 @@ class JournalEntryViewModel(
         repository.getForUploadCountFlow(),
         repository.getConflicts(),
         prefManager.showEmptyTags(),
-    ) { selectedIndex, contentForCopy, entries, forUploadCount, entryConflicts, showEmptyTags ->
+    ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts, showEmptyTags ->
         val tags = tagsDao.getAll()
         val dayGroups = try {
             entries.toDayGroups(
@@ -102,6 +109,7 @@ class JournalEntryViewModel(
                 selectedIndex = selectedIndex,
                 contentForCopy = contentForCopy,
                 showEmptyTags = showEmptyTags,
+                snackBarType = snackBarType,
             )
         }
     }.stateIn(
@@ -221,18 +229,6 @@ class JournalEntryViewModel(
         }
     }
 
-    fun reconcile() {
-        val dayGroup = state.value.selectedDayGroup
-        viewModelScope.launch {
-            dayGroup
-                .tagGroups
-                .map { it.entries }
-                .flatten()
-                .map { it.copy(reconciled = true) }
-                .let { repository.update(it) }
-        }
-    }
-
     fun forceUpload(tagGroup: TagGroup) {
         repository.upload(tagGroup.entries)
     }
@@ -328,6 +324,7 @@ class JournalEntryViewModel(
                 }
             }
             _contentForCopy.update { content }
+            reconcileWithDelay(dayGroup)
         }
     }
 
@@ -343,6 +340,30 @@ class JournalEntryViewModel(
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
         }
+    }
+
+    private fun reconcileWithDelay(dayGroup: DayGroup) {
+        _snackBarType.update {
+            SnackBarType.Reconcile
+        }
+        reconcileDayGroupJob = viewModelScope.launch {
+            delay(1_000)
+            _snackBarType.update {
+                SnackBarType.None
+            }
+            delay(5_000)
+            dayGroup
+                .tagGroups
+                .map { it.entries }
+                .flatten()
+                .map { it.copy(reconciled = true) }
+                .let { repository.update(it) }
+        }
+    }
+
+    fun cancelReconcile() {
+        reconcileDayGroupJob?.cancel()
+        reconcileDayGroupJob = null
     }
 
     companion object {
@@ -374,16 +395,14 @@ data class ViewState(
     val selectedIndex: Int = 0,
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
+    val snackBarType: SnackBarType = SnackBarType.None,
 ) {
     val selectedDayGroup: DayGroup
         get() {
-            if (dayGroups.isEmpty()) {
-                return DayGroup(
-                    LocalDate(1970, 1, 1),
-                    listOf(),
-                )
-            }
-            return dayGroups[selectedIndex]
+            return dayGroups.getOrNull(selectedIndex) ?: DayGroup(
+                LocalDate(1970, 1, 1),
+                listOf(),
+            )
         }
 
     val dayGroupConflictCountMap
@@ -391,16 +410,22 @@ data class ViewState(
             .associateWith { it.getConflictsCount(entryConflicts) }
 }
 
+sealed interface SnackBarType {
+    data object None : SnackBarType
+    data object Reconcile : SnackBarType
+}
+
 @Suppress("UNCHECKED_CAST")
-private fun <T1, T2, T3, T4, T5, T6, R> combine(
+private fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
     flow4: Flow<T4>,
     flow5: Flow<T5>,
     flow6: Flow<T6>,
-    transform: suspend (T1, T2, T3, T4, T5, T6) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6) { args: Array<*> ->
+    flow7: Flow<T7>,
+    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
+): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7) { args: Array<*> ->
     transform(
         args[0] as T1,
         args[1] as T2,
@@ -408,5 +433,6 @@ private fun <T1, T2, T3, T4, T5, T6, R> combine(
         args[3] as T4,
         args[4] as T5,
         args[5] as T6,
+        args[6] as T7,
     )
 }
