@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.repository
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
+import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
@@ -195,27 +196,29 @@ class JournalRepository(
 
 
     private fun JournalEntry.getEntryConflict(
-        withEntry: JournalEntry,
-        withEntrySender: Sender
+        incomingEntry: JournalEntry,
+        incomingEntrySender: Sender
     ): EntryConflict? {
-        if (entryTime == withEntry.entryTime &&
-            text == withEntry.text &&
-            tag == withEntry.tag
+        if (entryTime == incomingEntry.entryTime &&
+            text == incomingEntry.text &&
+            tag == incomingEntry.tag
         ) {
             return null
         }
 
         // Assume that local entry is older because the other entry now has a tag
-        if (tag == null && withEntry.tag != null) {
+        if ((tag == null || tag == Tag.NO_TAG.value) &&
+            !(incomingEntry.tag == null || incomingEntry.tag == Tag.NO_TAG.value)
+        ) {
             return null
         }
 
         return EntryConflict(
-            entryId = withEntry.id,
-            entryTime = withEntry.entryTime,
-            text = withEntry.text,
-            tag = withEntry.tag,
-            senderName = withEntrySender.name,
+            entryId = incomingEntry.id,
+            entryTime = incomingEntry.entryTime,
+            text = incomingEntry.text,
+            tag = incomingEntry.tag,
+            senderName = incomingEntrySender.name,
         )
     }
 }

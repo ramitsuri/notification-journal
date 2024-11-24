@@ -19,7 +19,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import java.net.URLDecoder
@@ -49,7 +49,8 @@ class AddJournalEntryViewModel(
             text = receivedText ?: "",
             dateTime = savedStateHandle.get<String?>(DATE_ARG)
                 ?.let { dateString ->
-                    LocalDate.parse(dateString).atStartOfDayIn(zoneId)
+                    val currentDateTime = clock.now().toLocalDateTime(zoneId)
+                    LocalDate.parse(dateString).atTime(currentDateTime.time).toInstant(zoneId)
                 } ?: clock.now(),
             timeZone = zoneId,
             selectedTag = savedStateHandle[TAG_ARG],
