@@ -13,20 +13,19 @@ import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
-import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.combine
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import com.ramitsuri.notificationjournal.core.utils.getLocalDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,7 +39,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class JournalEntryViewModel(
     receivedText: String?,
-    private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val prefManager: PrefManager,
@@ -59,64 +57,62 @@ class JournalEntryViewModel(
 
     private var reconcileDayGroupJob: Job? = null
 
-    val state: StateFlow<ViewState> = combine(
-        _selectedIndex,
-        _contentForCopy,
-        _snackBarType,
-        repository.getFlow(
-            showReconciled = keyValueStore.getBoolean(
-                Constants.PREF_KEY_SHOW_RECONCILED,
-                false
-            )
-        ),
-        repository.getForUploadCountFlow(),
-        repository.getConflicts(),
-        prefManager.showEmptyTags(),
-    ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts, showEmptyTags ->
-        val tags = tagsDao.getAll()
-        val dayGroups = try {
-            entries.toDayGroups(
-                zoneId = zoneId,
-                tagsForSort = tags,
-            )
-        } catch (e: Exception) {
-            listOf()
-        }
-        val sorted = dayGroups.sortedBy { it.date }
-        // Show either today or the biggest date as initially selected
-        if (selectedIndex == null) {
-            if (sorted.isNotEmpty()) {
-                _selectedIndex.update {
-                    sorted
-                        .indexOfFirst {
-                            it.date == getLocalDate(clock.now(), zoneId)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val state: StateFlow<ViewState> =
+        prefManager.showReconciled().flatMapLatest { showReconciled ->
+            combine(
+                _selectedIndex,
+                _contentForCopy,
+                _snackBarType,
+                repository.getFlow(showReconciled = showReconciled),
+                repository.getForUploadCountFlow(),
+                repository.getConflicts(),
+                prefManager.showEmptyTags(),
+                prefManager.showConflictDiffInline(),
+            ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
+                showEmptyTags, showConflictDiffInline ->
+                val tags = tagsDao.getAll()
+                val dayGroups = try {
+                    entries.toDayGroups(
+                        zoneId = zoneId,
+                        tagsForSort = tags,
+                    )
+                } catch (e: Exception) {
+                    listOf()
+                }
+                val sorted = dayGroups.sortedBy { it.date }
+                // Show either today or the biggest date as initially selected
+                if (selectedIndex == null) {
+                    if (sorted.isNotEmpty()) {
+                        _selectedIndex.update {
+                            sorted
+                                .indexOfFirst {
+                                    it.date == getLocalDate(clock.now(), zoneId)
+                                }
+                                .takeIf { it >= 0 }
+                                ?: sorted.lastIndex
                         }
-                        .takeIf { it >= 0 }
-                        ?: sorted.lastIndex
+                    }
+                    ViewState()
+                } else {
+                    ViewState(
+                        dayGroups = sorted,
+                        tags = tags,
+                        notUploadedCount = forUploadCount,
+                        entryConflicts = entryConflicts,
+                        showConflictDiffInline = showConflictDiffInline,
+                        selectedIndex = selectedIndex,
+                        contentForCopy = contentForCopy,
+                        showEmptyTags = showEmptyTags,
+                        snackBarType = snackBarType,
+                    )
                 }
             }
-            ViewState()
-        } else {
-            ViewState(
-                dayGroups = sorted,
-                tags = tags,
-                notUploadedCount = forUploadCount,
-                entryConflicts = entryConflicts,
-                showConflictDiffInline = keyValueStore.getBoolean(
-                    Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
-                    false
-                ),
-                selectedIndex = selectedIndex,
-                contentForCopy = contentForCopy,
-                showEmptyTags = showEmptyTags,
-                snackBarType = snackBarType,
-            )
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ViewState(),
-    )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ViewState(),
+        )
 
     fun setReceivedText(text: String?) {
         if (!text.isNullOrEmpty()) {
@@ -376,7 +372,6 @@ class JournalEntryViewModel(
             ): T {
                 return JournalEntryViewModel(
                     receivedText,
-                    ServiceLocator.keyValueStore,
                     ServiceLocator.repository,
                     ServiceLocator.tagsDao,
                     prefManager = ServiceLocator.prefManager,
@@ -413,26 +408,4 @@ data class ViewState(
 sealed interface SnackBarType {
     data object None : SnackBarType
     data object Reconcile : SnackBarType
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
-    flow: Flow<T1>,
-    flow2: Flow<T2>,
-    flow3: Flow<T3>,
-    flow4: Flow<T4>,
-    flow5: Flow<T5>,
-    flow6: Flow<T6>,
-    flow7: Flow<T7>,
-    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7) { args: Array<*> ->
-    transform(
-        args[0] as T1,
-        args[1] as T2,
-        args[2] as T3,
-        args[3] as T4,
-        args[4] as T5,
-        args[5] as T6,
-        args[6] as T7,
-    )
 }
