@@ -9,10 +9,10 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.combine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,6 +26,7 @@ class SettingsViewModel(
     private val prefManager: PrefManager,
 ) : ViewModel() {
     private val _uploadLoading = MutableStateFlow(false)
+
     // Because some prefs are stored in non reactive storage
     private val _prefUpdated = MutableStateFlow(0)
 
@@ -34,7 +35,9 @@ class SettingsViewModel(
         _uploadLoading,
         prefManager.showEmptyTags(),
         prefManager.copyWithEmptyTags(),
-    ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags ->
+        prefManager.showReconciled(),
+        prefManager.showConflictDiffInline(),
+    ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showReconciled, showConflictDiffInline ->
         SettingsViewState(
             uploadLoading = uploadLoading,
             dataHost = DataHost(getDataHost()),
@@ -43,8 +46,8 @@ class SettingsViewModel(
             username = Username(getUsername()),
             password = Password(getPassword()),
             appVersion = getAppVersion(),
-            showReconciled = getShowReconciled(),
-            showConflictDiffInline = getShowConflictDiffInline(),
+            showReconciled = showReconciled,
+            showConflictDiffInline = showConflictDiffInline,
             showEmptyTags = showEmptyTags,
             copyWithEmptyTags = copyWithEmptyTags,
         )
@@ -81,16 +84,15 @@ class SettingsViewModel(
     }
 
     fun toggleShowReconciled() {
-        keyValueStore.putBoolean(Constants.PREF_KEY_SHOW_RECONCILED, !getShowReconciled())
-        _prefUpdated.update { it + 1 }
+        viewModelScope.launch {
+            prefManager.setShowReconciled(state.value.showReconciled.not())
+        }
     }
 
     fun toggleShowConflictDiffInline() {
-        keyValueStore.putBoolean(
-            Constants.PREF_SHOW_CONFLICT_DIFF_INLINE,
-            !getShowConflictDiffInline()
-        )
-        _prefUpdated.update { it + 1 }
+        viewModelScope.launch {
+            prefManager.setShowConflictDiffInline(state.value.showConflictDiffInline.not())
+        }
     }
 
     fun toggleShowEmptyTags() {
@@ -115,12 +117,6 @@ class SettingsViewModel(
     private fun getUsername() = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "") ?: ""
 
     private fun getPassword() = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "") ?: ""
-
-    private fun getShowReconciled() =
-        keyValueStore.getBoolean(Constants.PREF_KEY_SHOW_RECONCILED, false)
-
-    private fun getShowConflictDiffInline() =
-        keyValueStore.getBoolean(Constants.PREF_SHOW_CONFLICT_DIFF_INLINE, false)
 
     companion object {
         fun factory() = object : ViewModelProvider.Factory {
