@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -611,21 +612,19 @@ private fun List(
     ) {
         dayGroup.tagGroups.forEach { tagGroup ->
             val entries = tagGroup.entries
+            val showAddButtonItem = (showEmptyTags || entries.isNotEmpty())
+                    && tagGroup.tag != Tag.NO_TAG.value
             var shape: Shape
             var borderModifier: Modifier
-            stickyHeader(key = dayGroup.date.toString().plus(tagGroup.tag)) {
-                if (showEmptyTags || entries.isNotEmpty()) {
+            if (showEmptyTags || entries.isNotEmpty()) {
+                stickyHeader(key = dayGroup.date.toString().plus(tagGroup.tag)) {
                     SubHeaderItem(
                         tagGroup = tagGroup,
-                        showAddButton = tagGroup.tag != Tag.NO_TAG.value,
                         onCopyRequested = onTagGroupCopyRequested,
                         onDeleteRequested = onTagGroupDeleteRequested,
                         onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         onForceUploadRequested = onTagGroupForceUploadRequested,
-                        onAddRequested = { tag ->
-                            onAddRequested(dayGroup.date, tag)
-                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(color = MaterialTheme.colorScheme.background)
@@ -648,7 +647,7 @@ private fun List(
                             Modifier.topBorder(strokeWidth, strokeColor, cornerRadius)
                     }
 
-                    index == entries.lastIndex -> {
+                    index == entries.lastIndex && !showAddButtonItem -> {
                         shape = bottomShape
                         borderModifier =
                             Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
@@ -703,6 +702,20 @@ private fun List(
                         }
                 )
             }
+            if (showAddButtonItem) {
+                item {
+                    AddForTagButton(
+                        isAddTheOnlyItem = entries.isEmpty(),
+                        strokeWidth = strokeWidth,
+                        strokeColor = strokeColor,
+                        cornerRadius = cornerRadius,
+                        defaultBottomShape = bottomShape,
+                        onAddForTagButtonClick = {
+                            onAddRequested(dayGroup.date, tagGroup.tag)
+                        }
+                    )
+                }
+            }
             item {
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -719,6 +732,45 @@ private fun List(
         onDismiss = { onShowHideAllDays(false) },
         onDayGroupSelected = onShowDayGroupClicked,
     )
+}
+
+@Composable
+private fun AddForTagButton(
+    isAddTheOnlyItem: Boolean,
+    strokeWidth: Dp,
+    strokeColor: Color,
+    cornerRadius: Dp,
+    defaultBottomShape: Shape,
+    onAddForTagButtonClick: () -> Unit,
+) {
+    val (addButtonShape, addButtonBorderModifier) =
+        if (isAddTheOnlyItem) {
+            RoundedCornerShape(16.dp) to
+                    Modifier.fullBorder(strokeWidth, strokeColor.copy(alpha = 0.3f), cornerRadius)
+        } else {
+            defaultBottomShape to
+                    Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
+        }
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 12.dp)
+            .fillMaxWidth()
+            .clip(addButtonShape)
+            .then(addButtonBorderModifier),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        IconButton(
+            onClick = onAddForTagButtonClick,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(Res.string.add_entry_content_description)
+            )
+        }
+    }
 }
 
 @Composable
@@ -808,18 +860,16 @@ private fun HeaderItem(
 @Composable
 private fun SubHeaderItem(
     tagGroup: TagGroup,
-    showAddButton: Boolean,
     onCopyRequested: (TagGroup) -> Unit,
     onDeleteRequested: (TagGroup) -> Unit,
     onMoveToNextDayRequested: (TagGroup) -> Unit,
     onMoveToPreviousDayRequested: (TagGroup) -> Unit,
     onForceUploadRequested: (TagGroup) -> Unit,
-    onAddRequested: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier,
+        modifier = modifier.sizeIn(minHeight = 48.dp),
     ) {
         var showMenu by remember { mutableStateOf(false) }
         Spacer(modifier = Modifier.width(12.dp))
@@ -833,19 +883,6 @@ private fun SubHeaderItem(
             fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.weight(1f))
-        if (showAddButton) {
-            IconButton(
-                onClick = { onAddRequested(tagGroup.tag) },
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = stringResource(Res.string.add_entry_content_description)
-                )
-            }
-        }
         if (tagGroup.entries.isNotEmpty()) {
             SubHeaderItemMenu(
                 showMenu = showMenu,
