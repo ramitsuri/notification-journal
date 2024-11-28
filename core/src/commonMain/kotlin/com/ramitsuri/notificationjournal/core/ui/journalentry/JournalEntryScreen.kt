@@ -635,7 +635,7 @@ private fun List(
                 count = entries.size,
                 key = { index -> entries[index].id }) { index ->
                 when {
-                    entries.size == 1 -> {
+                    entries.size == 1 && !showAddButtonItem -> {
                         shape = RoundedCornerShape(16.dp)
                         borderModifier =
                             Modifier.fullBorder(strokeWidth, strokeColor, cornerRadius)
