@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.ramitsuri.notificationjournal.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -20,8 +23,10 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text2.BasicTextField2
+import androidx.compose.foundation.text2.input.TextFieldLineLimits
+import androidx.compose.foundation.text2.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
@@ -66,9 +71,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -100,14 +103,13 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun AddEditEntryDialog(
     isLoading: Boolean,
-    text: String,
+    textState: TextFieldState,
     tags: List<Tag>,
     selectedTag: String?,
     suggestedText: String?,
     showAddAnother: Boolean,
     dateTime: LocalDateTime,
     templates: List<JournalEntryTemplate>,
-    onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
@@ -180,7 +182,7 @@ fun AddEditEntryDialog(
                     // Escape -> Cancel
                     it.key == Key.Escape &&
                             it.type == KeyEventType.KeyUp -> {
-                        if (text.isEmpty()) {
+                        if (textState.text.isEmpty()) {
                             // To prevent accidental cancel
                             onCancel()
                         }
@@ -512,14 +514,13 @@ fun AddEditEntryDialog(
                     modifier = Modifier
                         .nestedScroll(scrollBehavior.nestedScrollConnection)
                         .weight(1f),
-                    text = text,
+                    textState = textState,
                     tags = tags,
                     selectedTag = selectedTag,
                     suggestedText = suggestedText,
                     templates = templates,
                     showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
                     showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
-                    onTextUpdated = onTextUpdated,
                     onTagClicked = onTagClicked,
                     onTemplateClicked = onTemplateClicked,
                     onUseSuggestedText = onUseSuggestedText,
@@ -546,17 +547,17 @@ fun AddEditEntryDialog(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Content(
     modifier: Modifier = Modifier,
-    text: String,
+    textState: TextFieldState,
     tags: List<Tag>,
     selectedTag: String?,
     suggestedText: String?,
     templates: List<JournalEntryTemplate>,
     showTagsKeyboardShortcutHint: Boolean,
     showTemplatesKeyboardShortcutHint: Boolean,
-    onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
@@ -566,7 +567,6 @@ private fun Content(
     val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
 
-    var selection by remember { mutableStateOf(TextRange(text.length)) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -581,23 +581,19 @@ private fun Content(
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        BasicTextField(
-            value = TextFieldValue(text = text, selection = selection),
-            onValueChange = {
-                onTextUpdated(it.text)
-                selection = it.selection
-            },
+        BasicTextField2(
+            state = textState,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences
             ),
             textStyle = MaterialTheme.typography.bodyMedium
                 .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
-            maxLines = 10,
+            lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester = textFieldFocusRequester),
-            decorationBox = { innerTextField ->
+            decorator = { innerTextField ->
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(5.dp))

@@ -171,7 +171,6 @@ fun NavGraph(
 
             AddJournalEntryScreen(
                 state = viewState,
-                onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
                 onTemplateClicked = viewModel::templateClicked,
                 onUseSuggestedText = viewModel::useSuggestedText,
@@ -205,7 +204,6 @@ fun NavGraph(
 
             EditJournalEntryScreen(
                 state = viewState,
-                onTextUpdated = viewModel::textUpdated,
                 onTagClicked = viewModel::tagClicked,
                 onTemplateClicked = viewModel::templateClicked,
                 onSave = viewModel::save,

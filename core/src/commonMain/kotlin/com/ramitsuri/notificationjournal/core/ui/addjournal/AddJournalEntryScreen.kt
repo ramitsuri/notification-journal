@@ -1,15 +1,16 @@
 package com.ramitsuri.notificationjournal.core.ui.addjournal
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.components.AddEditEntryDialog
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AddJournalEntryScreen(
     state: AddJournalEntryViewState,
-    onTextUpdated: (String) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
@@ -25,14 +26,13 @@ fun AddJournalEntryScreen(
 ) {
     AddEditEntryDialog(
         isLoading = state.isLoading,
-        text = state.text,
+        textState = state.textFieldState,
         tags = state.tags,
         selectedTag = state.selectedTag,
         suggestedText = state.suggestedText,
         showAddAnother = true,
         templates = state.templates,
         dateTime = state.localDateTime,
-        onTextUpdated = onTextUpdated,
         onTagClicked = onTagClicked,
         onTemplateClicked = onTemplateClicked,
         onUseSuggestedText = onUseSuggestedText,

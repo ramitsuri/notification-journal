@@ -1,5 +1,11 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.ramitsuri.notificationjournal.core.ui.addjournal
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.text2.input.TextFieldState
+import androidx.compose.foundation.text2.input.delete
+import androidx.compose.foundation.text2.input.insert
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -52,7 +58,7 @@ class AddJournalEntryViewModel(
 
     private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
         AddJournalEntryViewState(
-            text = receivedText ?: "",
+            textFieldState = TextFieldState(receivedText ?: ""),
             dateTime = dateTime,
             timeZone = zoneId,
             selectedTag = savedStateHandle[TAG_ARG],
@@ -66,12 +72,6 @@ class AddJournalEntryViewModel(
         loadFromDuplicateEntryId()
     }
 
-    fun textUpdated(text: String) {
-        _state.update {
-            it.copy(text = text)
-        }
-    }
-
     fun tagClicked(tag: String) {
         _state.update {
             it.copy(selectedTag = tag)
@@ -82,20 +82,20 @@ class AddJournalEntryViewModel(
         val suggestedText = _state.value.suggestedText
         if (suggestedText != null) {
             _state.update {
-                it.copy(text = suggestedText, suggestedText = null)
+                it.copy(textFieldState = TextFieldState(suggestedText), suggestedText = null)
             }
         }
     }
 
     fun templateClicked(template: JournalEntryTemplate) {
-        _state.update { previousState ->
-            val newText = if (template.replacesExistingValues) {
+        _state.value.textFieldState.edit {
+            if (template.replacesExistingValues) {
                 tagClicked(template.tag)
-                template.text
+                delete(0, length)
+                insert(0, template.text)
             } else {
-                previousState.text + template.text
+                insert(selectionInChars.start, template.text)
             }
-            previousState.copy(text = newText)
         }
     }
 
@@ -151,7 +151,7 @@ class AddJournalEntryViewModel(
 
     private fun save(exitOnSave: Boolean) {
         val currentState = _state.value
-        val text = currentState.text
+        val text = currentState.textFieldState.text.toString()
         if (text.isEmpty()) {
             return
         }
@@ -169,7 +169,12 @@ class AddJournalEntryViewModel(
                 }
             } else {
                 _state.update {
-                    it.copy(isLoading = false, text = "", selectedTag = null, suggestedText = null)
+                    it.copy(
+                        isLoading = false,
+                        textFieldState = TextFieldState(),
+                        selectedTag = null,
+                        suggestedText = null,
+                    )
                 }
             }
         }
@@ -199,7 +204,10 @@ class AddJournalEntryViewModel(
         viewModelScope.launch {
             val fromEntry = repository.get(id) ?: return@launch
             _state.update {
-                it.copy(text = fromEntry.text, selectedTag = fromEntry.tag)
+                it.copy(
+                    textFieldState = TextFieldState(fromEntry.text),
+                    selectedTag = fromEntry.tag,
+                )
             }
         }
     }
@@ -214,7 +222,7 @@ class AddJournalEntryViewModel(
 
 data class AddJournalEntryViewState(
     val isLoading: Boolean = false,
-    val text: String = "",
+    val textFieldState: TextFieldState = TextFieldState(),
     val tags: List<Tag> = listOf(),
     val selectedTag: String? = null,
     val suggestedText: String? = null,
