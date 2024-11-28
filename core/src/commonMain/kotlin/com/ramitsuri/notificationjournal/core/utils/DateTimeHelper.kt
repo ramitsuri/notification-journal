@@ -35,7 +35,14 @@ fun formatForDisplay(
     pmString: String,
 ): String {
     val localDateTime = toFormat.toLocalDateTime(timeZone)
-    val minute = localDateTime.minute
+    return formatForDisplay(toFormat = localDateTime, amString = amString, pmString = pmString)
+}
+fun formatForDisplay(
+    toFormat: LocalDateTime,
+    amString: String,
+    pmString: String,
+): String {
+    val minute = toFormat.minute
     val format = LocalDateTime.Format {
         amPmHour(padding = Padding.NONE)
         if (minute != 0) {
@@ -44,7 +51,7 @@ fun formatForDisplay(
         }
         amPmMarker(am = amString, pm = pmString)
     }
-    return localDateTime.format(format)
+    return toFormat.format(format)
 }
 
 @Composable

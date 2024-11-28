@@ -466,7 +466,7 @@ fun JournalEntryScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Toolbar(
+private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     notUploadedCount: Int,
     onSyncClicked: () -> Unit,

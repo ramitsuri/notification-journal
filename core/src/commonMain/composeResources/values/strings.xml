@@ -116,7 +116,7 @@
     <string name="password">Password</string>
     <string name="untagged_format">Untagged: %1$s</string>
     <string name="conflicts_format">Conflicts: %1$s</string>
-    <string name="reset_date_time">Reset date time</string>
+    <string name="reset">Reset</string>
     <string name="text">Text</string>
     <string name="display_text">Display text</string>
     <string name="short_display_text">Short display text</string>

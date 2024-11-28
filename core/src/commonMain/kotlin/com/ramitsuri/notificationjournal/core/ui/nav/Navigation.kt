@@ -153,7 +153,7 @@ fun NavGraph(
             )
         }
 
-        dialog(
+        composable(
             route = Destination.ADD_ENTRY.route(),
             arguments = Destination.ADD_ENTRY.navArgs()
         ) { backStackEntry ->
@@ -178,15 +178,16 @@ fun NavGraph(
                 onSave = viewModel::save,
                 onAddAnother = viewModel::saveAndAddAnother,
                 onCancel = { navController.navigateUp() },
+                onDateSelected = viewModel::dateSelected,
                 onPreviousDateRequested = viewModel::previousDay,
                 onNextDateRequested = viewModel::nextDay,
-                onHourUpdated = viewModel::setHour,
-                onMinuteUpdated = viewModel::setMinute,
-                onResetDateTime = viewModel::resetDateTime,
+                onTimeSelected = viewModel::timeSelected,
+                onResetDate = viewModel::resetDate,
+                onResetTime = viewModel::resetTime,
             )
         }
 
-        dialog(
+        composable(
             Destination.EDIT_ENTRY.route(),
             arguments = Destination.EDIT_ENTRY.navArgs()
         ) { backStackEntry ->
@@ -209,11 +210,12 @@ fun NavGraph(
                 onTemplateClicked = viewModel::templateClicked,
                 onSave = viewModel::save,
                 onCancel = { navController.navigateUp() },
+                onDateSelected = viewModel::dateSelected,
                 onPreviousDateRequested = viewModel::previousDay,
                 onNextDateRequested = viewModel::nextDay,
-                onHourUpdated = viewModel::setHour,
-                onMinuteUpdated = viewModel::setMinute,
-                onResetDateTime = viewModel::resetDateTime,
+                onTimeSelected = viewModel::timeSelected,
+                onResetDate = viewModel::resetDate,
+                onResetTime = viewModel::resetTime,
             )
         }
 

@@ -3,6 +3,8 @@ package com.ramitsuri.notificationjournal.core.ui.addjournal
 import androidx.compose.runtime.Composable
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.components.AddEditEntryDialog
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 
 @Composable
 fun AddJournalEntryScreen(
@@ -14,11 +16,12 @@ fun AddJournalEntryScreen(
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
     onPreviousDateRequested: () -> Unit,
     onNextDateRequested: () -> Unit,
-    onHourUpdated: (String) -> Unit,
-    onMinuteUpdated: (String) -> Unit,
-    onResetDateTime: () -> Unit,
+    onTimeSelected: (LocalTime) -> Unit,
+    onResetDate: () -> Unit,
+    onResetTime: () -> Unit,
 ) {
     AddEditEntryDialog(
         isLoading = state.isLoading,
@@ -36,10 +39,11 @@ fun AddJournalEntryScreen(
         onSave = onSave,
         onAddAnother = onAddAnother,
         onCancel = onCancel,
+        onDateSelected = onDateSelected,
         onPreviousDateRequested = onPreviousDateRequested,
         onNextDateRequested = onNextDateRequested,
-        onHourUpdated = onHourUpdated,
-        onMinuteUpdated = onMinuteUpdated,
-        onResetDateTime = onResetDateTime,
+        onTimeSelected = onTimeSelected,
+        onResetDate = onResetDate,
+        onResetTime = onResetTime,
     )
 }

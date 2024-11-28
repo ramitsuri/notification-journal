@@ -16,9 +16,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.days
@@ -115,55 +117,30 @@ class EditJournalEntryViewModel(
         }
     }
 
-    fun setHour(hourString: String) {
-        val hour = hourString.ifEmpty { "0" }.toIntOrNull() ?: return
-
-        val hourToSet = if ((0..23).contains(hour).not()) {
-            if (hour % 10 == 0) {
-                hour / 10
-            } else {
-                hour % 10
-            }
-        } else {
-            hour
-        }
-        setHourAndMinute(hour = hourToSet)
-    }
-
-    fun setMinute(minuteString: String) {
-        val minute = minuteString.ifEmpty { "0" }.toIntOrNull() ?: return
-
-        val minuteToSet = if ((0..59).contains(minute).not()) {
-            if (minute % 10 == 0) {
-                minute / 10
-            } else {
-                minute % 10
-            }
-        } else {
-            minute
-        }
-        setHourAndMinute(minute = minuteToSet)
-    }
-
-    fun resetDateTime() {
-        _state.update { it.copy(dateTime = entry.entryTime) }
-    }
-
-    private fun setHourAndMinute(hour: Int? = null, minute: Int? = null) {
+    fun dateSelected(date: LocalDate) {
         _state.update {
-            val previousDateTime = it.dateTime.toLocalDateTime(it.timeZone)
-            val previousTime = previousDateTime.time
-
-            val newTime = LocalTime(
-                hour = hour ?: previousTime.hour,
-                minute = minute ?: previousTime.minute,
-                second = previousTime.second,
-                nanosecond = previousTime.nanosecond,
-            )
-            it.copy(
-                dateTime = LocalDateTime(previousDateTime.date, newTime).toInstant(it.timeZone)
-            )
+            it.copy(dateTime = date.atTime(it.localDateTime.time).toInstant(it.timeZone))
         }
+    }
+
+    fun timeSelected(time: LocalTime) {
+        _state.update {
+            it.copy(dateTime = LocalDateTime(it.localDateTime.date, time).toInstant(it.timeZone))
+        }
+    }
+
+    fun resetDate() {
+        val currentDateTime = _state.value.localDateTime
+        val originalDateTime = entry.entryTime.toLocalDateTime(entry.timeZone)
+        val resetDateTime = LocalDateTime(date = originalDateTime.date, time = currentDateTime.time)
+        _state.update { it.copy(dateTime = resetDateTime.toInstant(entry.timeZone)) }
+    }
+
+    fun resetTime() {
+        val currentDateTime = _state.value.localDateTime
+        val originalDateTime = entry.entryTime.toLocalDateTime(entry.timeZone)
+        val resetDateTime = LocalDateTime(date = currentDateTime.date, time = originalDateTime.time)
+        _state.update { it.copy(dateTime = resetDateTime.toInstant(entry.timeZone)) }
     }
 
     private fun loadTags() {

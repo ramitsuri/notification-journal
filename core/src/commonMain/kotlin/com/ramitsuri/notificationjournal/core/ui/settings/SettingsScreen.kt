@@ -15,11 +15,8 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -37,8 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import notificationjournal.core.generated.resources.Res
-import notificationjournal.core.generated.resources.back
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.data_host
 import notificationjournal.core.generated.resources.device_name
@@ -61,6 +58,7 @@ import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
@@ -98,14 +96,7 @@ fun SettingsScreen(
                 .systemBarsPadding()
                 .displayCutoutPadding(),
         ) {
-            IconButton(
-                onClick = onBack
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back)
-                )
-            }
+            Toolbar(onBackClick = onBack)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth(),

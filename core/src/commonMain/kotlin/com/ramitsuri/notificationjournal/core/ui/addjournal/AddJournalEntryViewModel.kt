@@ -41,17 +41,19 @@ class AddJournalEntryViewModel(
         }
     private val duplicateFromEntryId: String? = savedStateHandle[DUPLICATE_FROM_ENTRY_ID_ARG]
 
+    private val dateTime = savedStateHandle.get<String?>(DATE_ARG)
+        ?.let { dateString ->
+            val currentDateTime = clock.now().toLocalDateTime(zoneId)
+            LocalDate.parse(dateString).atTime(currentDateTime.time).toInstant(zoneId)
+        } ?: clock.now()
+
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
 
     private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
         AddJournalEntryViewState(
             text = receivedText ?: "",
-            dateTime = savedStateHandle.get<String?>(DATE_ARG)
-                ?.let { dateString ->
-                    val currentDateTime = clock.now().toLocalDateTime(zoneId)
-                    LocalDate.parse(dateString).atTime(currentDateTime.time).toInstant(zoneId)
-                } ?: clock.now(),
+            dateTime = dateTime,
             timeZone = zoneId,
             selectedTag = savedStateHandle[TAG_ARG],
         )
@@ -105,6 +107,12 @@ class AddJournalEntryViewModel(
         save(exitOnSave = false)
     }
 
+    fun dateSelected(date: LocalDate) {
+        _state.update {
+            it.copy(dateTime = date.atTime(it.localDateTime.time).toInstant(it.timeZone))
+        }
+    }
+
     fun nextDay() {
         _state.update {
             it.copy(
@@ -121,55 +129,24 @@ class AddJournalEntryViewModel(
         }
     }
 
-    fun setHour(hourString: String) {
-        val hour = hourString.ifEmpty { "0" }.toIntOrNull() ?: return
-
-        val hourToSet = if ((0..23).contains(hour).not()) {
-            if (hour % 10 == 0) {
-                hour / 10
-            } else {
-                hour % 10
-            }
-        } else {
-            hour
-        }
-        setHourAndMinute(hour = hourToSet)
-    }
-
-    fun setMinute(minuteString: String) {
-        val minute = minuteString.ifEmpty { "0" }.toIntOrNull() ?: return
-
-        val minuteToSet = if ((0..59).contains(minute).not()) {
-            if (minute % 10 == 0) {
-                minute / 10
-            } else {
-                minute % 10
-            }
-        } else {
-            minute
-        }
-        setHourAndMinute(minute = minuteToSet)
-    }
-
-    fun resetDateTime() {
-        _state.update { it.copy(dateTime = clock.now()) }
-    }
-
-    private fun setHourAndMinute(hour: Int? = null, minute: Int? = null) {
+    fun timeSelected(time: LocalTime) {
         _state.update {
-            val previousDateTime = it.dateTime.toLocalDateTime(it.timeZone)
-            val previousTime = previousDateTime.time
-
-            val newTime = LocalTime(
-                hour = hour ?: previousTime.hour,
-                minute = minute ?: previousTime.minute,
-                second = previousTime.second,
-                nanosecond = previousTime.nanosecond,
-            )
-            it.copy(
-                dateTime = LocalDateTime(previousDateTime.date, newTime).toInstant(it.timeZone)
-            )
+            it.copy(dateTime = LocalDateTime(it.localDateTime.date, time).toInstant(it.timeZone))
         }
+    }
+
+    fun resetDate() {
+        val currentDateTime = _state.value.localDateTime
+        val originalDateTime = dateTime.toLocalDateTime(zoneId)
+        val resetDateTime = LocalDateTime(date = originalDateTime.date, time = currentDateTime.time)
+        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
+    }
+
+    fun resetTime() {
+        val currentDateTime = _state.value.localDateTime
+        val originalDateTime = dateTime.toLocalDateTime(zoneId)
+        val resetDateTime = LocalDateTime(date = currentDateTime.date, time = originalDateTime.time)
+        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
     }
 
     private fun save(exitOnSave: Boolean) {
