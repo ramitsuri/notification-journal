@@ -1,11 +1,8 @@
-@file:OptIn(ExperimentalFoundationApi::class)
-
 package com.ramitsuri.notificationjournal.core.ui.addjournal
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.text2.input.TextFieldState
-import androidx.compose.foundation.text2.input.delete
-import androidx.compose.foundation.text2.input.insert
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.delete
+import androidx.compose.foundation.text.input.insert
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -94,7 +91,7 @@ class AddJournalEntryViewModel(
                 delete(0, length)
                 insert(0, template.text)
             } else {
-                insert(selectionInChars.start, template.text)
+                insert(selection.start, template.text)
             }
         }
     }
