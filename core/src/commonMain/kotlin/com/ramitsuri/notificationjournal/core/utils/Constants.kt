@@ -26,6 +26,8 @@ object Constants {
         const val JOURNAL_ENTRY_TAG = "journal_entry_tag"
         const val REQUEST_UPLOAD_ROUTE = "/upload"
         const val TEMPLATE_ROUTE = "/template"
+        const val CLEAR_TEMPLATES_ROUTE = "/clear-templates"
+        const val UPDATE_TILE_ROUTE = "/update-tile"
         const val TEMPLATE_ID = "template_id"
         const val TEMPLATE_VALUE = "template_value"
         const val TEMPLATE_TAG = "template_tag"

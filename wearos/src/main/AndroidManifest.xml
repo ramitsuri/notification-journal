@@ -61,6 +61,20 @@
                     android:pathPattern="/template/.*"
                     android:scheme="wear" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPattern="/clear-templates/.*"
+                    android:scheme="wear" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPattern="/update-tile/.*"
+                    android:scheme="wear" />
+            </intent-filter>
         </service>
 
     </application>

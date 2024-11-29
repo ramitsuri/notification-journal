@@ -109,6 +109,38 @@ class WearDataSharingClientImpl(
         }
     }
 
+    override suspend fun clearTemplates(): Boolean {
+        return try {
+            val requestId = UUID.randomUUID().toString()
+            val path = "${Constants.WearDataSharing.CLEAR_TEMPLATES_ROUTE}/$requestId"
+            val request = PutDataMapRequest.create(path)
+                .asPutDataRequest()
+                .setUrgent()
+
+            dataClient.putDataItem(request).await()
+            true
+        } catch (exception: Exception) {
+            Log.d(TAG, "Failed to clear templates: ${exception.message}")
+            false
+        }
+    }
+
+    override suspend fun updateTile(): Boolean {
+        return try {
+            val requestId = UUID.randomUUID().toString()
+            val path = "${Constants.WearDataSharing.UPDATE_TILE_ROUTE}/$requestId"
+            val request = PutDataMapRequest.create(path)
+                .asPutDataRequest()
+                .setUrgent()
+
+            dataClient.putDataItem(request).await()
+            true
+        } catch (exception: Exception) {
+            Log.d(TAG, "Failed to update tile: ${exception.message}")
+            false
+        }
+    }
+
     companion object {
         private const val TAG = "DataSharingClient"
     }

@@ -11,6 +11,7 @@ import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -126,8 +127,14 @@ class TemplatesViewModel(
     fun sync() {
         viewModelScope.launch {
             val templates = _state.value.templates
-            templates.forEach { template ->
-                wearDataSharingClient.postTemplate(template)
+            launch {
+                wearDataSharingClient.clearTemplates()
+                templates.forEach { template ->
+                    // So that the templates get synced in order
+                    delay(100)
+                    wearDataSharingClient.postTemplate(template)
+                }
+                wearDataSharingClient.updateTile()
             }
             dataSendHelper?.sendTemplates(templates)
         }

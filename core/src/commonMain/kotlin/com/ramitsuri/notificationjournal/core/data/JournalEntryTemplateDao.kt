@@ -21,6 +21,11 @@ abstract class JournalEntryTemplateDao {
     @Transaction
     open suspend fun clearAndInsert(templates: List<JournalEntryTemplate>) {
         deleteAll()
+        insert(templates)
+    }
+
+    @Transaction
+    open suspend fun insert(templates: List<JournalEntryTemplate>) {
         templates.forEach {
             insert(it)
         }
@@ -51,7 +56,7 @@ abstract class JournalEntryTemplateDao {
     protected abstract suspend fun insertOrUpdate(journalEntryTemplate: JournalEntryTemplate)
 
     @Query("DELETE FROM journalentrytemplate")
-    protected abstract suspend fun deleteAll()
+    abstract suspend fun deleteAll()
 
     @Insert
     protected abstract suspend fun insert(journalEntryTemplate: JournalEntryTemplate)

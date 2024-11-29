@@ -61,6 +61,16 @@ actual class Factory {
                 // Not supported
                 return true
             }
+
+            override suspend fun clearTemplates(): Boolean {
+                // Not supported
+                return true
+            }
+
+            override suspend fun updateTile(): Boolean {
+                // Not supported
+                return true
+            }
         }
     }
 

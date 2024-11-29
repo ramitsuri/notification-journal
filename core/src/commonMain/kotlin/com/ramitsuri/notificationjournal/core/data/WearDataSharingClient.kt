@@ -15,4 +15,8 @@ interface WearDataSharingClient {
     suspend fun requestUpload()
 
     suspend fun postTemplate(template: JournalEntryTemplate): Boolean
+
+    suspend fun clearTemplates(): Boolean
+
+    suspend fun updateTile(): Boolean
 }

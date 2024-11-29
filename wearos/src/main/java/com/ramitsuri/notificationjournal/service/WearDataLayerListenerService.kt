@@ -1,6 +1,7 @@
 package com.ramitsuri.notificationjournal.service
 
 import android.annotation.SuppressLint
+import android.util.Log
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -15,46 +16,69 @@ class WearDataLayerListenerService : WearableListenerService() {
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         val addTemplateEvents = mutableListOf<DataEvent>()
+        val clearTemplatesEvent = mutableListOf<DataEvent>()
+        val updateTileEvent = mutableListOf<DataEvent>()
         dataEvents.forEach { event ->
             val path = event.dataItem.uri.path ?: ""
             if (path.startsWith(Constants.WearDataSharing.TEMPLATE_ROUTE)) {
                 addTemplateEvents.add(event)
             }
-        }
-
-        if (addTemplateEvents.isEmpty()) {
-            return
-        }
-        val journalEntryTemplates = mutableListOf<JournalEntryTemplate>()
-        addTemplateEvents.forEach { dataEvent ->
-            val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-            val templateId = dataMap.getString(Constants.WearDataSharing.TEMPLATE_ID)
-            val templateValue = dataMap.getString(Constants.WearDataSharing.TEMPLATE_VALUE)
-            val templateTag = dataMap.getString(Constants.WearDataSharing.TEMPLATE_TAG)
-            val templateDisplayText =
-                dataMap.getString(Constants.WearDataSharing.TEMPLATE_DISPLAY_TEXT)
-            val templateShortDisplayText =
-                dataMap.getString(Constants.WearDataSharing.TEMPLATE_SHORT_DISPLAY_TEXT)
-            if (templateId != null && templateValue != null && templateTag != null &&
-                templateDisplayText != null && templateShortDisplayText != null
-            ) {
-                val template = JournalEntryTemplate(
-                    id = templateId,
-                    text = templateValue,
-                    tag = templateTag,
-                    displayText = templateDisplayText,
-                    shortDisplayText = templateShortDisplayText,
-                )
-                journalEntryTemplates.add(template)
+            if (path.startsWith(Constants.WearDataSharing.CLEAR_TEMPLATES_ROUTE)) {
+                clearTemplatesEvent.add(event)
+            }
+            if (path.startsWith(Constants.WearDataSharing.UPDATE_TILE_ROUTE)) {
+                updateTileEvent.add(event)
             }
         }
 
         val dao = ServiceLocator.templatesDao
 
+        val templates = addTemplateEvents.mapNotNull { it.toTemplate() }
+        val delete = clearTemplatesEvent.isNotEmpty()
+        val insert = addTemplateEvents.isNotEmpty()
+        val updateTile = updateTileEvent.isNotEmpty()
+
         ServiceLocator.coroutineScope.launch {
-            // Use ones received from the phone app as the single source of truth
-            dao.clearAndInsert(journalEntryTemplates)
-            JournalTileService.update(applicationContext)
+            if (delete) {
+                log("Deleting existing templates")
+                dao.deleteAll()
+            }
+            if (insert) {
+                log("Inserting ${templates.size} templates")
+                dao.insert(templates)
+            }
+            if (updateTile) {
+                log("Updating tile")
+                JournalTileService.update(applicationContext)
+            }
         }
+    }
+
+    private fun DataEvent.toTemplate(): JournalEntryTemplate? {
+        val dataMap = DataMapItem.fromDataItem(this.dataItem).dataMap
+        val templateId = dataMap.getString(Constants.WearDataSharing.TEMPLATE_ID)
+        val templateValue = dataMap.getString(Constants.WearDataSharing.TEMPLATE_VALUE)
+        val templateTag = dataMap.getString(Constants.WearDataSharing.TEMPLATE_TAG)
+        val templateDisplayText =
+            dataMap.getString(Constants.WearDataSharing.TEMPLATE_DISPLAY_TEXT)
+        val templateShortDisplayText =
+            dataMap.getString(Constants.WearDataSharing.TEMPLATE_SHORT_DISPLAY_TEXT)
+        return if (templateId != null && templateValue != null && templateTag != null &&
+            templateDisplayText != null && templateShortDisplayText != null
+        ) {
+            JournalEntryTemplate(
+                id = templateId,
+                text = templateValue,
+                tag = templateTag,
+                displayText = templateDisplayText,
+                shortDisplayText = templateShortDisplayText,
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun log(message: String) {
+        Log.d("WearDataLayerListenerService", message)
     }
 }
