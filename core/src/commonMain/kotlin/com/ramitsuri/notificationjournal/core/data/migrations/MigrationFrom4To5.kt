@@ -6,6 +6,7 @@ import androidx.sqlite.execSQL
 import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
+import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 
 class MigrationFrom4To5 : Migration(4, 5) {
 
@@ -74,7 +75,7 @@ class MigrationFrom4To5 : Migration(4, 5) {
                     val text = statement.getText(textColumn)
 
                     val tagColumn = statement.getColumnIndex("tag")
-                    val tag = statement.getText(tagColumn)
+                    val tag = statement.getTextOrNull(tagColumn)
 
                     val entryTimeOverrideColumn = statement.getColumnIndex("entry_time_override")
                     val entryTimeOverride = statement.getLongOrNull(entryTimeOverrideColumn)

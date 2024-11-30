@@ -6,6 +6,7 @@ import androidx.sqlite.execSQL
 import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
+import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 import java.util.UUID
 
 // Changes auto generated int primary key to UUID string primary key for JournalEntry, Tags,
@@ -128,7 +129,7 @@ class MigrationFrom5To6 : Migration(5, 6) {
                     val text = statement.getText(textColumn)
 
                     val tagColumn = statement.getColumnIndex("tag")
-                    val tag = statement.getText(tagColumn)
+                    val tag = statement.getTextOrNull(tagColumn)
 
                     val entryTimeOverrideColumn = statement.getColumnIndex("entry_time_override")
                     val entryTimeOverride = statement.getLongOrNull(entryTimeOverrideColumn)

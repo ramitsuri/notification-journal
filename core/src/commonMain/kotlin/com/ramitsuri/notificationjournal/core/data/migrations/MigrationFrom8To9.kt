@@ -6,6 +6,7 @@ import androidx.sqlite.execSQL
 import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
+import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 
 // Copies "entry_time_override" value to "entry_time" and deletes the column from JournalEntry table
 class MigrationFrom8To9 : Migration(8, 9) {
@@ -75,7 +76,7 @@ class MigrationFrom8To9 : Migration(8, 9) {
                     val text = statement.getText(textColumn)
 
                     val tagColumn = statement.getColumnIndex("tag")
-                    val tag = statement.getText(tagColumn)
+                    val tag = statement.getTextOrNull(tagColumn)
 
                     val entryTimeOverrideColumn = statement.getColumnIndex("entry_time_override")
                     val entryTimeOverrideMillis = statement.getLongOrNull(entryTimeOverrideColumn)
