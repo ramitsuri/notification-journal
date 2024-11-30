@@ -6,6 +6,7 @@ import androidx.sqlite.execSQL
 import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
+import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 import kotlinx.datetime.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -73,7 +74,7 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
                 val entryTime = statement.getLong(statement.getColumnIndex("entry_time"))
                 val timeZone = statement.getText(statement.getColumnIndex("time_zone"))
                 val text = statement.getText(statement.getColumnIndex("text"))
-                val tag = statement.getText(statement.getColumnIndex("tag"))
+                val tag = statement.getTextOrNull(statement.getColumnIndex("tag"))
                 val entryTimeOverride =
                     statement.getLongOrNull(statement.getColumnIndex("entry_time_override"))
                 data.add(

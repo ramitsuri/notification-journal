@@ -5,6 +5,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
+import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.fail
@@ -68,7 +69,7 @@ class MigrationFrom8To9Test : BaseMigrationTest() {
                 val entryTime = statement.getLong(statement.getColumnIndex("entry_time"))
                 val timeZone = statement.getText(statement.getColumnIndex("time_zone"))
                 val text = statement.getText(statement.getColumnIndex("text"))
-                val tag = statement.getText(statement.getColumnIndex("tag"))
+                val tag = statement.getTextOrNull(statement.getColumnIndex("tag"))
                 val uploaded = statement.getBoolean(statement.getColumnIndex("uploaded"))
                 val autoTagged = statement.getBoolean(statement.getColumnIndex("auto_tagged"))
                 val deleted = statement.getBoolean(statement.getColumnIndex("deleted"))

@@ -6,6 +6,7 @@ import androidx.sqlite.execSQL
 import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
+import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -69,7 +70,7 @@ class MigrationFrom4To5Test : BaseMigrationTest() {
                 val entryTime = cursor.getLong(cursor.getColumnIndex("entry_time"))
                 val timeZone = cursor.getText(cursor.getColumnIndex("time_zone"))
                 val text = cursor.getText(cursor.getColumnIndex("text"))
-                val tag = cursor.getText(cursor.getColumnIndex("tag"))
+                val tag = cursor.getTextOrNull(cursor.getColumnIndex("tag"))
                 val entryTimeOverride =
                     cursor.getLongOrNull(cursor.getColumnIndex("entry_time_override"))
                 val uploaded = cursor.getBoolean(cursor.getColumnIndex("uploaded"))
