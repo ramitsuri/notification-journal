@@ -8,7 +8,6 @@ fun List<JournalEntry>.toDayGroups(
     zoneId: TimeZone = TimeZone.currentSystemDefault(),
     tagsForSort: List<Tag> = listOf(),
 ): List<DayGroup> {
-    val tags = listOf(Tag.NO_TAG) + tagsForSort
     return groupBy {
         val entryTime = it.entryTime
         getLocalDate(entryTime, zoneId)
@@ -21,19 +20,18 @@ fun List<JournalEntry>.toDayGroups(
                 nonNullTag to entries
             }
             .toMap()
-        val tagGroups = if (tags.isEmpty()) {
+        val tagGroups = if (tagsForSort.isEmpty()) {
             tagToEntries.map { (tag, entries) -> TagGroup(tag, entries) }
         } else {
-            tags
-                .mapNotNull { tag ->
-                    val entriesForTag = tagToEntries[tag.value] ?: listOf()
-                    if (tag.value == Tag.NO_TAG.value && entriesForTag.isEmpty()) {
-                        null
-                    } else {
-                        TagGroup(tag.value, entriesForTag)
-                    }
-                }
+            tagsForSort.map { tag ->
+                TagGroup(tag.value, tagToEntries[tag.value] ?: listOf())
+            }
         }
-        DayGroup(date, tagGroups)
+        val noTagEntries = entriesByDate.filter { Tag.isNoTag(it.tag) }
+        if (noTagEntries.isEmpty()) {
+            DayGroup(date, tagGroups)
+        } else {
+            DayGroup(date, listOf(TagGroup(Tag.NO_TAG.value, noTagEntries)) + tagGroups)
+        }
     }
 }

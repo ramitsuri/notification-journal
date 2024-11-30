@@ -30,5 +30,7 @@ data class Tag(
             order = Int.MIN_VALUE,
             value = "internal_no_tag_value"
         )
+
+        fun isNoTag(tag: String?) = tag == NO_TAG.value || tag.isNullOrEmpty()
     }
 }
