@@ -15,7 +15,7 @@ enum class Destination(private val route: String) {
     EDIT_ENTRY("edit_entry"),
     ;
 
-    fun routeWithArgValues(args: Map<String, String> = mapOf()): String {
+    fun routeWithArgValues(args: Map<String, String?> = mapOf()): String {
         return when {
             this == EDIT_ENTRY -> {
                 route.plus("/${args[EditJournalEntryViewModel.ENTRY_ID_ARG]}")
@@ -29,6 +29,8 @@ enum class Destination(private val route: String) {
                     .plus("=${args[AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG]}")
                     .plus("&${AddJournalEntryViewModel.DATE_ARG}")
                     .plus("=${args[AddJournalEntryViewModel.DATE_ARG]}")
+                    .plus("&${AddJournalEntryViewModel.TIME_ARG}")
+                    .plus("=${args[AddJournalEntryViewModel.TIME_ARG]}")
                     .plus("&${AddJournalEntryViewModel.TAG_ARG}")
                     .plus("=${args[AddJournalEntryViewModel.TAG_ARG]}")
 
@@ -54,6 +56,8 @@ enum class Destination(private val route: String) {
                     .plus("={${AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG}}")
                     .plus("&${AddJournalEntryViewModel.DATE_ARG}")
                     .plus("={${AddJournalEntryViewModel.DATE_ARG}}")
+                    .plus("&${AddJournalEntryViewModel.TIME_ARG}")
+                    .plus("={${AddJournalEntryViewModel.TIME_ARG}}")
                     .plus("&${AddJournalEntryViewModel.TAG_ARG}")
                     .plus("={${AddJournalEntryViewModel.TAG_ARG}}")
             }
@@ -86,6 +90,10 @@ enum class Destination(private val route: String) {
                         nullable = true
                     },
                     navArgument(AddJournalEntryViewModel.DATE_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                    },
+                    navArgument(AddJournalEntryViewModel.TIME_ARG) {
                         type = NavType.StringType
                         nullable = true
                     },

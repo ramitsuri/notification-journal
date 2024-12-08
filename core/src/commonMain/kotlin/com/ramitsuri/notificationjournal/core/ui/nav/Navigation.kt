@@ -93,7 +93,7 @@ fun NavGraph(
                 onAddRequested = { date ->
                     navController.navigate(
                         Destination.ADD_ENTRY.routeWithArgValues(
-                            mapOf(AddJournalEntryViewModel.DATE_ARG to date.toString())
+                            mapOf(AddJournalEntryViewModel.DATE_ARG to date?.toString())
                         )
                     )
                 },
@@ -139,11 +139,12 @@ fun NavGraph(
                 onCopyDayGroupRequested = viewModel::onCopy,
                 onCopied = viewModel::onContentCopied,
                 onResetReceiveHelper = viewModel::resetReceiveHelper,
-                onAddFromTagRequested = { date, tag ->
+                onAddFromTagRequested = { date, time, tag ->
                     navController.navigate(
                         Destination.ADD_ENTRY.routeWithArgValues(
                             mapOf(
                                 AddJournalEntryViewModel.DATE_ARG to date.toString(),
+                                AddJournalEntryViewModel.TIME_ARG to time?.toString(),
                                 AddJournalEntryViewModel.TAG_ARG to tag,
                             )
                         )
@@ -182,7 +183,9 @@ fun NavGraph(
                 onNextDateRequested = viewModel::nextDay,
                 onTimeSelected = viewModel::timeSelected,
                 onResetDate = viewModel::resetDate,
+                onResetDateToToday = viewModel::resetDateToToday,
                 onResetTime = viewModel::resetTime,
+                onResetTimeToNow = viewModel::resetTimeToNow,
             )
         }
 

@@ -22,7 +22,9 @@ fun AddJournalEntryScreen(
     onNextDateRequested: () -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onResetDate: () -> Unit,
+    onResetDateToToday: (() -> Unit)?,
     onResetTime: () -> Unit,
+    onResetTimeToNow: (() -> Unit)?,
 ) {
     AddEditEntryDialog(
         isLoading = state.isLoading,
@@ -44,6 +46,8 @@ fun AddJournalEntryScreen(
         onNextDateRequested = onNextDateRequested,
         onTimeSelected = onTimeSelected,
         onResetDate = onResetDate,
+        onResetDateToToday = onResetDateToToday,
         onResetTime = onResetTime,
+        onResetTimeToNow = onResetTimeToNow,
     )
 }

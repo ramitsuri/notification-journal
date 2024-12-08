@@ -42,6 +42,8 @@ fun EditJournalEntryScreen(
         onPreviousDateRequested = onPreviousDateRequested,
         onNextDateRequested = onNextDateRequested,
         onResetDate = onResetDate,
+        onResetDateToToday = null,
         onResetTime = onResetTime,
+        onResetTimeToNow = null,
     )
 }

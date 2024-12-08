@@ -139,6 +139,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
@@ -200,7 +201,7 @@ fun JournalEntryScreen(
     onCopyDayGroupRequested: () -> Unit,
     onCopied: () -> Unit,
     onResetReceiveHelper: () -> Unit,
-    onAddFromTagRequested: (LocalDate, String) -> Unit,
+    onAddFromTagRequested: (LocalDate, LocalTime?, String?) -> Unit,
     onCancelReconcile: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
@@ -562,7 +563,7 @@ private fun List(
     onDayGroupCopyRequested: () -> Unit,
     onShowNextDay: () -> Unit,
     onShowPreviousDay: () -> Unit,
-    onAddRequested: (LocalDate, String) -> Unit,
+    onAddRequested: (LocalDate, LocalTime?, String?) -> Unit,
 ) {
     val strokeWidth: Dp = 1.dp
     val strokeColor: Color = MaterialTheme.colorScheme.outline
@@ -576,7 +577,7 @@ private fun List(
         conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
         onCopyRequested = onDayGroupCopyRequested,
         onShowAllDaysClicked = { onShowHideAllDays(true) },
-        onAddRequested = { onAddRequested(dayGroup.date, "") },
+        onAddRequested = { onAddRequested(dayGroup.date, null, null) },
     )
     var swipeAmount by remember { mutableStateOf(0f) }
     LazyColumn(
@@ -711,7 +712,7 @@ private fun List(
                         cornerRadius = cornerRadius,
                         defaultBottomShape = bottomShape,
                         onAddForTagButtonClick = {
-                            onAddRequested(dayGroup.date, tagGroup.tag)
+                            onAddRequested(dayGroup.date, tagGroup.timeAfterLastEntry, tagGroup.tag)
                         }
                     )
                 }
