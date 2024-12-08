@@ -57,6 +57,8 @@ kotlin {
             implementation(libs.amqp.client)
 
             implementation(libs.datastore)
+            implementation(libs.symspellkt)
+            implementation(libs.symspellkt.fdic)
         }
         androidMain.dependencies {
             implementation(libs.androidx.ktx)
@@ -71,6 +73,8 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(libs.androidx.room.testing)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
         }
     }
 

@@ -1,13 +1,11 @@
 package com.ramitsuri.notificationjournal.core.ui.editjournal
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.ui.components.AddEditEntryDialog
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditJournalEntryScreen(
     state: EditJournalEntryViewState,
@@ -21,6 +19,7 @@ fun EditJournalEntryScreen(
     onTimeSelected: (LocalTime) -> Unit,
     onResetDate: () -> Unit,
     onResetTime: () -> Unit,
+    onCorrectionAccepted: (String, String) -> Unit,
 ) {
     AddEditEntryDialog(
         isLoading = state.isLoading,
@@ -30,6 +29,7 @@ fun EditJournalEntryScreen(
         suggestedText = state.suggestedText,
         templates = state.templates,
         dateTime = state.localDateTime,
+        textCorrections = state.corrections,
         onTagClicked = onTagClicked,
         onTemplateClicked = onTemplateClicked,
         onUseSuggestedText = { },
@@ -45,5 +45,6 @@ fun EditJournalEntryScreen(
         onResetDateToToday = null,
         onResetTime = onResetTime,
         onResetTimeToNow = null,
+        onCorrectionAccepted = onCorrectionAccepted,
     )
 }

@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
@@ -18,6 +19,8 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import java.io.File
@@ -131,6 +134,18 @@ actual class Factory {
 
     actual fun getDataStorePath(): String {
         return File(appDir, DataStoreKeyValueStore.FILE).absolutePath
+    }
+
+    actual fun getSpellChecker(
+        initializationScope: CoroutineScope,
+        ioDispatcher: CoroutineDispatcher,
+        defaultDispatcher: CoroutineDispatcher,
+    ): SpellChecker? {
+        return SpellChecker(
+            initializationScope = initializationScope,
+            ioDispatcher = ioDispatcher,
+            defaultDispatcher = defaultDispatcher,
+        )
     }
 
     companion object {

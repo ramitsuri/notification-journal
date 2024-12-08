@@ -11,7 +11,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScreen
@@ -186,6 +185,7 @@ fun NavGraph(
                 onResetDateToToday = viewModel::resetDateToToday,
                 onResetTime = viewModel::resetTime,
                 onResetTimeToNow = viewModel::resetTimeToNow,
+                onCorrectionAccepted = viewModel::correctionAccepted,
             )
         }
 
@@ -217,6 +217,7 @@ fun NavGraph(
                 onTimeSelected = viewModel::timeSelected,
                 onResetDate = viewModel::resetDate,
                 onResetTime = viewModel::resetTime,
+                onCorrectionAccepted = viewModel::correctionAccepted,
             )
         }
 
