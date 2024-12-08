@@ -94,10 +94,12 @@ import notificationjournal.core.generated.resources.add_entry_save
 import notificationjournal.core.generated.resources.add_entry_save_and_add_another
 import notificationjournal.core.generated.resources.add_from_template
 import notificationjournal.core.generated.resources.am
+import notificationjournal.core.generated.resources.now
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.reset
 import notificationjournal.core.generated.resources.tags
+import notificationjournal.core.generated.resources.today
 import notificationjournal.core.generated.resources.use
 import org.jetbrains.compose.resources.stringResource
 
@@ -123,7 +125,9 @@ fun AddEditEntryDialog(
     onPreviousDateRequested: () -> Unit,
     onNextDateRequested: () -> Unit,
     onResetDate: () -> Unit,
+    onResetDateToToday: (() -> Unit)?,
     onResetTime: () -> Unit,
+    onResetTimeToNow: (() -> Unit)?,
 ) {
     var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
@@ -513,6 +517,8 @@ fun AddEditEntryDialog(
                     onTimeSelected = onTimeSelected,
                     onResetDate = onResetDate,
                     onResetTime = onResetTime,
+                    onResetDateToToday = onResetDateToToday,
+                    onResetTimeToNow = onResetTimeToNow,
                 )
                 Content(
                     modifier = Modifier
@@ -718,7 +724,9 @@ private fun DateTimeEntry(
     onDateSelected: (LocalDate) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onResetDate: () -> Unit,
+    onResetDateToToday: (() -> Unit)?,
     onResetTime: () -> Unit,
+    onResetTimeToNow: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     var showDate by remember { mutableStateOf(false) }
@@ -759,6 +767,7 @@ private fun DateTimeEntry(
             selectedDate = dateTime.date,
             onDismiss = { showDate = false },
             onResetDate = onResetDate,
+            onResetDateToToday = onResetDateToToday,
             onDateSelected = onDateSelected,
         )
     }
@@ -769,6 +778,7 @@ private fun DateTimeEntry(
             onTimeSelected = onTimeSelected,
             onDismiss = { showTime = false },
             onResetTime = onResetTime,
+            onResetTimeToNow = onResetTimeToNow,
         )
     }
 }
@@ -779,6 +789,7 @@ private fun Time(
     selectedTime: LocalTime,
     onTimeSelected: (LocalTime) -> Unit,
     onResetTime: () -> Unit,
+    onResetTimeToNow: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -799,6 +810,14 @@ private fun Time(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                 ) {
+                    onResetTimeToNow?.let {
+                        TextButton(onClick = {
+                            onResetTimeToNow()
+                            onDismiss()
+                        }) {
+                            Text(stringResource(Res.string.now))
+                        }
+                    }
                     TextButton(onClick = {
                         onResetTime()
                         onDismiss()
@@ -824,6 +843,7 @@ private fun Date(
     allowedSelections: ClosedRange<LocalDate>? = null,
     onDateSelected: ((LocalDate) -> Unit)? = null,
     onResetDate: () -> Unit,
+    onResetDateToToday: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -907,6 +927,14 @@ private fun Date(
                         onDismiss()
                     }) {
                         Text(stringResource(Res.string.reset))
+                    }
+                    onResetDateToToday?.let {
+                        TextButton(onClick = {
+                            onResetDateToToday()
+                            onDismiss()
+                        }) {
+                            Text(stringResource(Res.string.today))
+                        }
                     }
                 }
             }

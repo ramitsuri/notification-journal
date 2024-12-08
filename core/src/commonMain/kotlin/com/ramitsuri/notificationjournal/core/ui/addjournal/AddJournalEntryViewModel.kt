@@ -47,7 +47,13 @@ class AddJournalEntryViewModel(
     private val dateTime = savedStateHandle.get<String?>(DATE_ARG)
         ?.let { dateString ->
             val currentDateTime = clock.now().toLocalDateTime(zoneId)
-            LocalDate.parse(dateString).atTime(currentDateTime.time).toInstant(zoneId)
+            val timeString = savedStateHandle.get<String?>(TIME_ARG)
+            val time = if (timeString == null) {
+                currentDateTime.time
+            } else {
+                LocalTime.parse(timeString)
+            }
+            LocalDate.parse(dateString).atTime(time).toInstant(zoneId)
         } ?: clock.now()
 
     private val _saved = MutableStateFlow(false)
@@ -139,10 +145,28 @@ class AddJournalEntryViewModel(
         _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
     }
 
+    fun resetDateToToday() {
+        val currentDateTime = _state.value.localDateTime
+        val resetDateTime = LocalDateTime(
+            date = clock.now().toLocalDateTime(zoneId).date,
+            time = currentDateTime.time
+        )
+        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
+    }
+
     fun resetTime() {
         val currentDateTime = _state.value.localDateTime
         val originalDateTime = dateTime.toLocalDateTime(zoneId)
         val resetDateTime = LocalDateTime(date = currentDateTime.date, time = originalDateTime.time)
+        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
+    }
+
+    fun resetTimeToNow() {
+        val currentDateTime = _state.value.localDateTime
+        val resetDateTime = LocalDateTime(
+            date = currentDateTime.date,
+            time = clock.now().toLocalDateTime(zoneId).time
+        )
         _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
     }
 
@@ -214,6 +238,7 @@ class AddJournalEntryViewModel(
         const val DUPLICATE_FROM_ENTRY_ID_ARG = "duplicate_from_entry_id"
         const val DATE_ARG = "date_arg"
         const val TAG_ARG = "tag_arg"
+        const val TIME_ARG = "time_arg"
     }
 }
 
