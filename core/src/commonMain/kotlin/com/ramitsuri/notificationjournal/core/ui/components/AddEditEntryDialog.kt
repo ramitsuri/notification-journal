@@ -806,7 +806,8 @@ private fun WordCorrectionItem(
                 FilterChip(
                     selected = false,
                     onClick = { onCorrectionAccepted(word, it) },
-                    label = { Text(text = it) }),
+                    label = { Text(text = it) }
+                )
             }
         }
     }

@@ -63,6 +63,10 @@ class SpellChecker(
             val wordsInText = getWordsInText(text)
 
             wordsInText.forEach { word ->
+                // Storing in a separate list so that it can be immediately updated with encountered
+                // words rather than updating the state flow with the encountered word and no
+                // corrections first because the state flow is setup to only hold entries which have
+                // any corrections
                 if (addToEncounteredWords(word)) {
                     findCorrectionsChannel.send(word)
                 }
