@@ -119,6 +119,7 @@ object ServiceLocator {
             repository = repository,
             tagsDao = tagsDao,
             templatesDao = templatesDao,
+            spellChecker = spellChecker,
         )
     }
 
@@ -132,6 +133,7 @@ object ServiceLocator {
             repository = repository,
             tagsDao = tagsDao,
             templatesDao = templatesDao,
+            spellChecker = spellChecker,
         )
     }
 
@@ -178,6 +180,14 @@ object ServiceLocator {
         }
     }
 
+    private val spellChecker by lazy {
+        factory.getSpellChecker(
+            initializationScope = coroutineScope,
+            ioDispatcher = ioDispatcher,
+            defaultDispatcher = defaultDispatcher,
+        )
+    }
+
     private var dataReceiveHelper: DataReceiveHelper? = null
         get() = if (field == null) {
             synchronized(this) {
@@ -193,6 +203,10 @@ object ServiceLocator {
 
     private val ioDispatcher by lazy {
         Dispatchers.IO
+    }
+
+    private val defaultDispatcher by lazy {
+        Dispatchers.Default
     }
 
     private fun getReceiver(): DataReceiveHelper? {

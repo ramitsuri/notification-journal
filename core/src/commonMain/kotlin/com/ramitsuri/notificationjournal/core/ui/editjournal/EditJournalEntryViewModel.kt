@@ -3,6 +3,8 @@ package com.ramitsuri.notificationjournal.core.ui.editjournal
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.insert
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,8 +15,11 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -33,6 +38,7 @@ class EditJournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
+    private val spellChecker: SpellChecker?,
 ) : ViewModel() {
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
@@ -47,9 +53,9 @@ class EditJournalEntryViewModel(
         viewModelScope.launch {
             entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG])) ?: return@launch
             _state.update {
+                it.textFieldState.setTextAndPlaceCursorAtEnd(entry.text)
                 it.copy(
                     isLoading = false,
-                    textFieldState = TextFieldState(entry.text),
                     selectedTag = entry.tag,
                     dateTime = entry.entryTime,
                     timeZone = entry.timeZone,
@@ -58,6 +64,7 @@ class EditJournalEntryViewModel(
         }
         loadTags()
         loadTemplates()
+        loadCorrections()
     }
 
     fun tagClicked(tag: String) {
@@ -140,6 +147,25 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(dateTime = resetDateTime.toInstant(entry.timeZone)) }
     }
 
+    fun correctionAccepted(word: String, correction: String) {
+        _state.value.textFieldState.apply {
+            var startIndexForSearch = 0
+            var start = text.indexOf(string = word, startIndex = startIndexForSearch)
+            while (start >= 0) {
+                edit {
+                    replace(start, start + word.length, correction)
+                }
+                startIndexForSearch = start + word.length
+                start = text.indexOf(string = word, startIndex = startIndexForSearch)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        spellChecker?.reset()
+    }
+
     private fun loadTags() {
         viewModelScope.launch {
             _state.update {
@@ -159,6 +185,27 @@ class EditJournalEntryViewModel(
         }
     }
 
+    @OptIn(FlowPreview::class)
+    private fun loadCorrections() {
+        viewModelScope.launch {
+            snapshotFlow {
+                _state.value.textFieldState.text
+            }
+                .debounce(300)
+                .collect { text ->
+                    spellChecker?.onTextUpdated(text.toString())
+                }
+        }
+        viewModelScope.launch {
+            spellChecker?.corrections
+                ?.collect { corrections ->
+                    _state.update {
+                        it.copy(corrections = corrections)
+                    }
+                }
+        }
+    }
+
     companion object {
         const val ENTRY_ID_ARG = "entry_id"
     }
@@ -171,6 +218,7 @@ data class EditJournalEntryViewState(
     val selectedTag: String? = null,
     val suggestedText: String? = null,
     val templates: List<JournalEntryTemplate> = listOf(),
+    val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: Instant = Clock.System.now(),
     val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {

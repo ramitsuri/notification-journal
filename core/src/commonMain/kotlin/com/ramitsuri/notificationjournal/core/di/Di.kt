@@ -6,10 +6,13 @@ import androidx.navigation.NavBackStackEntry
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 
 expect class Factory {
     fun getSettings(): Settings
@@ -35,4 +38,10 @@ expect class Factory {
     ): AbstractSavedStateViewModelFactory
 
     fun getDataStorePath(): String
+
+    fun getSpellChecker(
+        initializationScope: CoroutineScope,
+        ioDispatcher: CoroutineDispatcher,
+        defaultDispatcher: CoroutineDispatcher,
+    ): SpellChecker?
 }

@@ -23,6 +23,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -114,6 +117,7 @@ fun AddEditEntryDialog(
     showAddAnother: Boolean,
     dateTime: LocalDateTime,
     templates: List<JournalEntryTemplate>,
+    textCorrections: Map<String, List<String>>,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
@@ -128,6 +132,7 @@ fun AddEditEntryDialog(
     onResetDateToToday: (() -> Unit)?,
     onResetTime: () -> Unit,
     onResetTimeToNow: (() -> Unit)?,
+    onCorrectionAccepted: (String, String) -> Unit,
 ) {
     var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
@@ -529,11 +534,13 @@ fun AddEditEntryDialog(
                     selectedTag = selectedTag,
                     suggestedText = suggestedText,
                     templates = templates,
+                    textCorrections = textCorrections,
                     showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
                     showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
                     onTagClicked = onTagClicked,
                     onTemplateClicked = onTemplateClicked,
                     onUseSuggestedText = onUseSuggestedText,
+                    onCorrectionAccepted = onCorrectionAccepted,
                 )
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -564,17 +571,21 @@ private fun Content(
     tags: List<Tag>,
     selectedTag: String?,
     suggestedText: String?,
+    textCorrections: Map<String, List<String>>,
     templates: List<JournalEntryTemplate>,
     showTagsKeyboardShortcutHint: Boolean,
     showTemplatesKeyboardShortcutHint: Boolean,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
+    onCorrectionAccepted: (String, String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     val textFieldFocusRequester = remember { FocusRequester() }
     val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
+
+    var showTextCorrectionsDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -590,34 +601,47 @@ private fun Content(
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        BasicTextField(
-            state = textState,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences
-            ),
-            textStyle = MaterialTheme.typography.bodyMedium
-                .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
-            lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester = textFieldFocusRequester),
-            decorator = { innerTextField ->
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(5.dp))
-                        .border(
-                            BorderStroke(
-                                1.dp,
-                                SolidColor(MaterialTheme.colorScheme.outline)
-                            ),
-                            RoundedCornerShape(5.dp)
-                        )
-                        .padding(8.dp)
-                ) {
-                    innerTextField()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicTextField(
+                state = textState,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences
+                ),
+                textStyle = MaterialTheme.typography.bodyMedium
+                    .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
+                lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester = textFieldFocusRequester),
+                decorator = { innerTextField ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(5.dp))
+                            .border(
+                                BorderStroke(
+                                    1.dp,
+                                    SolidColor(MaterialTheme.colorScheme.outline)
+                                ),
+                                RoundedCornerShape(5.dp)
+                            )
+                            .padding(8.dp)
+                    ) {
+                        innerTextField()
+                    }
                 }
-            })
+            )
+            Spacer(Modifier.width(4.dp))
+            OutlinedButton(
+                onClick = { showTextCorrectionsDialog = true },
+                enabled = textCorrections.isNotEmpty(),
+            ) {
+                Text(text = textCorrections.size.toString())
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         if (!suggestedText.isNullOrEmpty()) {
             SuggestedText(suggestedText, onUseSuggestedText = onUseSuggestedText)
@@ -714,6 +738,76 @@ private fun Content(
                 }
             )
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+
+    if (showTextCorrectionsDialog) {
+        TextCorrectionsDialog(
+            textCorrections = textCorrections,
+            onDismiss = { showTextCorrectionsDialog = false },
+            onCorrectionAccepted = { word, correction ->
+                if (textCorrections.size == 1) {
+                    showTextCorrectionsDialog = false
+                }
+                onCorrectionAccepted(word, correction)
+            },
+        )
+    }
+}
+
+@Composable
+private fun TextCorrectionsDialog(
+    textCorrections: Map<String, List<String>>,
+    onDismiss: () -> Unit,
+    onCorrectionAccepted: (String, String) -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                textCorrections.forEach { (word, corrections) ->
+                    item {
+                        WordCorrectionItem(
+                            word = word,
+                            corrections = corrections,
+                            onCorrectionAccepted = onCorrectionAccepted
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WordCorrectionItem(
+    word: String,
+    corrections: List<String>,
+    onCorrectionAccepted: (String, String) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = word,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        LazyRow(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            items(corrections) {
+                FilterChip(
+                    selected = false,
+                    onClick = { onCorrectionAccepted(word, it) },
+                    label = { Text(text = it) }),
+            }
         }
     }
 }
