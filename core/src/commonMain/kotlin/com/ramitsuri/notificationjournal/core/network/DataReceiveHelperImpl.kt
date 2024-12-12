@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.network
 
+import co.touchlab.kermit.Logger
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
@@ -28,10 +29,12 @@ internal class DataReceiveHelperImpl(
     private val mutex: Mutex = Mutex()
 
     override suspend fun startListening(onPayloadReceived: (Payload) -> Unit) {
+        log("Start receiving")
         val deliverCallback = DeliverCallback { _: String?, delivery: Delivery ->
             val message = String(delivery.body, Charsets.UTF_8)
             val payload = json.decodeFromString<Payload>(message)
             if (payload.sender.id == deviceId) {
+                log("Ignoring own message")
                 return@DeliverCallback
             }
             onPayloadReceived(payload)
@@ -40,9 +43,11 @@ internal class DataReceiveHelperImpl(
             mutex.withLock {
                 createChannelIfNecessary()
                 try {
-                    channel?.basicConsume(deviceName, true, deliverCallback) { _ -> }
+                    channel?.let {
+                        it.basicConsume(deviceName, true, deliverCallback) { _ -> }
+                    } ?: log("Channel not available")
                 } catch (e: Exception) {
-                    log("Failed to setup receiver: ${e.message}")
+                    log("Failed to setup receiver", e)
                 }
             }
         }
@@ -74,13 +79,13 @@ internal class DataReceiveHelperImpl(
                 channel?.queueBind(deviceName, exchangeName, "")
             }
         } catch (e: Exception) {
-            log("Failed to connect to RabbitMQ: $e")
+            log("Failed to connect to RabbitMQ", e)
             closeConnection()
         }
     }
 
-    private fun log(message: String) {
-        println("$TAG: $message")
+    private fun log(message: String, throwable: Throwable? = null) {
+        Logger.i(TAG, throwable) { message }
     }
 
     companion object {

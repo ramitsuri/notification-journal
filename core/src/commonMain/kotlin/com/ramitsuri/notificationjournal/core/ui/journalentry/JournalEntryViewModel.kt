@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DayGroup
@@ -236,6 +237,7 @@ class JournalEntryViewModel(
     }
 
     fun sync() {
+        Logger.i("JournalEntryViewModel") { "Attempting to sync" }
         viewModelScope.launch {
             repository.sync()
         }
