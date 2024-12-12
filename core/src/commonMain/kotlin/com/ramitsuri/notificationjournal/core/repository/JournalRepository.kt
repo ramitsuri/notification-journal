@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.repository
 
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
@@ -107,14 +108,17 @@ class JournalRepository(
     }
 
     suspend fun sync() {
+        Logger.i(TAG) { "Attempting to sync" }
         val entries = dao.getForUpload()
         if (entries.isEmpty()) {
+            Logger.i(TAG) { "Nothing to sync" }
             return
         }
         upload(entries)
     }
 
     fun upload(entries: List<JournalEntry>) {
+        Logger.i(TAG) { "Syncing ${entries.size} entries" }
         entries.chunked(10).forEach {
             sendAndMarkUploaded(it)
         }
@@ -220,5 +224,9 @@ class JournalRepository(
             tag = incomingEntry.tag,
             senderName = incomingEntrySender.name,
         )
+    }
+
+    companion object {
+        private const val TAG = "JournalRepository"
     }
 }

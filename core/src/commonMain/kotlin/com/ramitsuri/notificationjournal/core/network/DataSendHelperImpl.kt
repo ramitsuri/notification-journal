@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.network
 
+import co.touchlab.kermit.Logger
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
@@ -55,6 +56,7 @@ internal class DataSendHelperImpl(
     }
 
     private suspend fun Payload.send(): Boolean {
+        log("Sending payload")
         return withContext(ioDispatcher) {
             mutex.withLock {
                 createChannelIfNecessary()
@@ -70,10 +72,11 @@ internal class DataSendHelperImpl(
                         it.waitForConfirmsOrDie(5.seconds.inWholeMilliseconds)
                         true
                     } ?: run {
+                        log("Channel not available")
                         false
                     }
                 } catch (e: Exception) {
-                    log("failed to send message: $e")
+                    log("failed to send message", e)
                     false
                 }
             }
@@ -111,13 +114,13 @@ internal class DataSendHelperImpl(
                 channel?.confirmSelect()
             }
         } catch (e: Exception) {
-            log("Failed to connect to RabbitMQ: $e")
+            log("Failed to connect to RabbitMQ", e)
             closeConnectionInternal()
         }
     }
 
-    private fun log(message: String) {
-        println("$TAG: $message")
+    private fun log(message: String, throwable: Throwable? = null) {
+        Logger.i(TAG, throwable) { message }
     }
 
     companion object {
