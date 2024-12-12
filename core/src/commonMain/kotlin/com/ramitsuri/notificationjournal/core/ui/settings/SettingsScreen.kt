@@ -47,6 +47,7 @@ import notificationjournal.core.generated.resources.settings_copy_with_empty_tag
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
 import notificationjournal.core.generated.resources.settings_data_sharing_title
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
+import notificationjournal.core.generated.resources.settings_showLogsButton
 import notificationjournal.core.generated.resources.settings_showReconciled
 import notificationjournal.core.generated.resources.settings_show_empty_tags
 import notificationjournal.core.generated.resources.settings_tags_subtitle
@@ -72,6 +73,7 @@ fun SettingsScreen(
     onToggleShowConflictDiffInline: () -> Unit,
     onToggleShowEmptyTags: () -> Unit,
     onToggleCopyWithEmptyTags: () -> Unit,
+    onToggleShowLogsButton: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -167,6 +169,13 @@ fun SettingsScreen(
                         title = stringResource(Res.string.settings_copy_with_empty_tags),
                         value = state.copyWithEmptyTags,
                         onClick = onToggleCopyWithEmptyTags,
+                    )
+                }
+                item {
+                    SettingsItemWithToggle(
+                        title = stringResource(Res.string.settings_showLogsButton),
+                        value = state.showLogsButton,
+                        onClick = onToggleShowLogsButton,
                     )
                 }
                 item {

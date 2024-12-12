@@ -34,4 +34,12 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
     suspend fun setShowConflictDiffInline(showConflictDiffInline: Boolean) {
         keyValueStore.putBoolean(Key.CONFLICT_DIFF_INLINE, showConflictDiffInline)
     }
+
+    fun showLogsButton(): Flow<Boolean> {
+        return keyValueStore.getBooleanFlow(Key.SHOW_LOGS_BUTTON, true)
+    }
+
+    suspend fun setShowLogsButton(showLogsButton: Boolean) {
+        keyValueStore.putBoolean(Key.SHOW_LOGS_BUTTON, showLogsButton)
+    }
 }

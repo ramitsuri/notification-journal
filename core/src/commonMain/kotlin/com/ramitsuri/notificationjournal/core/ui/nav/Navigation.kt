@@ -11,7 +11,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScreen
@@ -20,6 +19,8 @@ import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryScr
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.log.LogScreen
+import com.ramitsuri.notificationjournal.core.ui.log.LogScreenViewModel
 import com.ramitsuri.notificationjournal.core.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.core.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.core.ui.tags.TagsScreen
@@ -151,6 +152,11 @@ fun NavGraph(
                     )
                 },
                 onCancelReconcile = viewModel::cancelReconcile,
+                onLogsClicked = {
+                    navController.navigate(
+                        Destination.LOGS.routeWithArgValues()
+                    )
+                },
             )
         }
 
@@ -238,6 +244,7 @@ fun NavGraph(
                 onToggleShowConflictDiffInline = viewModel::toggleShowConflictDiffInline,
                 onToggleCopyWithEmptyTags = viewModel::toggleCopyWithEmptyTags,
                 onToggleShowEmptyTags = viewModel::toggleShowEmptyTags,
+                onToggleShowLogsButton = viewModel::toggleShowLogsButton,
             )
         }
 
@@ -275,6 +282,18 @@ fun NavGraph(
                 onAddOrEditApproved = viewModel::save,
                 onAddOrEditCanceled = viewModel::onAddOrEditCanceled,
                 onBack = { navController.navigateUp() },
+            )
+        }
+
+        composable(Destination.LOGS.route()) {
+            val viewModel: LogScreenViewModel =
+                viewModel(factory = LogScreenViewModel.factory())
+
+            val logs by viewModel.logs.collectAsStateWithLifecycle()
+
+            LogScreen(
+                logs = logs,
+                onBackClick = { navController.navigateUp() },
             )
         }
     }

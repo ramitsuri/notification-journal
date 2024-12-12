@@ -57,6 +57,8 @@ kotlin {
             implementation(libs.amqp.client)
 
             implementation(libs.datastore)
+
+            implementation(libs.kermit)
         }
         androidMain.dependencies {
             implementation(libs.androidx.ktx)

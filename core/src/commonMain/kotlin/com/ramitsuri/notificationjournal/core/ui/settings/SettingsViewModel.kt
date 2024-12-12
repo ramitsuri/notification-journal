@@ -37,7 +37,9 @@ class SettingsViewModel(
         prefManager.copyWithEmptyTags(),
         prefManager.showReconciled(),
         prefManager.showConflictDiffInline(),
-    ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showReconciled, showConflictDiffInline ->
+        prefManager.showLogsButton(),
+    ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showReconciled, showConflictDiffInline,
+        showLogsButton ->
         SettingsViewState(
             uploadLoading = uploadLoading,
             dataHost = DataHost(getDataHost()),
@@ -50,6 +52,7 @@ class SettingsViewModel(
             showConflictDiffInline = showConflictDiffInline,
             showEmptyTags = showEmptyTags,
             copyWithEmptyTags = copyWithEmptyTags,
+            showLogsButton = showLogsButton,
         )
     }.stateIn(
         viewModelScope,
@@ -107,6 +110,12 @@ class SettingsViewModel(
         }
     }
 
+    fun toggleShowLogsButton() {
+        viewModelScope.launch {
+            prefManager.setShowLogsButton(state.value.showLogsButton.not())
+        }
+    }
+
     private fun getDeviceName() = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "") ?: ""
 
     private fun getExchangeName() =
@@ -148,4 +157,5 @@ data class SettingsViewState(
     val showConflictDiffInline: Boolean = false,
     val showEmptyTags: Boolean = false,
     val copyWithEmptyTags: Boolean = false,
+    val showLogsButton: Boolean = false,
 )

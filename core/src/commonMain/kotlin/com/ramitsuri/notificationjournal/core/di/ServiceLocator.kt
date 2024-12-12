@@ -2,11 +2,13 @@ package com.ramitsuri.notificationjournal.core.di
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.navigation.NavBackStackEntry
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
@@ -47,6 +49,7 @@ object ServiceLocator {
         if (deviceId.isNullOrEmpty()) {
             keyValueStore.putString(Constants.PREF_KEY_DEVICE_ID, UUID.randomUUID().toString())
         }
+        Logger.setLogWriters(listOf(inMemoryLogWriter))
     }
 
     fun onAppStart() {
@@ -189,6 +192,10 @@ object ServiceLocator {
 
     val coroutineScope by lazy {
         CoroutineScope(SupervisorJob())
+    }
+
+    val inMemoryLogWriter by lazy {
+        InMemoryLogWriter()
     }
 
     private val ioDispatcher by lazy {

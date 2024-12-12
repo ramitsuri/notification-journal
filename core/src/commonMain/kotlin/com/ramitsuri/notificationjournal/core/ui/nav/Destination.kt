@@ -13,6 +13,7 @@ enum class Destination(private val route: String) {
     SETTINGS("settings"),
     ADD_ENTRY("add_entry"),
     EDIT_ENTRY("edit_entry"),
+    LOGS("logs"),
     ;
 
     fun routeWithArgValues(args: Map<String, String?> = mapOf()): String {
