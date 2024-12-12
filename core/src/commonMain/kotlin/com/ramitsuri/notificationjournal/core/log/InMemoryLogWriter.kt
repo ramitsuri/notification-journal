@@ -12,16 +12,17 @@ class InMemoryLogWriter : LogWriter() {
 
     override fun log(severity: Severity, message: String, tag: String, throwable: Throwable?) {
         _logs.update {
-            it + LogData(
+            val newLogs = it + LogData(
                 message = message,
                 tag = tag,
                 errorMessage = throwable?.message,
                 stackTrace = throwable?.stackTraceToString(),
             )
-        }
-        if (_logs.value.size >= MAX_LOGS) {
-            val existing = _logs.value
-            _logs.update { existing.drop(existing.size - MAX_LOGS) }
+            if (newLogs.size > MAX_LOGS) {
+                newLogs.drop(newLogs.size - MAX_LOGS)
+            } else {
+                newLogs
+            }
         }
     }
 
