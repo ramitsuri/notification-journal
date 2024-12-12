@@ -3,14 +3,15 @@ package com.ramitsuri.notificationjournal.core.utils
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("UNCHECKED_CAST")
-fun <T1, T2, T3, T4, T5, T6, R> combine(
+fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
     flow4: Flow<T4>,
     flow5: Flow<T5>,
     flow6: Flow<T6>,
-    transform: suspend (T1, T2, T3, T4, T5, T6) -> R
+    flow7: Flow<T7>,
+    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
 ): Flow<R> = kotlinx.coroutines.flow.combine(
     flow,
     flow2,
@@ -18,6 +19,7 @@ fun <T1, T2, T3, T4, T5, T6, R> combine(
     flow4,
     flow5,
     flow6,
+    flow7,
 ) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -26,11 +28,12 @@ fun <T1, T2, T3, T4, T5, T6, R> combine(
         args[3] as T4,
         args[4] as T5,
         args[5] as T6,
+        args[6] as T7,
     )
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combine(
+fun <T1, T2, T3, T4, T5, T6, T7, T8,T9, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
@@ -39,7 +42,8 @@ fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combine(
     flow6: Flow<T6>,
     flow7: Flow<T7>,
     flow8: Flow<T8>,
-    transform: suspend (T1, T2, T3, T4, T5, T6, T7, T8) -> R
+    flow9: Flow<T9>,
+    transform: suspend (T1, T2, T3, T4, T5, T6, T7, T8, T9) -> R
 ): Flow<R> = kotlinx.coroutines.flow.combine(
     flow,
     flow2,
@@ -49,6 +53,7 @@ fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combine(
     flow6,
     flow7,
     flow8,
+    flow9,
 ) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -59,5 +64,6 @@ fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combine(
         args[5] as T6,
         args[6] as T7,
         args[7] as T8,
+        args[8] as T9,
     )
 }

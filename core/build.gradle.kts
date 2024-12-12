@@ -59,6 +59,8 @@ kotlin {
             implementation(libs.datastore)
             implementation(libs.symspellkt)
             implementation(libs.symspellkt.fdic)
+
+            implementation(libs.kermit)
         }
         androidMain.dependencies {
             implementation(libs.androidx.ktx)

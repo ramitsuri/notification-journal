@@ -37,6 +37,7 @@ fun formatForDisplay(
     val localDateTime = toFormat.toLocalDateTime(timeZone)
     return formatForDisplay(toFormat = localDateTime, amString = amString, pmString = pmString)
 }
+
 fun formatForDisplay(
     toFormat: LocalDateTime,
     amString: String,
@@ -52,6 +53,27 @@ fun formatForDisplay(
         amPmMarker(am = amString, pm = pmString)
     }
     return toFormat.format(format)
+}
+
+fun formatForLogs(
+    toFormat: Instant,
+    timeZone: TimeZone,
+    amString: String,
+    pmString: String,
+): String {
+    val localDateTime = toFormat.toLocalDateTime(timeZone)
+    val format = LocalDateTime.Format {
+        amPmHour(padding = Padding.NONE)
+        char(':')
+        minute()
+        char(':')
+        second()
+        char('.')
+        secondFraction(maxLength = 3)
+        char(' ')
+        amPmMarker(am = amString, pm = pmString)
+    }
+    return localDateTime.format(format)
 }
 
 @Composable

@@ -23,5 +23,6 @@ enum class Key(val value: String) {
     COPY_WITH_EMPTY_TAGS("copy_with_empty_tags"),
     SHOW_RECONCILED("show_reconciled"),
     CONFLICT_DIFF_INLINE("show_conflict_diff_inline"),
+    SHOW_LOGS_BUTTON("show_logs_button"),
     ;
 }

@@ -38,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material.icons.automirrored.filled.KeyboardTab
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -203,6 +204,7 @@ fun JournalEntryScreen(
     onResetReceiveHelper: () -> Unit,
     onAddFromTagRequested: (LocalDate, LocalTime?, String?) -> Unit,
     onCancelReconcile: () -> Unit,
+    onLogsClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -392,9 +394,11 @@ fun JournalEntryScreen(
 
             Toolbar(
                 notUploadedCount = state.notUploadedCount,
+                showLogsButton = state.showLogsButton,
                 onSyncClicked = onSyncClicked,
                 onSettingsClicked = onSettingsClicked,
                 onResetReceiveHelper = onResetReceiveHelper,
+                onLogsClicked = onLogsClicked,
                 scrollBehavior = scrollBehavior,
             )
 
@@ -470,9 +474,11 @@ fun JournalEntryScreen(
 private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     notUploadedCount: Int,
+    showLogsButton: Boolean,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onResetReceiveHelper: () -> Unit,
+    onLogsClicked: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults
@@ -480,6 +486,19 @@ private fun Toolbar(
             .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         actions = {
+            if (showLogsButton) {
+                IconButton(
+                    onClick = onLogsClicked,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ListAlt,
+                        contentDescription = null,
+                    )
+                }
+            }
             if (notUploadedCount > 0) {
                 Box(
                     modifier = Modifier

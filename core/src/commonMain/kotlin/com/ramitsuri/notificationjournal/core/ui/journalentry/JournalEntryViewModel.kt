@@ -69,8 +69,9 @@ class JournalEntryViewModel(
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
+                prefManager.showLogsButton(),
             ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline ->
+                showEmptyTags, showConflictDiffInline, showLogsButton ->
                 val tags = tagsDao.getAll()
                 val dayGroups = try {
                     entries.toDayGroups(
@@ -105,6 +106,7 @@ class JournalEntryViewModel(
                         contentForCopy = contentForCopy,
                         showEmptyTags = showEmptyTags,
                         snackBarType = snackBarType,
+                        showLogsButton = showLogsButton,
                     )
                 }
             }
@@ -390,6 +392,7 @@ data class ViewState(
     val selectedIndex: Int = 0,
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
+    val showLogsButton: Boolean = false,
     val snackBarType: SnackBarType = SnackBarType.None,
 ) {
     val selectedDayGroup: DayGroup
