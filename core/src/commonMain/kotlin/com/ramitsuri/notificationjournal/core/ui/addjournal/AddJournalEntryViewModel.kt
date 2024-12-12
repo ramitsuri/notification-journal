@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.ui.addjournal
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.insert
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,8 +13,11 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -33,6 +37,7 @@ class AddJournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
+    private val spellChecker: SpellChecker?,
     private val clock: Clock = Clock.System,
     private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -73,6 +78,7 @@ class AddJournalEntryViewModel(
         loadTags()
         loadTemplates()
         loadFromDuplicateEntryId()
+        loadCorrections()
     }
 
     fun tagClicked(tag: String) {
@@ -170,6 +176,25 @@ class AddJournalEntryViewModel(
         _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
     }
 
+    fun correctionAccepted(word: String, correction: String) {
+        _state.value.textFieldState.apply {
+            var startIndexForSearch = 0
+            var start = text.indexOf(string = word, startIndex = startIndexForSearch)
+            while (start >= 0) {
+                edit {
+                    replace(start, start + word.length, correction)
+                }
+                startIndexForSearch = start + word.length
+                start = text.indexOf(string = word, startIndex = startIndexForSearch)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        spellChecker?.reset()
+    }
+
     private fun save(exitOnSave: Boolean) {
         val currentState = _state.value
         val text = currentState.textFieldState.text.toString()
@@ -233,6 +258,27 @@ class AddJournalEntryViewModel(
         }
     }
 
+    @OptIn(FlowPreview::class)
+    private fun loadCorrections() {
+        viewModelScope.launch {
+            snapshotFlow {
+                _state.value.textFieldState.text
+            }
+                .debounce(300)
+                .collect { text ->
+                    spellChecker?.onTextUpdated(text.toString())
+                }
+        }
+        viewModelScope.launch {
+            spellChecker?.corrections
+                ?.collect { corrections ->
+                    _state.update {
+                        it.copy(corrections = corrections)
+                    }
+                }
+        }
+    }
+
     companion object {
         const val RECEIVED_TEXT_ARG = "received_text"
         const val DUPLICATE_FROM_ENTRY_ID_ARG = "duplicate_from_entry_id"
@@ -249,6 +295,7 @@ data class AddJournalEntryViewState(
     val selectedTag: String? = null,
     val suggestedText: String? = null,
     val templates: List<JournalEntryTemplate> = listOf(),
+    val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: Instant,
     val timeZone: TimeZone,
 ) {

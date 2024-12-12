@@ -192,6 +192,7 @@ fun NavGraph(
                 onResetDateToToday = viewModel::resetDateToToday,
                 onResetTime = viewModel::resetTime,
                 onResetTimeToNow = viewModel::resetTimeToNow,
+                onCorrectionAccepted = viewModel::correctionAccepted,
             )
         }
 
@@ -223,6 +224,7 @@ fun NavGraph(
                 onTimeSelected = viewModel::timeSelected,
                 onResetDate = viewModel::resetDate,
                 onResetTime = viewModel::resetTime,
+                onCorrectionAccepted = viewModel::correctionAccepted,
             )
         }
 
