@@ -33,6 +33,7 @@
     <string name="force_upload">Force upload</string>
     <string name="duplicate">Duplicate</string>
     <string name="conflicts">Conflicts</string>
+    <string name="search">Search</string>
 
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>

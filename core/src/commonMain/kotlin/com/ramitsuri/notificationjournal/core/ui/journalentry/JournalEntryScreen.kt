@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
@@ -160,6 +161,7 @@ import notificationjournal.core.generated.resources.next_day
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.previous_day
+import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_down
 import notificationjournal.core.generated.resources.sync_up
@@ -205,6 +207,7 @@ fun JournalEntryScreen(
     onAddFromTagRequested: (LocalDate, LocalTime?, String?) -> Unit,
     onCancelReconcile: () -> Unit,
     onLogsClicked: () -> Unit,
+    onSearchClicked: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -397,6 +400,7 @@ fun JournalEntryScreen(
                 showLogsButton = state.showLogsButton,
                 onSyncClicked = onSyncClicked,
                 onSettingsClicked = onSettingsClicked,
+                onSearchClicked = onSearchClicked,
                 onResetReceiveHelper = onResetReceiveHelper,
                 onLogsClicked = onLogsClicked,
                 scrollBehavior = scrollBehavior,
@@ -477,6 +481,7 @@ private fun Toolbar(
     showLogsButton: Boolean,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
+    onSearchClicked: () -> Unit,
     onResetReceiveHelper: () -> Unit,
     onLogsClicked: () -> Unit,
 ) {
@@ -528,6 +533,17 @@ private fun Toolbar(
                 Icon(
                     imageVector = vectorResource(Res.drawable.sync_down),
                     contentDescription = null,
+                )
+            }
+            IconButton(
+                onClick = onSearchClicked,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = stringResource(Res.string.search)
                 )
             }
             IconButton(

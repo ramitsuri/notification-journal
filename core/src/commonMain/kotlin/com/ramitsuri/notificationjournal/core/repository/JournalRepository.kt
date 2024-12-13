@@ -171,6 +171,14 @@ class JournalRepository(
         sendAndMarkUploaded(listOf(newEntry), replacesLocal = true)
     }
 
+    suspend fun search(query: String, tags: List<String>): List<JournalEntry> {
+        return dao.search(query, tags)
+    }
+
+     fun getEntryTags(): Flow<List<String>>{
+        return dao.getEntryTags()
+    }
+
     private suspend fun replaceWithTimeTemplateIfNecessary(
         originalText: String,
         time: Instant,
