@@ -21,6 +21,8 @@ import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreen
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreenViewModel
+import com.ramitsuri.notificationjournal.core.ui.search.SearchScreen
+import com.ramitsuri.notificationjournal.core.ui.search.SearchViewModel
 import com.ramitsuri.notificationjournal.core.ui.settings.SettingsScreen
 import com.ramitsuri.notificationjournal.core.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.core.ui.tags.TagsScreen
@@ -157,6 +159,9 @@ fun NavGraph(
                         Destination.LOGS.routeWithArgValues()
                     )
                 },
+                onSearchClicked = {
+                    navController.navigate(Destination.SEARCH.route())
+                }
             )
         }
 
@@ -296,6 +301,20 @@ fun NavGraph(
             LogScreen(
                 logs = logs,
                 onBackClick = { navController.navigateUp() },
+            )
+        }
+
+        composable(Destination.SEARCH.route()) {
+            val viewModel: SearchViewModel = viewModel(factory = SearchViewModel.factory())
+
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            SearchScreen(
+                state = state,
+                onBackClick = {
+                    navController.navigateUp()
+                },
+                onClearClick = viewModel::clearSearchTerm,
+                onTagClicked = viewModel::tagClicked,
             )
         }
     }

@@ -29,6 +29,12 @@ abstract class JournalEntryDao {
     @Query("SELECT * FROM journalentry WHERE id = :id")
     abstract suspend fun get(id: String): JournalEntry?
 
+    @Query("SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND tag IN (:tags) AND deleted = 0 ORDER BY entry_time DESC")
+    abstract suspend fun search(query: String, tags: List<String>): List<JournalEntry>
+
+    @Query("SELECT DISTINCT tag FROM journalentry")
+    abstract fun getEntryTags(): Flow<List<String>>
+
     @Transaction
     open suspend fun insert(entry: JournalEntry) {
         insertInternal(entry)
