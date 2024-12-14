@@ -4,6 +4,9 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
+import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryItem
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom10To11
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom9To10
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
@@ -27,8 +30,9 @@ import kotlinx.coroutines.Dispatchers
         JournalEntryTemplate::class,
         Tag::class,
         EntryConflict::class,
+        DictionaryItem::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
@@ -40,6 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun templateDao(): JournalEntryTemplateDao
 
     abstract fun entryConflictDao(): EntryConflictDao
+
+    abstract fun dictionaryDao(): DictionaryDao
 
     companion object {
         @Volatile
@@ -60,6 +66,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MigrationFrom7To8())
                     .addMigrations(MigrationFrom8To9())
                     .addMigrations(MigrationFrom9To10())
+                    .addMigrations(MigrationFrom10To11())
                     .build()
             }
             return INSTANCE as AppDatabase
@@ -72,6 +79,8 @@ abstract class AppDatabase : RoomDatabase() {
         fun getTagsDao(factory: Factory) = getInstance(factory).tagsDao()
 
         fun getConflictsDao(factory: Factory) = getInstance(factory).entryConflictDao()
+
+        fun getDictionaryDao(factory: Factory) = getInstance(factory).dictionaryDao()
     }
 }
 

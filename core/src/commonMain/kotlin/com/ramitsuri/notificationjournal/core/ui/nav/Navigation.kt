@@ -198,6 +198,7 @@ fun NavGraph(
                 onResetTime = viewModel::resetTime,
                 onResetTimeToNow = viewModel::resetTimeToNow,
                 onCorrectionAccepted = viewModel::correctionAccepted,
+                onAddDictionaryWord = viewModel::addDictionaryWord,
             )
         }
 
@@ -230,6 +231,7 @@ fun NavGraph(
                 onResetDate = viewModel::resetDate,
                 onResetTime = viewModel::resetTime,
                 onCorrectionAccepted = viewModel::correctionAccepted,
+                onAddDictionaryWord = viewModel::addDictionaryWord,
             )
         }
 
