@@ -83,6 +83,9 @@ class SpellChecker(
     suspend fun addWord(word: String) {
         checker.createDictionaryEntry(word, 1)
         dictionaryDao.insert(DictionaryItem(word = word))
+        _corrections.update { existing ->
+            existing - word
+        }
     }
 
     fun reset() {

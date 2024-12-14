@@ -769,6 +769,11 @@ private fun TextCorrectionsDialog(
     onCorrectionAccepted: (String, String) -> Unit,
     onAddDictionaryWord: (String) -> Unit,
 ) {
+    LaunchedEffect(textCorrections) {
+        if (textCorrections.isEmpty()) {
+            onDismiss()
+        }
+    }
     Dialog(onDismissRequest = onDismiss) {
         Card {
             LazyColumn(

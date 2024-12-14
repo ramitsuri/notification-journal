@@ -1,6 +1,8 @@
 package com.ramitsuri.notificationjournal.core.spellcheck
 
 import app.cash.turbine.test
+import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
+import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryItem
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -56,6 +58,15 @@ class SpellCheckerTest {
 
     private fun TestScope.setup() {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        spellChecker = SpellChecker(backgroundScope, dispatcher, dispatcher)
+        spellChecker = SpellChecker(backgroundScope, dispatcher, dispatcher, object :
+            DictionaryDao() {
+            override suspend fun getItems(): List<DictionaryItem> {
+                return listOf()
+            }
+
+            override suspend fun insert(item: DictionaryItem) {
+
+            }
+        })
     }
 }
