@@ -38,7 +38,7 @@ class EditJournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
-    private val spellChecker: SpellChecker?,
+    private val spellChecker: SpellChecker,
 ) : ViewModel() {
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
@@ -161,9 +161,15 @@ class EditJournalEntryViewModel(
         }
     }
 
+    fun addDictionaryWord(word: String) {
+        viewModelScope.launch {
+            spellChecker.addWord(word)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
-        spellChecker?.reset()
+        spellChecker.reset()
     }
 
     private fun loadTags() {
@@ -193,12 +199,13 @@ class EditJournalEntryViewModel(
             }
                 .debounce(300)
                 .collect { text ->
-                    spellChecker?.onTextUpdated(text.toString())
+                    spellChecker.onTextUpdated(text.toString())
                 }
         }
         viewModelScope.launch {
-            spellChecker?.corrections
-                ?.collect { corrections ->
+            spellChecker
+                .corrections
+                .collect { corrections ->
                     _state.update {
                         it.copy(corrections = corrections)
                     }

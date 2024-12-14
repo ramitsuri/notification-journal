@@ -24,6 +24,7 @@ fun AddJournalEntryScreen(
     onResetTime: () -> Unit,
     onResetTimeToNow: (() -> Unit)?,
     onCorrectionAccepted: (String, String) -> Unit,
+    onAddDictionaryWord: (String) -> Unit,
 ) {
     AddEditEntryDialog(
         isLoading = state.isLoading,
@@ -50,5 +51,6 @@ fun AddJournalEntryScreen(
         onResetTime = onResetTime,
         onResetTimeToNow = onResetTimeToNow,
         onCorrectionAccepted = onCorrectionAccepted,
+        onAddDictionaryWord = onAddDictionaryWord,
     )
 }

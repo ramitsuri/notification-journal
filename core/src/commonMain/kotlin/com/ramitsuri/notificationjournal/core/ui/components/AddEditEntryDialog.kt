@@ -33,12 +33,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -133,6 +136,7 @@ fun AddEditEntryDialog(
     onResetTime: () -> Unit,
     onResetTimeToNow: (() -> Unit)?,
     onCorrectionAccepted: (String, String) -> Unit,
+    onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
@@ -541,6 +545,7 @@ fun AddEditEntryDialog(
                     onTemplateClicked = onTemplateClicked,
                     onUseSuggestedText = onUseSuggestedText,
                     onCorrectionAccepted = onCorrectionAccepted,
+                    onAddDictionaryWord = onAddDictionaryWord,
                 )
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -579,6 +584,7 @@ private fun Content(
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
     onCorrectionAccepted: (String, String) -> Unit,
+    onAddDictionaryWord: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     val textFieldFocusRequester = remember { FocusRequester() }
@@ -751,6 +757,7 @@ private fun Content(
                 }
                 onCorrectionAccepted(word, correction)
             },
+            onAddDictionaryWord = onAddDictionaryWord,
         )
     }
 }
@@ -760,6 +767,7 @@ private fun TextCorrectionsDialog(
     textCorrections: Map<String, List<String>>,
     onDismiss: () -> Unit,
     onCorrectionAccepted: (String, String) -> Unit,
+    onAddDictionaryWord: (String) -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card {
@@ -774,7 +782,8 @@ private fun TextCorrectionsDialog(
                         WordCorrectionItem(
                             word = word,
                             corrections = corrections,
-                            onCorrectionAccepted = onCorrectionAccepted
+                            onCorrectionAccepted = onCorrectionAccepted,
+                            onAddDictionaryWord = onAddDictionaryWord,
                         )
                     }
                 }
@@ -788,6 +797,7 @@ private fun WordCorrectionItem(
     word: String,
     corrections: List<String>,
     onCorrectionAccepted: (String, String) -> Unit,
+    onAddDictionaryWord: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -807,6 +817,15 @@ private fun WordCorrectionItem(
                     selected = false,
                     onClick = { onCorrectionAccepted(word, it) },
                     label = { Text(text = it) }
+                )
+            }
+            item {
+                FilterChip(
+                    selected = false,
+                    onClick = { onAddDictionaryWord(word) },
+                    label = {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    }
                 )
             }
         }

@@ -8,6 +8,7 @@ import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
 import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
@@ -15,6 +16,7 @@ import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -98,6 +100,10 @@ object ServiceLocator {
 
     val templatesDao: JournalEntryTemplateDao by lazy {
         AppDatabase.getJournalEntryTemplateDao(factory)
+    }
+
+    private val dictionaryDao: DictionaryDao by lazy {
+        AppDatabase.getDictionaryDao(factory)
     }
 
     val wearDataSharingClient: WearDataSharingClient by lazy {
@@ -184,10 +190,11 @@ object ServiceLocator {
     }
 
     private val spellChecker by lazy {
-        factory.getSpellChecker(
+        SpellChecker(
             initializationScope = coroutineScope,
             ioDispatcher = ioDispatcher,
             defaultDispatcher = defaultDispatcher,
+            dictionaryDao = dictionaryDao,
         )
     }
 

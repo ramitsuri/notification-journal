@@ -4,7 +4,7 @@ import com.darkrockstudios.symspell.fdic.loadFdicFile
 import com.darkrockstudios.symspellkt.common.Verbosity
 import com.darkrockstudios.symspellkt.impl.SymSpell
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
-import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDaoImpl
+import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryItem
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +25,7 @@ class SpellChecker(
     initializationScope: CoroutineScope,
     ioDispatcher: CoroutineDispatcher,
     private val defaultDispatcher: CoroutineDispatcher,
-    private val dictionaryDao: DictionaryDao = DictionaryDaoImpl(),
+    private val dictionaryDao: DictionaryDao,
     private val locale: Locale = Locale.US,
 ) {
     private val _corrections = MutableStateFlow<Map<String, List<String>>>(mapOf())
@@ -78,6 +78,11 @@ class SpellChecker(
                 }
             }
         }
+    }
+
+    suspend fun addWord(word: String) {
+        checker.createDictionaryEntry(word, 1)
+        dictionaryDao.insert(DictionaryItem(word = word))
     }
 
     fun reset() {

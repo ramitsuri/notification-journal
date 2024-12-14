@@ -1,11 +1,15 @@
 package com.ramitsuri.notificationjournal.core.data.dictionary
 
-interface DictionaryDao {
-    suspend fun getItems(): List<DictionaryItem>
-}
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 
-class DictionaryDaoImpl : DictionaryDao {
-    override suspend fun getItems(): List<DictionaryItem> {
-        return listOf()
-    }
+@Dao
+abstract class DictionaryDao {
+    @Query("SELECT * FROM DictionaryItem")
+    abstract suspend fun getItems(): List<DictionaryItem>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insert(item: DictionaryItem)
 }
