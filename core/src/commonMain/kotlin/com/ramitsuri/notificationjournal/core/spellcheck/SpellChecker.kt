@@ -119,7 +119,8 @@ class SpellChecker(
         val regex = """(?<!\w)'(?!\w)|[.,!?;:"-]""".toRegex()
         return text
             .replace(regex, "")
-            .split(" ")
+            .split("\n")
+            .flatMap { it.split(" ") }
     }
 
     private suspend fun addToEncounteredWords(word: String): Boolean {
