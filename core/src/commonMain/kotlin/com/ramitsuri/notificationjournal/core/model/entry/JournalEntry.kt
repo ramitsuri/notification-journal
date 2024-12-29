@@ -3,9 +3,7 @@ package com.ramitsuri.notificationjournal.core.model.entry
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -20,11 +18,7 @@ data class JournalEntry(
 
     @ColumnInfo(name = "entry_time")
     @SerialName("entryTime")
-    val entryTime: Instant,
-
-    @ColumnInfo(name = "time_zone")
-    @SerialName("timeZone")
-    val timeZone: TimeZone,
+    val entryTime: LocalDateTime,
 
     @ColumnInfo(name = "text")
     @SerialName("text")
@@ -49,6 +43,4 @@ data class JournalEntry(
     @ColumnInfo(name = "reconciled", defaultValue = "0")
     @SerialName("reconciled")
     val reconciled: Boolean = false,
-) {
-    fun localDateTime() = entryTime.toLocalDateTime(timeZone)
-}
+)

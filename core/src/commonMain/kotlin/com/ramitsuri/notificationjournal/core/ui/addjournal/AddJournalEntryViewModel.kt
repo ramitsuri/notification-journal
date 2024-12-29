@@ -14,6 +14,9 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import com.ramitsuri.notificationjournal.core.utils.minus
+import com.ramitsuri.notificationjournal.core.utils.nowLocal
+import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,14 +24,10 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import java.net.URLDecoder
 import kotlin.time.Duration.Companion.days
 
@@ -39,7 +38,6 @@ class AddJournalEntryViewModel(
     private val templatesDao: JournalEntryTemplateDao,
     private val spellChecker: SpellChecker,
     private val clock: Clock = Clock.System,
-    private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
     private val receivedText: String? =
         if (savedStateHandle.get<String?>(RECEIVED_TEXT_ARG).isNullOrEmpty()) {
@@ -51,15 +49,15 @@ class AddJournalEntryViewModel(
 
     private val dateTime = savedStateHandle.get<String?>(DATE_ARG)
         ?.let { dateString ->
-            val currentDateTime = clock.now().toLocalDateTime(zoneId)
+            val currentDateTime = clock.nowLocal()
             val timeString = savedStateHandle.get<String?>(TIME_ARG)
             val time = if (timeString == null) {
                 currentDateTime.time
             } else {
                 LocalTime.parse(timeString)
             }
-            LocalDate.parse(dateString).atTime(time).toInstant(zoneId)
-        } ?: clock.now()
+            LocalDate.parse(dateString).atTime(time)
+        } ?: clock.nowLocal()
 
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
@@ -68,7 +66,6 @@ class AddJournalEntryViewModel(
         AddJournalEntryViewState(
             textFieldState = TextFieldState(receivedText ?: ""),
             dateTime = dateTime,
-            timeZone = zoneId,
             selectedTag = savedStateHandle[TAG_ARG],
         )
     )
@@ -118,7 +115,7 @@ class AddJournalEntryViewModel(
 
     fun dateSelected(date: LocalDate) {
         _state.update {
-            it.copy(dateTime = date.atTime(it.localDateTime.time).toInstant(it.timeZone))
+            it.copy(dateTime = date.atTime(it.dateTime.time))
         }
     }
 
@@ -140,40 +137,40 @@ class AddJournalEntryViewModel(
 
     fun timeSelected(time: LocalTime) {
         _state.update {
-            it.copy(dateTime = LocalDateTime(it.localDateTime.date, time).toInstant(it.timeZone))
+            it.copy(dateTime = LocalDateTime(it.dateTime.date, time))
         }
     }
 
     fun resetDate() {
-        val currentDateTime = _state.value.localDateTime
-        val originalDateTime = dateTime.toLocalDateTime(zoneId)
+        val currentDateTime = _state.value.dateTime
+        val originalDateTime = dateTime
         val resetDateTime = LocalDateTime(date = originalDateTime.date, time = currentDateTime.time)
-        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
+        _state.update { it.copy(dateTime = resetDateTime) }
     }
 
     fun resetDateToToday() {
-        val currentDateTime = _state.value.localDateTime
+        val currentDateTime = _state.value.dateTime
         val resetDateTime = LocalDateTime(
-            date = clock.now().toLocalDateTime(zoneId).date,
+            date = clock.nowLocal().date,
             time = currentDateTime.time
         )
-        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
+        _state.update { it.copy(dateTime = resetDateTime) }
     }
 
     fun resetTime() {
-        val currentDateTime = _state.value.localDateTime
-        val originalDateTime = dateTime.toLocalDateTime(zoneId)
+        val currentDateTime = _state.value.dateTime
+        val originalDateTime = dateTime
         val resetDateTime = LocalDateTime(date = currentDateTime.date, time = originalDateTime.time)
-        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
+        _state.update { it.copy(dateTime = resetDateTime) }
     }
 
     fun resetTimeToNow() {
-        val currentDateTime = _state.value.localDateTime
+        val currentDateTime = _state.value.dateTime
         val resetDateTime = LocalDateTime(
             date = currentDateTime.date,
-            time = clock.now().toLocalDateTime(zoneId).time
+            time = clock.nowLocal().time
         )
-        _state.update { it.copy(dateTime = resetDateTime.toInstant(zoneId)) }
+        _state.update { it.copy(dateTime = resetDateTime) }
     }
 
     fun correctionAccepted(word: String, correction: String) {
@@ -303,10 +300,5 @@ data class AddJournalEntryViewState(
     val suggestedText: String? = null,
     val templates: List<JournalEntryTemplate> = listOf(),
     val corrections: Map<String, List<String>> = mapOf(),
-    val dateTime: Instant,
-    val timeZone: TimeZone,
-) {
-
-    val localDateTime: LocalDateTime
-        get() = dateTime.toLocalDateTime(timeZone)
-}
+    val dateTime: LocalDateTime,
+)

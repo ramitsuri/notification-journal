@@ -9,8 +9,7 @@ import com.google.android.gms.wearable.Wearable
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import kotlinx.coroutines.tasks.await
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDateTime
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -23,8 +22,7 @@ class WearDataSharingClientImpl(
     @SuppressLint("VisibleForTests")
     override suspend fun postJournalEntry(
         value: String,
-        time: Instant,
-        timeZoneId: TimeZone,
+        time: LocalDateTime,
         tag: String?,
     ): Boolean {
         return try {
@@ -33,13 +31,9 @@ class WearDataSharingClientImpl(
             val request = PutDataMapRequest.create(path)
                 .apply {
                     dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_VALUE, value)
-                    dataMap.putLong(
-                        Constants.WearDataSharing.JOURNAL_ENTRY_TIME,
-                        time.toEpochMilliseconds()
-                    )
                     dataMap.putString(
-                        Constants.WearDataSharing.JOURNAL_ENTRY_TIME_ZONE,
-                        timeZoneId.id
+                        Constants.WearDataSharing.JOURNAL_ENTRY_TIME,
+                        time.toString()
                     )
                     if (tag != null) {
                         dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG, tag)

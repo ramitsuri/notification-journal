@@ -277,7 +277,6 @@ private fun SearchItem(journalEntry: JournalEntry) {
                         style = MaterialTheme.typography.labelSmall,
                         text = formatForDisplay(
                             toFormat = journalEntry.entryTime,
-                            timeZone = journalEntry.timeZone,
                             amString = stringResource(Res.string.am),
                             pmString = stringResource(Res.string.pm),
                         )

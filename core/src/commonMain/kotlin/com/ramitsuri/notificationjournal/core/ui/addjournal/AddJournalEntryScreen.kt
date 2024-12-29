@@ -34,7 +34,7 @@ fun AddJournalEntryScreen(
         suggestedText = state.suggestedText,
         showAddAnother = true,
         templates = state.templates,
-        dateTime = state.localDateTime,
+        dateTime = state.dateTime,
         textCorrections = state.corrections,
         onTagClicked = onTagClicked,
         onTemplateClicked = onTemplateClicked,

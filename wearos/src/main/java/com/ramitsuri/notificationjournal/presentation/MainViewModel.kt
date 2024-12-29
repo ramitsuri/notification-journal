@@ -8,6 +8,8 @@ import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.nowLocal
+import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,8 +17,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
@@ -91,8 +94,7 @@ class MainViewModel(
         value: String,
         tag: String? = null,
         exitOnDone: Boolean = false,
-        time: Instant = Clock.System.now(),
-        timeZone: TimeZone = TimeZone.currentSystemDefault(),
+        time: LocalDateTime = Clock.System.nowLocal(),
     ) {
         longLivingCoroutineScope.launch {
             value.split(". ")
@@ -103,7 +105,6 @@ class MainViewModel(
                         postToClient(
                             value = entry,
                             time = entryTime,
-                            timeZone = timeZone,
                             tag = tag,
                         )
                     }
@@ -123,7 +124,6 @@ class MainViewModel(
                 val posted = wearDataSharingClient.postJournalEntry(
                     journalEntry.text,
                     journalEntry.entryTime,
-                    journalEntry.timeZone,
                     journalEntry.tag
                 )
                 if (posted) {
@@ -147,15 +147,14 @@ class MainViewModel(
 
     private suspend fun postToClient(
         value: String,
-        time: Instant,
-        timeZone: TimeZone,
+        time: LocalDateTime,
         tag: String?,
     ) {
-        val posted = wearDataSharingClient.postJournalEntry(value, time, timeZone, tag)
+        val posted = wearDataSharingClient.postJournalEntry(value, time, tag)
         if (posted) { // Shared with phone client, so no need to save to local db
             return
         }
-        repository.insert(text = value, time = time, timeZone = timeZone)
+        repository.insert(text = value, time = time)
     }
 }
 

@@ -1,14 +1,12 @@
 package com.ramitsuri.notificationjournal.core.data
 
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDateTime
 
 interface WearDataSharingClient {
     suspend fun postJournalEntry(
         value: String,
-        time: Instant,
-        timeZoneId: TimeZone,
+        time: LocalDateTime,
         tag: String?,
     ): Boolean
 

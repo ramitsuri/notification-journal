@@ -46,6 +46,7 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.presentation.theme.NotificationJournalTheme
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun WearApp(
@@ -251,18 +252,15 @@ private fun JournalEntriesPresentPreview() {
         viewState = ViewState(
             journalEntries = listOf(
                 JournalEntry(
-                    entryTime = Clock.System.now(),
-                    timeZone = TimeZone.currentSystemDefault(),
+                    entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
                     text = "Text1"
                 ),
                 JournalEntry(
-                    entryTime = Clock.System.now(),
-                    timeZone = TimeZone.currentSystemDefault(),
+                    entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
                     text = "Text2"
                 ),
                 JournalEntry(
-                    entryTime = Clock.System.now(),
-                    timeZone = TimeZone.currentSystemDefault(),
+                    entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
                     text = "Text3"
                 )
             )

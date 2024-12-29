@@ -11,12 +11,13 @@ import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
+import com.ramitsuri.notificationjournal.core.utils.nowLocal
+import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDateTime
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.pm
@@ -28,7 +29,6 @@ class JournalRepository(
     private val dao: JournalEntryDao,
     private val conflictDao: EntryConflictDao,
     private val clock: Clock = Clock.System,
-    private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
     private val dataSendHelper: DataSendHelper?,
 ) {
     fun getFlow(
@@ -61,7 +61,6 @@ class JournalRepository(
                     text = replaceWithTimeTemplateIfNecessary(
                         originalText = journalEntry.text,
                         time = journalEntry.entryTime,
-                        timeZone = journalEntry.timeZone,
                     )
                 )
             )
@@ -75,8 +74,7 @@ class JournalRepository(
     suspend fun insert(
         text: String,
         tag: String? = null,
-        time: Instant = clock.now(),
-        timeZone: TimeZone = this.timeZone,
+        time: LocalDateTime = clock.nowLocal(),
     ) {
         text
             .split("\n")
@@ -86,12 +84,10 @@ class JournalRepository(
                 val entryText = replaceWithTimeTemplateIfNecessary(
                     originalText = entry,
                     time = entryTime,
-                    timeZone = timeZone,
                 )
                 dao.insert(
                     entry = JournalEntry(
                         entryTime = entryTime,
-                        timeZone = timeZone,
                         text = entryText.trim(),
                         tag = tag,
                     ),
@@ -181,15 +177,13 @@ class JournalRepository(
 
     private suspend fun replaceWithTimeTemplateIfNecessary(
         originalText: String,
-        time: Instant,
-        timeZone: TimeZone,
+        time: LocalDateTime,
     ): String {
         return if (originalText.contains(Constants.TEMPLATED_TIME)) {
             originalText.replace(
                 Constants.TEMPLATED_TIME,
                 formatForDisplay(
                     toFormat = time,
-                    timeZone = timeZone,
                     amString = getString(Res.string.am),
                     pmString = getString(Res.string.pm),
                 )
