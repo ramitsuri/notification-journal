@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.ui.nav
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -254,6 +255,9 @@ fun NavGraph(
                 onToggleCopyWithEmptyTags = viewModel::toggleCopyWithEmptyTags,
                 onToggleShowEmptyTags = viewModel::toggleShowEmptyTags,
                 onToggleShowLogsButton = viewModel::toggleShowLogsButton,
+                onJournalImportClicked = {
+                    navController.navigate(Destination.IMPORT.routeWithArgValues())
+                },
             )
         }
 
@@ -318,6 +322,10 @@ fun NavGraph(
                 onClearClick = viewModel::clearSearchTerm,
                 onTagClicked = viewModel::tagClicked,
             )
+        }
+
+        composable(Destination.IMPORT.route()) {
+            Text("Import")
         }
     }
 }

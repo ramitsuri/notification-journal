@@ -61,6 +61,9 @@
 
     <string name="settings_showLogsButton">Show logs button</string>
 
+    <string name="settings_journal_import_title">Import</string>
+    <string name="settings_journal_import_subtitle">Import journal entries</string>
+
     <string name="tag_delete_fail_message">Tag is being used</string>
     <string name="tag_insert_fail_message">Tag being used or new tag exists</string>
     <string name="tag_info">Tag can\'t be changed if it\'s currently being used by a template or a journal entry</string>

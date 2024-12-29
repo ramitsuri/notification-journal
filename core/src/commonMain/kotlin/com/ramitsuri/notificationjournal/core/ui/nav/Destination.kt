@@ -15,6 +15,7 @@ enum class Destination(private val route: String) {
     EDIT_ENTRY("edit_entry"),
     LOGS("logs"),
     SEARCH("search"),
+    IMPORT("import"),
     ;
 
     fun routeWithArgValues(args: Map<String, String?> = mapOf()): String {
