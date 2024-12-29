@@ -29,7 +29,7 @@ fun EditJournalEntryScreen(
         selectedTag = state.selectedTag,
         suggestedText = state.suggestedText,
         templates = state.templates,
-        dateTime = state.localDateTime,
+        dateTime = state.dateTime,
         textCorrections = state.corrections,
         onTagClicked = onTagClicked,
         onTemplateClicked = onTemplateClicked,

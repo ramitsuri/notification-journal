@@ -1,9 +1,8 @@
 package com.ramitsuri.notificationjournal.core.model
 
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import org.junit.Assert.*
+import kotlinx.datetime.LocalDateTime
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.UUID
 
@@ -84,8 +83,7 @@ class EntriesToDayGroupsMapperKtTest {
         tag: String? = null,
     ) = JournalEntry(
         id = id,
-        entryTime = Instant.parse("2024-11-30T15:00:00Z"),
-        timeZone = TimeZone.UTC,
+        entryTime = LocalDateTime.parse("2024-11-30T15:00:00"),
         text = "text",
         tag = tag,
         uploaded = false,

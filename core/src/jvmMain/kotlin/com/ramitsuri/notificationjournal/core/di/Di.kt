@@ -18,8 +18,7 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDateTime
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -45,8 +44,7 @@ actual class Factory {
         return object : WearDataSharingClient {
             override suspend fun postJournalEntry(
                 value: String,
-                time: Instant,
-                timeZoneId: TimeZone,
+                time: LocalDateTime,
                 tag: String?
             ): Boolean {
                 // Not supported

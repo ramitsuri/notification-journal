@@ -3,7 +3,7 @@ package com.ramitsuri.notificationjournal.core.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -22,7 +22,7 @@ data class EntryConflict(
 
     @ColumnInfo(name = "entry_time")
     @SerialName("entry_time")
-    val entryTime: Instant,
+    val entryTime: LocalDateTime,
 
     @ColumnInfo(name = "text")
     @SerialName("text")

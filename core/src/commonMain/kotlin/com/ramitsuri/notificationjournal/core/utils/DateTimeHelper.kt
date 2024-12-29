@@ -14,6 +14,7 @@ import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
@@ -27,16 +28,7 @@ import notificationjournal.core.generated.resources.yesterday
 import org.jetbrains.compose.resources.getStringArray
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
-
-fun formatForDisplay(
-    toFormat: Instant,
-    timeZone: TimeZone,
-    amString: String,
-    pmString: String,
-): String {
-    val localDateTime = toFormat.toLocalDateTime(timeZone)
-    return formatForDisplay(toFormat = localDateTime, amString = amString, pmString = pmString)
-}
+import kotlin.time.Duration
 
 fun formatForDisplay(
     toFormat: LocalDateTime,
@@ -78,14 +70,12 @@ fun formatForLogs(
 
 @Composable
 fun getDateTime(
-    toFormat: Instant,
-    timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    toFormat: LocalDateTime,
     monthNames: List<String> = stringArrayResource(Res.array.month_names_short),
     amString: String = stringResource(Res.string.am),
     pmString: String = stringResource(Res.string.pm),
 ): String {
-    val localDateTime = toFormat.toLocalDateTime(timeZone)
-    val minute = localDateTime.minute
+    val minute = toFormat.minute
     val format = LocalDateTime.Format {
         monthName(MonthNames(monthNames))
         char(' ')
@@ -99,7 +89,7 @@ fun getDateTime(
         }
         amPmMarker(am = amString, pm = pmString)
     }
-    return localDateTime.format(format)
+    return toFormat.format(format)
 }
 
 @Suppress("MoveVariableDeclarationIntoWhen")
@@ -181,3 +171,19 @@ suspend fun dayMonthDateWithYear(
         year()
     }.format(toFormat)
 }
+
+fun LocalDateTime.plus(duration: Duration) =
+    toInstant(TimeZone.UTC)
+        .plus(duration)
+        .toLocalDateTime(TimeZone.UTC)
+
+fun LocalDateTime.minus(duration: Duration) =
+    toInstant(TimeZone.UTC)
+        .minus(duration)
+        .toLocalDateTime(TimeZone.UTC)
+
+fun Clock.nowLocal(): LocalDateTime =
+    Clock
+        .System
+        .now()
+        .toLocalDateTime(TimeZone.currentSystemDefault())

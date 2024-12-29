@@ -7,6 +7,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryItem
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom10To11
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom11To12
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom9To10
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
@@ -32,7 +33,7 @@ import kotlinx.coroutines.Dispatchers
         EntryConflict::class,
         DictionaryItem::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
@@ -67,6 +68,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MigrationFrom8To9())
                     .addMigrations(MigrationFrom9To10())
                     .addMigrations(MigrationFrom10To11())
+                    .addMigrations(MigrationFrom11To12())
                     .build()
             }
             return INSTANCE as AppDatabase

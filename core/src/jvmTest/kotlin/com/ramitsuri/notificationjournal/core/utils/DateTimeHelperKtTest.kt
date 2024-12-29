@@ -1,14 +1,10 @@
 package com.ramitsuri.notificationjournal.core.utils
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class DateTimeHelperKtTest {
-    private val timeZone = TimeZone.of("America/New_York")
     private var toFormat: String = ""
 
     @Test
@@ -39,14 +35,13 @@ class DateTimeHelperKtTest {
         assertEquals(expected, format())
     }
 
-    private fun String.toInstant(): Instant {
-        return LocalDateTime.parse(this).toInstant(timeZone)
+    private fun String.toLocalDateTime(): LocalDateTime {
+        return LocalDateTime.parse(this)
     }
 
     private fun format(): String {
         return formatForDisplay(
-            toFormat = toFormat.toInstant(),
-            timeZone = timeZone,
+            toFormat = toFormat.toLocalDateTime(),
             amString = "am",
             pmString = "pm",
         )

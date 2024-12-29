@@ -17,7 +17,9 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
-import com.ramitsuri.notificationjournal.core.utils.getLocalDate
+import com.ramitsuri.notificationjournal.core.utils.minus
+import com.ramitsuri.notificationjournal.core.utils.nowLocal
+import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -31,9 +33,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
@@ -43,7 +44,6 @@ class JournalEntryViewModel(
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val prefManager: PrefManager,
-    private val zoneId: TimeZone = TimeZone.currentSystemDefault(),
     private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
@@ -76,7 +76,6 @@ class JournalEntryViewModel(
                 val tags = tagsDao.getAll()
                 val dayGroups = try {
                     entries.toDayGroups(
-                        zoneId = zoneId,
                         tagsForSort = tags,
                     )
                 } catch (e: Exception) {
@@ -89,7 +88,7 @@ class JournalEntryViewModel(
                         _selectedIndex.update {
                             sorted
                                 .indexOfFirst {
-                                    it.date == getLocalDate(clock.now(), zoneId)
+                                    it.date == clock.nowLocal().date
                                 }
                                 .takeIf { it >= 0 }
                                 ?: sorted.lastIndex
@@ -336,7 +335,7 @@ class JournalEntryViewModel(
         ServiceLocator.resetReceiveHelper()
     }
 
-    private fun setDate(journalEntry: JournalEntry, entryTime: Instant) {
+    private fun setDate(journalEntry: JournalEntry, entryTime: LocalDateTime) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
         }

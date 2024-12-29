@@ -1,16 +1,12 @@
 package com.ramitsuri.notificationjournal.core.model
 
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.utils.getLocalDate
-import kotlinx.datetime.TimeZone
 
 fun List<JournalEntry>.toDayGroups(
-    zoneId: TimeZone = TimeZone.currentSystemDefault(),
     tagsForSort: List<Tag> = listOf(),
 ): List<DayGroup> {
     return groupBy {
-        val entryTime = it.entryTime
-        getLocalDate(entryTime, zoneId)
+        it.entryTime.date
     }.map { (date, entriesByDate) ->
         val tagToEntries = entriesByDate
             .groupBy { it.tag }

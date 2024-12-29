@@ -135,14 +135,13 @@ import com.ramitsuri.notificationjournal.core.utils.getDateTime
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
 import com.ramitsuri.notificationjournal.core.utils.getTime
+import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.alert
@@ -991,7 +990,7 @@ private fun ListItem(
         text = item.text,
         tags = tags,
         selectedTag = selectedTag,
-        time = item.localDateTime(),
+        time = item.entryTime,
         onCopyRequested = onCopyRequested,
         onEditRequested = onEditRequested,
         onDeleteRequested = onDeleteRequested,
@@ -1046,7 +1045,6 @@ private fun ConflictResolutionDialog(
                     EntryConflictView(
                         device = stringResource(Res.string.conflict_this_device),
                         entryTime = entry.entryTime,
-                        timeZone = entry.timeZone,
                         text = AnnotatedString(entry.text),
                         tag = entry.tag,
                         onClick = {
@@ -1063,7 +1061,6 @@ private fun ConflictResolutionDialog(
                             } else {
                                 null
                             },
-                            timeZone = entry.timeZone,
                             text = if (conflict.text != entry.text) {
                                 if (showDiffInline) {
                                     remember(conflict.id) {
@@ -1101,8 +1098,7 @@ private fun ConflictResolutionDialog(
 @Composable
 private fun EntryConflictView(
     device: String,
-    entryTime: Instant?,
-    timeZone: TimeZone,
+    entryTime: LocalDateTime?,
     text: AnnotatedString?,
     tag: String?,
     showDiffInline: Boolean = false,
@@ -1122,7 +1118,7 @@ private fun EntryConflictView(
         Spacer(modifier = Modifier.height(4.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
             entryTime?.let {
-                Text(getDateTime(it, timeZone), style = MaterialTheme.typography.bodySmall)
+                Text(getDateTime(it), style = MaterialTheme.typography.bodySmall)
             }
             tag?.let {
                 Text(
@@ -1603,8 +1599,7 @@ private fun ListItemPreview() {
     Surface {
         ListItem(
             item = JournalEntry(
-                entryTime = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
+                entryTime = Clock.System.nowLocal(),
                 text = "Test text"
             ),
             conflicts = listOf(),
