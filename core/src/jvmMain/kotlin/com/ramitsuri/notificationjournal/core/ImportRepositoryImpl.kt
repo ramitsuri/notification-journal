@@ -25,19 +25,26 @@ class ImportRepositoryImpl(
     override val importedEntriesFlow: Flow<List<JournalEntry>> = channel.consumeAsFlow()
 
     /**
-     * Reads Markdown files in named in the following format in the fromDir directory:
+     * Reads Markdown files named in the following format in the fromDir directory:
      * - fromDir
-     *      - 2024
-     *          - 01
-     *              - 01.md
-     *              - 02.md
-     *          - 02
-     *              - 01.md
-     *              - 02.md
+     *    - 2023
+     *      - 11
+     *        - 01.md
+     *        - 02.md
+     *      - 12
+     *        - 01.md
+     *        - 02.md
+     *    - 2024
+     *      - 01
+     *        - 01.md
+     *        - 02.md
+     *      - 02
+     *        - 01.md
+     *        - 02.md
      *
      * The Markdown files themselves are formatted like
      *
-     * 2024/01/01.md
+     * // 2024/01/01.md
      *
      * # Tuesday, January 1, 2024
      *
