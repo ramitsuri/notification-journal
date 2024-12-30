@@ -37,8 +37,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -46,12 +44,10 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -60,7 +56,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -88,13 +83,9 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import com.ramitsuri.notificationjournal.core.utils.getDay
 import kotlinx.coroutines.delay
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_save
 import notificationjournal.core.generated.resources.add_entry_save_and_add_another
@@ -105,7 +96,6 @@ import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.reset
 import notificationjournal.core.generated.resources.tags
-import notificationjournal.core.generated.resources.today
 import notificationjournal.core.generated.resources.use
 import org.jetbrains.compose.resources.stringResource
 
@@ -887,7 +877,10 @@ private fun DateTimeEntry(
             onDismiss = { showDate = false },
             onResetDate = onResetDate,
             onResetDateToToday = onResetDateToToday,
-            onDateSelected = onDateSelected,
+            onDateSelected = {
+                showDate = false
+                onDateSelected(it)
+            },
         )
     }
 
@@ -948,112 +941,6 @@ private fun Time(
                         onDismiss()
                     }) {
                         Text(stringResource(Res.string.ok))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Date(
-    selectedDate: LocalDate? = null,
-    allowedSelections: ClosedRange<LocalDate>? = null,
-    onDateSelected: ((LocalDate) -> Unit)? = null,
-    onResetDate: () -> Unit,
-    onResetDateToToday: (() -> Unit)?,
-    onDismiss: () -> Unit,
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card {
-            fun Long.toLocalDate(): LocalDate {
-                return Instant
-                    .fromEpochMilliseconds(this)
-                    .toLocalDateTime(TimeZone.UTC)
-                    .date
-            }
-
-            fun LocalDate.toMillisSinceEpoch(): Long {
-                return this
-                    .atStartOfDayIn(TimeZone.UTC)
-                    .toEpochMilliseconds()
-            }
-
-            val yearRange = if (allowedSelections == null) {
-                DatePickerDefaults.YearRange
-            } else {
-                allowedSelections.start.year..allowedSelections.endInclusive.year
-            }
-            val selectedDateMillis = remember(selectedDate) { selectedDate?.toMillisSinceEpoch() }
-            val initialDisplayedMonthMillis =
-                selectedDateMillis ?: allowedSelections?.endInclusive?.toMillisSinceEpoch()
-            val state = rememberDatePickerState(
-                initialSelectedDateMillis = selectedDateMillis,
-                initialDisplayedMonthMillis = initialDisplayedMonthMillis,
-                yearRange = yearRange,
-                selectableDates = object : SelectableDates {
-                    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                        if (allowedSelections == null) {
-                            return true
-                        }
-                        val pickedDate = utcTimeMillis.toLocalDate()
-                        return allowedSelections.contains(pickedDate)
-                    }
-
-                    override fun isSelectableYear(year: Int): Boolean {
-                        if (allowedSelections == null) {
-                            return true
-                        }
-                        return (allowedSelections.start.year..allowedSelections.endInclusive.year).contains(
-                            year
-                        )
-                    }
-                },
-            )
-            var dateSelectedOnce by remember { mutableStateOf(false) }
-
-            LaunchedEffect(Unit) {
-                snapshotFlow { state.selectedDateMillis }.collect { selectedDateMillis ->
-                    if (selectedDateMillis != null) {
-                        onDateSelected?.invoke(selectedDateMillis.toLocalDate())
-                        if (dateSelectedOnce) {
-                            onDismiss()
-                        } else {
-                            dateSelectedOnce = true
-                        }
-                    }
-                }
-            }
-
-            Column(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                DatePicker(
-                    state = state,
-                    showModeToggle = false,
-                    headline = null,
-                    title = null,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    TextButton(onClick = {
-                        onResetDate()
-                        onDismiss()
-                    }) {
-                        Text(stringResource(Res.string.reset))
-                    }
-                    onResetDateToToday?.let {
-                        TextButton(onClick = {
-                            onResetDateToToday()
-                            onDismiss()
-                        }) {
-                            Text(stringResource(Res.string.today))
-                        }
                     }
                 }
             }
