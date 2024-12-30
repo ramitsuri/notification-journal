@@ -28,7 +28,7 @@ class ImportViewModel(
         viewModelScope.launch {
             val days = mutableSetOf<LocalDate>()
             importRepository
-                .journalEntriesFlow
+                .importedEntriesFlow
                 .collect { entries ->
                     days.addAll(entries.map { it.entryTime.date })
                     journalRepository.insert(entries)

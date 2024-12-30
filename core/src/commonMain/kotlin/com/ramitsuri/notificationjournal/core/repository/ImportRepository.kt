@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 
 interface ImportRepository {
-    suspend fun import(fromDir: String, startDate: LocalDate, endDate: LocalDate)
+    val importedEntriesFlow: Flow<List<JournalEntry>>
 
-    val journalEntriesFlow: Flow<List<JournalEntry>>
+    suspend fun import(fromDir: String, startDate: LocalDate, endDate: LocalDate)
 }

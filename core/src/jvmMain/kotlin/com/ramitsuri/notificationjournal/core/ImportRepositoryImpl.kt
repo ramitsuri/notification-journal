@@ -22,7 +22,7 @@ class ImportRepositoryImpl(
 
     private val channel = Channel<List<JournalEntry>>()
 
-    override val journalEntriesFlow: Flow<List<JournalEntry>> = channel.consumeAsFlow()
+    override val importedEntriesFlow: Flow<List<JournalEntry>> = channel.consumeAsFlow()
 
     /**
      * Reads Markdown files in named in the following format in the fromDir directory:
