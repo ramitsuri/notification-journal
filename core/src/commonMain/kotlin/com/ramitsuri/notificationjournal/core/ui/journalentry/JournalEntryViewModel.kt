@@ -111,7 +111,7 @@ class JournalEntryViewModel(
                         showEmptyTags = showEmptyTags,
                         snackBarType = snackBarType,
                         showLogsButton = showLogsButton,
-                        stats = repository.getStats().takeIf { statsRequested },
+                        stats = if (statsRequested) repository.getStats() else null,
                     )
                 }
             }

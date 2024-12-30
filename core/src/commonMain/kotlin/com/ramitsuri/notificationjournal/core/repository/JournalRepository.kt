@@ -185,57 +185,56 @@ class JournalRepository(
             .size
             .toString()
 
-        val notUploadedNotReconciled = async {
+        val notUploadedNotReconciled = let {
             val uploaded = false
             val reconciled = false
-            dao.getEntryTimes(uploaded, reconciled).dates() to
-                    dao.getEntryCount(uploaded, reconciled).toString()
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
         }
-        val uploadedNotReconciled = async {
+        val uploadedNotReconciled = let {
             val uploaded = true
             val reconciled = false
-            dao.getEntryTimes(uploaded, reconciled).dates() to
-                    dao.getEntryCount(uploaded, reconciled).toString()
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
         }
-        val notUploadedReconciled = async {
+        val notUploadedReconciled = let {
             val uploaded = false
             val reconciled = true
-            dao.getEntryTimes(uploaded, reconciled).dates() to
-                    dao.getEntryCount(uploaded, reconciled).toString()
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
         }
-        val uploadedReconciled = async {
+        val uploadedReconciled = let {
             val uploaded = true
             val reconciled = true
-            dao.getEntryTimes(uploaded, reconciled).dates() to
-                    dao.getEntryCount(uploaded, reconciled).toString()
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
         }
         // All dates won't necessarily add up to individual dates because same date could have
         // uploaded as well as not uploaded entries for example
-        val all = async {
-            dao.getEntryTimes().dates() to
-                    dao.getEntryCount().toString()
+        val all = let {
+            async { dao.getEntryTimes().dates() } to
+                    async { dao.getEntryCount().toString() }
         }
         EntryStats(
             uploadedAndReconciled = EntryStats.Count(
-                days = uploadedReconciled.await().first,
-                entries = uploadedReconciled.await().second,
+                days = uploadedReconciled.first.await(),
+                entries = uploadedReconciled.second.await(),
             ),
-
             uploadedAndNotReconciled = EntryStats.Count(
-                days = uploadedNotReconciled.await().first,
-                entries = uploadedNotReconciled.await().second,
+                days = uploadedNotReconciled.first.await(),
+                entries = uploadedNotReconciled.second.await(),
             ),
             notUploadedAndReconciled = EntryStats.Count(
-                days = notUploadedReconciled.await().first,
-                entries = notUploadedReconciled.await().second,
+                days = notUploadedReconciled.first.await(),
+                entries = notUploadedReconciled.second.await(),
             ),
             notUploadedAndNotReconciled = EntryStats.Count(
-                days = notUploadedNotReconciled.await().first,
-                entries = notUploadedNotReconciled.await().second,
+                days = notUploadedNotReconciled.first.await(),
+                entries = notUploadedNotReconciled.second.await(),
             ),
             all = EntryStats.Count(
-                days = all.await().first,
-                entries = all.await().second,
+                days = all.first.await(),
+                entries = all.second.await(),
             )
         )
     }
