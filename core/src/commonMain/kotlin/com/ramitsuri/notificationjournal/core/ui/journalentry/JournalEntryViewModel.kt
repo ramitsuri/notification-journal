@@ -77,11 +77,6 @@ class JournalEntryViewModel(
                 statsRequested,
             ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
                 showEmptyTags, showConflictDiffInline, showLogsButton, statsRequested ->
-                val stats = if (statsRequested) {
-                    repository.getStats()
-                } else {
-                    null
-                }
                 val tags = tagsDao.getAll()
                 val dayGroups = try {
                     entries.toDayGroups(
@@ -116,7 +111,7 @@ class JournalEntryViewModel(
                         showEmptyTags = showEmptyTags,
                         snackBarType = snackBarType,
                         showLogsButton = showLogsButton,
-                        stats = stats,
+                        stats = repository.getStats().takeIf { statsRequested },
                     )
                 }
             }
@@ -346,9 +341,7 @@ class JournalEntryViewModel(
     }
 
     fun onStatsRequestToggled() {
-        viewModelScope.launch {
-            statsRequested.update { !it }
-        }
+        statsRequested.update { !it }
     }
 
     private fun setDate(journalEntry: JournalEntry, entryTime: LocalDateTime) {
