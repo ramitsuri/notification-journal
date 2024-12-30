@@ -18,6 +18,8 @@ import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScree
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.import.ImportScreen
+import com.ramitsuri.notificationjournal.core.ui.import.ImportViewModel
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreen
@@ -325,7 +327,19 @@ fun NavGraph(
         }
 
         composable(Destination.IMPORT.route()) {
-            Text("Import")
+            val viewModel: ImportViewModel = viewModel(factory = ImportViewModel.factory())
+
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            ImportScreen(
+                state = state,
+                onBackClick = { navController.navigateUp() },
+                onImportClick = viewModel::onImportClicked,
+                onFromDirChanged = viewModel::onFromDirChanged,
+                onStartDateChanged = viewModel::onStartDateChanged,
+                onResetStartDate = viewModel::onResetStartDate,
+                onEndDateChanged = viewModel::onEndDateChanged,
+                onResetEndDate = viewModel::onResetEndDate,
+            )
         }
     }
 }

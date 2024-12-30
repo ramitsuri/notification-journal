@@ -71,6 +71,10 @@ class JournalRepository(
         dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
 
+    suspend fun insert(entries: List<JournalEntry>){
+        dao.insert(entries)
+    }
+
     suspend fun insert(
         text: String,
         tag: String? = null,
@@ -79,19 +83,16 @@ class JournalRepository(
         text
             .split("\n")
             .filter { it.isNotBlank() }
-            .forEachIndexed { index, entry ->
+            .mapIndexed { index, entry ->
                 val entryTime = time.plus(index.times(10).milliseconds)
                 val entryText = replaceWithTimeTemplateIfNecessary(
                     originalText = entry,
                     time = entryTime,
-                )
-                dao.insert(
-                    entry = JournalEntry(
-                        entryTime = entryTime,
-                        text = entryText.trim(),
-                        tag = tag,
-                    ),
-                )
+                ).trim()
+                JournalEntry(entryTime = entryTime, text = entryText, tag = tag)
+            }
+            .let {
+                insert(it)
             }
     }
 

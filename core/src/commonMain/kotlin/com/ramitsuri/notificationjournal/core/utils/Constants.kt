@@ -1,5 +1,7 @@
 package com.ramitsuri.notificationjournal.core.utils
 
+import kotlinx.datetime.LocalDate
+
 object Constants {
     const val REMOTE_INPUT_JOURNAL_KEY = "remote_input_journal_text"
     const val ACTION_JOURNAL = "action_journal"
@@ -32,5 +34,9 @@ object Constants {
         const val TEMPLATE_TAG = "template_tag"
         const val TEMPLATE_DISPLAY_TEXT = "template_display_text"
         const val TEMPLATE_SHORT_DISPLAY_TEXT = "template_short_display_text"
+    }
+
+    object LocalDate {
+        val IMPORT_MIN = LocalDate(year = 2020, monthNumber = 1, dayOfMonth = 1)
     }
 }

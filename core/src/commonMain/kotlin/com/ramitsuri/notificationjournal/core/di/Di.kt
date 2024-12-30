@@ -6,10 +6,12 @@ import androidx.navigation.NavBackStackEntry
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CoroutineDispatcher
 
 expect class Factory {
 
@@ -38,4 +40,6 @@ expect class Factory {
     ): AbstractSavedStateViewModelFactory
 
     fun getDataStorePath(): String
+
+    fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository
 }

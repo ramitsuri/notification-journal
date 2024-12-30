@@ -37,7 +37,12 @@ abstract class JournalEntryDao {
 
     @Transaction
     open suspend fun insert(entry: JournalEntry) {
-        insertInternal(entry)
+        insertInternal(listOf(entry))
+    }
+
+    @Transaction
+    open suspend fun insert(entries: List<JournalEntry>) {
+        insertInternal(entries)
     }
 
     @Transaction
@@ -54,7 +59,7 @@ abstract class JournalEntryDao {
     abstract suspend fun upsert(journalEntry: JournalEntry)
 
     @Insert
-    protected abstract suspend fun insertInternal(journalEntry: JournalEntry)
+    protected abstract suspend fun insertInternal(journalEntries: List<JournalEntry>)
 
     @Update
     protected abstract suspend fun updateInternal(journalEntries: List<JournalEntry>)
