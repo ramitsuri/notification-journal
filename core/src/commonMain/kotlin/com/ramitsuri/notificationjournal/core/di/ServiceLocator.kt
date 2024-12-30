@@ -15,6 +15,7 @@ import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
+import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
@@ -216,6 +217,10 @@ object ServiceLocator {
 
     val inMemoryLogWriter by lazy {
         InMemoryLogWriter()
+    }
+
+    val importRepository by lazy {
+        factory.getImportRepository(ioDispatcher)
     }
 
     private val ioDispatcher by lazy {

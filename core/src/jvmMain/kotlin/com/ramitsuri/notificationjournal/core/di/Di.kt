@@ -7,9 +7,11 @@ import androidx.navigation.NavBackStackEntry
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.BuildKonfig
+import com.ramitsuri.notificationjournal.core.ImportRepositoryImpl
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
@@ -18,6 +20,7 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.datetime.LocalDateTime
 import java.io.File
 import java.nio.file.Files
@@ -132,6 +135,10 @@ actual class Factory {
 
     actual fun getDataStorePath(): String {
         return File(appDir, DataStoreKeyValueStore.FILE).absolutePath
+    }
+
+    actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository {
+        return ImportRepositoryImpl(ioDispatcher)
     }
 
     companion object {
