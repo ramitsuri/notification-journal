@@ -6,6 +6,7 @@ import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
@@ -14,6 +15,8 @@ import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -71,7 +74,7 @@ class JournalRepository(
         dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
 
-    suspend fun insert(entries: List<JournalEntry>){
+    suspend fun insert(entries: List<JournalEntry>) {
         dao.insert(entries)
     }
 
@@ -172,8 +175,69 @@ class JournalRepository(
         return dao.search(query, tags)
     }
 
-     fun getEntryTags(): Flow<List<String>>{
+    fun getEntryTags(): Flow<List<String>> {
         return dao.getEntryTags()
+    }
+
+    suspend fun getStats(): EntryStats = coroutineScope {
+        fun List<LocalDateTime>.dates() = map { it.date }
+            .distinct()
+            .size
+            .toString()
+
+        val notUploadedNotReconciled = async {
+            val uploaded = false
+            val reconciled = false
+            dao.getEntryTimes(uploaded, reconciled).dates() to
+                    dao.getEntryCount(uploaded, reconciled).toString()
+        }
+        val uploadedNotReconciled = async {
+            val uploaded = true
+            val reconciled = false
+            dao.getEntryTimes(uploaded, reconciled).dates() to
+                    dao.getEntryCount(uploaded, reconciled).toString()
+        }
+        val notUploadedReconciled = async {
+            val uploaded = false
+            val reconciled = true
+            dao.getEntryTimes(uploaded, reconciled).dates() to
+                    dao.getEntryCount(uploaded, reconciled).toString()
+        }
+        val uploadedReconciled = async {
+            val uploaded = true
+            val reconciled = true
+            dao.getEntryTimes(uploaded, reconciled).dates() to
+                    dao.getEntryCount(uploaded, reconciled).toString()
+        }
+        // All dates won't necessarily add up to individual dates because same date could have
+        // uploaded as well as not uploaded entries for example
+        val all = async {
+            dao.getEntryTimes().dates() to
+                    dao.getEntryCount().toString()
+        }
+        EntryStats(
+            uploadedAndReconciled = EntryStats.Count(
+                days = uploadedReconciled.await().first,
+                entries = uploadedReconciled.await().second,
+            ),
+
+            uploadedAndNotReconciled = EntryStats.Count(
+                days = uploadedNotReconciled.await().first,
+                entries = uploadedNotReconciled.await().second,
+            ),
+            notUploadedAndReconciled = EntryStats.Count(
+                days = notUploadedReconciled.await().first,
+                entries = notUploadedReconciled.await().second,
+            ),
+            notUploadedAndNotReconciled = EntryStats.Count(
+                days = notUploadedNotReconciled.await().first,
+                entries = notUploadedNotReconciled.await().second,
+            ),
+            all = EntryStats.Count(
+                days = all.await().first,
+                entries = all.await().second,
+            )
+        )
     }
 
     private suspend fun replaceWithTimeTemplateIfNecessary(
