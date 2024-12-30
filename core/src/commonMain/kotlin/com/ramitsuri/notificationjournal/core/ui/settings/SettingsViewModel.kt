@@ -158,4 +158,5 @@ data class SettingsViewState(
     val showEmptyTags: Boolean = false,
     val copyWithEmptyTags: Boolean = false,
     val showLogsButton: Boolean = false,
+    val showJournalImportButton: Boolean = ServiceLocator.allowJournalImport,
 )

@@ -54,6 +54,9 @@ object ServiceLocator {
         Logger.setLogWriters(listOf(inMemoryLogWriter))
     }
 
+    val allowJournalImport: Boolean
+        get() = factory.allowJournalImport
+
     fun onAppStart() {
         startReceiving()
     }

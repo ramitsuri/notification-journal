@@ -26,6 +26,9 @@ import java.util.prefs.Preferences
 import kotlin.reflect.KClass
 
 actual class Factory {
+
+    actual val allowJournalImport: Boolean = true
+
     actual fun getSettings(): Settings {
         // File located at ~/Library/Preferences/com.apple.java.util.prefs
         return PreferencesSettings(Preferences.userRoot().node(packageName))

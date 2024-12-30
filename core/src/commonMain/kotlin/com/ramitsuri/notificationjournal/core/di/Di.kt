@@ -12,6 +12,9 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.russhwolf.settings.Settings
 
 expect class Factory {
+
+    val allowJournalImport: Boolean
+
     fun getSettings(): Settings
 
     fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
