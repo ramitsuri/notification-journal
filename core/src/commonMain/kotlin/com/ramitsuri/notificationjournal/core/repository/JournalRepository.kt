@@ -6,6 +6,7 @@ import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
@@ -14,6 +15,8 @@ import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -71,7 +74,7 @@ class JournalRepository(
         dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
 
-    suspend fun insert(entries: List<JournalEntry>){
+    suspend fun insert(entries: List<JournalEntry>) {
         dao.insert(entries)
     }
 
@@ -172,8 +175,68 @@ class JournalRepository(
         return dao.search(query, tags)
     }
 
-     fun getEntryTags(): Flow<List<String>>{
+    fun getEntryTags(): Flow<List<String>> {
         return dao.getEntryTags()
+    }
+
+    suspend fun getStats(): EntryStats = coroutineScope {
+        fun List<LocalDateTime>.dates() = map { it.date }
+            .distinct()
+            .size
+            .toString()
+
+        val notUploadedNotReconciled = let {
+            val uploaded = false
+            val reconciled = false
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
+        }
+        val uploadedNotReconciled = let {
+            val uploaded = true
+            val reconciled = false
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
+        }
+        val notUploadedReconciled = let {
+            val uploaded = false
+            val reconciled = true
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
+        }
+        val uploadedReconciled = let {
+            val uploaded = true
+            val reconciled = true
+            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                    async { dao.getEntryCount(uploaded, reconciled).toString() }
+        }
+        // All dates won't necessarily add up to individual dates because same date could have
+        // uploaded as well as not uploaded entries for example
+        val all = let {
+            async { dao.getEntryTimes().dates() } to
+                    async { dao.getEntryCount().toString() }
+        }
+        EntryStats(
+            uploadedAndReconciled = EntryStats.Count(
+                days = uploadedReconciled.first.await(),
+                entries = uploadedReconciled.second.await(),
+            ),
+            uploadedAndNotReconciled = EntryStats.Count(
+                days = uploadedNotReconciled.first.await(),
+                entries = uploadedNotReconciled.second.await(),
+            ),
+            notUploadedAndReconciled = EntryStats.Count(
+                days = notUploadedReconciled.first.await(),
+                entries = notUploadedReconciled.second.await(),
+            ),
+            notUploadedAndNotReconciled = EntryStats.Count(
+                days = notUploadedNotReconciled.first.await(),
+                entries = notUploadedNotReconciled.second.await(),
+            ),
+            all = EntryStats.Count(
+                days = all.first.await(),
+                entries = all.second.await(),
+            )
+        )
     }
 
     private suspend fun replaceWithTimeTemplateIfNecessary(

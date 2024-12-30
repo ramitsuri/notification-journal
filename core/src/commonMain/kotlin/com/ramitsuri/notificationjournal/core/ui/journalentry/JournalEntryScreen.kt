@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -112,6 +113,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -124,6 +126,7 @@ import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.ui.bottomBorder
 import com.ramitsuri.notificationjournal.core.ui.components.CountdownSnackbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
@@ -162,6 +165,14 @@ import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
+import notificationjournal.core.generated.resources.stats
+import notificationjournal.core.generated.resources.stats_column_days
+import notificationjournal.core.generated.resources.stats_column_entries
+import notificationjournal.core.generated.resources.stats_row_all
+import notificationjournal.core.generated.resources.stats_row_not_uploaded_not_reconciled
+import notificationjournal.core.generated.resources.stats_row_not_uploaded_reconciled
+import notificationjournal.core.generated.resources.stats_row_uploaded_not_reconciled
+import notificationjournal.core.generated.resources.stats_row_uploaded_reconciled
 import notificationjournal.core.generated.resources.sync_down
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged
@@ -207,6 +218,7 @@ fun JournalEntryScreen(
     onCancelReconcile: () -> Unit,
     onLogsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
+    onStatsRequestToggled: () -> Unit,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -402,6 +414,7 @@ fun JournalEntryScreen(
                 onSearchClicked = onSearchClicked,
                 onResetReceiveHelper = onResetReceiveHelper,
                 onLogsClicked = onLogsClicked,
+                onStatsRequestToggled = onStatsRequestToggled,
                 scrollBehavior = scrollBehavior,
             )
 
@@ -468,9 +481,111 @@ fun JournalEntryScreen(
                 )
             }
         }
+        if (state.stats != null) {
+            StatsDialog(
+                stats = state.stats,
+                onStatsRequestToggled = onStatsRequestToggled,
+            )
+        }
     }
 }
 
+@Composable
+private fun StatsDialog(
+    stats: EntryStats,
+    onStatsRequestToggled: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onStatsRequestToggled,
+    ) {
+        Card {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                StatRow()
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_uploaded_reconciled),
+                    statCount = stats.uploadedAndReconciled,
+                    applyBackground = true,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_uploaded_not_reconciled),
+                    statCount = stats.uploadedAndNotReconciled,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_not_uploaded_reconciled),
+                    statCount = stats.notUploadedAndReconciled,
+                    applyBackground = true,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_not_uploaded_not_reconciled),
+                    statCount = stats.notUploadedAndNotReconciled,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_all),
+                    statCount = stats.all,
+                    applyBackground = true,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StatRow(
+    rowTitle: String? = null,
+    statCount: EntryStats.Count? = null,
+    applyBackground: Boolean = false,
+) {
+    val background = if (applyBackground) {
+        Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f))
+    } else {
+        Modifier
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(background)
+            .padding(4.dp),
+    ) {
+        if (rowTitle != null) {
+            Text(
+                text = rowTitle,
+                modifier = Modifier.weight(3.5f),
+            )
+        } else {
+            Spacer(modifier = Modifier.weight(3.5f))
+        }
+        if (statCount != null) {
+            Text(
+                text = statCount.days,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = statCount.entries,
+                modifier = Modifier.weight(1.5f),
+                textAlign = TextAlign.End,
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.stats_column_days),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = stringResource(Res.string.stats_column_entries),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1.5f),
+                textAlign = TextAlign.End,
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -483,6 +598,7 @@ private fun Toolbar(
     onSearchClicked: () -> Unit,
     onResetReceiveHelper: () -> Unit,
     onLogsClicked: () -> Unit,
+    onStatsRequestToggled: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults
@@ -543,6 +659,17 @@ private fun Toolbar(
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = stringResource(Res.string.search)
+                )
+            }
+            IconButton(
+                onClick = onStatsRequestToggled,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = stringResource(Res.string.stats)
                 )
             }
             IconButton(
@@ -746,7 +873,11 @@ private fun List(
                         cornerRadius = cornerRadius,
                         defaultBottomShape = bottomShape,
                         onAddForTagButtonClick = {
-                            onAddRequested(dayGroup.date, tagGroup.timeAfterLastEntry, tagGroup.tag)
+                            onAddRequested(
+                                dayGroup.date,
+                                tagGroup.timeAfterLastEntry,
+                                tagGroup.tag
+                            )
                         }
                     )
                 }
@@ -781,7 +912,11 @@ private fun AddForTagButton(
     val (addButtonShape, addButtonBorderModifier) =
         if (isAddTheOnlyItem) {
             RoundedCornerShape(16.dp) to
-                    Modifier.fullBorder(strokeWidth, strokeColor.copy(alpha = 0.3f), cornerRadius)
+                    Modifier.fullBorder(
+                        strokeWidth,
+                        strokeColor.copy(alpha = 0.3f),
+                        cornerRadius
+                    )
         } else {
             defaultBottomShape to
                     Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)

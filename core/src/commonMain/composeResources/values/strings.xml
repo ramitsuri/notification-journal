@@ -15,6 +15,7 @@
     <string name="no_items">No items</string>
     <string name="now">Now</string>
     <string name="pick">Pick</string>
+    <string name="stats">Stats</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>
@@ -139,4 +140,12 @@
     <string name="import">Import</string>
     <string name="import_status_in_progress">%1$s entries imported so far</string>
     <string name="import_status_completed">Imported %1$s entries spanning %2$s days</string>
+
+    <string name="stats_column_days">Days</string>
+    <string name="stats_column_entries">Entries</string>
+    <string name="stats_row_uploaded_reconciled">Uploaded and reconciled</string>
+    <string name="stats_row_uploaded_not_reconciled">Uploaded and not reconciled</string>
+    <string name="stats_row_not_uploaded_reconciled">Not uploaded and reconciled</string>
+    <string name="stats_row_not_uploaded_not_reconciled">Not uploaded and not reconciled</string>
+    <string name="stats_row_all">All</string>
 </resources>

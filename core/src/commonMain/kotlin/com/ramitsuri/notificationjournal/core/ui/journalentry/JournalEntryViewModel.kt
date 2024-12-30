@@ -12,6 +12,7 @@ import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
@@ -56,6 +57,8 @@ class JournalEntryViewModel(
 
     private val _snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
 
+    private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     private var reconcileDayGroupJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -71,8 +74,9 @@ class JournalEntryViewModel(
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
                 prefManager.showLogsButton(),
+                statsRequested,
             ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline, showLogsButton ->
+                showEmptyTags, showConflictDiffInline, showLogsButton, statsRequested ->
                 val tags = tagsDao.getAll()
                 val dayGroups = try {
                     entries.toDayGroups(
@@ -107,6 +111,7 @@ class JournalEntryViewModel(
                         showEmptyTags = showEmptyTags,
                         snackBarType = snackBarType,
                         showLogsButton = showLogsButton,
+                        stats = if (statsRequested) repository.getStats() else null,
                     )
                 }
             }
@@ -335,6 +340,10 @@ class JournalEntryViewModel(
         ServiceLocator.resetReceiveHelper()
     }
 
+    fun onStatsRequestToggled() {
+        statsRequested.update { !it }
+    }
+
     private fun setDate(journalEntry: JournalEntry, entryTime: LocalDateTime) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
@@ -395,6 +404,7 @@ data class ViewState(
     val showEmptyTags: Boolean = false,
     val showLogsButton: Boolean = false,
     val snackBarType: SnackBarType = SnackBarType.None,
+    val stats: EntryStats? = null,
 ) {
     val selectedDayGroup: DayGroup
         get() {

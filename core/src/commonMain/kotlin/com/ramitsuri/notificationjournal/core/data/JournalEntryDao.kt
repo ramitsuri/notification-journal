@@ -8,6 +8,7 @@ import androidx.room.Update
 import androidx.room.Upsert
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDateTime
 
 @Dao
 abstract class JournalEntryDao {
@@ -54,6 +55,22 @@ abstract class JournalEntryDao {
     open suspend fun updateUploaded(entries: List<JournalEntry>, uploaded: Boolean) {
         update(entries.map { it.copy(uploaded = uploaded) })
     }
+
+    //region stats
+
+    @Query("SELECT entry_time from journalentry WHERE uploaded = :uploaded AND reconciled = :reconciled ORDER BY entry_time ASC")
+    abstract suspend fun getEntryTimes(uploaded: Boolean, reconciled: Boolean): List<LocalDateTime>
+
+    @Query("SELECT entry_time from journalentry")
+    abstract suspend fun getEntryTimes(): List<LocalDateTime>
+
+    @Query("SELECT COUNT(*) from journalentry WHERE uploaded = :uploaded AND reconciled = :reconciled")
+    abstract suspend fun getEntryCount(uploaded: Boolean, reconciled: Boolean): Long
+
+    @Query("SELECT COUNT(*) from journalentry")
+    abstract suspend fun getEntryCount(): Long
+
+    //endregion
 
     @Upsert
     abstract suspend fun upsert(journalEntry: JournalEntry)

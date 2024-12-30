@@ -164,7 +164,8 @@ fun NavGraph(
                 },
                 onSearchClicked = {
                     navController.navigate(Destination.SEARCH.route())
-                }
+                },
+                onStatsRequestToggled = viewModel::onStatsRequestToggled,
             )
         }
 
