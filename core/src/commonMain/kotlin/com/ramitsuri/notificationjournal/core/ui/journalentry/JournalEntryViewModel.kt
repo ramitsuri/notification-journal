@@ -80,7 +80,7 @@ class JournalEntryViewModel(
                 val tags = tagsDao.getAll()
                 val dayGroups = try {
                     entries.toDayGroups(
-                        tagsForSort = tags,
+                        tagsForSort = tags.map { it.value },
                     )
                 } catch (e: Exception) {
                     listOf()

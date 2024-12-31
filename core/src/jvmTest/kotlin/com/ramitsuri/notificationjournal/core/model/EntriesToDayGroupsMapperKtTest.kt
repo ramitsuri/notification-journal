@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.model
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import kotlinx.datetime.LocalDateTime
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.UUID
 
@@ -30,6 +31,27 @@ class EntriesToDayGroupsMapperKtTest {
     }
 
     @Test
+    fun testWithDifferentTagsShouldMatchSortOrder() {
+        val tags = listOf(
+            Tag(id = "id", value = "tag1", order = 1),
+            Tag(id = "id", value = "tag2", order = 2),
+        )
+        val entries = listOf(
+            entry(tag = tags[0].value),
+            entry(tag = null),
+            entry(tag = "tag3"),
+            entry(tag = tags[1].value),
+        )
+
+        val dayGroup = entries.toDayGroups(tags.map { it.value }).first()
+
+        assertTrue(dayGroup.tagGroups[0].tag == Tag.NO_TAG.value)
+        assertTrue(dayGroup.tagGroups[1].tag == "tag1")
+        assertTrue(dayGroup.tagGroups[2].tag == "tag2")
+        assertTrue(dayGroup.tagGroups[3].tag == "tag3")
+    }
+
+    @Test
     fun testWithNoTagVariationTags() {
         val entries = listOf(
             entry(tag = null),
@@ -40,6 +62,18 @@ class EntriesToDayGroupsMapperKtTest {
 
         val tagGroup = dayGroup.tagGroups.first()
         assertEquals(2, tagGroup.entries.size)
+    }
+
+    @Test
+    fun testWithNoTagsShouldHaveSingleNoTagGroup() {
+        val entries = listOf(
+            entry(tag = null),
+            entry(tag = Tag.NO_TAG.value),
+        )
+
+        val dayGroup = entries.toDayGroups().first()
+
+        assertEquals(1, dayGroup.tagGroups.size)
     }
 
     @Test
