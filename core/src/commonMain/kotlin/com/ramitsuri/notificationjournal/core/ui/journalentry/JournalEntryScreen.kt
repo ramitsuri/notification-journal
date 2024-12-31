@@ -134,10 +134,10 @@ import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.theme.green
 import com.ramitsuri.notificationjournal.core.ui.theme.red
 import com.ramitsuri.notificationjournal.core.ui.topBorder
-import com.ramitsuri.notificationjournal.core.utils.getDateTime
-import com.ramitsuri.notificationjournal.core.utils.getDay
+import com.ramitsuri.notificationjournal.core.utils.monthDayHourMinute
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
-import com.ramitsuri.notificationjournal.core.utils.getTime
+import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -733,7 +733,7 @@ private fun List(
     val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
 
     HeaderItem(
-        headerText = getDay(toFormat = dayGroup.date),
+        headerText = dayMonthDate(toFormat = dayGroup.date),
         untaggedCount = dayGroup.untaggedCount,
         conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
         onCopyRequested = onDayGroupCopyRequested,
@@ -1253,7 +1253,7 @@ private fun EntryConflictView(
         Spacer(modifier = Modifier.height(4.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
             entryTime?.let {
-                Text(getDateTime(it), style = MaterialTheme.typography.bodySmall)
+                Text(monthDayHourMinute(it), style = MaterialTheme.typography.bodySmall)
             }
             tag?.let {
                 Text(
@@ -1361,9 +1361,9 @@ private fun DetailsDialog(
                         }
                         Text(
                             if (showTime) {
-                                getTime(toFormat = time.time)
+                                hourMinute(toFormat = time.time)
                             } else {
-                                getDay(toFormat = time.date)
+                                dayMonthDate(toFormat = time.date)
                             },
                             modifier = Modifier
                                 .clickable {
@@ -1507,7 +1507,7 @@ private fun ShowAllDaysDialog(
                                 )
                                 .padding(8.dp)
                             ) {
-                                Text(getDay(toFormat = dayGroup.date))
+                                Text(dayMonthDate(toFormat = dayGroup.date))
                                 val text = buildString {
                                     if (dayGroup.untaggedCount > 0) {
                                         append(

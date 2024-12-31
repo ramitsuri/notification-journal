@@ -80,8 +80,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
-import com.ramitsuri.notificationjournal.core.utils.getDay
+import com.ramitsuri.notificationjournal.core.utils.hourMinute
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -852,7 +852,7 @@ private fun DateTimeEntry(
             onClick = { showDate = true }
         ) {
             Text(
-                getDay(toFormat = dateTime.date),
+                dayMonthDate(toFormat = dateTime.date),
                 textAlign = TextAlign.Center,
             )
         }
@@ -862,7 +862,7 @@ private fun DateTimeEntry(
             onClick = { showTime = true }
         ) {
             Text(
-                text = formatForDisplay(
+                text = hourMinute(
                     dateTime,
                     amString = stringResource(Res.string.am),
                     pmString = stringResource(Res.string.pm),

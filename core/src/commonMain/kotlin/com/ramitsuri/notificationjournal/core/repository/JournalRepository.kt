@@ -11,7 +11,7 @@ import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
+import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.CoroutineScope
@@ -246,7 +246,7 @@ class JournalRepository(
         return if (originalText.contains(Constants.TEMPLATED_TIME)) {
             originalText.replace(
                 Constants.TEMPLATED_TIME,
-                formatForDisplay(
+                hourMinute(
                     toFormat = time,
                     amString = getString(Res.string.am),
                     pmString = getString(Res.string.pm),

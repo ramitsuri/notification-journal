@@ -39,7 +39,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.core.ui.components.Date
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
-import com.ramitsuri.notificationjournal.core.utils.getDay
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.import
@@ -234,7 +234,7 @@ private fun DatePickers(
                 modifier = Modifier.weight(1f),
             ) {
                 val text =
-                    startDate?.let { getDay(it) } ?: stringResource(Res.string.pick)
+                    startDate?.let { dayMonthDate(it) } ?: stringResource(Res.string.pick)
                 Text(text)
             }
         }
@@ -250,7 +250,7 @@ private fun DatePickers(
                 onClick = { showEndDatePicker = true },
                 modifier = Modifier.weight(1f),
             ) {
-                val text = endDate?.let { getDay(it) } ?: stringResource(Res.string.pick)
+                val text = endDate?.let { dayMonthDate(it) } ?: stringResource(Res.string.pick)
                 Text(text)
             }
         }
