@@ -33,17 +33,28 @@ class SearchViewModel(
     val state = combine(
         repository.getEntryTags().map { tags -> tags.filter { !Tag.isNoTag(it) } },
         tagSelections,
-        snapshotFlow { searchTextState.text }.debounce(300)
-    ) { tags, selections, searchText ->
+        snapshotFlow { searchTextState.text.toString() }.debounce(300)
+    ) { entryTags, selections, searchText ->
         if (initialSelectionForTags && selections.isEmpty()) {
-            tagSelections.update { tags }
+            tagSelections.update { entryTags }
         }
+
+        // Allow search with empty text if only single tag selected so that there's still a limited
+        // amount of results
+        val text = if (searchText.isEmpty() && selections.size == 1) {
+            searchText
+        } else {
+            searchText.takeIf { it.isNotEmpty() }
+        }
+
+        // When entryTags are empty, then don't pass any tags so that search can ignore tags
+        val tags = selections.takeIf { entryTags.isNotEmpty() }
 
         ViewState(
             searchTextState = searchTextState,
-            tags = tags.map { ViewState.Tag(it, it in selections) },
-            results = searchText.toString().takeIf { it.isNotEmpty() }
-                ?.let { repository.search(it, selections) }
+            tags = entryTags.map { ViewState.Tag(it, it in selections) },
+            results = text
+                ?.let { repository.search(it, tags) }
                 ?: listOf()
         )
     }.stateIn(
@@ -54,14 +65,25 @@ class SearchViewModel(
 
     fun tagClicked(tag: String) {
         initialSelectionForTags = false
-        val currentSelections = tagSelections.value
-        tagSelections.update {
+        tagSelections.update { currentSelections ->
             if (tag in currentSelections) {
                 currentSelections - tag
             } else {
                 currentSelections + tag
             }
         }
+    }
+
+    fun selectAllTagsClicked() {
+        initialSelectionForTags = false
+        tagSelections.update {
+            state.value.tags.map { it.value }
+        }
+    }
+
+    fun unselectAllTagsClicked() {
+        initialSelectionForTags = false
+        tagSelections.update { listOf() }
     }
 
     fun clearSearchTerm() {

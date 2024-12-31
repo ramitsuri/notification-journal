@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -41,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -62,12 +64,17 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import kotlinx.coroutines.delay
+import notificationjournal.core.generated.resources.Res
+import notificationjournal.core.generated.resources.search_select_all
+import notificationjournal.core.generated.resources.search_tip_empty_text
+import notificationjournal.core.generated.resources.search_unselect_all
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +83,8 @@ fun SearchScreen(
     onBackClick: () -> Unit,
     onClearClick: () -> Unit,
     onTagClicked: (String) -> Unit,
+    onSelectAllTagsClicked: () -> Unit,
+    onUnselectAllTagsClicked: () -> Unit,
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -109,6 +118,8 @@ fun SearchScreen(
                 tags = state.tags,
                 onClearClick = onClearClick,
                 onTagClicked = onTagClicked,
+                onSelectAllTagsClicked = onSelectAllTagsClicked,
+                onUnselectAllTagsClicked = onUnselectAllTagsClicked,
             )
 
             LazyColumn(
@@ -132,7 +143,9 @@ private fun SearchRow(
     searchFieldState: TextFieldState,
     tags: List<ViewState.Tag>,
     onTagClicked: (String) -> Unit,
-    onClearClick: () -> Unit
+    onClearClick: () -> Unit,
+    onSelectAllTagsClicked: () -> Unit,
+    onUnselectAllTagsClicked: () -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
     val showKeyboard by remember { mutableStateOf(true) }
@@ -198,15 +211,17 @@ private fun SearchRow(
             }
         )
         Spacer(modifier = Modifier.width(8.dp))
-        IconButton(
-            onClick = { showSearchFilterDialog = true },
-            modifier = Modifier
-                .size(48.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Tune,
-                contentDescription = null,
-            )
+        if (tags.isNotEmpty()) {
+            IconButton(
+                onClick = { showSearchFilterDialog = true },
+                modifier = Modifier
+                    .size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Tune,
+                    contentDescription = null,
+                )
+            }
         }
 
         SearchFilterDialog(
@@ -214,6 +229,8 @@ private fun SearchRow(
             tags = tags,
             onDismiss = { showSearchFilterDialog = false },
             onTagClicked = onTagClicked,
+            onSelectAllTagsClicked = onSelectAllTagsClicked,
+            onUnselectAllTagsClicked = onUnselectAllTagsClicked,
         )
     }
 }
@@ -225,27 +242,53 @@ private fun SearchFilterDialog(
     tags: List<ViewState.Tag>,
     onDismiss: () -> Unit,
     onTagClicked: (String) -> Unit,
+    onSelectAllTagsClicked: () -> Unit,
+    onUnselectAllTagsClicked: () -> Unit,
 ) {
     if (showSearchFilterDialog) {
         Dialog(
             onDismissRequest = onDismiss,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnClickOutside = true,
-            )
         ) {
             Card {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(16.dp),
-                ) {
-                    tags.forEach {
-                        FilterChip(
-                            selected = it.selected,
-                            onClick = {
-                                onTagClicked(it.value)
-                            },
-                            label = { Text(text = it.value) })
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (tags.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        ) {
+                            tags.forEach {
+                                FilterChip(
+                                    selected = it.selected,
+                                    onClick = {
+                                        onTagClicked(it.value)
+                                    },
+                                    label = { Text(text = it.value) })
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            TextButton(onClick = onSelectAllTagsClicked) {
+                                Text(
+                                    text = stringResource(Res.string.search_select_all),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            TextButton(onClick = onUnselectAllTagsClicked) {
+                                Text(
+                                    text = stringResource(Res.string.search_unselect_all),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(Res.string.search_tip_empty_text),
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
@@ -275,7 +318,7 @@ private fun SearchItem(journalEntry: JournalEntry) {
                             toFormat = journalEntry.entryTime.date,
                         )
                     )
-                    if (!journalEntry.tag.isNullOrEmpty()) {
+                    if (!Tag.isNoTag(journalEntry.tag)) {
                         Text(
                             text = "\u2022",
                             style = MaterialTheme.typography.labelSmall,
