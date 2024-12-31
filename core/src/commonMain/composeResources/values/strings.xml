@@ -148,4 +148,8 @@
     <string name="stats_row_not_uploaded_reconciled">Not uploaded and reconciled</string>
     <string name="stats_row_not_uploaded_not_reconciled">Not uploaded and not reconciled</string>
     <string name="stats_row_all">All</string>
+
+    <string name="search_tip_empty_text">Tip: to get all results even for empty text, select only a single tag</string>
+    <string name="search_select_all">Select all tags</string>
+    <string name="search_unselect_all">Unselect all tags</string>
 </resources>

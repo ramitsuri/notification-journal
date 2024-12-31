@@ -324,6 +324,8 @@ fun NavGraph(
                 },
                 onClearClick = viewModel::clearSearchTerm,
                 onTagClicked = viewModel::tagClicked,
+                onSelectAllTagsClicked = viewModel::selectAllTagsClicked,
+                onUnselectAllTagsClicked = viewModel::unselectAllTagsClicked,
             )
         }
 

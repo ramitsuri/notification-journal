@@ -33,6 +33,9 @@ abstract class JournalEntryDao {
     @Query("SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND tag IN (:tags) AND deleted = 0 ORDER BY entry_time DESC")
     abstract suspend fun search(query: String, tags: List<String>): List<JournalEntry>
 
+    @Query("SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND deleted = 0 ORDER BY entry_time DESC")
+    abstract suspend fun search(query: String): List<JournalEntry>
+
     @Query("SELECT DISTINCT tag FROM journalentry")
     abstract fun getEntryTags(): Flow<List<String>>
 

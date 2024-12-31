@@ -171,8 +171,12 @@ class JournalRepository(
         sendAndMarkUploaded(listOf(newEntry), replacesLocal = true)
     }
 
-    suspend fun search(query: String, tags: List<String>): List<JournalEntry> {
-        return dao.search(query, tags)
+    suspend fun search(query: String, tags: List<String>?): List<JournalEntry> {
+        return if (tags == null) {
+            dao.search(query)
+        } else {
+            dao.search(query, tags)
+        }
     }
 
     fun getEntryTags(): Flow<List<String>> {
