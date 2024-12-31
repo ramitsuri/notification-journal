@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,11 +24,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
@@ -253,17 +256,23 @@ private fun SearchFilterDialog(
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (tags.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                        Column(
+                            modifier = Modifier
+                                .fillMaxHeight(0.4f)
+                                .verticalScroll(rememberScrollState()),
                         ) {
-                            tags.forEach {
-                                FilterChip(
-                                    selected = it.selected,
-                                    onClick = {
-                                        onTagClicked(it.value)
-                                    },
-                                    label = { Text(text = it.value) })
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            ) {
+                                tags.forEach {
+                                    FilterChip(
+                                        selected = it.selected,
+                                        onClick = {
+                                            onTagClicked(it.value)
+                                        },
+                                        label = { Text(text = it.value) })
+                                }
                             }
                         }
                         Row(
