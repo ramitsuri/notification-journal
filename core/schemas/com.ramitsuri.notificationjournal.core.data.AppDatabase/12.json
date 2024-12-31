@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 12,
-    "identityHash": "85615a778007c71070f580e256f63979",
+    "identityHash": "ff8e0522199cef49dbb7e1569c60dadc",
     "entities": [
       {
         "tableName": "JournalEntry",
@@ -219,12 +219,23 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_dictionary_word",
+            "unique": true,
+            "columnNames": [
+              "word"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_dictionary_word` ON `${TABLE_NAME}` (`word`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '85615a778007c71070f580e256f63979')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ff8e0522199cef49dbb7e1569c60dadc')"
     ]
   }
 }
