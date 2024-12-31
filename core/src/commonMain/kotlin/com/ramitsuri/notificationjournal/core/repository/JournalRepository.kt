@@ -92,7 +92,7 @@ class JournalRepository(
                     originalText = entry,
                     time = entryTime,
                 ).trim()
-                JournalEntry(entryTime = entryTime, text = entryText, tag = tag)
+                JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: Tag.NO_TAG.value)
             }
             .let {
                 insert(it)

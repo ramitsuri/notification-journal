@@ -1212,7 +1212,7 @@ private fun ConflictResolutionDialog(
                             } else {
                                 null
                             },
-                            tag = if (conflict.tag != null && conflict.tag != entry.tag) {
+                            tag = if (conflict.tag != entry.tag) {
                                 conflict.tag
                             } else {
                                 null

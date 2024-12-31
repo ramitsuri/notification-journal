@@ -31,6 +31,6 @@ data class Tag(
             value = "internal_no_tag_value"
         )
 
-        fun isNoTag(tag: String?) = tag == NO_TAG.value || tag.isNullOrEmpty()
+        fun isNoTag(tag: String) = tag == NO_TAG.value
     }
 }
