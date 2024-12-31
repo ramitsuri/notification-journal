@@ -17,7 +17,7 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
-import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYearSuspend
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
@@ -311,7 +311,7 @@ class JournalEntryViewModel(
             val copyEmptyTags = prefManager.copyWithEmptyTags().first()
             val content = buildString {
                 append("# ")
-                append(dayMonthDateWithYear(dayGroup.date))
+                append(dayMonthDateWithYearSuspend(dayGroup.date))
                 append("\n")
                 dayGroup.tagGroups.forEach { tagGroup ->
                     if (tagGroup.entries.isEmpty() && !copyEmptyTags) {

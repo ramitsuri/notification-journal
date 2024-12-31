@@ -30,7 +30,8 @@ import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 
-fun formatForDisplay(
+// 4:45pm, 4pm
+fun hourMinute(
     toFormat: LocalDateTime,
     amString: String,
     pmString: String,
@@ -47,7 +48,7 @@ fun formatForDisplay(
     return toFormat.format(format)
 }
 
-fun formatForLogs(
+fun formatTimeForLogs(
     toFormat: Instant,
     timeZone: TimeZone,
     amString: String,
@@ -69,7 +70,7 @@ fun formatForLogs(
 }
 
 @Composable
-fun getDateTime(
+fun monthDayHourMinute(
     toFormat: LocalDateTime,
     monthNames: List<String> = stringArrayResource(Res.array.month_names_short),
     amString: String = stringResource(Res.string.am),
@@ -94,7 +95,7 @@ fun getDateTime(
 
 @Suppress("MoveVariableDeclarationIntoWhen")
 @Composable
-fun getDay(
+fun dayMonthDate(
     toFormat: LocalDate,
     now: Instant = Clock.System.now(),
     timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -132,8 +133,9 @@ fun getDay(
     }
 }
 
+// 4:45pm
 @Composable
-fun getTime(
+fun hourMinute(
     toFormat: LocalTime,
     amString: String = stringResource(Res.string.am),
     pmString: String = stringResource(Res.string.pm),
@@ -147,19 +149,31 @@ fun getTime(
     return toFormat.format(format)
 }
 
-fun getLocalDate(
-    time: Instant,
-    zoneId: TimeZone = TimeZone.currentSystemDefault(),
-): LocalDate {
-    return time.toLocalDateTime(zoneId).date
-}
-
 // Saturday, November 16 2024
-suspend fun dayMonthDateWithYear(
+suspend fun dayMonthDateWithYearSuspend(
     toFormat: LocalDate,
 ): String {
     val monthNames = getStringArray(Res.array.month_names)
     val dayOfWeekNames = getStringArray(Res.array.day_of_week_names)
+    return LocalDate.Format {
+        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
+        char(',')
+        char(' ')
+        monthName(MonthNames(monthNames))
+        char(' ')
+        dayOfMonth()
+        char(' ')
+        year()
+    }.format(toFormat)
+}
+
+// Saturday, November 16 2024
+@Composable
+fun dayMonthDateWithYear(
+    toFormat: LocalDate,
+    monthNames: List<String> = stringArrayResource(Res.array.month_names),
+    dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
+): String {
     return LocalDate.Format {
         dayOfWeek(DayOfWeekNames(dayOfWeekNames))
         char(',')
@@ -182,8 +196,4 @@ fun LocalDateTime.minus(duration: Duration) =
         .minus(duration)
         .toLocalDateTime(TimeZone.UTC)
 
-fun Clock.nowLocal(): LocalDateTime =
-    Clock
-        .System
-        .now()
-        .toLocalDateTime(TimeZone.currentSystemDefault())
+fun Clock.nowLocal(): LocalDateTime = now().toLocalDateTime(TimeZone.currentSystemDefault())

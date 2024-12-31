@@ -40,7 +40,7 @@ class DateTimeHelperKtTest {
     }
 
     private fun format(): String {
-        return formatForDisplay(
+        return hourMinute(
             toFormat = toFormat.toLocalDateTime(),
             amString = "am",
             pmString = "pm",

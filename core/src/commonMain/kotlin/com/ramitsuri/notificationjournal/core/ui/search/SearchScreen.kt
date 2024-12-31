@@ -66,12 +66,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
-import com.ramitsuri.notificationjournal.core.utils.formatForDisplay
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import kotlinx.coroutines.delay
-import notificationjournal.core.generated.resources.Res
-import notificationjournal.core.generated.resources.am
-import notificationjournal.core.generated.resources.pm
-import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -275,10 +271,8 @@ private fun SearchItem(journalEntry: JournalEntry) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         style = MaterialTheme.typography.labelSmall,
-                        text = formatForDisplay(
-                            toFormat = journalEntry.entryTime,
-                            amString = stringResource(Res.string.am),
-                            pmString = stringResource(Res.string.pm),
+                        text = dayMonthDateWithYear(
+                            toFormat = journalEntry.entryTime.date,
                         )
                     )
                     if (!journalEntry.tag.isNullOrEmpty()) {

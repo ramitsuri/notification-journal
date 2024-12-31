@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.ramitsuri.notificationjournal.core.log.LogData
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
-import com.ramitsuri.notificationjournal.core.utils.formatForLogs
+import com.ramitsuri.notificationjournal.core.utils.formatTimeForLogs
 import kotlinx.datetime.TimeZone
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
@@ -105,7 +105,7 @@ private fun LogItem(logData: LogData, timeZone: TimeZone) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         style = MaterialTheme.typography.labelSmall,
-                        text = formatForLogs(
+                        text = formatTimeForLogs(
                             toFormat = logData.time,
                             timeZone = timeZone,
                             amString = stringResource(Res.string.am),
