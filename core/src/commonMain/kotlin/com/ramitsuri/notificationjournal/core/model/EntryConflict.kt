@@ -30,7 +30,7 @@ data class EntryConflict(
 
     @ColumnInfo(name = "tag")
     @SerialName("tag")
-    val tag: String?,
+    val tag: String,
 
     @ColumnInfo(name = "sender_name")
     @SerialName("sender_name")

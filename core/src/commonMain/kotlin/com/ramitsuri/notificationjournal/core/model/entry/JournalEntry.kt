@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.model.entry
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.ramitsuri.notificationjournal.core.model.Tag
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -26,7 +27,7 @@ data class JournalEntry(
 
     @ColumnInfo(name = "tag")
     @SerialName("tag")
-    val tag: String? = null,
+    val tag: String = Tag.NO_TAG.value,
 
     @ColumnInfo(name = "uploaded", defaultValue = "0")
     @SerialName("uploaded")

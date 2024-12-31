@@ -94,7 +94,7 @@ class EditJournalEntryViewModel(
         }
         val dateTime = currentState.dateTime
         _state.update { it.copy(isLoading = true) }
-        val tag = currentState.selectedTag
+        val tag = currentState.selectedTag ?: Tag.NO_TAG.value
         viewModelScope.launch {
             repository.updateText(entry.copy(text = text, tag = tag, entryTime = dateTime))
             _saved.update {

@@ -38,7 +38,7 @@ class EntriesToDayGroupsMapperKtTest {
         )
         val entries = listOf(
             entry(tag = tags[0].value),
-            entry(tag = null),
+            entry(tag = Tag.NO_TAG.value),
             entry(tag = "tag3"),
             entry(tag = tags[1].value),
         )
@@ -54,7 +54,7 @@ class EntriesToDayGroupsMapperKtTest {
     @Test
     fun testWithNoTagVariationTags() {
         val entries = listOf(
-            entry(tag = null),
+            entry(tag = Tag.NO_TAG.value),
             entry(tag = Tag.NO_TAG.value),
         )
 
@@ -67,7 +67,7 @@ class EntriesToDayGroupsMapperKtTest {
     @Test
     fun testWithNoTagsShouldHaveSingleNoTagGroup() {
         val entries = listOf(
-            entry(tag = null),
+            entry(tag = Tag.NO_TAG.value),
             entry(tag = Tag.NO_TAG.value),
         )
 
@@ -80,7 +80,7 @@ class EntriesToDayGroupsMapperKtTest {
     fun testWithNoTagAndTag() {
         val entries = listOf(
             entry(tag = "tag1"),
-            entry(tag = null),
+            entry(tag = Tag.NO_TAG.value),
             entry(tag = Tag.NO_TAG.value),
         )
 
@@ -99,7 +99,7 @@ class EntriesToDayGroupsMapperKtTest {
     fun testSortOrderWithNoTagAndTag() {
         val entries = listOf(
             entry(tag = "tag1"),
-            entry(tag = null),
+            entry(tag = Tag.NO_TAG.value),
             entry(tag = Tag.NO_TAG.value),
         )
 
@@ -114,7 +114,7 @@ class EntriesToDayGroupsMapperKtTest {
 
     private fun entry(
         id: String = UUID.randomUUID().toString(),
-        tag: String? = null,
+        tag: String = Tag.NO_TAG.value,
     ) = JournalEntry(
         id = id,
         entryTime = LocalDateTime.parse("2024-11-30T15:00:00"),
