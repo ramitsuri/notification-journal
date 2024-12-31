@@ -15,9 +15,5 @@ class MigrationFrom10To11 : Migration(10, 11) {
                     "PRIMARY KEY(`id`)" +
                     ")"
         )
-
-        connection.execSQL(
-            "CREATE UNIQUE INDEX IF NOT EXISTS `index_dictionary_word` ON `DictionaryItem` (`word`)"
-        )
     }
 }
