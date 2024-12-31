@@ -3,7 +3,7 @@ package com.ramitsuri.notificationjournal.core.model
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 
 fun List<JournalEntry>.toDayGroups(
-    tagsForSort: List<Tag> = listOf(),
+    tagsForSort: List<String> = listOf(),
 ): List<DayGroup> {
     return groupBy {
         it.entryTime.date
@@ -16,18 +16,36 @@ fun List<JournalEntry>.toDayGroups(
                 nonNullTag to entries
             }
             .toMap()
-        val tagGroups = if (tagsForSort.isEmpty()) {
-            tagToEntries.map { (tag, entries) -> TagGroup(tag, entries) }
-        } else {
-            tagsForSort.map { tag ->
-                TagGroup(tag.value, tagToEntries[tag.value] ?: listOf())
+
+        val tagGroupNoTag = entriesByDate
+            .filter {
+                Tag.isNoTag(it.tag)
             }
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                TagGroup(Tag.NO_TAG.value, it)
+            }
+
+        val tagGroupsExistingTags = tagsForSort
+            .map { tag ->
+                TagGroup(tag, tagToEntries[tag] ?: listOf())
+            }
+
+        val tagGroupsRemaining = tagToEntries
+            .filter { (tag, _) ->
+                !tagsForSort.contains(tag) && !Tag.isNoTag(tag)
+            }
+            .map { (tag, entries) ->
+                TagGroup(tag, entries)
+            }
+
+        val tagGroups = buildList {
+            if (tagGroupNoTag != null) {
+                add(tagGroupNoTag)
+            }
+            addAll(tagGroupsExistingTags)
+            addAll(tagGroupsRemaining)
         }
-        val noTagEntries = entriesByDate.filter { Tag.isNoTag(it.tag) }
-        if (noTagEntries.isEmpty()) {
-            DayGroup(date, tagGroups)
-        } else {
-            DayGroup(date, listOf(TagGroup(Tag.NO_TAG.value, noTagEntries)) + tagGroups)
-        }
+        DayGroup(date, tagGroups)
     }
 }
