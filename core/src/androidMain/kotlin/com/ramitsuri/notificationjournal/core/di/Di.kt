@@ -21,6 +21,7 @@ import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineDispatcher
+import java.nio.file.Path
 
 actual class Factory(private val application: Application) {
 
@@ -91,8 +92,8 @@ actual class Factory(private val application: Application) {
         }
     }
 
-    actual fun getDataStorePath(): String {
-        return application.filesDir.resolve(DataStoreKeyValueStore.FILE).absolutePath
+    actual fun getDataStorePath(): Path {
+        return application.filesDir.resolve(DataStoreKeyValueStore.FILE).toPath()
     }
 
     actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository{

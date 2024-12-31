@@ -12,6 +12,7 @@ import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryVie
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineDispatcher
+import java.nio.file.Path
 
 expect class Factory {
 
@@ -39,7 +40,7 @@ expect class Factory {
         getVMInstance: (SavedStateHandle) -> EditJournalEntryViewModel,
     ): AbstractSavedStateViewModelFactory
 
-    fun getDataStorePath(): String
+    fun getDataStorePath(): Path
 
     fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository
 }

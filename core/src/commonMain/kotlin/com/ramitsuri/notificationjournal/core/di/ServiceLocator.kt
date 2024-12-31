@@ -15,7 +15,6 @@ import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
-import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
@@ -33,7 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import okio.Path.Companion.toPath
+import okio.Path.Companion.toOkioPath
 import java.util.UUID
 
 object ServiceLocator {
@@ -158,7 +157,7 @@ object ServiceLocator {
     val prefManager by lazy {
         val keyValueStore = DataStoreKeyValueStore(
             dataStore = PreferenceDataStoreFactory.createWithPath(
-                produceFile = { factory.getDataStorePath().toPath() }
+                produceFile = { factory.getDataStorePath().toOkioPath() }
             )
         )
         PrefManager(keyValueStore)

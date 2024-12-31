@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.datetime.LocalDateTime
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.prefs.Preferences
 import kotlin.reflect.KClass
@@ -38,9 +39,9 @@ actual class Factory {
     }
 
     actual fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
-        Files.createDirectories(Paths.get(appDir))
+        Files.createDirectories(appDir)
         val fileName = "database"
-        val dbFile = File(appDir, fileName)
+        val dbFile = appDir.resolve(fileName).toFile()
         return Room.databaseBuilder<AppDatabase>(
             name = dbFile.absolutePath,
         )
@@ -133,8 +134,8 @@ actual class Factory {
         }
     }
 
-    actual fun getDataStorePath(): String {
-        return File(appDir, DataStoreKeyValueStore.FILE).absolutePath
+    actual fun getDataStorePath(): Path {
+        return appDir.resolve(DataStoreKeyValueStore.FILE)
     }
 
     actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository {
@@ -150,14 +151,22 @@ actual class Factory {
 
         // TODO make compatible with other desktop OSs
         private val appDir = System.getProperty("user.home")
-            .plus("/Library")
-            .plus("/com.ramitsuri.notificationjournal")
-            .plus(
-                if (BuildKonfig.IS_DEBUG) {
-                    "/debug"
-                } else {
-                    "/release"
-                }
-            )
+            .let { userHomePath ->
+                val osPath = System
+                    .getProperty("os.name", "generic")
+                    .lowercase()
+                    .let { os ->
+                        if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
+                            "Library"
+                        } else if (os.indexOf("win") >= 0) {
+                            "Documents"
+                        } else {
+                            error("OS not supported")
+                        }
+                    }
+                val appPath ="com.ramitsuri.notificationjournal"
+                val buildPath = if (BuildKonfig.IS_DEBUG) "debug" else "release"
+                Paths.get(userHomePath, osPath, appPath, buildPath)
+            }
     }
 }
