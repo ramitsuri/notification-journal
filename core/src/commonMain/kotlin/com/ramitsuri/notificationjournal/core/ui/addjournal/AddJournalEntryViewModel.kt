@@ -94,6 +94,12 @@ class AddJournalEntryViewModel(
     }
 
     fun templateClicked(template: JournalEntryTemplate) {
+        // When entry is added by tapping the add button at the bottom of a tag, the time is derived
+        // from the last entry in that tag but when adding via template, it's most likely not the
+        // intention to use that time. So reset it.
+        _state.update {
+            it.copy(dateTime = it.dateTime.date.atTime(clock.nowLocal().time))
+        }
         _state.value.textFieldState.edit {
             if (template.replacesExistingValues) {
                 tagClicked(template.tag)
