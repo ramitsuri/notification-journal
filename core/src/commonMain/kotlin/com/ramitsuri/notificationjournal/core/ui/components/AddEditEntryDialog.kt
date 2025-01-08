@@ -1011,7 +1011,7 @@ private fun Templates(
                         selected = false,
                         onClick = { onTemplateClicked(template) },
                         label = {
-                            Text(text = template.displayText)
+                            Text(text = "${template.shortDisplayText} ${template.displayText}")
                         })
 
                     val hint = if (index == 9) {
