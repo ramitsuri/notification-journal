@@ -50,6 +50,14 @@ abstract class JournalEntryDao {
     }
 
     @Transaction
+    open suspend fun clearDaysAndInsert(days: List<String>, entries: List<JournalEntry>) {
+        days.forEach { day ->
+            clearForDateInternal(day)
+        }
+        insertInternal(entries)
+    }
+
+    @Transaction
     open suspend fun update(entries: List<JournalEntry>) {
         updateInternal(entries)
     }
@@ -83,4 +91,7 @@ abstract class JournalEntryDao {
 
     @Update
     protected abstract suspend fun updateInternal(journalEntries: List<JournalEntry>)
+
+    @Query("UPDATE journalentry SET deleted = 1 WHERE entry_time LIKE :date||'%'")
+    protected abstract suspend fun clearForDateInternal(date: String)
 }

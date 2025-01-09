@@ -197,3 +197,14 @@ fun LocalDateTime.minus(duration: Duration) =
         .toLocalDateTime(TimeZone.UTC)
 
 fun Clock.nowLocal(): LocalDateTime = now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+// Formats the date in the following format:
+// 2024/12/31.md
+fun LocalDate.asImportFileName() = buildString {
+    append(year)
+    append("/")
+    append(String.format("%02d", month.value))
+    append("/")
+    append(String.format("%02d", dayOfMonth))
+    append(".md")
+}
