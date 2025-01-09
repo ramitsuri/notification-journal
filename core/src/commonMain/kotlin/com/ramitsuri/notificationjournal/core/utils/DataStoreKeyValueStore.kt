@@ -32,45 +32,45 @@ class DataStoreKeyValueStore(
         }
     }
 
-    override fun getStringFlow(key: String, fallback: String): Flow<String?> {
+    override fun getStringFlow(key: Key, fallback: String): Flow<String?> {
         return dataStore
             .data
             .map {
-                it[stringPreferencesKey(key)] ?: fallback
+                it[stringPreferencesKey(key.value)] ?: fallback
             }
     }
 
-    override suspend fun getString(key: String, fallback: String): String {
+    override suspend fun getString(key: Key, fallback: String): String {
         return getStringFlow(key, fallback).firstOrNull() ?: fallback
     }
 
-    override suspend fun putString(key: String, value: String) {
+    override suspend fun putString(key: Key, value: String) {
         dataStore.edit {
-            it[stringPreferencesKey(key)] = value
+            it[stringPreferencesKey(key.value)] = value
         }
     }
 
-    override fun getIntFlow(key: String, fallback: Int): Flow<Int> {
+    override fun getIntFlow(key: Key, fallback: Int): Flow<Int> {
         return dataStore
             .data
             .map {
-                it[intPreferencesKey(key)] ?: fallback
+                it[intPreferencesKey(key.value)] ?: fallback
             }
     }
 
-    override suspend fun getInt(key: String, fallback: Int): Int {
+    override suspend fun getInt(key: Key, fallback: Int): Int {
         return getIntFlow(key, fallback).firstOrNull() ?: fallback
     }
 
-    override suspend fun putInt(key: String, value: Int) {
+    override suspend fun putInt(key: Key, value: Int) {
         dataStore.edit {
-            it[intPreferencesKey(key)] = value
+            it[intPreferencesKey(key.value)] = value
         }
     }
 
-    override suspend fun hasKey(key: String): Boolean {
+    override suspend fun hasKey(key: Key): Boolean {
         return dataStore.data.map {
-            it.contains(stringPreferencesKey(key))
+            it.contains(stringPreferencesKey(key.value))
         }.firstOrNull() ?: false
     }
 

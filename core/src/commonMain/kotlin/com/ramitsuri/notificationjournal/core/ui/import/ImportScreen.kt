@@ -1,6 +1,8 @@
 package com.ramitsuri.notificationjournal.core.ui.import
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,12 +18,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,24 +41,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.core.ui.components.Date
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
-import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.import
 import notificationjournal.core.generated.resources.import_end_date
 import notificationjournal.core.generated.resources.import_from_dir
 import notificationjournal.core.generated.resources.import_from_dir_hint
+import notificationjournal.core.generated.resources.import_last_import_time
 import notificationjournal.core.generated.resources.import_start_date
 import notificationjournal.core.generated.resources.import_status_completed
 import notificationjournal.core.generated.resources.import_status_in_progress
+import notificationjournal.core.generated.resources.import_use_last_import_time
 import notificationjournal.core.generated.resources.ok
-import notificationjournal.core.generated.resources.pick
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +73,9 @@ fun ImportScreen(
     onResetStartDate: () -> Unit,
     onEndDateChanged: (LocalDate) -> Unit,
     onResetEndDate: () -> Unit,
+    onLastImportDateChanged: (LocalDate) -> Unit,
+    onResetLastImportTime: () -> Unit,
+    onToggleUseLastImportTime: () -> Unit,
 ) {
     var showImportStatus by remember { mutableStateOf(false) }
 
@@ -110,22 +122,35 @@ fun ImportScreen(
                     label = {
                         Text(stringResource(Res.string.import_from_dir))
                     },
-                    placeholder = {
-                        Text(stringResource(Res.string.import_from_dir_hint))
-                    },
                     onValueChange = onFromDirChanged,
                     modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    stringResource(Res.string.import_from_dir_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 DatePickers(
                     startDate = state.startDate,
+                    startDateFileName = state.startDateFormattedAsFile,
                     allowedStartDateSelections = state.allowedStartDateSelections,
                     endDate = state.endDate,
+                    endDateFileName = state.endDateFormattedAsFile,
                     allowedEndDateSelections = state.allowedEndDateSelections,
                     onStartDateChanged = onStartDateChanged,
                     onResetStartDate = onResetStartDate,
                     onEndDateChanged = onEndDateChanged,
                     onResetEndDate = onResetEndDate,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                LastImportTime(
+                    useLastImportTime = state.useLastImportTime,
+                    lastImportDate = state.lastImportDate,
+                    onToggleUseLastImportTime = onToggleUseLastImportTime,
+                    onLastImportDateChanged = onLastImportDateChanged,
+                    onResetLastImportDate = onResetLastImportTime,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 FilledTonalButton(
@@ -146,6 +171,74 @@ fun ImportScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun LastImportTime(
+    useLastImportTime: Boolean,
+    lastImportDate: LocalDate,
+    onToggleUseLastImportTime: () -> Unit,
+    onLastImportDateChanged: (LocalDate) -> Unit,
+    onResetLastImportDate: () -> Unit,
+) {
+    var showLastImportDatePicker by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Row(
+            modifier = Modifier
+                .clickable(
+                    role = Role.Checkbox,
+                    onClick = onToggleUseLastImportTime,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Checkbox(checked = useLastImportTime, onCheckedChange = null)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                stringResource(Res.string.import_use_last_import_time),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            DisabledTextField(
+                value = dayMonthDateWithYear(lastImportDate),
+                label = stringResource(Res.string.import_last_import_time),
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            IconButton(
+                onClick = { showLastImportDatePicker = true },
+                enabled = useLastImportTime,
+            ) {
+                Icon(
+                    Icons.Outlined.Today,
+                    contentDescription = stringResource(Res.string.import_last_import_time)
+                )
+            }
+        }
+    }
+    if (showLastImportDatePicker) {
+        Date(
+            selectedDate = lastImportDate,
+            allowedSelections = null,
+            onDateSelected = {
+                showLastImportDatePicker = false
+                onLastImportDateChanged(it)
+            },
+            onResetDateToToday = null,
+            onResetDate = onResetLastImportDate,
+            onDismiss = { showLastImportDatePicker = false },
+        )
     }
 }
 
@@ -208,9 +301,11 @@ private fun ImportStatus(
 
 @Composable
 private fun DatePickers(
-    startDate: LocalDate?,
+    startDate: LocalDate,
+    startDateFileName: String,
     allowedStartDateSelections: ClosedRange<LocalDate>,
-    endDate: LocalDate?,
+    endDate: LocalDate,
+    endDateFileName: String,
     allowedEndDateSelections: ClosedRange<LocalDate>,
     onStartDateChanged: (LocalDate) -> Unit,
     onResetStartDate: () -> Unit,
@@ -219,39 +314,46 @@ private fun DatePickers(
 ) {
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
-    Column(
+    Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                stringResource(Res.string.import_start_date),
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            DisabledTextField(
+                value = startDateFileName,
+                label = stringResource(Res.string.import_start_date),
             )
             Spacer(modifier = Modifier.width(16.dp))
-            TextButton(
+            IconButton(
                 onClick = { showStartDatePicker = true },
-                modifier = Modifier.weight(1f),
             ) {
-                val text =
-                    startDate?.let { dayMonthDate(it) } ?: stringResource(Res.string.pick)
-                Text(text)
+                Icon(
+                    Icons.Outlined.Today,
+                    contentDescription = stringResource(Res.string.import_start_date)
+                )
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                stringResource(Res.string.import_end_date),
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            DisabledTextField(
+                value = endDateFileName,
+                label = stringResource(Res.string.import_end_date)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            TextButton(
+            IconButton(
                 onClick = { showEndDatePicker = true },
-                modifier = Modifier.weight(1f),
             ) {
-                val text = endDate?.let { dayMonthDate(it) } ?: stringResource(Res.string.pick)
-                Text(text)
+                Icon(
+                    Icons.Outlined.Today,
+                    contentDescription = stringResource(Res.string.import_end_date)
+                )
             }
         }
     }
@@ -281,4 +383,27 @@ private fun DatePickers(
             onDismiss = { showEndDatePicker = false },
         )
     }
+}
+
+@Composable
+private fun DisabledTextField(
+    value: String,
+    label: String,
+) {
+    val colors = OutlinedTextFieldDefaults
+        .colors()
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        enabled = false,
+        label = {
+            Text(label)
+        },
+        colors = colors
+            .copy(
+                disabledTextColor = colors.unfocusedTextColor,
+                disabledLabelColor = colors.unfocusedLabelColor,
+                disabledContainerColor = colors.unfocusedContainerColor,
+            )
+    )
 }

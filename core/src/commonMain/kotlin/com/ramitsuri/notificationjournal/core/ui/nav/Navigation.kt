@@ -342,6 +342,9 @@ fun NavGraph(
                 onResetStartDate = viewModel::onResetStartDate,
                 onEndDateChanged = viewModel::onEndDateChanged,
                 onResetEndDate = viewModel::onResetEndDate,
+                onLastImportDateChanged = viewModel::onLastImportDateChanged,
+                onResetLastImportTime = viewModel::resetLastImportDate,
+                onToggleUseLastImportTime = viewModel::toggleUseLastImportTime,
             )
         }
     }

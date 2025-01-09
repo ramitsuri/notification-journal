@@ -20,6 +20,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
@@ -74,8 +75,8 @@ class JournalRepository(
         dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
 
-    suspend fun insert(entries: List<JournalEntry>) {
-        dao.insert(entries)
+    suspend fun clearDaysAndInsert(days: List<LocalDate>, entries: List<JournalEntry>) {
+        dao.clearDaysAndInsert(days.map { it.toString() }, entries)
     }
 
     suspend fun insert(
@@ -95,7 +96,7 @@ class JournalRepository(
                 JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: Tag.NO_TAG.value)
             }
             .let {
-                insert(it)
+                dao.insert(it)
             }
     }
 
