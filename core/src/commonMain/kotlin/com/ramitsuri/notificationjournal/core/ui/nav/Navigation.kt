@@ -2,7 +2,6 @@ package com.ramitsuri.notificationjournal.core.ui.nav
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -310,6 +309,7 @@ fun NavGraph(
             LogScreen(
                 logs = logs,
                 onBackClick = { navController.navigateUp() },
+                onClearLogsClick = viewModel::clearLogsClicked,
             )
         }
 

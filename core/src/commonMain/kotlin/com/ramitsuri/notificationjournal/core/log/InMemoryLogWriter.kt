@@ -26,7 +26,11 @@ class InMemoryLogWriter : LogWriter() {
         }
     }
 
+    fun clear() {
+        _logs.update { emptyList() }
+    }
+
     private companion object {
-        const val MAX_LOGS = 100
+        const val MAX_LOGS = 200
     }
 }
