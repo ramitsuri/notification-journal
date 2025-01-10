@@ -23,6 +23,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -196,8 +197,12 @@ class EditJournalEntryViewModel(
                 _state.value.textFieldState.text
             }
                 .debounce(300)
+                .map { it.toString() }
                 .collect { text ->
-                    spellChecker.onTextUpdated(text.toString())
+                    spellChecker.onTextUpdated(text)
+                    _state.update { existingState ->
+                        existingState.copy(showWarningOnExit = text != entry.text)
+                    }
                 }
         }
         viewModelScope.launch {
@@ -225,4 +230,5 @@ data class EditJournalEntryViewState(
     val templates: List<JournalEntryTemplate> = listOf(),
     val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: LocalDateTime = Clock.System.nowLocal(),
+    val showWarningOnExit: Boolean = false,
 )

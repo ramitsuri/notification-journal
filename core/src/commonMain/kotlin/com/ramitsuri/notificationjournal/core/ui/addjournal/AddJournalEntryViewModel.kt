@@ -307,4 +307,7 @@ data class AddJournalEntryViewState(
     val templates: List<JournalEntryTemplate> = listOf(),
     val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: LocalDateTime,
-)
+) {
+    val showWarningOnExit
+        get() = textFieldState.text.toString().isNotEmpty()
+}

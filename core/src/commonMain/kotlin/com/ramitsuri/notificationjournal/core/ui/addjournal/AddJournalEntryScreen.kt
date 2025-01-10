@@ -36,6 +36,7 @@ fun AddJournalEntryScreen(
         templates = state.templates,
         dateTime = state.dateTime,
         textCorrections = state.corrections,
+        showWarningOnExit = state.showWarningOnExit,
         onTagClicked = onTagClicked,
         onTemplateClicked = onTemplateClicked,
         onUseSuggestedText = onUseSuggestedText,

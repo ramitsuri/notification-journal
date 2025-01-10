@@ -35,6 +35,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +56,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,12 +92,16 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_save
 import notificationjournal.core.generated.resources.add_entry_save_and_add_another
 import notificationjournal.core.generated.resources.add_from_template
+import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.am
+import notificationjournal.core.generated.resources.cancel
+import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.now
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.reset
 import notificationjournal.core.generated.resources.tags
+import notificationjournal.core.generated.resources.unsaved_warning_message
 import notificationjournal.core.generated.resources.use
 import org.jetbrains.compose.resources.stringResource
 
@@ -111,6 +117,7 @@ fun AddEditEntryDialog(
     dateTime: LocalDateTime,
     templates: List<JournalEntryTemplate>,
     textCorrections: Map<String, List<String>>,
+    showWarningOnExit: Boolean,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onUseSuggestedText: () -> Unit,
@@ -131,6 +138,7 @@ fun AddEditEntryDialog(
     var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showDateKeyboardShortcutHints by remember { mutableStateOf(false) }
+    var showCancelWarningDialog by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         rememberTopAppBarState()
     )
@@ -138,6 +146,13 @@ fun AddEditEntryDialog(
     LaunchedEffect(focusRequester) {
         delay(500)
         focusRequester.requestFocus()
+    }
+    val onCancelWithWarning = {
+        if (showWarningOnExit) {
+            showCancelWarningDialog = true
+        } else {
+            onCancel()
+        }
     }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -189,10 +204,7 @@ fun AddEditEntryDialog(
                     // Escape -> Cancel
                     it.key == Key.Escape &&
                             it.type == KeyEventType.KeyUp -> {
-                        if (textState.text.isEmpty()) {
-                            // To prevent accidental cancel
-                            onCancel()
-                        }
+                        onCancelWithWarning()
                         true
                     }
 
@@ -502,7 +514,7 @@ fun AddEditEntryDialog(
                 }
             }) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Toolbar(onBackClick = onCancel, scrollBehavior = scrollBehavior)
+            Toolbar(onBackClick = onCancelWithWarning, scrollBehavior = scrollBehavior)
             if (isLoading) {
                 LinearProgressIndicator(
                     modifier = Modifier
@@ -555,6 +567,37 @@ fun AddEditEntryDialog(
                     }
                 }
             }
+        }
+
+        if (showCancelWarningDialog) {
+            AlertDialog(
+                onDismissRequest = { showCancelWarningDialog = false },
+                title = {
+                    Text(text = stringResource(Res.string.alert))
+                },
+                text = {
+                    Text(stringResource(Res.string.unsaved_warning_message))
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showCancelWarningDialog = false
+                            onCancel()
+                        }
+                    ) {
+                        Text(stringResource(Res.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showCancelWarningDialog = false
+                        }
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                }
+            )
         }
     }
 }
