@@ -35,6 +35,7 @@ class ImportViewModel(
         ViewState(
             startDate = defaultStartDate,
             endDate = defaultEndDate,
+            lastImportDate = defaultLastImportDate,
         )
     )
     val state = _state.asStateFlow()
@@ -45,8 +46,11 @@ class ImportViewModel(
                 _state.update {
                     it.copy(
                         fromDir = prefManager.getLastImportDir().first(),
-                        lastImportDate = prefManager.getLastImportDate().first()
-                            .toLocalDateTime(timeZone).date,
+                        lastImportDate = prefManager
+                            .getLastImportDate()
+                            .first()
+                            ?.fromInstant()
+                            ?: defaultLastImportDate,
                     )
                 }
             }
@@ -132,7 +136,11 @@ class ImportViewModel(
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    lastImportDate = prefManager.getLastImportDate().first().fromInstant(),
+                    lastImportDate = prefManager
+                        .getLastImportDate()
+                        .first()
+                        ?.fromInstant()
+                        ?: defaultLastImportDate,
                 )
             }
         }
@@ -151,6 +159,8 @@ class ImportViewModel(
             get() = Constants.LocalDate.IMPORT_MIN
         private val defaultEndDate
             get() = Clock.System.nowLocal().date
+        private val defaultLastImportDate
+            get() = LocalDate(year = 2000, monthNumber = 1, dayOfMonth = 1)
 
         fun factory() = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -173,9 +183,7 @@ data class ViewState(
     val startDate: LocalDate,
     val endDate: LocalDate,
     val importStatus: ImportStatus = ImportStatus.NotStarted,
-    val lastImportDate: LocalDate = Instant.DISTANT_PAST
-        .toLocalDateTime(TimeZone.currentSystemDefault())
-        .date,
+    val lastImportDate: LocalDate,
     val useLastImportTime: Boolean = true,
 ) {
     val isImportEnabled: Boolean
