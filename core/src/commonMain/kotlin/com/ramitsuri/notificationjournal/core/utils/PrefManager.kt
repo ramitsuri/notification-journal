@@ -45,7 +45,7 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
         keyValueStore.putBoolean(Key.SHOW_LOGS_BUTTON, showLogsButton)
     }
 
-    fun getLastImportDate(): Flow<Instant> {
+    fun getLastImportDate(): Flow<Instant?> {
         return keyValueStore
             .getStringFlow(Key.LAST_IMPORT_DATE, "")
             .map { timeString ->
@@ -53,7 +53,6 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
                     ?.let {
                         runCatching { Instant.parse(it) }.getOrNull()
                     }
-                    ?: Instant.DISTANT_PAST
             }
     }
 
