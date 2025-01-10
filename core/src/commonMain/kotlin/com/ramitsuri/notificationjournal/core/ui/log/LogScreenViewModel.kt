@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlin.reflect.KClass
 
 class LogScreenViewModel(
-    inMemoryLogWriter: InMemoryLogWriter
+    private val inMemoryLogWriter: InMemoryLogWriter
 ) : ViewModel() {
     val logs = inMemoryLogWriter
         .logs
@@ -25,6 +25,10 @@ class LogScreenViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    fun clearLogsClicked() {
+        inMemoryLogWriter.clear()
+    }
 
     companion object {
         fun factory() = object : ViewModelProvider.Factory {

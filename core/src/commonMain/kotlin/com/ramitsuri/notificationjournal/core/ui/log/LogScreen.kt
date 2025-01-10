@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,7 +51,8 @@ import org.jetbrains.compose.resources.stringResource
 fun LogScreen(
     logs: List<LogData>,
     timeZone: TimeZone = TimeZone.currentSystemDefault(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onClearLogsClick: () -> Unit,
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -73,6 +75,16 @@ fun LogScreen(
             Toolbar(
                 onBackClick = onBackClick,
                 scrollBehavior = null,
+                actions = {
+                    Row {
+                        IconButton(onClick = onClearLogsClick) {
+                            Icon(
+                                imageVector = Icons.Outlined.DeleteForever,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                }
             )
 
             LazyColumn(
