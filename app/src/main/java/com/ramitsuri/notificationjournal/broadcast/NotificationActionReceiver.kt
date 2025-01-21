@@ -12,9 +12,10 @@ import com.ramitsuri.notificationjournal.core.utils.Constants.ACTION_JOURNAL
 import kotlinx.coroutines.launch
 
 class NotificationActionReceiver : BroadcastReceiver() {
-
-    override fun onReceive(context: Context, intent: Intent) {
-
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         val action = intent.action ?: return
         if (action != ACTION_JOURNAL) {
             return

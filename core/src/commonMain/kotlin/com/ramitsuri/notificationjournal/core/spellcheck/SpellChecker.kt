@@ -58,27 +58,28 @@ class SpellChecker(
             }
     }
 
-    suspend fun onTextUpdated(text: String) = coroutineScope {
-        withContext(defaultDispatcher) {
-            val wordsInText = getWordsInText(text)
+    suspend fun onTextUpdated(text: String) =
+        coroutineScope {
+            withContext(defaultDispatcher) {
+                val wordsInText = getWordsInText(text)
 
-            wordsInText.forEach { word ->
-                // Storing in a separate list so that it can be immediately updated with encountered
-                // words rather than updating the state flow with the encountered word and no
-                // corrections first because the state flow is setup to only hold entries which have
-                // any corrections
-                if (addToEncounteredWords(word)) {
-                    findCorrectionsChannel.send(word)
+                wordsInText.forEach { word ->
+                    // Storing in a separate list so that it can be immediately updated with encountered
+                    // words rather than updating the state flow with the encountered word and no
+                    // corrections first because the state flow is setup to only hold entries which have
+                    // any corrections
+                    if (addToEncounteredWords(word)) {
+                        findCorrectionsChannel.send(word)
+                    }
                 }
-            }
 
-            _corrections.update { existing ->
-                existing.filter {
-                    wordsInText.contains(it.key)
+                _corrections.update { existing ->
+                    existing.filter {
+                        wordsInText.contains(it.key)
+                    }
                 }
             }
         }
-    }
 
     suspend fun addWord(word: String) {
         checker.createDictionaryEntry(word, 1)
@@ -93,35 +94,36 @@ class SpellChecker(
         _corrections.update { mapOf() }
     }
 
-    private suspend fun findCorrections(word: String) = coroutineScope {
-        withContext(defaultDispatcher) {
-            checker.lookup(
-                word,
-                Verbosity.Closest,
-                2.0
-            )
-                .filter {
-                    it.term.lowercase() != word.lowercase()
-                }
-                .map { suggestion ->
-                    suggestion.term.replaceFirstChar {
-                        if (word.first().isUpperCase()) {
-                            it.titlecase(locale)
-                        } else if (word.first().isLowerCase()) {
-                            it.lowercase(locale)
-                        } else {
-                            it.toString()
+    private suspend fun findCorrections(word: String) =
+        coroutineScope {
+            withContext(defaultDispatcher) {
+                checker.lookup(
+                    word,
+                    Verbosity.Closest,
+                    2.0,
+                )
+                    .filter {
+                        it.term.lowercase() != word.lowercase()
+                    }
+                    .map { suggestion ->
+                        suggestion.term.replaceFirstChar {
+                            if (word.first().isUpperCase()) {
+                                it.titlecase(locale)
+                            } else if (word.first().isLowerCase()) {
+                                it.lowercase(locale)
+                            } else {
+                                it.toString()
+                            }
                         }
                     }
-                }
-                .takeIf { it.isNotEmpty() }
-                ?.let { suggestions ->
-                    _corrections.update { existing ->
-                        existing + (word to suggestions)
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { suggestions ->
+                        _corrections.update { existing ->
+                            existing + (word to suggestions)
+                        }
                     }
-                }
+            }
         }
-    }
 
     private fun getWordsInText(text: String): List<String> {
         val regex = """(?<!\w)'(?!\w)|[.,!?;:"-]""".toRegex()

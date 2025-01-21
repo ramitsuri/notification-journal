@@ -47,27 +47,27 @@ fun NavGraph(
         enterTransition = {
             slideIntoContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
-                animationSpec = tween(300)
+                animationSpec = tween(300),
             )
         },
         exitTransition = {
             slideOutOfContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
-                animationSpec = tween(300)
+                animationSpec = tween(300),
             )
         },
         popEnterTransition = {
             slideIntoContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
-                animationSpec = tween(300)
+                animationSpec = tween(300),
             )
         },
         popExitTransition = {
             slideOutOfContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
-                animationSpec = tween(300)
+                animationSpec = tween(300),
             )
-        }
+        },
     ) {
         composable(Destination.JOURNAL_ENTRY.route()) {
             val viewModel: JournalEntryViewModel =
@@ -84,9 +84,9 @@ fun NavGraph(
                         Destination.ADD_ENTRY.routeWithArgValues(
                             mapOf(
                                 AddJournalEntryViewModel.RECEIVED_TEXT_ARG to
-                                        URLEncoder.encode(receivedTextState, "UTF-8")
-                            )
-                        )
+                                    URLEncoder.encode(receivedTextState, "UTF-8"),
+                            ),
+                        ),
                     )
                     viewModel.onReceivedTextConsumed()
                 }
@@ -98,17 +98,17 @@ fun NavGraph(
                 onAddRequested = { date ->
                     navController.navigate(
                         Destination.ADD_ENTRY.routeWithArgValues(
-                            mapOf(AddJournalEntryViewModel.DATE_ARG to date?.toString())
-                        )
+                            mapOf(AddJournalEntryViewModel.DATE_ARG to date?.toString()),
+                        ),
                     )
                 },
                 onEditRequested = { entryId ->
                     navController.navigate(
                         Destination.EDIT_ENTRY.routeWithArgValues(
                             mapOf(
-                                EditJournalEntryViewModel.ENTRY_ID_ARG to entryId
-                            )
-                        )
+                                EditJournalEntryViewModel.ENTRY_ID_ARG to entryId,
+                            ),
+                        ),
                     )
                 },
                 onDeleteRequested = viewModel::delete,
@@ -133,7 +133,7 @@ fun NavGraph(
                     navController.navigate(
                         Destination.ADD_ENTRY.routeWithArgValues(
                             mapOf(AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG to it.id),
-                        )
+                        ),
                     )
                 },
                 onShowPreviousDayClicked = viewModel::goToPreviousDay,
@@ -151,14 +151,14 @@ fun NavGraph(
                                 AddJournalEntryViewModel.DATE_ARG to date.toString(),
                                 AddJournalEntryViewModel.TIME_ARG to time?.toString(),
                                 AddJournalEntryViewModel.TAG_ARG to tag,
-                            )
-                        )
+                            ),
+                        ),
                     )
                 },
                 onCancelReconcile = viewModel::cancelReconcile,
                 onLogsClicked = {
                     navController.navigate(
-                        Destination.LOGS.routeWithArgValues()
+                        Destination.LOGS.routeWithArgValues(),
                     )
                 },
                 onSearchClicked = {
@@ -170,7 +170,7 @@ fun NavGraph(
 
         composable(
             route = Destination.ADD_ENTRY.route(),
-            arguments = Destination.ADD_ENTRY.navArgs()
+            arguments = Destination.ADD_ENTRY.navArgs(),
         ) { backStackEntry ->
             val viewModel: AddJournalEntryViewModel =
                 viewModel(factory = ServiceLocator.getAddJournalEntryVMFactory(backStackEntry))
@@ -207,7 +207,7 @@ fun NavGraph(
 
         composable(
             Destination.EDIT_ENTRY.route(),
-            arguments = Destination.EDIT_ENTRY.navArgs()
+            arguments = Destination.EDIT_ENTRY.navArgs(),
         ) { backStackEntry ->
             val viewModel: EditJournalEntryViewModel =
                 viewModel(factory = ServiceLocator.getEditJournalEntryVMFactory(backStackEntry))

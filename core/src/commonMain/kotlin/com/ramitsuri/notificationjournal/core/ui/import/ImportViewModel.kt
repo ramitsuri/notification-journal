@@ -31,13 +31,14 @@ class ImportViewModel(
     private val clock: Clock = Clock.System,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
-    private val _state = MutableStateFlow(
-        ViewState(
-            startDate = defaultStartDate,
-            endDate = defaultEndDate,
-            lastImportDate = defaultLastImportDate,
+    private val _state =
+        MutableStateFlow(
+            ViewState(
+                startDate = defaultStartDate,
+                endDate = defaultEndDate,
+                lastImportDate = defaultLastImportDate,
+            ),
         )
-    )
     val state = _state.asStateFlow()
 
     init {
@@ -46,11 +47,12 @@ class ImportViewModel(
                 _state.update {
                     it.copy(
                         fromDir = prefManager.getLastImportDir().first(),
-                        lastImportDate = prefManager
-                            .getLastImportDate()
-                            .first()
-                            ?.fromInstant()
-                            ?: defaultLastImportDate,
+                        lastImportDate =
+                            prefManager
+                                .getLastImportDate()
+                                .first()
+                                ?.fromInstant()
+                                ?: defaultLastImportDate,
                     )
                 }
             }
@@ -62,8 +64,9 @@ class ImportViewModel(
                     days.addAll(modifiedDays)
                     journalRepository.clearDaysAndInsert(modifiedDays, entries)
                     _state.update {
-                        val existingCount = (it.importStatus as? ImportStatus.InProgress)
-                            ?.importCount ?: 0
+                        val existingCount =
+                            (it.importStatus as? ImportStatus.InProgress)
+                                ?.importCount ?: 0
                         val newCount = existingCount + entries.size
                         it.copy(importStatus = ImportStatus.InProgress(newCount))
                     }
@@ -71,13 +74,15 @@ class ImportViewModel(
             // This is okay because the collect call suspends until all of the import is done and
             // then updates the status to completed.
             _state.update {
-                val entriesCount = (it.importStatus as? ImportStatus.InProgress)
-                    ?.importCount ?: 0
+                val entriesCount =
+                    (it.importStatus as? ImportStatus.InProgress)
+                        ?.importCount ?: 0
                 it.copy(
-                    importStatus = ImportStatus.Completed(
-                        importCount = entriesCount,
-                        daysCount = days.size,
-                    )
+                    importStatus =
+                        ImportStatus.Completed(
+                            importCount = entriesCount,
+                            daysCount = days.size,
+                        ),
                 )
             }
             prefManager.setLastImportDate(clock.now())
@@ -95,11 +100,12 @@ class ImportViewModel(
                 fromDir = state.fromDir,
                 startDate = startDate,
                 endDate = endDate,
-                lastImportDate = if (state.useLastImportTime) {
-                    state.lastImportDate.toInstant()
-                } else {
-                    Instant.DISTANT_PAST
-                },
+                lastImportDate =
+                    if (state.useLastImportTime) {
+                        state.lastImportDate.toInstant()
+                    } else {
+                        Instant.DISTANT_PAST
+                    },
             )
         }
     }
@@ -136,11 +142,12 @@ class ImportViewModel(
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    lastImportDate = prefManager
-                        .getLastImportDate()
-                        .first()
-                        ?.fromInstant()
-                        ?: defaultLastImportDate,
+                    lastImportDate =
+                        prefManager
+                            .getLastImportDate()
+                            .first()
+                            ?.fromInstant()
+                            ?: defaultLastImportDate,
                 )
             }
         }
@@ -162,19 +169,20 @@ class ImportViewModel(
         private val defaultLastImportDate
             get() = LocalDate(year = 2000, monthNumber = 1, dayOfMonth = 1)
 
-        fun factory() = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: KClass<T>,
-                extras: CreationExtras
-            ): T {
-                return ImportViewModel(
-                    importRepository = ServiceLocator.importRepository,
-                    journalRepository = ServiceLocator.repository,
-                    prefManager = ServiceLocator.prefManager,
-                ) as T
+        fun factory() =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T {
+                    return ImportViewModel(
+                        importRepository = ServiceLocator.importRepository,
+                        journalRepository = ServiceLocator.repository,
+                        prefManager = ServiceLocator.prefManager,
+                    ) as T
+                }
             }
-        }
     }
 }
 
@@ -187,7 +195,8 @@ data class ViewState(
     val useLastImportTime: Boolean = true,
 ) {
     val isImportEnabled: Boolean
-        get() = fromDir.isNotBlank() &&
+        get() =
+            fromDir.isNotBlank() &&
                 endDate >= startDate
 
     val allowedStartDateSelections: ClosedRange<LocalDate>
@@ -205,6 +214,8 @@ data class ViewState(
 
 sealed interface ImportStatus {
     data object NotStarted : ImportStatus
+
     data class InProgress(val importCount: Int) : ImportStatus
+
     data class Completed(val importCount: Int, val daysCount: Int) : ImportStatus
 }

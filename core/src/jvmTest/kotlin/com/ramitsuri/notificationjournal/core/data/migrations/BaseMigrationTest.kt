@@ -13,12 +13,13 @@ import kotlin.io.path.deleteRecursively
 
 open class BaseMigrationTest {
     @get:Rule
-    val helper: MigrationTestHelper = MigrationTestHelper(
-        schemaDirectoryPath = Path("schemas"),
-        databasePath = Path("test/migration-test"),
-        driver = BundledSQLiteDriver(),
-        databaseClass = AppDatabase::class,
-    )
+    val helper: MigrationTestHelper =
+        MigrationTestHelper(
+            schemaDirectoryPath = Path("schemas"),
+            databasePath = Path("test/migration-test"),
+            driver = BundledSQLiteDriver(),
+            databaseClass = AppDatabase::class,
+        )
 
     @OptIn(ExperimentalPathApi::class)
     @After
@@ -30,7 +31,10 @@ open class BaseMigrationTest {
         return helper.createDatabase(version)
     }
 
-    fun runMigrationAndValidate(version: Int, migration: Migration): SQLiteConnection {
+    fun runMigrationAndValidate(
+        version: Int,
+        migration: Migration,
+    ): SQLiteConnection {
         return helper.runMigrationsAndValidate(version, listOf(migration))
     }
 }

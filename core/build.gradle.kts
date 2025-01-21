@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.buildKonfig)
+    alias(libs.plugins.ktlint)
 }
 
 kotlin {
@@ -71,7 +72,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation (libs.jsystemthemedetector)
+            implementation(libs.jsystemthemedetector)
         }
         jvmTest.dependencies {
             implementation(libs.androidx.room.testing)
@@ -165,5 +166,16 @@ fun getProperty(
         properties.getProperty(key, defaultValue)
     } else {
         defaultValue
+    }
+}
+
+ktlint {
+    verbose.set(true)
+    outputToConsole.set(true)
+    filter {
+        exclude("**/generated/**")
+        exclude("**/build/**")
+        exclude { element -> element.file.toString().contains("generated/") }
+        exclude { element -> element.file.toString().contains("build/") }
     }
 }

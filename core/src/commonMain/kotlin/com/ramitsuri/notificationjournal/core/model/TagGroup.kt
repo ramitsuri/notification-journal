@@ -11,14 +11,14 @@ import kotlin.time.Duration.Companion.seconds
 data class TagGroup(
     @SerialName("tag")
     val tag: String,
-
     @SerialName("entries")
-    val entries: List<JournalEntry>
+    val entries: List<JournalEntry>,
 ) {
     val timeAfterLastEntry: LocalTime?
-        get() = entries
-            .lastOrNull()
-            ?.entryTime
-            ?.plus(1.seconds)
-            ?.time
+        get() =
+            entries
+                .lastOrNull()
+                ?.entryTime
+                ?.plus(1.seconds)
+                ?.time
 }

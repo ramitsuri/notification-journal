@@ -14,4 +14,3 @@ value class Username(val username: String)
 
 @JvmInline
 value class Password(val password: String)
-

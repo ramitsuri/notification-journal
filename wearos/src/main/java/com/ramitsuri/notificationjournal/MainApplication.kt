@@ -17,7 +17,7 @@ class MainApplication : Application() {
             ServiceLocator.repository,
             ServiceLocator.templatesDao,
             ServiceLocator.wearDataSharingClient,
-            ServiceLocator.coroutineScope
+            ServiceLocator.coroutineScope,
         )
     }
 }

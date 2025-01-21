@@ -44,9 +44,9 @@ object ServiceLocator {
                 NotificationChannelInfo(
                     channelType = NotificationChannelType.MAIN,
                     name = NotificationChannelType.MAIN.id,
-                    description = "For main notification"
-                )
-            )
+                    description = "For main notification",
+                ),
+            ),
         )
         val deviceId = keyValueStore.getString(Constants.PREF_KEY_DEVICE_ID, "")
         if (deviceId.isNullOrEmpty()) {
@@ -86,7 +86,7 @@ object ServiceLocator {
             coroutineScope = coroutineScope,
             dao = AppDatabase.getJournalEntryDao(factory),
             dataSendHelper = dataSendHelper,
-            conflictDao = AppDatabase.getConflictsDao(factory)
+            conflictDao = AppDatabase.getConflictsDao(factory),
         )
     }
 
@@ -122,33 +122,31 @@ object ServiceLocator {
         }
     }
 
-    fun getAddJournalEntryVMFactory(
-        navBackStackEntry: NavBackStackEntry
-    ) = factory.addJournalEntryVMFactory(
-        navBackStackEntry,
-    ) { savedStateHandle ->
-        AddJournalEntryViewModel(
-            savedStateHandle = savedStateHandle,
-            repository = repository,
-            tagsDao = tagsDao,
-            templatesDao = templatesDao,
-            spellChecker = spellChecker,
-        )
-    }
+    fun getAddJournalEntryVMFactory(navBackStackEntry: NavBackStackEntry) =
+        factory.addJournalEntryVMFactory(
+            navBackStackEntry,
+        ) { savedStateHandle ->
+            AddJournalEntryViewModel(
+                savedStateHandle = savedStateHandle,
+                repository = repository,
+                tagsDao = tagsDao,
+                templatesDao = templatesDao,
+                spellChecker = spellChecker,
+            )
+        }
 
-    fun getEditJournalEntryVMFactory(
-        navBackStackEntry: NavBackStackEntry
-    ) = factory.editJournalEntryVMFactory(
-        navBackStackEntry,
-    ) { savedStateHandle ->
-        EditJournalEntryViewModel(
-            savedStateHandle = savedStateHandle,
-            repository = repository,
-            tagsDao = tagsDao,
-            templatesDao = templatesDao,
-            spellChecker = spellChecker,
-        )
-    }
+    fun getEditJournalEntryVMFactory(navBackStackEntry: NavBackStackEntry) =
+        factory.editJournalEntryVMFactory(
+            navBackStackEntry,
+        ) { savedStateHandle ->
+            EditJournalEntryViewModel(
+                savedStateHandle = savedStateHandle,
+                repository = repository,
+                tagsDao = tagsDao,
+                templatesDao = templatesDao,
+                spellChecker = spellChecker,
+            )
+        }
 
     fun getAppVersion(): String {
         val suffix = if (BuildKonfig.IS_DEBUG) "_debug" else ""
@@ -156,11 +154,13 @@ object ServiceLocator {
     }
 
     val prefManager by lazy {
-        val keyValueStore = DataStoreKeyValueStore(
-            dataStore = PreferenceDataStoreFactory.createWithPath(
-                produceFile = { factory.getDataStorePath().toOkioPath() }
+        val keyValueStore =
+            DataStoreKeyValueStore(
+                dataStore =
+                    PreferenceDataStoreFactory.createWithPath(
+                        produceFile = { factory.getDataStorePath().toOkioPath() },
+                    ),
             )
-        )
         PrefManager(keyValueStore)
     }
 
@@ -203,13 +203,14 @@ object ServiceLocator {
     }
 
     private var dataReceiveHelper: DataReceiveHelper? = null
-        get() = if (field == null) {
-            synchronized(this) {
-                return if (field == null) getReceiver() else field
+        get() =
+            if (field == null) {
+                synchronized(this) {
+                    return if (field == null) getReceiver() else field
+                }
+            } else {
+                field
             }
-        } else {
-            field
-        }
 
     val coroutineScope by lazy {
         CoroutineScope(SupervisorJob())

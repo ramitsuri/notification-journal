@@ -37,15 +37,16 @@ abstract class JournalEntryTemplateDao {
         text: String,
         tag: String,
         shortDisplayText: String,
-        displayText: String
+        displayText: String,
     ) {
-        val template = JournalEntryTemplate(
-            id = id ?: UUID.randomUUID().toString(),
-            text = text,
-            tag = tag,
-            shortDisplayText = shortDisplayText,
-            displayText = displayText
-        )
+        val template =
+            JournalEntryTemplate(
+                id = id ?: UUID.randomUUID().toString(),
+                text = text,
+                tag = tag,
+                shortDisplayText = shortDisplayText,
+                displayText = displayText,
+            )
         insertOrUpdate(template)
     }
 

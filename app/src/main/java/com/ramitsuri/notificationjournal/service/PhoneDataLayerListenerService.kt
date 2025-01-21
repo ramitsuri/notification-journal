@@ -13,7 +13,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 
 class PhoneDataLayerListenerService : WearableListenerService() {
-
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         val addJournalEntryEvents = mutableListOf<DataEvent>()

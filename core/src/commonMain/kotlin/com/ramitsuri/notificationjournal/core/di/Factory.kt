@@ -15,7 +15,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import java.nio.file.Path
 
 expect class Factory {
-
     val allowJournalImport: Boolean
 
     fun getSettings(): Settings

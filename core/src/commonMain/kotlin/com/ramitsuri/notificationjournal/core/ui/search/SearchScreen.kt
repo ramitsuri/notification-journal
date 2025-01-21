@@ -91,25 +91,28 @@ fun SearchScreen(
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .consumeWindowInsets(paddingValues)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Horizontal,
+                        ),
                     ),
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-                rememberTopAppBarState()
-            )
+            val scrollBehavior =
+                TopAppBarDefaults.enterAlwaysScrollBehavior(
+                    rememberTopAppBarState(),
+                )
 
             Toolbar(
                 scrollBehavior = scrollBehavior,
@@ -126,10 +129,11 @@ fun SearchScreen(
             )
 
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .nestedScroll(scrollBehavior.nestedScrollConnection),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(state.results) {
@@ -164,23 +168,27 @@ private fun SearchRow(
     }
     val interactionSource = remember { MutableInteractionSource() }
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BasicTextField(
             state = searchFieldState,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences
-            ),
-            textStyle = MaterialTheme.typography.bodyMedium
-                .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            keyboardOptions =
+                KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                ),
+            textStyle =
+                MaterialTheme.typography.bodyMedium
+                    .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
             lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 1),
-            modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester = textFieldFocusRequester),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester = textFieldFocusRequester),
             decorator = @Composable { innerTextField ->
                 OutlinedTextFieldDefaults.DecorationBox(
                     value = searchFieldState.text.toString(),
@@ -190,8 +198,9 @@ private fun SearchRow(
                         if (searchFieldState.text.isNotEmpty()) {
                             IconButton(
                                 onClick = onClearClick,
-                                modifier = Modifier
-                                    .size(48.dp)
+                                modifier =
+                                    Modifier
+                                        .size(48.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
@@ -209,16 +218,17 @@ private fun SearchRow(
                             isError = false,
                             interactionSource = interactionSource,
                         )
-                    }
+                    },
                 )
-            }
+            },
         )
         Spacer(modifier = Modifier.width(8.dp))
         if (tags.isNotEmpty()) {
             IconButton(
                 onClick = { showSearchFilterDialog = true },
-                modifier = Modifier
-                    .size(48.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Tune,
@@ -257,9 +267,10 @@ private fun SearchFilterDialog(
                     if (tags.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Column(
-                            modifier = Modifier
-                                .fillMaxHeight(0.4f)
-                                .verticalScroll(rememberScrollState()),
+                            modifier =
+                                Modifier
+                                    .fillMaxHeight(0.4f)
+                                    .verticalScroll(rememberScrollState()),
                         ) {
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -271,32 +282,33 @@ private fun SearchFilterDialog(
                                         onClick = {
                                             onTagClicked(it.value)
                                         },
-                                        label = { Text(text = it.value) })
+                                        label = { Text(text = it.value) },
+                                    )
                                 }
                             }
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Center,
                         ) {
                             TextButton(onClick = onSelectAllTagsClicked) {
                                 Text(
                                     text = stringResource(Res.string.search_select_all),
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             TextButton(onClick = onUnselectAllTagsClicked) {
                                 Text(
                                     text = stringResource(Res.string.search_unselect_all),
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = stringResource(Res.string.search_tip_empty_text),
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 }
@@ -308,11 +320,12 @@ private fun SearchFilterDialog(
 @Composable
 private fun SearchItem(journalEntry: JournalEntry) {
     Column(
-        modifier = Modifier.fillMaxWidth()
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .fullBorder(1.dp, MaterialTheme.colorScheme.outline, 16.dp)
-            .padding(16.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .fullBorder(1.dp, MaterialTheme.colorScheme.outline, 16.dp)
+                .padding(16.dp),
     ) {
         val collapsedMaxLines = 2
         var isExpanded by remember { mutableStateOf(false) }
@@ -323,15 +336,16 @@ private fun SearchItem(journalEntry: JournalEntry) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         style = MaterialTheme.typography.labelSmall,
-                        text = dayMonthDateWithYear(
-                            toFormat = journalEntry.entryTime.date,
-                        )
+                        text =
+                            dayMonthDateWithYear(
+                                toFormat = journalEntry.entryTime.date,
+                            ),
                     )
                     if (!Tag.isNoTag(journalEntry.tag)) {
                         Text(
                             text = "\u2022",
                             style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = 4.dp),
                         )
                         Text(
                             text = journalEntry.tag,
@@ -340,9 +354,10 @@ private fun SearchItem(journalEntry: JournalEntry) {
                     }
                 }
                 Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .animateContentSize(),
                     style = MaterialTheme.typography.bodyMedium,
                     text = journalEntry.text,
                     overflow = TextOverflow.Ellipsis,
@@ -357,12 +372,13 @@ private fun SearchItem(journalEntry: JournalEntry) {
             if (clickable) {
                 IconButton(onClick = { isExpanded = !isExpanded }) {
                     Icon(
-                        imageVector = if (isExpanded) {
-                            Icons.Default.ArrowDropUp
-                        } else {
-                            Icons.Default.ArrowDropDown
-                        },
-                        contentDescription = null
+                        imageVector =
+                            if (isExpanded) {
+                                Icons.Default.ArrowDropUp
+                            } else {
+                                Icons.Default.ArrowDropDown
+                            },
+                        contentDescription = null,
                     )
                 }
             }

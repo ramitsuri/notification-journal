@@ -18,7 +18,7 @@ class MigrationFrom11To12 : Migration(11, 12) {
 
         // Missed this from previous migration
         connection.execSQL(
-            "CREATE UNIQUE INDEX IF NOT EXISTS `index_dictionary_word` ON `DictionaryItem` (`word`)"
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_dictionary_word` ON `DictionaryItem` (`word`)",
         )
     }
 
@@ -27,29 +27,29 @@ class MigrationFrom11To12 : Migration(11, 12) {
         connection.execSQL("DROP TABLE `JournalEntry`")
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `JournalEntry` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`entry_time` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT, " +
-                    "`uploaded` INTEGER NOT NULL DEFAULT 0, " +
-                    "`auto_tagged` INTEGER NOT NULL DEFAULT 0, " +
-                    "`deleted` INTEGER NOT NULL DEFAULT 0, " +
-                    "`reconciled` INTEGER NOT NULL DEFAULT 0, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`entry_time` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT, " +
+                "`uploaded` INTEGER NOT NULL DEFAULT 0, " +
+                "`auto_tagged` INTEGER NOT NULL DEFAULT 0, " +
+                "`deleted` INTEGER NOT NULL DEFAULT 0, " +
+                "`reconciled` INTEGER NOT NULL DEFAULT 0, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
         entries.forEach { entry ->
             connection.prepare(
                 "INSERT INTO JournalEntry " +
-                        "(id, entry_time, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
-                        "VALUES " +
-                        " (?, ?, ?, ?, ?, ?, ?, ?)"
+                    "(id, entry_time, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
+                    "VALUES " +
+                    " (?, ?, ?, ?, ?, ?, ?, ?)",
             ).use { statement ->
                 statement.bindText(index = 1, value = entry.id)
                 statement.bindText(
                     index = 2,
-                    value = entry.entryTimeMillis.toLocalDateTimeString(entry.timeZone)
+                    value = entry.entryTimeMillis.toLocalDateTimeString(entry.timeZone),
                 )
                 statement.bindText(index = 3, value = entry.text)
                 if (entry.tag == null) {
@@ -109,7 +109,7 @@ class MigrationFrom11To12 : Migration(11, 12) {
                             autoTagged = autoTagged,
                             deleted = deleted,
                             reconciled = reconciled,
-                        )
+                        ),
                     )
                 } catch (e: Exception) {
                     // Do nothing. Continue reading the ones we can
@@ -136,28 +136,28 @@ class MigrationFrom11To12 : Migration(11, 12) {
         connection.execSQL("DROP TABLE `EntryConflict`")
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `EntryConflict` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`entry_id` TEXT NOT NULL, " +
-                    "`entry_time` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT, " +
-                    "`sender_name` TEXT NOT NULL, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`entry_id` TEXT NOT NULL, " +
+                "`entry_time` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT, " +
+                "`sender_name` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
         existing.forEach { conflict ->
             connection.prepare(
                 "INSERT INTO EntryConflict " +
-                        "(id, entry_id, entry_time, text, tag, sender_name) " +
-                        "VALUES " +
-                        " (?, ?, ?, ?, ?, ?)"
+                    "(id, entry_id, entry_time, text, tag, sender_name) " +
+                    "VALUES " +
+                    " (?, ?, ?, ?, ?, ?)",
             ).use { statement ->
                 statement.bindText(index = 1, value = conflict.id)
                 statement.bindText(index = 2, value = conflict.entryId)
                 statement.bindText(
                     index = 3,
-                    value = conflict.entryTimeMillis.toLocalDateTimeString()
+                    value = conflict.entryTimeMillis.toLocalDateTimeString(),
                 )
                 statement.bindText(index = 4, value = conflict.text)
                 if (conflict.tag == null) {
@@ -202,7 +202,7 @@ class MigrationFrom11To12 : Migration(11, 12) {
                             text = text,
                             tag = tag,
                             senderName = senderName,
-                        )
+                        ),
                     )
                 } catch (e: Exception) {
                     // Do nothing. Continue reading the ones we can

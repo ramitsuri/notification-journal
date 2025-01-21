@@ -36,7 +36,6 @@ enum class Destination(private val route: String) {
                     .plus("=${args[AddJournalEntryViewModel.TIME_ARG]}")
                     .plus("&${AddJournalEntryViewModel.TAG_ARG}")
                     .plus("=${args[AddJournalEntryViewModel.TAG_ARG]}")
-
             }
 
             else -> {

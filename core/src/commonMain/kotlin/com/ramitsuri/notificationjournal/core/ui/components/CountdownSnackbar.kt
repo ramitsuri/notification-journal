@@ -58,30 +58,32 @@ fun CountdownSnackbar(
     }
 
     val actionLabel = snackbarData.visuals.actionLabel
-    val actionComposable: (@Composable () -> Unit)? = if (actionLabel != null) {
-        @Composable {
-            TextButton(
-                colors = ButtonDefaults.textButtonColors(contentColor = actionColor),
-                onClick = { snackbarData.performAction() },
-                content = { Text(actionLabel) }
-            )
+    val actionComposable: (@Composable () -> Unit)? =
+        if (actionLabel != null) {
+            @Composable {
+                TextButton(
+                    colors = ButtonDefaults.textButtonColors(contentColor = actionColor),
+                    onClick = { snackbarData.performAction() },
+                    content = { Text(actionLabel) },
+                )
+            }
+        } else {
+            null
         }
-    } else {
-        null
-    }
 
-    val dismissActionComposable: (@Composable () -> Unit)? = if (snackbarData.visuals.withDismissAction) {
-        @Composable {
-            IconButton(
-                onClick = { snackbarData.dismiss() },
-                content = {
-                    Icon(Icons.Rounded.Close, null)
-                }
-            )
+    val dismissActionComposable: (@Composable () -> Unit)? =
+        if (snackbarData.visuals.withDismissAction) {
+            @Composable {
+                IconButton(
+                    onClick = { snackbarData.dismiss() },
+                    content = {
+                        Icon(Icons.Rounded.Close, null)
+                    },
+                )
+            }
+        } else {
+            null
         }
-    } else {
-        null
-    }
 
     Snackbar(
         modifier = modifier.padding(12.dp),
@@ -96,12 +98,12 @@ fun CountdownSnackbar(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             SnackbarCountdown(
                 timerProgress = millisRemaining.toFloat() / totalDuration.toFloat(),
                 secondsRemaining = (millisRemaining / 1000) + 1,
-                color = contentColor
+                color = contentColor,
             )
             Text(snackbarData.visuals.message)
         }
@@ -112,35 +114,37 @@ fun CountdownSnackbar(
 private fun SnackbarCountdown(
     timerProgress: Float,
     secondsRemaining: Int,
-    color: Color
+    color: Color,
 ) {
     Box(
         modifier = Modifier.size(24.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.matchParentSize()) {
-            val strokeStyle = Stroke(
-                width = 3.dp.toPx(),
-                cap = StrokeCap.Round
-            )
+            val strokeStyle =
+                Stroke(
+                    width = 3.dp.toPx(),
+                    cap = StrokeCap.Round,
+                )
             drawCircle(
                 color = color.copy(alpha = 0.12f),
-                style = strokeStyle
+                style = strokeStyle,
             )
             drawArc(
                 color = color,
                 startAngle = -90f,
                 sweepAngle = (-360f * timerProgress),
                 useCenter = false,
-                style = strokeStyle
+                style = strokeStyle,
             )
         }
         Text(
             text = secondsRemaining.toString(),
-            style = LocalTextStyle.current.copy(
-                fontSize = 14.sp,
-                color = color
-            )
+            style =
+                LocalTextStyle.current.copy(
+                    fontSize = 14.sp,
+                    color = color,
+                ),
         )
     }
 }

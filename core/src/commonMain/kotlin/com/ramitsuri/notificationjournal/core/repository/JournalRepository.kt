@@ -35,9 +35,7 @@ class JournalRepository(
     private val clock: Clock = Clock.System,
     private val dataSendHelper: DataSendHelper?,
 ) {
-    fun getFlow(
-        showReconciled: Boolean = false,
-    ): Flow<List<JournalEntry>> {
+    fun getFlow(showReconciled: Boolean = false): Flow<List<JournalEntry>> {
         return if (showReconciled) {
             dao.getAllFlow()
         } else {
@@ -62,12 +60,13 @@ class JournalRepository(
         update(
             listOf(
                 journalEntry.copy(
-                    text = replaceWithTimeTemplateIfNecessary(
-                        originalText = journalEntry.text,
-                        time = journalEntry.entryTime,
-                    )
-                )
-            )
+                    text =
+                        replaceWithTimeTemplateIfNecessary(
+                            originalText = journalEntry.text,
+                            time = journalEntry.entryTime,
+                        ),
+                ),
+            ),
         )
     }
 
@@ -75,7 +74,10 @@ class JournalRepository(
         dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
 
-    suspend fun clearDaysAndInsert(days: List<LocalDate>, entries: List<JournalEntry>) {
+    suspend fun clearDaysAndInsert(
+        days: List<LocalDate>,
+        entries: List<JournalEntry>,
+    ) {
         dao.clearDaysAndInsert(days.map { it.toString() }, entries)
     }
 
@@ -89,10 +91,11 @@ class JournalRepository(
             .filter { it.isNotBlank() }
             .mapIndexed { index, entry ->
                 val entryTime = time.plus(index.times(10).milliseconds)
-                val entryText = replaceWithTimeTemplateIfNecessary(
-                    originalText = entry,
-                    time = entryTime,
-                ).trim()
+                val entryText =
+                    replaceWithTimeTemplateIfNecessary(
+                        originalText = entry,
+                        time = entryTime,
+                    ).trim()
                 JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: Tag.NO_TAG.value)
             }
             .let {
@@ -153,16 +156,20 @@ class JournalRepository(
         return conflictDao.getAllFlow()
     }
 
-    suspend fun resolveConflict(entry: JournalEntry, selectedConflict: EntryConflict?) {
-        val newEntry = if (selectedConflict == null) { // No conflict selected, retain local entry
-            entry
-        } else {
-            entry.copy(
-                text = selectedConflict.text,
-                entryTime = selectedConflict.entryTime,
-                tag = selectedConflict.tag
-            )
-        }
+    suspend fun resolveConflict(
+        entry: JournalEntry,
+        selectedConflict: EntryConflict?,
+    ) {
+        val newEntry =
+            if (selectedConflict == null) { // No conflict selected, retain local entry
+                entry
+            } else {
+                entry.copy(
+                    text = selectedConflict.text,
+                    entryTime = selectedConflict.entryTime,
+                    tag = selectedConflict.tag,
+                )
+            }
 
         if (selectedConflict != null) {
             update(newEntry)
@@ -172,7 +179,10 @@ class JournalRepository(
         sendAndMarkUploaded(listOf(newEntry), replacesLocal = true)
     }
 
-    suspend fun search(query: String, tags: List<String>?): List<JournalEntry> {
+    suspend fun search(
+        query: String,
+        tags: List<String>?,
+    ): List<JournalEntry> {
         return if (tags == null) {
             dao.search(query)
         } else {
@@ -184,65 +194,77 @@ class JournalRepository(
         return dao.getEntryTags()
     }
 
-    suspend fun getStats(): EntryStats = coroutineScope {
-        fun List<LocalDateTime>.dates() = map { it.date }
-            .distinct()
-            .size
-            .toString()
+    suspend fun getStats(): EntryStats =
+        coroutineScope {
+            fun List<LocalDateTime>.dates() =
+                map { it.date }
+                    .distinct()
+                    .size
+                    .toString()
 
-        val notUploadedNotReconciled = let {
-            val uploaded = false
-            val reconciled = false
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        val uploadedNotReconciled = let {
-            val uploaded = true
-            val reconciled = false
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        val notUploadedReconciled = let {
-            val uploaded = false
-            val reconciled = true
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        val uploadedReconciled = let {
-            val uploaded = true
-            val reconciled = true
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        // All dates won't necessarily add up to individual dates because same date could have
-        // uploaded as well as not uploaded entries for example
-        val all = let {
-            async { dao.getEntryTimes().dates() } to
-                    async { dao.getEntryCount().toString() }
-        }
-        EntryStats(
-            uploadedAndReconciled = EntryStats.Count(
-                days = uploadedReconciled.first.await(),
-                entries = uploadedReconciled.second.await(),
-            ),
-            uploadedAndNotReconciled = EntryStats.Count(
-                days = uploadedNotReconciled.first.await(),
-                entries = uploadedNotReconciled.second.await(),
-            ),
-            notUploadedAndReconciled = EntryStats.Count(
-                days = notUploadedReconciled.first.await(),
-                entries = notUploadedReconciled.second.await(),
-            ),
-            notUploadedAndNotReconciled = EntryStats.Count(
-                days = notUploadedNotReconciled.first.await(),
-                entries = notUploadedNotReconciled.second.await(),
-            ),
-            all = EntryStats.Count(
-                days = all.first.await(),
-                entries = all.second.await(),
+            val notUploadedNotReconciled =
+                let {
+                    val uploaded = false
+                    val reconciled = false
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            val uploadedNotReconciled =
+                let {
+                    val uploaded = true
+                    val reconciled = false
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            val notUploadedReconciled =
+                let {
+                    val uploaded = false
+                    val reconciled = true
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            val uploadedReconciled =
+                let {
+                    val uploaded = true
+                    val reconciled = true
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            // All dates won't necessarily add up to individual dates because same date could have
+            // uploaded as well as not uploaded entries for example
+            val all =
+                let {
+                    async { dao.getEntryTimes().dates() } to
+                        async { dao.getEntryCount().toString() }
+                }
+            EntryStats(
+                uploadedAndReconciled =
+                    EntryStats.Count(
+                        days = uploadedReconciled.first.await(),
+                        entries = uploadedReconciled.second.await(),
+                    ),
+                uploadedAndNotReconciled =
+                    EntryStats.Count(
+                        days = uploadedNotReconciled.first.await(),
+                        entries = uploadedNotReconciled.second.await(),
+                    ),
+                notUploadedAndReconciled =
+                    EntryStats.Count(
+                        days = notUploadedReconciled.first.await(),
+                        entries = notUploadedReconciled.second.await(),
+                    ),
+                notUploadedAndNotReconciled =
+                    EntryStats.Count(
+                        days = notUploadedNotReconciled.first.await(),
+                        entries = notUploadedNotReconciled.second.await(),
+                    ),
+                all =
+                    EntryStats.Count(
+                        days = all.first.await(),
+                        entries = all.second.await(),
+                    ),
             )
-        )
-    }
+        }
 
     private suspend fun replaceWithTimeTemplateIfNecessary(
         originalText: String,
@@ -255,24 +277,26 @@ class JournalRepository(
                     toFormat = time,
                     amString = getString(Res.string.am),
                     pmString = getString(Res.string.pm),
-                )
+                ),
             )
         } else {
             originalText
         }
     }
 
-    private fun sendAndMarkUploaded(entries: List<JournalEntry>, replacesLocal: Boolean = false) {
+    private fun sendAndMarkUploaded(
+        entries: List<JournalEntry>,
+        replacesLocal: Boolean = false,
+    ) {
         coroutineScope.launch {
             val sent = dataSendHelper?.sendEntry(entries, replacesLocal) == true
             dao.updateUploaded(entries = entries, uploaded = sent)
         }
     }
 
-
     private fun JournalEntry.getEntryConflict(
         incomingEntry: JournalEntry,
-        incomingEntrySender: Sender
+        incomingEntrySender: Sender,
     ): EntryConflict? {
         if (entryTime == incomingEntry.entryTime &&
             text == incomingEntry.text &&

@@ -25,48 +25,50 @@ class SettingsViewModel(
     private val getAppVersion: () -> String,
     private val prefManager: PrefManager,
 ) : ViewModel() {
-    private val _uploadLoading = MutableStateFlow(false)
+    private val uploadLoading = MutableStateFlow(false)
 
     // Because some prefs are stored in non reactive storage
-    private val _prefUpdated = MutableStateFlow(0)
+    private val prefUpdated = MutableStateFlow(0)
 
-    val state = combine(
-        _prefUpdated,
-        _uploadLoading,
-        prefManager.showEmptyTags(),
-        prefManager.copyWithEmptyTags(),
-        prefManager.showReconciled(),
-        prefManager.showConflictDiffInline(),
-        prefManager.showLogsButton(),
-    ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showReconciled, showConflictDiffInline,
-        showLogsButton ->
-        SettingsViewState(
-            uploadLoading = uploadLoading,
-            dataHost = DataHost(getDataHost()),
-            exchangeName = ExchangeName(getExchangeName()),
-            deviceName = DeviceName(getDeviceName()),
-            username = Username(getUsername()),
-            password = Password(getPassword()),
-            appVersion = getAppVersion(),
-            showReconciled = showReconciled,
-            showConflictDiffInline = showConflictDiffInline,
-            showEmptyTags = showEmptyTags,
-            copyWithEmptyTags = copyWithEmptyTags,
-            showLogsButton = showLogsButton,
+    val state =
+        combine(
+            prefUpdated,
+            uploadLoading,
+            prefManager.showEmptyTags(),
+            prefManager.copyWithEmptyTags(),
+            prefManager.showReconciled(),
+            prefManager.showConflictDiffInline(),
+            prefManager.showLogsButton(),
+        ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showReconciled, showConflictDiffInline,
+            showLogsButton,
+            ->
+            SettingsViewState(
+                uploadLoading = uploadLoading,
+                dataHost = DataHost(getDataHost()),
+                exchangeName = ExchangeName(getExchangeName()),
+                deviceName = DeviceName(getDeviceName()),
+                username = Username(getUsername()),
+                password = Password(getPassword()),
+                appVersion = getAppVersion(),
+                showReconciled = showReconciled,
+                showConflictDiffInline = showConflictDiffInline,
+                showEmptyTags = showEmptyTags,
+                copyWithEmptyTags = copyWithEmptyTags,
+                showLogsButton = showLogsButton,
+            )
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            SettingsViewState(),
         )
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
-        SettingsViewState(),
-    )
 
     fun upload() {
-        _uploadLoading.update { true }
+        uploadLoading.update { true }
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 repository.sync()
-                _uploadLoading.update { false }
+                uploadLoading.update { false }
             }
         }
     }
@@ -83,7 +85,7 @@ class SettingsViewModel(
         keyValueStore.putString(Constants.PREF_KEY_DEVICE_NAME, deviceName.name)
         keyValueStore.putString(Constants.PREF_KEY_USERNAME, username.username)
         keyValueStore.putString(Constants.PREF_KEY_PASSWORD, password.password)
-        _prefUpdated.update { it + 1 }
+        prefUpdated.update { it + 1 }
     }
 
     fun toggleShowReconciled() {
@@ -118,8 +120,7 @@ class SettingsViewModel(
 
     private fun getDeviceName() = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "") ?: ""
 
-    private fun getExchangeName() =
-        keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "") ?: ""
+    private fun getExchangeName() = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "") ?: ""
 
     private fun getDataHost() = keyValueStore.getString(Constants.PREF_KEY_DATA_HOST, "") ?: ""
 
@@ -128,20 +129,21 @@ class SettingsViewModel(
     private fun getPassword() = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "") ?: ""
 
     companion object {
-        fun factory() = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: KClass<T>,
-                extras: CreationExtras
-            ): T {
-                return SettingsViewModel(
-                    keyValueStore = ServiceLocator.keyValueStore,
-                    repository = ServiceLocator.repository,
-                    getAppVersion = ServiceLocator::getAppVersion,
-                    prefManager = ServiceLocator.prefManager,
-                ) as T
+        fun factory() =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T {
+                    return SettingsViewModel(
+                        keyValueStore = ServiceLocator.keyValueStore,
+                        repository = ServiceLocator.repository,
+                        getAppVersion = ServiceLocator::getAppVersion,
+                        prefManager = ServiceLocator.prefManager,
+                    ) as T
+                }
             }
-        }
     }
 }
 

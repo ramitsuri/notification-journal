@@ -10,7 +10,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 
-fun Modifier.topBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = composed(
+fun Modifier.topBorder(
+    strokeWidth: Dp,
+    color: Color,
+    cornerRadiusDp: Dp,
+) = composed(
     factory = {
         val density = LocalDensity.current
         val strokeWidthPx = density.run { strokeWidth.toPx() }
@@ -24,7 +28,7 @@ fun Modifier.topBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = comp
                 color = color,
                 start = Offset(x = 0f, y = height),
                 end = Offset(x = 0f, y = cornerRadiusPx),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -34,14 +38,14 @@ fun Modifier.topBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = comp
                 useCenter = false,
                 topLeft = Offset.Zero,
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = cornerRadiusPx, y = 0f),
                 end = Offset(x = width - cornerRadiusPx, y = 0f),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -51,20 +55,24 @@ fun Modifier.topBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = comp
                 useCenter = false,
                 topLeft = Offset(x = width - cornerRadiusPx * 2, y = 0f),
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = width, y = height),
                 end = Offset(x = width, y = cornerRadiusPx),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
         }
-    }
+    },
 )
 
-fun Modifier.bottomBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = composed(
+fun Modifier.bottomBorder(
+    strokeWidth: Dp,
+    color: Color,
+    cornerRadiusDp: Dp,
+) = composed(
     factory = {
         val density = LocalDensity.current
         val strokeWidthPx = density.run { strokeWidth.toPx() }
@@ -77,8 +85,8 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = c
             drawLine(
                 color = color,
                 start = Offset(x = 0f, y = 0f),
-                end = Offset(x = 0f, y = height-cornerRadiusPx),
-                strokeWidth = strokeWidthPx
+                end = Offset(x = 0f, y = height - cornerRadiusPx),
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -88,14 +96,14 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = c
                 useCenter = false,
                 topLeft = Offset(x = 0f, y = height - cornerRadiusPx * 2),
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = cornerRadiusPx, y = height),
                 end = Offset(x = width - cornerRadiusPx, y = height),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -105,20 +113,23 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = c
                 useCenter = false,
                 topLeft = Offset(x = width - cornerRadiusPx * 2, y = height - cornerRadiusPx * 2),
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = width, y = 0f),
                 end = Offset(x = width, y = height - cornerRadiusPx),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
         }
-    }
+    },
 )
 
-fun Modifier.sideBorder(strokeWidth: Dp, color: Color) = composed(
+fun Modifier.sideBorder(
+    strokeWidth: Dp,
+    color: Color,
+) = composed(
     factory = {
         val density = LocalDensity.current
         val strokeWidthPx = density.run { strokeWidth.toPx() }
@@ -131,20 +142,24 @@ fun Modifier.sideBorder(strokeWidth: Dp, color: Color) = composed(
                 color = color,
                 start = Offset(x = 0f, y = 0f),
                 end = Offset(x = 0f, y = height),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = width, y = 0f),
                 end = Offset(x = width, y = height),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
         }
-    }
+    },
 )
 
-fun Modifier.fullBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = composed(
+fun Modifier.fullBorder(
+    strokeWidth: Dp,
+    color: Color,
+    cornerRadiusDp: Dp,
+) = composed(
     factory = {
         val density = LocalDensity.current
         val strokeWidthPx = density.run { strokeWidth.toPx() }
@@ -158,7 +173,7 @@ fun Modifier.fullBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = com
                 color = color,
                 start = Offset(x = 0f, y = height),
                 end = Offset(x = 0f, y = cornerRadiusPx),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -168,14 +183,14 @@ fun Modifier.fullBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = com
                 useCenter = false,
                 topLeft = Offset.Zero,
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = cornerRadiusPx, y = 0f),
                 end = Offset(x = width - cornerRadiusPx, y = 0f),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -185,14 +200,14 @@ fun Modifier.fullBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = com
                 useCenter = false,
                 topLeft = Offset(x = width - cornerRadiusPx * 2, y = 0f),
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = width, y = height),
                 end = Offset(x = width, y = cornerRadiusPx),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -202,14 +217,14 @@ fun Modifier.fullBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = com
                 useCenter = false,
                 topLeft = Offset(x = 0f, y = height - cornerRadiusPx * 2),
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
 
             drawLine(
                 color = color,
                 start = Offset(x = cornerRadiusPx, y = height),
                 end = Offset(x = width - cornerRadiusPx, y = height),
-                strokeWidth = strokeWidthPx
+                strokeWidth = strokeWidthPx,
             )
 
             drawArc(
@@ -219,8 +234,8 @@ fun Modifier.fullBorder(strokeWidth: Dp, color: Color, cornerRadiusDp: Dp) = com
                 useCenter = false,
                 topLeft = Offset(x = width - cornerRadiusPx * 2, y = height - cornerRadiusPx * 2),
                 size = Size(cornerRadiusPx * 2, cornerRadiusPx * 2),
-                style = Stroke(width = strokeWidthPx)
+                style = Stroke(width = strokeWidthPx),
             )
         }
-    }
+    },
 )

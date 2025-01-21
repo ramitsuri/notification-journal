@@ -12,7 +12,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom12To13Test : BaseMigrationTest() {
-
     @Test
     fun testMigrateFrom12To13_shouldMigrateJournalEntryNoTags() {
         try {
@@ -74,66 +73,69 @@ class MigrationFrom12To13Test : BaseMigrationTest() {
     }
 
     private fun createAndGetEntriesFromV12(): List<JournalEntryV12> {
-        val data = listOf(
-            JournalEntryV12(
-                id = "1",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = null,
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-            JournalEntryV12(
-                id = "2",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "",
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-            JournalEntryV12(
-                id = "3",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "null",
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-            JournalEntryV12(
-                id = "4",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "   ",
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-            JournalEntryV12(
-                id = "5",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "Tag",
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-        )
+        val data =
+            listOf(
+                JournalEntryV12(
+                    id = "1",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = null,
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+                JournalEntryV12(
+                    id = "2",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "",
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+                JournalEntryV12(
+                    id = "3",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "null",
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+                JournalEntryV12(
+                    id = "4",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "   ",
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+                JournalEntryV12(
+                    id = "5",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "Tag",
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+            )
         createDatabase(12).apply {
             data.forEach {
-                val tag = if (it.tag == null) {
-                    null
-                } else {
-                    "'${it.tag}'"
-                }
-                val statement = "INSERT INTO JournalEntry " +
+                val tag =
+                    if (it.tag == null) {
+                        null
+                    } else {
+                        "'${it.tag}'"
+                    }
+                val statement =
+                    "INSERT INTO JournalEntry " +
                         "(id,entry_time,text,tag,uploaded,auto_tagged,deleted,reconciled) " +
                         "VALUES(" +
                         "'${it.id}','${it.entryTime}','${it.text}'," +
@@ -141,7 +143,7 @@ class MigrationFrom12To13Test : BaseMigrationTest() {
                         "${it.deleted},${it.reconciled}" +
                         ")"
                 execSQL(
-                    statement
+                    statement,
                 )
             }
             close()
@@ -229,63 +231,66 @@ class MigrationFrom12To13Test : BaseMigrationTest() {
     }
 
     private fun createAndGetConflictsFromV12(): List<ConflictV12> {
-        val data = listOf(
-            ConflictV12(
-                id = "1",
-                entryId = "1",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = null,
-                senderName = "sender",
-            ),
-            ConflictV12(
-                id = "2",
-                entryId = "2",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "",
-                senderName = "sender",
-            ),
-            ConflictV12(
-                id = "3",
-                entryId = "3",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "null",
-                senderName = "sender",
-            ),
-            ConflictV12(
-                id = "4",
-                entryId = "4",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "   ",
-                senderName = "sender",
-            ),
-            ConflictV12(
-                id = "5",
-                entryId = "5",
-                entryTime = "2024-01-01T00:00:00",
-                text = "Text 1",
-                tag = "Tag",
-                senderName = "sender",
-            ),
-        )
+        val data =
+            listOf(
+                ConflictV12(
+                    id = "1",
+                    entryId = "1",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = null,
+                    senderName = "sender",
+                ),
+                ConflictV12(
+                    id = "2",
+                    entryId = "2",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "",
+                    senderName = "sender",
+                ),
+                ConflictV12(
+                    id = "3",
+                    entryId = "3",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "null",
+                    senderName = "sender",
+                ),
+                ConflictV12(
+                    id = "4",
+                    entryId = "4",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "   ",
+                    senderName = "sender",
+                ),
+                ConflictV12(
+                    id = "5",
+                    entryId = "5",
+                    entryTime = "2024-01-01T00:00:00",
+                    text = "Text 1",
+                    tag = "Tag",
+                    senderName = "sender",
+                ),
+            )
         createDatabase(12).apply {
             data.forEach {
-                val tag = if (it.tag == null) {
-                    null
-                } else {
-                    "'${it.tag}'"
-                }
-                val statement = "INSERT INTO EntryConflict " +
+                val tag =
+                    if (it.tag == null) {
+                        null
+                    } else {
+                        "'${it.tag}'"
+                    }
+                val statement =
+                    "INSERT INTO EntryConflict " +
                         "(id, entry_id, entry_time, text, tag, sender_name) " +
                         "VALUES(" +
                         "'${it.id}','${it.entryId}','${it.entryTime}','${it.text}'," +
                         "$tag,'${it.senderName}'" +
                         ")"
                 execSQL(
-                    statement
+                    statement,
                 )
             }
             close()

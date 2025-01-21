@@ -35,27 +35,29 @@ class MainApplication : Application(), DefaultLifecycleObserver {
     }
 
     fun showJournalNotification() {
-        val notificationInfo = NotificationInfo(
-            channel = NotificationChannelType.MAIN,
-            title = "",
-            body = "",
-            iconResId = R.drawable.ic_notification,
-            isVisibilityPublic = true,
-            cancelOnTouch = false,
-            isForegroundServiceImmediate = false,
-            isOngoing = true,
-            intentClass = MainActivity::class.java,
-            intentExtras = mapOf(),
-            actions = listOf(
-                NotificationActionInfo(
-                    action = Constants.ACTION_JOURNAL,
-                    text = getString(R.string.add_new_journal_content),
-                    intentReceiverClass = NotificationActionReceiver::class.java,
-                    remoteInputKey = Constants.REMOTE_INPUT_JOURNAL_KEY
-                ),
-            ),
-            actionExtras = mapOf()
-        )
+        val notificationInfo =
+            NotificationInfo(
+                channel = NotificationChannelType.MAIN,
+                title = "",
+                body = "",
+                iconResId = R.drawable.ic_notification,
+                isVisibilityPublic = true,
+                cancelOnTouch = false,
+                isForegroundServiceImmediate = false,
+                isOngoing = true,
+                intentClass = MainActivity::class.java,
+                intentExtras = mapOf(),
+                actions =
+                    listOf(
+                        NotificationActionInfo(
+                            action = Constants.ACTION_JOURNAL,
+                            text = getString(R.string.add_new_journal_content),
+                            intentReceiverClass = NotificationActionReceiver::class.java,
+                            remoteInputKey = Constants.REMOTE_INPUT_JOURNAL_KEY,
+                        ),
+                    ),
+                actionExtras = mapOf(),
+            )
         ServiceLocator.notificationHandler.showNotification(notificationInfo)
     }
 }
