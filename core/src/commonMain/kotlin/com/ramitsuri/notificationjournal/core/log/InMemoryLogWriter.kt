@@ -10,14 +10,21 @@ class InMemoryLogWriter : LogWriter() {
     private val _logs = MutableStateFlow<List<LogData>>(listOf())
     val logs = _logs.asStateFlow()
 
-    override fun log(severity: Severity, message: String, tag: String, throwable: Throwable?) {
+    override fun log(
+        severity: Severity,
+        message: String,
+        tag: String,
+        throwable: Throwable?,
+    ) {
         _logs.update {
-            val newLogs = it + LogData(
-                message = message,
-                tag = tag,
-                errorMessage = throwable?.message,
-                stackTrace = throwable?.stackTraceToString(),
-            )
+            val newLogs =
+                it +
+                    LogData(
+                        message = message,
+                        tag = tag,
+                        errorMessage = throwable?.message,
+                        stackTrace = throwable?.stackTraceToString(),
+                    )
             if (newLogs.size > MAX_LOGS) {
                 newLogs.drop(newLogs.size - MAX_LOGS)
             } else {

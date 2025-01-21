@@ -12,30 +12,29 @@ import java.util.UUID
 // Changes auto generated int primary key to UUID string primary key for JournalEntry, Tags,
 // Templates tables
 class MigrationFrom5To6 : Migration(5, 6) {
-
     override fun migrate(connection: SQLiteConnection) {
         val entries = getExistingJournalEntries(connection)
         connection.execSQL("DROP TABLE `JournalEntry`")
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `JournalEntry` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`entry_time` INTEGER NOT NULL, " +
-                    "`time_zone` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT, " +
-                    "`entry_time_override` INTEGER, " +
-                    "`uploaded` INTEGER NOT NULL DEFAULT 0, " +
-                    "`auto_tagged` INTEGER NOT NULL DEFAULT 0, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`entry_time` INTEGER NOT NULL, " +
+                "`time_zone` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT, " +
+                "`entry_time_override` INTEGER, " +
+                "`uploaded` INTEGER NOT NULL DEFAULT 0, " +
+                "`auto_tagged` INTEGER NOT NULL DEFAULT 0, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
         entries.forEach { entry ->
             connection.prepare(
                 "INSERT INTO JournalEntry " +
-                        "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
-                        "VALUES " +
-                        " (?, ?, ?, ?, ?, ?, ?, ?)"
+                    "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
+                    "VALUES " +
+                    " (?, ?, ?, ?, ?, ?, ?, ?)",
             ).use { statement ->
                 statement.bindText(index = 1, value = UUID.randomUUID().toString())
                 statement.bindLong(index = 2, value = entry.entryTimeMillis)
@@ -61,22 +60,22 @@ class MigrationFrom5To6 : Migration(5, 6) {
         connection.execSQL("DROP TABLE `Tags`")
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `Tags` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`order` INTEGER NOT NULL, " +
-                    "`value` TEXT NOT NULL, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`order` INTEGER NOT NULL, " +
+                "`value` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
         connection.execSQL(
-            "CREATE UNIQUE INDEX IF NOT EXISTS `index_Tags_value` ON `Tags` (`value`)"
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_Tags_value` ON `Tags` (`value`)",
         )
         tags.forEach { tag ->
             connection.prepare(
                 "INSERT INTO Tags " +
-                        "(id, 'order', value) " +
-                        "VALUES " +
-                        " (?, ?, ?)"
+                    "(id, 'order', value) " +
+                    "VALUES " +
+                    " (?, ?, ?)",
             ).use { statement ->
                 statement.bindText(index = 1, value = UUID.randomUUID().toString())
                 statement.bindInt(index = 2, value = tag.order)
@@ -89,19 +88,19 @@ class MigrationFrom5To6 : Migration(5, 6) {
         connection.execSQL("DROP TABLE `JournalEntryTemplate`")
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `JournalEntryTemplate` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT NOT NULL, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
         templates.forEach { template ->
             connection.prepare(
                 "INSERT INTO JournalEntryTemplate " +
-                        "(id, text, tag) " +
-                        "VALUES " +
-                        " (?, ?, ?)"
+                    "(id, text, tag) " +
+                    "VALUES " +
+                    " (?, ?, ?)",
             ).use { statement ->
                 statement.bindText(index = 1, value = UUID.randomUUID().toString())
                 statement.bindText(index = 2, value = template.text)
@@ -150,7 +149,7 @@ class MigrationFrom5To6 : Migration(5, 6) {
                             entryTimeOverride = entryTimeOverride,
                             uploaded = uploaded,
                             autoTagged = autoTagged,
-                        )
+                        ),
                     )
                 } catch (e: Exception) {
                     // Do nothing. Continue reading the ones we can

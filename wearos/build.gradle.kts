@@ -19,7 +19,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
     }
 
     buildTypes {
@@ -27,10 +26,10 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // Enable if testing
-            //signingConfig signingConfigs.debug
+            // signingConfig signingConfigs.debug
         }
         debug {
             isMinifyEnabled = false

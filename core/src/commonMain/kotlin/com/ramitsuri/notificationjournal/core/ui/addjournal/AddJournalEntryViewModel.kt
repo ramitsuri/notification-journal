@@ -47,28 +47,31 @@ class AddJournalEntryViewModel(
         }
     private val duplicateFromEntryId: String? = savedStateHandle[DUPLICATE_FROM_ENTRY_ID_ARG]
 
-    private val dateTime = savedStateHandle.get<String?>(DATE_ARG)
-        ?.let { dateString ->
-            val currentDateTime = clock.nowLocal()
-            val timeString = savedStateHandle.get<String?>(TIME_ARG)
-            val time = if (timeString == null) {
-                currentDateTime.time
-            } else {
-                LocalTime.parse(timeString)
-            }
-            LocalDate.parse(dateString).atTime(time)
-        } ?: clock.nowLocal()
+    private val dateTime =
+        savedStateHandle.get<String?>(DATE_ARG)
+            ?.let { dateString ->
+                val currentDateTime = clock.nowLocal()
+                val timeString = savedStateHandle.get<String?>(TIME_ARG)
+                val time =
+                    if (timeString == null) {
+                        currentDateTime.time
+                    } else {
+                        LocalTime.parse(timeString)
+                    }
+                LocalDate.parse(dateString).atTime(time)
+            } ?: clock.nowLocal()
 
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
 
-    private val _state: MutableStateFlow<AddJournalEntryViewState> = MutableStateFlow(
-        AddJournalEntryViewState(
-            textFieldState = TextFieldState(receivedText ?: ""),
-            dateTime = dateTime,
-            selectedTag = savedStateHandle[TAG_ARG],
+    private val _state: MutableStateFlow<AddJournalEntryViewState> =
+        MutableStateFlow(
+            AddJournalEntryViewState(
+                textFieldState = TextFieldState(receivedText ?: ""),
+                dateTime = dateTime,
+                selectedTag = savedStateHandle[TAG_ARG],
+            ),
         )
-    )
     val state: StateFlow<AddJournalEntryViewState> = _state
 
     init {
@@ -128,7 +131,7 @@ class AddJournalEntryViewModel(
     fun nextDay() {
         _state.update {
             it.copy(
-                dateTime = it.dateTime.plus(1.days)
+                dateTime = it.dateTime.plus(1.days),
             )
         }
     }
@@ -136,7 +139,7 @@ class AddJournalEntryViewModel(
     fun previousDay() {
         _state.update {
             it.copy(
-                dateTime = it.dateTime.minus(1.days)
+                dateTime = it.dateTime.minus(1.days),
             )
         }
     }
@@ -156,10 +159,11 @@ class AddJournalEntryViewModel(
 
     fun resetDateToToday() {
         val currentDateTime = _state.value.dateTime
-        val resetDateTime = LocalDateTime(
-            date = clock.nowLocal().date,
-            time = currentDateTime.time
-        )
+        val resetDateTime =
+            LocalDateTime(
+                date = clock.nowLocal().date,
+                time = currentDateTime.time,
+            )
         _state.update { it.copy(dateTime = resetDateTime) }
     }
 
@@ -172,14 +176,18 @@ class AddJournalEntryViewModel(
 
     fun resetTimeToNow() {
         val currentDateTime = _state.value.dateTime
-        val resetDateTime = LocalDateTime(
-            date = currentDateTime.date,
-            time = clock.nowLocal().time
-        )
+        val resetDateTime =
+            LocalDateTime(
+                date = currentDateTime.date,
+                time = clock.nowLocal().time,
+            )
         _state.update { it.copy(dateTime = resetDateTime) }
     }
 
-    fun correctionAccepted(word: String, correction: String) {
+    fun correctionAccepted(
+        word: String,
+        correction: String,
+    ) {
         _state.value.textFieldState.apply {
             var startIndexForSearch = 0
             var start = text.indexOf(string = word, startIndex = startIndexForSearch)
@@ -216,7 +224,7 @@ class AddJournalEntryViewModel(
             repository.insert(
                 text = text,
                 tag = tag,
-                time = currentState.dateTime
+                time = currentState.dateTime,
             )
             if (exitOnSave) {
                 _saved.update {
@@ -247,8 +255,9 @@ class AddJournalEntryViewModel(
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    templates = templatesDao.getAll()
-                        .plus(JournalEntryTemplate.getShortcutTemplates())
+                    templates =
+                        templatesDao.getAll()
+                            .plus(JournalEntryTemplate.getShortcutTemplates()),
                 )
             }
         }

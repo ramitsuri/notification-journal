@@ -14,7 +14,7 @@ sealed class Payload {
     @SerialName("tags")
     data class Tags(
         val data: List<Tag>,
-        override val sender: Sender
+        override val sender: Sender,
     ) : Payload()
 
     @Serializable
@@ -22,13 +22,13 @@ sealed class Payload {
     data class Entries(
         val data: List<JournalEntry>,
         val replacesLocal: Boolean,
-        override val sender: Sender
+        override val sender: Sender,
     ) : Payload()
 
     @Serializable
     @SerialName("templates")
     data class Templates(
         val data: List<JournalEntryTemplate>,
-        override val sender: Sender
+        override val sender: Sender,
     ) : Payload()
 }

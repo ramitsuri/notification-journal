@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.map
 class DataStoreKeyValueStore(
     private val dataStore: DataStore<Preferences>,
 ) : KeyValueStoreV2 {
-
-    override fun getBooleanFlow(key: Key, defaultValue: Boolean): Flow<Boolean> {
+    override fun getBooleanFlow(
+        key: Key,
+        defaultValue: Boolean,
+    ): Flow<Boolean> {
         return dataStore
             .data
             .map {
@@ -22,17 +24,26 @@ class DataStoreKeyValueStore(
             }
     }
 
-    override suspend fun getBoolean(key: Key, defaultValue: Boolean): Boolean {
+    override suspend fun getBoolean(
+        key: Key,
+        defaultValue: Boolean,
+    ): Boolean {
         return getBooleanFlow(key, defaultValue).firstOrNull() ?: defaultValue
     }
 
-    override suspend fun putBoolean(key: Key, value: Boolean) {
+    override suspend fun putBoolean(
+        key: Key,
+        value: Boolean,
+    ) {
         dataStore.edit {
             it[booleanPreferencesKey(key.value)] = value
         }
     }
 
-    override fun getStringFlow(key: Key, fallback: String): Flow<String?> {
+    override fun getStringFlow(
+        key: Key,
+        fallback: String,
+    ): Flow<String?> {
         return dataStore
             .data
             .map {
@@ -40,17 +51,26 @@ class DataStoreKeyValueStore(
             }
     }
 
-    override suspend fun getString(key: Key, fallback: String): String {
+    override suspend fun getString(
+        key: Key,
+        fallback: String,
+    ): String {
         return getStringFlow(key, fallback).firstOrNull() ?: fallback
     }
 
-    override suspend fun putString(key: Key, value: String) {
+    override suspend fun putString(
+        key: Key,
+        value: String,
+    ) {
         dataStore.edit {
             it[stringPreferencesKey(key.value)] = value
         }
     }
 
-    override fun getIntFlow(key: Key, fallback: Int): Flow<Int> {
+    override fun getIntFlow(
+        key: Key,
+        fallback: Int,
+    ): Flow<Int> {
         return dataStore
             .data
             .map {
@@ -58,11 +78,17 @@ class DataStoreKeyValueStore(
             }
     }
 
-    override suspend fun getInt(key: Key, fallback: Int): Int {
+    override suspend fun getInt(
+        key: Key,
+        fallback: Int,
+    ): Int {
         return getIntFlow(key, fallback).firstOrNull() ?: fallback
     }
 
-    override suspend fun putInt(key: Key, value: Int) {
+    override suspend fun putInt(
+        key: Key,
+        value: Int,
+    ) {
         dataStore.edit {
             it[intPreferencesKey(key.value)] = value
         }

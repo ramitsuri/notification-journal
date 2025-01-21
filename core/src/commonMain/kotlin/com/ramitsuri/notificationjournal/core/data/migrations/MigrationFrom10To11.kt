@@ -9,11 +9,11 @@ class MigrationFrom10To11 : Migration(10, 11) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `DictionaryItem` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`word` TEXT NOT NULL, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`word` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
     }
 }

@@ -104,7 +104,7 @@ fun TagsScreen(
     onBack: () -> Unit,
     onErrorAcknowledged: () -> Unit,
     onSyncRequested: () -> Unit,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -119,7 +119,7 @@ fun TagsScreen(
             onNegativeClick = {
                 onAddOrEditCanceled()
                 showDialog = !showDialog
-            }
+            },
         )
     }
     val errorMessage = state.error.string()
@@ -132,9 +132,10 @@ fun TagsScreen(
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
@@ -142,47 +143,51 @@ fun TagsScreen(
                 onClick = {
                     showDialog = true
                     onAddRequested()
-                }
+                },
             ) {
                 Icon(
                     Icons.Filled.Add,
-                    stringResource(Res.string.add_entry_content_description)
+                    stringResource(Res.string.add_entry_content_description),
                 )
             }
-        }) { paddingValues ->
+        },
+    ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .consumeWindowInsets(paddingValues)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Horizontal,
+                        ),
                     ),
-                ),
         ) {
             Spacer(
-                modifier = Modifier.height(
-                    WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-                )
+                modifier =
+                    Modifier.height(
+                        WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                    ),
             )
             TopRow(
                 onBack = onBack,
-                onSyncClicked = onSyncRequested
+                onSyncClicked = onSyncRequested,
             )
             if (state.tags.isEmpty()) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .navigationBarsPadding()
-                        .padding(start = 16.dp, end = 16.dp)
-                        .padding(bottom = 64.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .navigationBarsPadding()
+                            .padding(start = 16.dp, end = 16.dp)
+                            .padding(bottom = 64.dp),
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = stringResource(Res.string.no_items),
-                        style = MaterialTheme.typography.displaySmall
+                        style = MaterialTheme.typography.displaySmall,
                     )
                 }
             } else {
@@ -196,8 +201,9 @@ fun TagsScreen(
                         showDialog = true
                     },
                     onDeleteRequested = onDeleteRequested,
-                    modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp)
+                    modifier =
+                        Modifier
+                            .padding(start = 16.dp, end = 16.dp),
                 )
             }
         }
@@ -211,25 +217,26 @@ private fun TopRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         IconButton(
-            onClick = onBack
+            onClick = onBack,
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.back)
+                contentDescription = stringResource(Res.string.back),
             )
         }
         IconButton(
             onClick = onSyncClicked,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .padding(4.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.Sync,
-                contentDescription = stringResource(Res.string.settings_upload_title)
+                contentDescription = stringResource(Res.string.settings_upload_title),
             )
         }
     }
@@ -239,17 +246,18 @@ private fun TopRow(
 private fun HelperText() {
     Column {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
         ) {
             Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(Res.string.tag_info),
-                style = MaterialTheme.typography.labelSmall
+                style = MaterialTheme.typography.labelSmall,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -266,13 +274,14 @@ private fun List(
     onDeleteRequested: (Tag) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val dragDropState = rememberDragDropState(listState) { fromIndex, toIndex ->
-        onEditOrder(toIndex, fromIndex)
-    }
+    val dragDropState =
+        rememberDragDropState(listState) { fromIndex, toIndex ->
+            onEditOrder(toIndex, fromIndex)
+        }
     LazyColumn(
         modifier = modifier.dragContainer(dragDropState),
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         itemsIndexed(tags, key = { _, item -> item.id }) { index, item ->
             DraggableItem(dragDropState, index) { isDragging ->
@@ -296,7 +305,7 @@ private fun ListItem(
     item: Tag,
     elevation: CardElevation,
     onEditRequested: (Tag) -> Unit,
-    onDeleteRequested: (Tag) -> Unit
+    onDeleteRequested: (Tag) -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
@@ -307,15 +316,17 @@ private fun ListItem(
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(8.dp)
+            modifier =
+                Modifier
+                    .padding(8.dp),
         ) {
             Text(
                 text = item.value,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp)
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(8.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             ItemMenu(
@@ -333,18 +344,19 @@ private fun ItemMenu(
     showMenu: Boolean,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
-    onMenuButtonClicked: () -> Unit
+    onMenuButtonClicked: () -> Unit,
 ) {
     Box {
         IconButton(
             onClick = onMenuButtonClicked,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .padding(4.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.MoreVert,
-                contentDescription = stringResource(Res.string.menu_content_description)
+                contentDescription = stringResource(Res.string.menu_content_description),
             )
         }
         DropdownMenu(
@@ -356,14 +368,14 @@ private fun ItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onEditRequested()
-                }
+                },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(Res.string.delete)) },
                 onClick = {
                     onMenuButtonClicked()
                     onDeleteRequested()
-                }
+                },
             )
         }
     }
@@ -384,16 +396,18 @@ private fun AddEditTagDialog(
 
     Dialog(
         onDismissRequest = { },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnClickOutside = false
-        )
+        properties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnClickOutside = false,
+            ),
     ) {
         Card {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .padding(16.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(16.dp),
             ) {
                 LaunchedEffect(focusRequester) {
                     if (showKeyboard) {
@@ -408,36 +422,41 @@ private fun AddEditTagDialog(
                         onTextUpdated(it.text)
                         selection = it.selection
                     },
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences
-                    ),
-                    textStyle = MaterialTheme.typography.bodyMedium
-                        .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                        ),
+                    textStyle =
+                        MaterialTheme.typography.bodyMedium
+                            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
                     maxLines = 1,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester = focusRequester),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester = focusRequester),
                     decorationBox = { innerTextField ->
                         Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(5.dp))
-                                .border(
-                                    BorderStroke(
-                                        1.dp,
-                                        SolidColor(MaterialTheme.colorScheme.outline)
-                                    ),
-                                    RoundedCornerShape(5.dp)
-                                )
-                                .padding(8.dp)
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .border(
+                                        BorderStroke(
+                                            1.dp,
+                                            SolidColor(MaterialTheme.colorScheme.outline),
+                                        ),
+                                        RoundedCornerShape(5.dp),
+                                    )
+                                    .padding(8.dp),
                         ) {
                             innerTextField()
                         }
-                    })
+                    },
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     TextButton(onClick = {
                         onNegativeClick()
@@ -459,9 +478,10 @@ private fun TagError?.string(): String? {
     if (this == null) {
         return null
     }
-    val resId = when (this) {
-        TagError.DELETE_FAIL -> Res.string.tag_delete_fail_message
-        TagError.INSERT_FAIL -> Res.string.tag_insert_fail_message
-    }
+    val resId =
+        when (this) {
+            TagError.DELETE_FAIL -> Res.string.tag_delete_fail_message
+            TagError.INSERT_FAIL -> Res.string.tag_insert_fail_message
+        }
     return stringResource(resId)
 }

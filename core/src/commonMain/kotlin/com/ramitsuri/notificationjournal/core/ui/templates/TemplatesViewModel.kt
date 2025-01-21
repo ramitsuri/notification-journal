@@ -24,7 +24,6 @@ class TemplatesViewModel(
     private val wearDataSharingClient: WearDataSharingClient,
     private val dataSendHelper: DataSendHelper?,
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(TemplatesViewState())
     val state: StateFlow<TemplatesViewState> = _state
 
@@ -36,7 +35,7 @@ class TemplatesViewModel(
                 _state.update { currentState ->
                     currentState.copy(
                         templates = templates,
-                        canAddMore = templates.size < MAX_TEMPLATES_ALLOWED
+                        canAddMore = templates.size < MAX_TEMPLATES_ALLOWED,
                     )
                 }
             }
@@ -142,16 +141,20 @@ class TemplatesViewModel(
 
     companion object {
         @Suppress("UNCHECKED_CAST")
-        fun factory() = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
-                return TemplatesViewModel(
-                    dao = ServiceLocator.templatesDao,
-                    tagsDao = ServiceLocator.tagsDao,
-                    wearDataSharingClient = ServiceLocator.wearDataSharingClient,
-                    dataSendHelper = ServiceLocator.dataSendHelper,
-                ) as T
+        fun factory() =
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T {
+                    return TemplatesViewModel(
+                        dao = ServiceLocator.templatesDao,
+                        tagsDao = ServiceLocator.tagsDao,
+                        wearDataSharingClient = ServiceLocator.wearDataSharingClient,
+                        dataSendHelper = ServiceLocator.dataSendHelper,
+                    ) as T
+                }
             }
-        }
 
         private const val MAX_TEMPLATES_ALLOWED = 10
     }
@@ -169,22 +172,21 @@ data class TemplatesViewState(
             return templateBeingAddedOrEdited.isValid
         }
 
-    fun updateText(text: String) =
-        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(text = text))
+    fun updateText(text: String) = copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(text = text))
 
-    fun updateTag(tag: String) = if (templateBeingAddedOrEdited.tag == tag) {
-        // Unselect if already selected
-        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(tag = null))
-    } else {
-        copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(tag = tag))
-    }
+    fun updateTag(tag: String) =
+        if (templateBeingAddedOrEdited.tag == tag) {
+            // Unselect if already selected
+            copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(tag = null))
+        } else {
+            copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(tag = tag))
+        }
 
     fun updateDisplayText(text: String) =
         copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(displayText = text))
 
     fun updateShortDisplayText(text: String) =
         copy(templateBeingAddedOrEdited = templateBeingAddedOrEdited.copy(shortDisplayText = text))
-
 }
 
 data class TemplateValues(

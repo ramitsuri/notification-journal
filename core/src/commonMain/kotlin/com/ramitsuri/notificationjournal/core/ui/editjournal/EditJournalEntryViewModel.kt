@@ -107,7 +107,7 @@ class EditJournalEntryViewModel(
     fun nextDay() {
         _state.update {
             it.copy(
-                dateTime = it.dateTime.plus(1.days)
+                dateTime = it.dateTime.plus(1.days),
             )
         }
     }
@@ -115,7 +115,7 @@ class EditJournalEntryViewModel(
     fun previousDay() {
         _state.update {
             it.copy(
-                dateTime = it.dateTime.minus(1.days)
+                dateTime = it.dateTime.minus(1.days),
             )
         }
     }
@@ -146,7 +146,10 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(dateTime = resetDateTime) }
     }
 
-    fun correctionAccepted(word: String, correction: String) {
+    fun correctionAccepted(
+        word: String,
+        correction: String,
+    ) {
         _state.value.textFieldState.apply {
             var startIndexForSearch = 0
             var start = text.indexOf(string = word, startIndex = startIndexForSearch)
@@ -183,8 +186,9 @@ class EditJournalEntryViewModel(
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    templates = templatesDao.getAll()
-                        .plus(JournalEntryTemplate.getShortcutTemplates())
+                    templates =
+                        templatesDao.getAll()
+                            .plus(JournalEntryTemplate.getShortcutTemplates()),
                 )
             }
         }

@@ -96,37 +96,40 @@ fun SettingsScreen(
     }
     Surface {
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-                .displayCutoutPadding(),
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
+                    .displayCutoutPadding(),
         ) {
             Toolbar(onBackClick = onBack)
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(),
             ) {
                 item {
-                    val subtitle = buildString {
-                        if (state.dataHost.host.isNotEmpty()) {
-                            append(state.dataHost.host)
-                            append(" : ")
+                    val subtitle =
+                        buildString {
+                            if (state.dataHost.host.isNotEmpty()) {
+                                append(state.dataHost.host)
+                                append(" : ")
+                            }
+                            if (state.exchangeName.name.isNotEmpty()) {
+                                append(state.exchangeName.name)
+                                append(" : ")
+                            }
+                            if (state.deviceName.name.isNotEmpty()) {
+                                append(state.deviceName.name)
+                            }
                         }
-                        if (state.exchangeName.name.isNotEmpty()) {
-                            append(state.exchangeName.name)
-                            append(" : ")
-                        }
-                        if (state.deviceName.name.isNotEmpty()) {
-                            append(state.deviceName.name)
-                        }
-                    }
                     SettingsItem(
                         title = stringResource(Res.string.settings_data_sharing_title),
                         subtitle = subtitle.ifEmpty { stringResource(Res.string.settings_data_sharing_not_set) },
                         onClick = {
                             showDialog = true
                         },
-                        showProgress = false
+                        showProgress = false,
                     )
                 }
                 item {
@@ -135,7 +138,7 @@ fun SettingsScreen(
                         subtitle = stringResource(Res.string.settings_tags_subtitle),
                         onClick = onTagsClicked,
                         showProgress = false,
-                        modifier = modifier
+                        modifier = modifier,
                     )
                 }
                 item {
@@ -143,7 +146,7 @@ fun SettingsScreen(
                         title = stringResource(Res.string.settings_templates_title),
                         subtitle = stringResource(Res.string.settings_templates_subtitle),
                         onClick = onTemplatesClicked,
-                        showProgress = false
+                        showProgress = false,
                     )
                 }
                 item {
@@ -204,7 +207,7 @@ fun SettingsScreen(
                         title = stringResource(Res.string.settings_app_version),
                         subtitle = state.appVersion,
                         onClick = { },
-                        showProgress = false
+                        showProgress = false,
                     )
                 }
             }
@@ -218,20 +221,21 @@ private fun SettingsItem(
     subtitle: String,
     onClick: () -> Unit,
     showProgress: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 64.dp)
-            .clickable(onClick = onClick, enabled = !showProgress)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 64.dp)
+                .clickable(onClick = onClick, enabled = !showProgress)
+                .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(4.dp)
+            modifier = Modifier.padding(4.dp),
         )
         if (showProgress) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -240,7 +244,7 @@ private fun SettingsItem(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 4.dp)
+                modifier = Modifier.padding(horizontal = 4.dp),
             )
         }
     }
@@ -251,21 +255,22 @@ private fun SettingsItemWithToggle(
     title: String,
     value: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 64.dp)
-            .clickable(onClick = onClick)
-            .padding(16.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 64.dp)
+                .clickable(onClick = onClick)
+                .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(4.dp)
+            modifier = Modifier.padding(4.dp),
         )
         Switch(
             checked = value,
@@ -283,7 +288,7 @@ private fun DataSharingPropertiesDialog(
     password: Password,
     onPositiveClick: (DataHost, ExchangeName, DeviceName, Username, Password) -> Unit,
     onNegativeClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var dataHostText by rememberSaveable { mutableStateOf(dataHost.host) }
     var exchangeNameText by rememberSaveable { mutableStateOf(exchangeName.name) }
@@ -301,7 +306,7 @@ private fun DataSharingPropertiesDialog(
                         Text(stringResource(Res.string.data_host))
                     },
                     onValueChange = { dataHostText = it },
-                    modifier = modifier.fillMaxWidth()
+                    modifier = modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = modifier.height(16.dp))
                 OutlinedTextField(
@@ -311,7 +316,7 @@ private fun DataSharingPropertiesDialog(
                         Text(stringResource(Res.string.exchange_name))
                     },
                     onValueChange = { exchangeNameText = it },
-                    modifier = modifier.fillMaxWidth()
+                    modifier = modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = modifier.height(16.dp))
                 OutlinedTextField(
@@ -320,11 +325,12 @@ private fun DataSharingPropertiesDialog(
                     label = {
                         Text(stringResource(Res.string.device_name))
                     },
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences
-                    ),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                        ),
                     onValueChange = { deviceNameText = it },
-                    modifier = modifier.fillMaxWidth()
+                    modifier = modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = modifier.height(16.dp))
                 OutlinedTextField(
@@ -334,7 +340,7 @@ private fun DataSharingPropertiesDialog(
                         Text(stringResource(Res.string.username))
                     },
                     onValueChange = { usernameText = it },
-                    modifier = modifier.fillMaxWidth()
+                    modifier = modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = modifier.height(16.dp))
                 OutlinedTextField(
@@ -344,12 +350,12 @@ private fun DataSharingPropertiesDialog(
                         Text(stringResource(Res.string.password))
                     },
                     onValueChange = { passwordText = it },
-                    modifier = modifier.fillMaxWidth()
+                    modifier = modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = modifier.height(16.dp))
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = modifier.fillMaxWidth()
+                    modifier = modifier.fillMaxWidth(),
                 ) {
                     TextButton(onClick = {
                         onNegativeClick()
@@ -366,7 +372,7 @@ private fun DataSharingPropertiesDialog(
                                 Username(usernameText),
                                 Password(passwordText),
                             )
-                        }
+                        },
                     ) {
                         Text(text = stringResource(Res.string.ok))
                     }

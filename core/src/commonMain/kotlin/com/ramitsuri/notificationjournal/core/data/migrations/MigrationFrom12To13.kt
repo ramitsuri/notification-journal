@@ -19,24 +19,24 @@ class MigrationFrom12To13 : Migration(12, 13) {
         connection.execSQL("DROP TABLE `JournalEntry`")
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `JournalEntry` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`entry_time` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT NOT NULL, " +
-                    "`uploaded` INTEGER NOT NULL DEFAULT 0, " +
-                    "`auto_tagged` INTEGER NOT NULL DEFAULT 0, " +
-                    "`deleted` INTEGER NOT NULL DEFAULT 0, " +
-                    "`reconciled` INTEGER NOT NULL DEFAULT 0, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`entry_time` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT NOT NULL, " +
+                "`uploaded` INTEGER NOT NULL DEFAULT 0, " +
+                "`auto_tagged` INTEGER NOT NULL DEFAULT 0, " +
+                "`deleted` INTEGER NOT NULL DEFAULT 0, " +
+                "`reconciled` INTEGER NOT NULL DEFAULT 0, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
         entries.forEach { entry ->
             connection.prepare(
                 "INSERT INTO JournalEntry " +
-                        "(id, entry_time, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
-                        "VALUES " +
-                        " (?, ?, ?, ?, ?, ?, ?, ?)"
+                    "(id, entry_time, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
+                    "VALUES " +
+                    " (?, ?, ?, ?, ?, ?, ?, ?)",
             ).use { statement ->
                 statement.bindText(index = 1, value = entry.id)
                 statement.bindText(index = 2, value = entry.entryTime)
@@ -90,7 +90,7 @@ class MigrationFrom12To13 : Migration(12, 13) {
                             autoTagged = autoTagged,
                             deleted = deleted,
                             reconciled = reconciled,
-                        )
+                        ),
                     )
                 } catch (e: Exception) {
                     // Do nothing. Continue reading the ones we can
@@ -116,22 +116,22 @@ class MigrationFrom12To13 : Migration(12, 13) {
         connection.execSQL("DROP TABLE `EntryConflict`")
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `EntryConflict` " +
-                    "(" +
-                    "`id` TEXT NOT NULL, " +
-                    "`entry_id` TEXT NOT NULL, " +
-                    "`entry_time` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT NOT NULL, " +
-                    "`sender_name` TEXT NOT NULL, " +
-                    "PRIMARY KEY(`id`)" +
-                    ")"
+                "(" +
+                "`id` TEXT NOT NULL, " +
+                "`entry_id` TEXT NOT NULL, " +
+                "`entry_time` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT NOT NULL, " +
+                "`sender_name` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`)" +
+                ")",
         )
         existing.forEach { conflict ->
             connection.prepare(
                 "INSERT INTO EntryConflict " +
-                        "(id, entry_id, entry_time, text, tag, sender_name) " +
-                        "VALUES " +
-                        " (?, ?, ?, ?, ?, ?)"
+                    "(id, entry_id, entry_time, text, tag, sender_name) " +
+                    "VALUES " +
+                    " (?, ?, ?, ?, ?, ?)",
             ).use { statement ->
                 statement.bindText(index = 1, value = conflict.id)
                 statement.bindText(index = 2, value = conflict.entryId)
@@ -175,7 +175,7 @@ class MigrationFrom12To13 : Migration(12, 13) {
                             text = text,
                             tag = tag,
                             senderName = senderName,
-                        )
+                        ),
                     )
                 } catch (e: Exception) {
                     // Do nothing. Continue reading the ones we can
@@ -194,9 +194,10 @@ class MigrationFrom12To13 : Migration(12, 13) {
         val senderName: String,
     )
 
-    private fun String?.getTag() = if (this.isNullOrEmpty() || this.isBlank() || this == "null") {
-        Tag.NO_TAG.value
-    } else {
-        this
-    }
+    private fun String?.getTag() =
+        if (this.isNullOrEmpty() || this.isBlank() || this == "null") {
+            Tag.NO_TAG.value
+        } else {
+            this
+        }
 }

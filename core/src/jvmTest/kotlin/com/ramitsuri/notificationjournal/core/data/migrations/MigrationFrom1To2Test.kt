@@ -18,7 +18,6 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
     private val zoneId = "America/New_York"
     private val baseText = "Text"
 
-
     @Test
     fun testMigrateFrom1to2_shouldContainNewColumns() {
         try {
@@ -98,7 +97,7 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
             repeat(10) {
                 execSQL(
                     "INSERT INTO JournalEntry (id,entry_time,time_zone,text) " +
-                            "VALUES($it,${baseEntryTime + it},'$zoneId','${baseText + it}')",
+                        "VALUES($it,${baseEntryTime + it},'$zoneId','${baseText + it}')",
                 )
             }
         }
@@ -110,6 +109,6 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
         val timeZone: String,
         val text: String,
         val tag: String?,
-        val entryTimeOverride: Long?
+        val entryTimeOverride: Long?,
     )
 }

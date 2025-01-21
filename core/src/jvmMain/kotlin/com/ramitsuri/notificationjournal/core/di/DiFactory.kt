@@ -22,15 +22,13 @@ import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.datetime.LocalDateTime
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.prefs.Preferences
 import kotlin.reflect.KClass
 
-actual class Factory {
-
+actual class DiFactory {
     actual val allowJournalImport: Boolean = true
 
     actual fun getSettings(): Settings {
@@ -52,7 +50,7 @@ actual class Factory {
             override suspend fun postJournalEntry(
                 value: String,
                 time: LocalDateTime,
-                tag: String?
+                tag: String?,
             ): Boolean {
                 // Not supported
                 return true
@@ -108,7 +106,7 @@ actual class Factory {
             override fun <T : ViewModel> create(
                 key: String,
                 modelClass: KClass<T>,
-                handle: SavedStateHandle
+                handle: SavedStateHandle,
             ): T {
                 return getVMInstance(handle) as T
             }
@@ -127,7 +125,7 @@ actual class Factory {
             override fun <T : ViewModel> create(
                 key: String,
                 modelClass: KClass<T>,
-                handle: SavedStateHandle
+                handle: SavedStateHandle,
             ): T {
                 return getVMInstance(handle) as T
             }
@@ -143,30 +141,33 @@ actual class Factory {
     }
 
     companion object {
-        private val packageName = if (BuildKonfig.IS_DEBUG) {
-            "com.ramitsuri.notificationjournal.debug"
-        } else {
-            "com.ramitsuri.notificationjournal.release"
-        }
+        private val packageName =
+            if (BuildKonfig.IS_DEBUG) {
+                "com.ramitsuri.notificationjournal.debug"
+            } else {
+                "com.ramitsuri.notificationjournal.release"
+            }
 
         // TODO make compatible with other desktop OSs
-        private val appDir = System.getProperty("user.home")
-            .let { userHomePath ->
-                val osPath = System
-                    .getProperty("os.name", "generic")
-                    .lowercase()
-                    .let { os ->
-                        if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
-                            "Library"
-                        } else if (os.indexOf("win") >= 0) {
-                            "Documents"
-                        } else {
-                            error("OS not supported")
-                        }
-                    }
-                val appPath ="com.ramitsuri.notificationjournal"
-                val buildPath = if (BuildKonfig.IS_DEBUG) "debug" else "release"
-                Paths.get(userHomePath, osPath, appPath, buildPath)
-            }
+        private val appDir =
+            System.getProperty("user.home")
+                .let { userHomePath ->
+                    val osPath =
+                        System
+                            .getProperty("os.name", "generic")
+                            .lowercase()
+                            .let { os ->
+                                if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
+                                    "Library"
+                                } else if (os.indexOf("win") >= 0) {
+                                    "Documents"
+                                } else {
+                                    error("OS not supported")
+                                }
+                            }
+                    val appPath = "com.ramitsuri.notificationjournal"
+                    val buildPath = if (BuildKonfig.IS_DEBUG) "debug" else "release"
+                    Paths.get(userHomePath, osPath, appPath, buildPath)
+                }
     }
 }

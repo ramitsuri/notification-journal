@@ -134,10 +134,10 @@ import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.theme.green
 import com.ramitsuri.notificationjournal.core.ui.theme.red
 import com.ramitsuri.notificationjournal.core.ui.topBorder
-import com.ramitsuri.notificationjournal.core.utils.monthDayHourMinute
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
+import com.ramitsuri.notificationjournal.core.utils.monthDayHourMinute
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -244,11 +244,12 @@ fun JournalEntryScreen(
     LaunchedEffect(state.snackBarType) {
         if (state.snackBarType is SnackBarType.Reconcile) {
             coroutineScope.launch {
-                val result = snackbarHostState.showSnackbar(
-                    message = reconcileSnackBarMessage,
-                    actionLabel = reconcileSnackBarAction,
-                    duration = SnackbarDuration.Indefinite
-                )
+                val result =
+                    snackbarHostState.showSnackbar(
+                        message = reconcileSnackBarMessage,
+                        actionLabel = reconcileSnackBarAction,
+                        duration = SnackbarDuration.Indefinite,
+                    )
                 when (result) {
                     SnackbarResult.Dismissed -> {
                         // Do nothing
@@ -265,13 +266,14 @@ fun JournalEntryScreen(
     var showContent by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, lifecycleEvent ->
-            if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
-                showContent = true
-            } else if (lifecycleEvent == Lifecycle.Event.ON_PAUSE) {
-                showContent = false
+        val observer =
+            LifecycleEventObserver { _, lifecycleEvent ->
+                if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
+                    showContent = true
+                } else if (lifecycleEvent == Lifecycle.Event.ON_PAUSE) {
+                    showContent = false
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -296,7 +298,8 @@ fun JournalEntryScreen(
                             onDeleteRequested(forDeletion)
                         }
                         journalEntryForDelete = null
-                    }) {
+                    },
+                ) {
                     Text(stringResource(Res.string.ok))
                 }
             },
@@ -304,74 +307,77 @@ fun JournalEntryScreen(
                 TextButton(
                     onClick = {
                         journalEntryForDelete = null
-                    }) {
+                    },
+                ) {
                     Text(stringResource(Res.string.cancel))
                 }
-            })
+            },
+        )
     }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .focusRequester(focusRequester)
-            .focusable()
-            .onKeyEvent {
-                if (
-                    it.isMetaPressed &&
-                    it.key == Key.N &&
-                    it.isShiftPressed &&
-                    it.type == KeyEventType.KeyUp
-                ) {
-                    onAddRequested(null)
-                    true
-                } else if (
-                    it.isMetaPressed &&
-                    it.key == Key.N &&
-                    !it.isShiftPressed &&
-                    it.type == KeyEventType.KeyUp
-                ) {
-                    onAddRequested(state.selectedDayGroup.date)
-                    true
-                } else if (
-                    it.isMetaPressed &&
-                    it.key == Key.Comma &&
-                    it.type == KeyEventType.KeyUp
-                ) {
-                    onSettingsClicked()
-                    true
-                } else if (it.key == Key.DirectionDown &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    focusManager.moveFocus(FocusDirection.Down)
-                } else if (it.key == Key.DirectionUp &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    focusManager.moveFocus(FocusDirection.Up)
-                } else if ((it.key == Key.J || it.key == Key.DirectionLeft) &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    onShowPreviousDayClicked()
-                    true
-                } else if ((it.key == Key.K || it.key == Key.DirectionRight) &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    onShowNextDayClicked()
-                    true
-                } else if (it.key == Key.D &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    showAllDays = true
-                    true
-                } else if (it.key == Key.S &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    onSyncClicked()
-                    true
-                } else {
-                    false
-                }
-            },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .focusRequester(focusRequester)
+                .focusable()
+                .onKeyEvent {
+                    if (
+                        it.isMetaPressed &&
+                        it.key == Key.N &&
+                        it.isShiftPressed &&
+                        it.type == KeyEventType.KeyUp
+                    ) {
+                        onAddRequested(null)
+                        true
+                    } else if (
+                        it.isMetaPressed &&
+                        it.key == Key.N &&
+                        !it.isShiftPressed &&
+                        it.type == KeyEventType.KeyUp
+                    ) {
+                        onAddRequested(state.selectedDayGroup.date)
+                        true
+                    } else if (
+                        it.isMetaPressed &&
+                        it.key == Key.Comma &&
+                        it.type == KeyEventType.KeyUp
+                    ) {
+                        onSettingsClicked()
+                        true
+                    } else if (it.key == Key.DirectionDown &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        focusManager.moveFocus(FocusDirection.Down)
+                    } else if (it.key == Key.DirectionUp &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        focusManager.moveFocus(FocusDirection.Up)
+                    } else if ((it.key == Key.J || it.key == Key.DirectionLeft) &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        onShowPreviousDayClicked()
+                        true
+                    } else if ((it.key == Key.K || it.key == Key.DirectionRight) &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        onShowNextDayClicked()
+                        true
+                    } else if (it.key == Key.D &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        showAllDays = true
+                        true
+                    } else if (it.key == Key.S &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        onSyncClicked()
+                        true
+                    } else {
+                        false
+                    }
+                },
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState,
@@ -382,29 +388,32 @@ fun JournalEntryScreen(
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 32.dp),
-                onClick = { onAddRequested(null) }
+                onClick = { onAddRequested(null) },
             ) {
                 Icon(
                     Icons.Filled.Add,
-                    stringResource(Res.string.add_entry_content_description)
+                    stringResource(Res.string.add_entry_content_description),
                 )
             }
-        }) { paddingValues ->
+        },
+    ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .consumeWindowInsets(paddingValues)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Horizontal,
+                        ),
                     ),
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-                rememberTopAppBarState()
-            )
+            val scrollBehavior =
+                TopAppBarDefaults.enterAlwaysScrollBehavior(
+                    rememberTopAppBarState(),
+                )
 
             Toolbar(
                 notUploadedCount = state.notUploadedCount,
@@ -420,16 +429,17 @@ fun JournalEntryScreen(
 
             if (state.dayGroups.isEmpty()) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .navigationBarsPadding()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .navigationBarsPadding()
+                            .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = stringResource(Res.string.no_items),
-                        style = MaterialTheme.typography.displaySmall
+                        style = MaterialTheme.typography.displaySmall,
                     )
                 }
             } else {
@@ -471,13 +481,15 @@ fun JournalEntryScreen(
                     onShowNextDay = onShowNextDayClicked,
                     onShowPreviousDay = onShowPreviousDayClicked,
                     onAddRequested = onAddFromTagRequested,
-                    modifier = Modifier.fillMaxSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {}, enabled = !showContent
-                        )
-                        .alpha(if (showContent) 1f else 0f),
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {},
+                                enabled = !showContent,
+                            )
+                            .alpha(if (showContent) 1f else 0f),
                 )
             }
         }
@@ -500,9 +512,10 @@ private fun StatsDialog(
     ) {
         Card {
             Column(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 StatRow()
@@ -540,16 +553,18 @@ fun StatRow(
     statCount: EntryStats.Count? = null,
     applyBackground: Boolean = false,
 ) {
-    val background = if (applyBackground) {
-        Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f))
-    } else {
-        Modifier
-    }
+    val background =
+        if (applyBackground) {
+            Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f))
+        } else {
+            Modifier
+        }
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(background)
-            .padding(4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(background)
+                .padding(4.dp),
     ) {
         if (rowTitle != null) {
             Text(
@@ -601,17 +616,19 @@ private fun Toolbar(
     onStatsRequestToggled: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
-        colors = TopAppBarDefaults
-            .centerAlignedTopAppBarColors()
-            .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
+        colors =
+            TopAppBarDefaults
+                .centerAlignedTopAppBarColors()
+                .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         actions = {
             if (showLogsButton) {
                 IconButton(
                     onClick = onLogsClicked,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .padding(4.dp)
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .padding(4.dp),
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ListAlt,
@@ -621,11 +638,12 @@ private fun Toolbar(
             }
             if (notUploadedCount > 0) {
                 Box(
-                    modifier = Modifier
-                        .height(48.dp)
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .clickable(onClick = onSyncClicked),
+                    modifier =
+                        Modifier
+                            .height(48.dp)
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .clickable(onClick = onSyncClicked),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -641,9 +659,10 @@ private fun Toolbar(
             }
             IconButton(
                 onClick = onResetReceiveHelper,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
             ) {
                 Icon(
                     imageVector = vectorResource(Res.drawable.sync_down),
@@ -652,35 +671,38 @@ private fun Toolbar(
             }
             IconButton(
                 onClick = onSearchClicked,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Search,
-                    contentDescription = stringResource(Res.string.search)
+                    contentDescription = stringResource(Res.string.search),
                 )
             }
             IconButton(
                 onClick = onStatsRequestToggled,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
-                    contentDescription = stringResource(Res.string.stats)
+                    contentDescription = stringResource(Res.string.stats),
                 )
             }
             IconButton(
                 onClick = onSettingsClicked,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
-                    contentDescription = stringResource(Res.string.settings)
+                    contentDescription = stringResource(Res.string.settings),
                 )
             }
         },
@@ -742,40 +764,42 @@ private fun List(
     )
     var swipeAmount by remember { mutableStateOf(0f) }
     LazyColumn(
-        modifier = modifier
-            .nestedScroll(scrollConnection)
-            .fillMaxSize()
-            .padding(horizontal = 4.dp)
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        swipeAmount = 0f
-                    },
-                    onDragEnd = {
-                        if (swipeAmount.absoluteValue < (size.width / 4)) {
+        modifier =
+            modifier
+                .nestedScroll(scrollConnection)
+                .fillMaxSize()
+                .padding(horizontal = 4.dp)
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragStart = {
                             swipeAmount = 0f
-                            return@detectHorizontalDragGestures
-                        }
-                        if (swipeAmount > 0) {
-                            onShowPreviousDay()
-                        } else {
-                            onShowNextDay()
-                        }
-                        swipeAmount = 0f
-                    },
-                    onDragCancel = {
-                        swipeAmount = 0f
-                    },
-                ) { change, dragAmount ->
-                    change.consume()
-                    swipeAmount += dragAmount
-                }
-            },
+                        },
+                        onDragEnd = {
+                            if (swipeAmount.absoluteValue < (size.width / 4)) {
+                                swipeAmount = 0f
+                                return@detectHorizontalDragGestures
+                            }
+                            if (swipeAmount > 0) {
+                                onShowPreviousDay()
+                            } else {
+                                onShowNextDay()
+                            }
+                            swipeAmount = 0f
+                        },
+                        onDragCancel = {
+                            swipeAmount = 0f
+                        },
+                    ) { change, dragAmount ->
+                        change.consume()
+                        swipeAmount += dragAmount
+                    }
+                },
     ) {
         dayGroup.tagGroups.forEach { tagGroup ->
             val entries = tagGroup.entries
-            val showAddButtonItem = (showEmptyTags || entries.isNotEmpty())
-                    && tagGroup.tag != Tag.NO_TAG.value
+            val showAddButtonItem =
+                (showEmptyTags || entries.isNotEmpty()) &&
+                    tagGroup.tag != Tag.NO_TAG.value
             var shape: Shape
             var borderModifier: Modifier
             if (showEmptyTags || entries.isNotEmpty()) {
@@ -787,15 +811,17 @@ private fun List(
                         onMoveToNextDayRequested = onTagGroupMoveToNextDayRequested,
                         onMoveToPreviousDayRequested = onTagGroupMoveToPreviousDayRequested,
                         onForceUploadRequested = onTagGroupForceUploadRequested,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(color = MaterialTheme.colorScheme.background)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .background(color = MaterialTheme.colorScheme.background),
                     )
                 }
             }
             items(
                 count = entries.size,
-                key = { index -> entries[index].id }) { index ->
+                key = { index -> entries[index].id },
+            ) { index ->
                 when {
                     entries.size == 1 && !showAddButtonItem -> {
                         shape = RoundedCornerShape(16.dp)
@@ -849,19 +875,20 @@ private fun List(
                     onForceUploadRequested = { onForceUploadRequested(entry) },
                     onConflictResolved = { onConflictResolved(entry, it) },
                     showConflictDiffInline = showConflictDiffInline,
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .fillMaxWidth()
-                        .clip(shape)
-                        .then(borderModifier)
-                        .onKeyEvent {
-                            if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
-                                onEditRequested(entry)
-                                true
-                            } else {
-                                false
-                            }
-                        }
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 12.dp)
+                            .fillMaxWidth()
+                            .clip(shape)
+                            .then(borderModifier)
+                            .onKeyEvent {
+                                if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
+                                    onEditRequested(entry)
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
                 )
             }
             if (showAddButtonItem) {
@@ -876,9 +903,9 @@ private fun List(
                             onAddRequested(
                                 dayGroup.date,
                                 tagGroup.timeAfterLastEntry,
-                                tagGroup.tag
+                                tagGroup.tag,
                             )
-                        }
+                        },
                     )
                 }
             }
@@ -912,32 +939,34 @@ private fun AddForTagButton(
     val (addButtonShape, addButtonBorderModifier) =
         if (isAddTheOnlyItem) {
             RoundedCornerShape(16.dp) to
-                    Modifier.fullBorder(
-                        strokeWidth,
-                        strokeColor.copy(alpha = 0.3f),
-                        cornerRadius
-                    )
+                Modifier.fullBorder(
+                    strokeWidth,
+                    strokeColor.copy(alpha = 0.3f),
+                    cornerRadius,
+                )
         } else {
             defaultBottomShape to
-                    Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
+                Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
         }
     Row(
-        modifier = Modifier
-            .padding(horizontal = 12.dp)
-            .fillMaxWidth()
-            .clip(addButtonShape)
-            .then(addButtonBorderModifier),
+        modifier =
+            Modifier
+                .padding(horizontal = 12.dp)
+                .fillMaxWidth()
+                .clip(addButtonShape)
+                .then(addButtonBorderModifier),
         horizontalArrangement = Arrangement.Center,
     ) {
         IconButton(
             onClick = onAddForTagButtonClick,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .padding(4.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.Add,
-                contentDescription = stringResource(Res.string.add_entry_content_description)
+                contentDescription = stringResource(Res.string.add_entry_content_description),
             )
         }
     }
@@ -953,17 +982,19 @@ private fun HeaderItem(
     onAddRequested: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = MaterialTheme.colorScheme.background)
-            .padding(horizontal = 8.dp)
-            .padding(bottom = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(color = MaterialTheme.colorScheme.background)
+                .padding(horizontal = 8.dp)
+                .padding(bottom = 8.dp),
     ) {
         Column(
-            modifier = Modifier
-                .clickable(onClick = onShowAllDaysClicked)
-                .padding(8.dp)
-                .align(Alignment.Center),
+            modifier =
+                Modifier
+                    .clickable(onClick = onShowAllDaysClicked)
+                    .padding(8.dp)
+                    .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -971,27 +1002,28 @@ private fun HeaderItem(
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
             )
-            val text = buildString {
-                if (untaggedCount > 0) {
-                    append(
-                        stringResource(
-                            Res.string.untagged_format,
-                            untaggedCount,
+            val text =
+                buildString {
+                    if (untaggedCount > 0) {
+                        append(
+                            stringResource(
+                                Res.string.untagged_format,
+                                untaggedCount,
+                            ),
                         )
-                    )
-                }
-                if (conflictCount > 0) {
-                    if (isNotEmpty()) {
-                        append(", ")
                     }
-                    append(
-                        stringResource(
-                            Res.string.conflicts_format,
-                            conflictCount,
+                    if (conflictCount > 0) {
+                        if (isNotEmpty()) {
+                            append(", ")
+                        }
+                        append(
+                            stringResource(
+                                Res.string.conflicts_format,
+                                conflictCount,
+                            ),
                         )
-                    )
+                    }
                 }
-            }
             if (text.isNotEmpty()) {
                 Text(
                     text = text,
@@ -1003,24 +1035,26 @@ private fun HeaderItem(
         Row(modifier = Modifier.align(Alignment.CenterEnd)) {
             IconButton(
                 onClick = onAddRequested,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Add,
-                    contentDescription = stringResource(Res.string.add_entry_content_description)
+                    contentDescription = stringResource(Res.string.add_entry_content_description),
                 )
             }
             IconButton(
                 onClick = onCopyRequested,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.ContentCopy,
-                    contentDescription = stringResource(Res.string.add_entry_content_description)
+                    contentDescription = stringResource(Res.string.add_entry_content_description),
                 )
             }
         }
@@ -1044,11 +1078,12 @@ private fun SubHeaderItem(
         var showMenu by remember { mutableStateOf(false) }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = if (tagGroup.tag == Tag.NO_TAG.value) {
-                stringResource(Res.string.untagged)
-            } else {
-                tagGroup.tag
-            },
+            text =
+                if (tagGroup.tag == Tag.NO_TAG.value) {
+                    stringResource(Res.string.untagged)
+                } else {
+                    tagGroup.tag
+                },
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
         )
@@ -1061,7 +1096,7 @@ private fun SubHeaderItem(
                 onMenuButtonClicked = { showMenu = !showMenu },
                 onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
                 onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
-                onForceUploadRequested = { onForceUploadRequested(tagGroup) }
+                onForceUploadRequested = { onForceUploadRequested(tagGroup) },
             )
         }
     }
@@ -1095,26 +1130,29 @@ private fun ListItem(
     Row(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .clickable(onClick = { showDetails = true })
+        modifier =
+            modifier
+                .clickable(onClick = { showDetails = true }),
     ) {
         Text(
             text = item.text,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier
-                .weight(1f)
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .padding(16.dp),
         )
         if (conflicts.isNotEmpty()) {
             IconButton(
                 onClick = { showConflictResolutionDialog = true },
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Error,
-                    contentDescription = stringResource(Res.string.conflicts)
+                    contentDescription = stringResource(Res.string.conflicts),
                 )
             }
         }
@@ -1138,7 +1176,7 @@ private fun ListItem(
         onTagClicked = { tag -> onTagClicked(tag) },
         onDuplicateRequested = onDuplicateRequested,
         onForceUploadRequested = onForceUploadRequested,
-        onDismiss = { showDetails = false }
+        onDismiss = { showDetails = false },
     )
 
     ConflictResolutionDialog(
@@ -1165,17 +1203,19 @@ private fun ConflictResolutionDialog(
     if (showDialog) {
         Dialog(
             onDismissRequest = onDismiss,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnClickOutside = true
-            )
+            properties =
+                DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnClickOutside = true,
+                ),
         ) {
             Card {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(16.dp)
-                        .verticalScroll(rememberScrollState())
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.9f)
+                            .padding(16.dp)
+                            .verticalScroll(rememberScrollState()),
                 ) {
                     EntryConflictView(
                         device = stringResource(Res.string.conflict_this_device),
@@ -1185,43 +1225,46 @@ private fun ConflictResolutionDialog(
                         onClick = {
                             onDismiss()
                             onConflictResolved(null)
-                        }
+                        },
                     )
                     conflicts.forEach { conflict ->
                         Spacer(modifier = Modifier.height(16.dp))
                         EntryConflictView(
                             device = conflict.senderName,
-                            entryTime = if (conflict.entryTime != entry.entryTime) {
-                                conflict.entryTime
-                            } else {
-                                null
-                            },
-                            text = if (conflict.text != entry.text) {
-                                if (showDiffInline) {
-                                    remember(conflict.id) {
-                                        getDiffAsAnnotatedText(
-                                            entry.text,
-                                            conflict.text,
-                                            leftColor,
-                                            rightColor
-                                        )
+                            entryTime =
+                                if (conflict.entryTime != entry.entryTime) {
+                                    conflict.entryTime
+                                } else {
+                                    null
+                                },
+                            text =
+                                if (conflict.text != entry.text) {
+                                    if (showDiffInline) {
+                                        remember(conflict.id) {
+                                            getDiffAsAnnotatedText(
+                                                entry.text,
+                                                conflict.text,
+                                                leftColor,
+                                                rightColor,
+                                            )
+                                        }
+                                    } else {
+                                        AnnotatedString(conflict.text)
                                     }
                                 } else {
-                                    AnnotatedString(conflict.text)
-                                }
-                            } else {
-                                null
-                            },
-                            tag = if (conflict.tag != entry.tag) {
-                                conflict.tag
-                            } else {
-                                null
-                            },
+                                    null
+                                },
+                            tag =
+                                if (conflict.tag != entry.tag) {
+                                    conflict.tag
+                                } else {
+                                    null
+                                },
                             showDiffInline = showDiffInline,
                             onClick = {
                                 onDismiss()
                                 onConflictResolved(conflict)
-                            }
+                            },
                         )
                     }
                 }
@@ -1240,14 +1283,15 @@ private fun EntryConflictView(
     onClick: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .border(
-                BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-                RoundedCornerShape(8.dp)
-            )
-            .padding(8.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onClick)
+                .border(
+                    BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                    RoundedCornerShape(8.dp),
+                )
+                .padding(8.dp),
     ) {
         Text(device, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
@@ -1259,7 +1303,7 @@ private fun EntryConflictView(
                 Text(
                     "\u00B7",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    modifier = Modifier.padding(horizontal = 4.dp),
                 )
                 Text(it, style = MaterialTheme.typography.bodySmall)
             }
@@ -1321,26 +1365,28 @@ private fun DetailsDialog(
     if (showDetails) {
         Dialog(
             onDismissRequest = onDismiss,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnClickOutside = true
-            )
+            properties =
+                DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnClickOutside = true,
+                ),
         ) {
             Card {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(16.dp)
-                        .focusRequester(focusRequester)
-                        .onKeyEvent {
-                            if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
-                                onDismiss()
-                                onEditRequested()
-                                true
-                            } else {
-                                false
-                            }
-                        }
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.9f)
+                            .padding(16.dp)
+                            .focusRequester(focusRequester)
+                            .onKeyEvent {
+                                if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
+                                    onDismiss()
+                                    onEditRequested()
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1349,14 +1395,15 @@ private fun DetailsDialog(
                     ) {
                         OutlinedIconButton(
                             onClick = onMoveToPreviousDayRequested,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .padding(4.dp),
+                            modifier =
+                                Modifier
+                                    .size(48.dp)
+                                    .padding(4.dp),
                             shape = RoundedCornerShape(16.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
-                                contentDescription = stringResource(Res.string.previous_day)
+                                contentDescription = stringResource(Res.string.previous_day),
                             )
                         }
                         Text(
@@ -1365,34 +1412,37 @@ private fun DetailsDialog(
                             } else {
                                 dayMonthDate(toFormat = time.date)
                             },
-                            modifier = Modifier
-                                .clickable {
-                                    showTime = !showTime
-                                }
-                                .padding(8.dp),
+                            modifier =
+                                Modifier
+                                    .clickable {
+                                        showTime = !showTime
+                                    }
+                                    .padding(8.dp),
                         )
                         OutlinedIconButton(
                             onClick = onMoveToNextDayRequested,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .padding(4.dp),
+                            modifier =
+                                Modifier
+                                    .size(48.dp)
+                                    .padding(4.dp),
                             shape = RoundedCornerShape(16.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowRight,
-                                contentDescription = stringResource(Res.string.next_day)
+                                contentDescription = stringResource(Res.string.next_day),
                             )
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = {
-                                onDismiss()
-                                onEditRequested()
-                            })
-                            .padding(vertical = 16.dp, horizontal = 8.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = {
+                                    onDismiss()
+                                    onEditRequested()
+                                })
+                                .padding(vertical = 16.dp, horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
@@ -1400,7 +1450,7 @@ private fun DetailsDialog(
                             text = text,
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1412,7 +1462,8 @@ private fun DetailsDialog(
                                     onTagClicked(it.value)
                                     onDismiss()
                                 },
-                                label = { Text(text = it.value) })
+                                label = { Text(text = it.value) },
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
@@ -1432,7 +1483,7 @@ private fun DetailsDialog(
                         onMoveToTopRequested = {
                             onMoveToTopRequested()
                             onDismiss()
-                        }
+                        },
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     ButtonRow(
@@ -1477,60 +1528,67 @@ private fun ShowAllDaysDialog(
     if (showAllDays) {
         Dialog(
             onDismissRequest = onDismiss,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnClickOutside = true
-            )
+            properties =
+                DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnClickOutside = true,
+                ),
         ) {
             Card {
                 LazyColumn(
-                    modifier = Modifier
-                        .focusRequester(focusRequester)
-                        .fillMaxWidth(0.9f)
-                        .padding(16.dp)
+                    modifier =
+                        Modifier
+                            .focusRequester(focusRequester)
+                            .fillMaxWidth(0.9f)
+                            .padding(16.dp),
                 ) {
                     items(
                         count = dayGroups.size,
-                        key = { index -> dayGroups[index].date.toString() }) { index ->
+                        key = { index -> dayGroups[index].date.toString() },
+                    ) { index ->
                         val dayGroup = dayGroups[index]
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(),
                         ) {
-                            Column(modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(
-                                    onClick = {
-                                        onDismiss()
-                                        onDayGroupSelected(dayGroup)
-                                    }
-                                )
-                                .padding(8.dp)
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable(
+                                            onClick = {
+                                                onDismiss()
+                                                onDayGroupSelected(dayGroup)
+                                            },
+                                        )
+                                        .padding(8.dp),
                             ) {
                                 Text(dayMonthDate(toFormat = dayGroup.date))
-                                val text = buildString {
-                                    if (dayGroup.untaggedCount > 0) {
-                                        append(
-                                            stringResource(
-                                                Res.string.untagged_format,
-                                                dayGroup.untaggedCount,
-                                            )
-                                        )
-                                    }
-                                    dayGroupConflictCountMap[dayGroup]
-                                        ?.takeIf { it > 0 }
-                                        ?.let {
-                                            if (isNotEmpty()) {
-                                                append(", ")
-                                            }
+                                val text =
+                                    buildString {
+                                        if (dayGroup.untaggedCount > 0) {
                                             append(
                                                 stringResource(
-                                                    Res.string.conflicts_format,
-                                                    it,
-                                                )
+                                                    Res.string.untagged_format,
+                                                    dayGroup.untaggedCount,
+                                                ),
                                             )
                                         }
-                                }
+                                        dayGroupConflictCountMap[dayGroup]
+                                            ?.takeIf { it > 0 }
+                                            ?.let {
+                                                if (isNotEmpty()) {
+                                                    append(", ")
+                                                }
+                                                append(
+                                                    stringResource(
+                                                        Res.string.conflicts_format,
+                                                        it,
+                                                    ),
+                                                )
+                                            }
+                                    }
                                 if (text.isNotEmpty()) {
                                     Text(
                                         text = text,
@@ -1591,20 +1649,22 @@ private fun Button(
     contentDescription: String? = null,
     rotateDegrees: Float? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(8.dp),
+        modifier =
+            modifier
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Center,
     ) {
         Icon(
-            modifier = Modifier
-                .size(24.dp)
-                .padding(4.dp)
-                .rotate(rotateDegrees ?: 0F),
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .padding(4.dp)
+                    .rotate(rotateDegrees ?: 0F),
             imageVector = icon,
             contentDescription = contentDescription,
         )
@@ -1623,29 +1683,33 @@ private fun ButtonRow(
             icon = Icons.Filled.ContentCopy,
             contentDescription = stringResource(Res.string.copy),
             onClick = onCopyRequested,
-            modifier = Modifier
-                .weight(1f)
+            modifier =
+                Modifier
+                    .weight(1f),
         )
         Button(
             icon = Icons.Filled.Delete,
             contentDescription = stringResource(Res.string.delete),
             onClick = onDeleteRequested,
-            modifier = Modifier
-                .weight(1f)
+            modifier =
+                Modifier
+                    .weight(1f),
         )
         Button(
             icon = Icons.Filled.CopyAll,
             contentDescription = stringResource(Res.string.duplicate),
             onClick = onDuplicateRequested,
-            modifier = Modifier
-                .weight(1f)
+            modifier =
+                Modifier
+                    .weight(1f),
         )
         Button(
             icon = Icons.Filled.Sync,
             contentDescription = stringResource(Res.string.force_upload),
             onClick = onForceUploadRequested,
-            modifier = Modifier
-                .weight(1f)
+            modifier =
+                Modifier
+                    .weight(1f),
         )
     }
 }
@@ -1658,19 +1722,20 @@ private fun SubHeaderItemMenu(
     onMenuButtonClicked: () -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
-    onForceUploadRequested: () -> Unit
+    onForceUploadRequested: () -> Unit,
 ) {
     var showingMoreMenu by remember { mutableStateOf(false) }
 
     Box {
         IconButton(
             onClick = onMenuButtonClicked,
-            modifier = Modifier
-                .size(48.dp)
+            modifier =
+                Modifier
+                    .size(48.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.MoreVert,
-                contentDescription = stringResource(Res.string.menu_content_description)
+                contentDescription = stringResource(Res.string.menu_content_description),
             )
         }
         DropdownMenu(
@@ -1686,13 +1751,13 @@ private fun SubHeaderItemMenu(
                     onClick = {
                         onMenuButtonClicked()
                         onCopyRequested()
-                    }
+                    },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.more)) },
                     onClick = {
                         showingMoreMenu = true
-                    }
+                    },
                 )
             } else {
                 DropdownMenuItem(
@@ -1700,28 +1765,28 @@ private fun SubHeaderItemMenu(
                     onClick = {
                         onMenuButtonClicked()
                         onMoveToNextDayRequested()
-                    }
+                    },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.previous_day)) },
                     onClick = {
                         onMenuButtonClicked()
                         onMoveToPreviousDayRequested()
-                    }
+                    },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.delete)) },
                     onClick = {
                         onMenuButtonClicked()
                         onDeleteRequested()
-                    }
+                    },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.force_upload)) },
                     onClick = {
                         onMenuButtonClicked()
                         onForceUploadRequested()
-                    }
+                    },
                 )
             }
         }
@@ -1733,10 +1798,11 @@ private fun SubHeaderItemMenu(
 private fun ListItemPreview() {
     Surface {
         ListItem(
-            item = JournalEntry(
-                entryTime = Clock.System.nowLocal(),
-                text = "Test text"
-            ),
+            item =
+                JournalEntry(
+                    entryTime = Clock.System.nowLocal(),
+                    text = "Test text",
+                ),
             conflicts = listOf(),
             onCopyRequested = {},
             onEditRequested = {},

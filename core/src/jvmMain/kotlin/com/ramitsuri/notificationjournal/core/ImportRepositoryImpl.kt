@@ -22,7 +22,6 @@ import kotlin.time.Duration.Companion.seconds
 class ImportRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher,
 ) : ImportRepository {
-
     private val channel = Channel<List<JournalEntry>>()
 
     override val importedEntriesFlow: Flow<List<JournalEntry>> = channel.consumeAsFlow()
@@ -71,15 +70,17 @@ class ImportRepositoryImpl(
         withContext(ioDispatcher) {
             var date = startDate
             do {
-                val filePath = buildString {
-                    append(fromDir)
-                    append("/")
-                    append(date.asImportFileName())
-                }
-                val contentLines = readFileContents(
-                    filePath = filePath,
-                    lastImportDate = lastImportDate,
-                )
+                val filePath =
+                    buildString {
+                        append(fromDir)
+                        append("/")
+                        append(date.asImportFileName())
+                    }
+                val contentLines =
+                    readFileContents(
+                        filePath = filePath,
+                        lastImportDate = lastImportDate,
+                    )
 
                 parseFileContent(date = date, contentLines = contentLines)
                     .let { entries ->
@@ -92,7 +93,10 @@ class ImportRepositoryImpl(
         }
     }
 
-    private fun readFileContents(filePath: String, lastImportDate: Instant): List<String> {
+    private fun readFileContents(
+        filePath: String,
+        lastImportDate: Instant,
+    ): List<String> {
         val file = File(filePath)
         if (!file.exists()) {
             return emptyList()
@@ -137,7 +141,7 @@ class ImportRepositoryImpl(
                         text = entryText,
                         tag = entryTag,
                         reconciled = true,
-                    )
+                    ),
                 )
                 time = time.plus(1.seconds)
                 text = null

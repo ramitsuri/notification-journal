@@ -12,7 +12,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom5To6Test : BaseMigrationTest() {
-
     //region JournalEntry
 
     @Test
@@ -89,62 +88,64 @@ class MigrationFrom5To6Test : BaseMigrationTest() {
     }
 
     private fun createAndGetEntriesFromV5(): List<JournalEntryV5> {
-        val data = listOf(
-            JournalEntryV5(
-                id = 1,
-                timeZone = "TZ1",
-                entryTime = 1706208791347,
-                text = "Text 1",
-                tag = null,
-                entryTimeOverride = null,
-                uploaded = true,
-                autoTagged = false,
-            ),
-            JournalEntryV5(
-                id = 2,
-                entryTime = 1706208791347,
-                timeZone = "TZ2",
-                text = "Text 2",
-                tag = "Tag1",
-                entryTimeOverride = null,
-                uploaded = true,
-                autoTagged = true,
-            ),
-            JournalEntryV5(
-                id = 3,
-                entryTime = 1706208791347,
-                timeZone = "TZ3",
-                text = "Text 3",
-                tag = null,
-                entryTimeOverride = 1706208791348,
-                uploaded = false,
-                autoTagged = true,
-            ),
-            JournalEntryV5(
-                id = 4,
-                entryTime = 1706208791347,
-                timeZone = "TZ4",
-                text = "Text 4",
-                tag = "Tag4",
-                entryTimeOverride = 1706208791348,
-                uploaded = false,
-                autoTagged = false,
+        val data =
+            listOf(
+                JournalEntryV5(
+                    id = 1,
+                    timeZone = "TZ1",
+                    entryTime = 1706208791347,
+                    text = "Text 1",
+                    tag = null,
+                    entryTimeOverride = null,
+                    uploaded = true,
+                    autoTagged = false,
+                ),
+                JournalEntryV5(
+                    id = 2,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ2",
+                    text = "Text 2",
+                    tag = "Tag1",
+                    entryTimeOverride = null,
+                    uploaded = true,
+                    autoTagged = true,
+                ),
+                JournalEntryV5(
+                    id = 3,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ3",
+                    text = "Text 3",
+                    tag = null,
+                    entryTimeOverride = 1706208791348,
+                    uploaded = false,
+                    autoTagged = true,
+                ),
+                JournalEntryV5(
+                    id = 4,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ4",
+                    text = "Text 4",
+                    tag = "Tag4",
+                    entryTimeOverride = 1706208791348,
+                    uploaded = false,
+                    autoTagged = false,
+                ),
             )
-        )
         createDatabase(5).apply {
             data.forEach {
-                val tag = if (it.tag == null) {
-                    null
-                } else {
-                    "'${it.tag}'"
-                }
+                val tag =
+                    if (it.tag == null) {
+                        null
+                    } else {
+                        "'${it.tag}'"
+                    }
                 execSQL(
                     "INSERT INTO JournalEntry " +
-                            "(id,entry_time,time_zone,text,tag,entry_time_override,uploaded,auto_tagged) " +
-                            "VALUES(" +
-                            "${it.id},${it.entryTime},'${it.timeZone}','${it.text}'," +
-                            "$tag,${it.entryTimeOverride},${it.uploaded},${it.autoTagged}" +
-                            ")"
+                        "(id,entry_time,time_zone,text,tag,entry_time_override,uploaded,auto_tagged) " +
+                        "VALUES(" +
+                        "${it.id},${it.entryTime},'${it.timeZone}','${it.text}'," +
+                        "$tag,${it.entryTimeOverride},${it.uploaded},${it.autoTagged}" +
+                        ")",
                 )
             }
             close()
@@ -241,35 +242,36 @@ class MigrationFrom5To6Test : BaseMigrationTest() {
     }
 
     private fun createAndGetTagsFromV5(): List<TagV5> {
-        val tags = listOf(
-            TagV5(
-                id = 1,
-                order = 1,
-                value = "Tag1",
-            ),
-            TagV5(
-                id = 2,
-                order = 2,
-                value = "Tag2",
-            ),
-            TagV5(
-                id = 3,
-                order = 3,
-                value = "Tag3",
-            ),
-            TagV5(
-                id = 4,
-                order = 4,
-                value = "Tag4",
-            ),
-        )
+        val tags =
+            listOf(
+                TagV5(
+                    id = 1,
+                    order = 1,
+                    value = "Tag1",
+                ),
+                TagV5(
+                    id = 2,
+                    order = 2,
+                    value = "Tag2",
+                ),
+                TagV5(
+                    id = 3,
+                    order = 3,
+                    value = "Tag3",
+                ),
+                TagV5(
+                    id = 4,
+                    order = 4,
+                    value = "Tag4",
+                ),
+            )
         createDatabase(5).apply {
             tags.forEach {
                 execSQL(
                     "INSERT INTO Tags " +
-                            "(id, 'order', value) " +
-                            "VALUES " +
-                            "(${it.id}, ${it.order}, '${it.value}')"
+                        "(id, 'order', value) " +
+                        "VALUES " +
+                        "(${it.id}, ${it.order}, '${it.value}')",
                 )
             }
             close()
@@ -351,36 +353,37 @@ class MigrationFrom5To6Test : BaseMigrationTest() {
     }
 
     private fun createAndGetTemplatesFromV5(): List<JournalEntryTemplateV5> {
-        val templates = listOf(
-            JournalEntryTemplateV5(
-                id = 1,
-                text = "Text1",
-                tag = "Tag1",
-            ),
-            JournalEntryTemplateV5(
-                id = 2,
-                text = "Text2",
-                tag = "Tag2",
-            ),
-            JournalEntryTemplateV5(
-                id = 3,
-                text = "Text3",
-                tag = "Tag3",
-            ),
-            JournalEntryTemplateV5(
-                id = 4,
-                text = "Text4",
-                tag = "Tag4",
-            ),
-        )
+        val templates =
+            listOf(
+                JournalEntryTemplateV5(
+                    id = 1,
+                    text = "Text1",
+                    tag = "Tag1",
+                ),
+                JournalEntryTemplateV5(
+                    id = 2,
+                    text = "Text2",
+                    tag = "Tag2",
+                ),
+                JournalEntryTemplateV5(
+                    id = 3,
+                    text = "Text3",
+                    tag = "Tag3",
+                ),
+                JournalEntryTemplateV5(
+                    id = 4,
+                    text = "Text4",
+                    tag = "Tag4",
+                ),
+            )
         createDatabase(5).apply {
             templates.forEach {
                 execSQL(
                     "INSERT INTO JournalEntryTemplate " +
-                            "(id,text,tag) " +
-                            "VALUES(" +
-                            "${it.id},'${it.text}','${it.tag}'" +
-                            ")"
+                        "(id,text,tag) " +
+                        "VALUES(" +
+                        "${it.id},'${it.text}','${it.tag}'" +
+                        ")",
                 )
             }
             close()

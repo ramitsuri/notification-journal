@@ -20,4 +20,3 @@ val ColorScheme.green: Color
 val ColorScheme.red: Color
     @Composable
     get() = if (isDarkMode()) Color(0xFF803030) else Color(0xFFFFC0C0)
-

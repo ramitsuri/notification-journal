@@ -17,7 +17,6 @@ import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import com.ramitsuri.notificationjournal.core.utils.receivedText
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -29,21 +28,23 @@ class MainActivity : ComponentActivity() {
             val darkTheme = isSystemInDarkTheme()
             DisposableEffect(darkTheme) {
                 enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(
-                        Color.TRANSPARENT,
-                        Color.TRANSPARENT,
-                    ) { darkTheme },
-                    navigationBarStyle = SystemBarStyle.auto(
-                        lightScrim,
-                        darkScrim,
-                    ) { darkTheme },
+                    statusBarStyle =
+                        SystemBarStyle.auto(
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT,
+                        ) { darkTheme },
+                    navigationBarStyle =
+                        SystemBarStyle.auto(
+                            lightScrim,
+                            darkScrim,
+                        ) { darkTheme },
                 )
                 onDispose {}
             }
 
             NotificationJournalTheme(
                 dynamicDarkColorScheme = dynamicDarkColorScheme(this),
-                dynamicLightColorScheme = dynamicLightColorScheme(this)
+                dynamicLightColorScheme = dynamicLightColorScheme(this),
             ) {
                 NavGraph(
                     receivedText = this@MainActivity.intent?.receivedText(),

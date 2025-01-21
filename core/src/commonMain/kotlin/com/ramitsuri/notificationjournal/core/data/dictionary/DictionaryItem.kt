@@ -14,7 +14,6 @@ data class DictionaryItem(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: String = UUID.randomUUID().toString(),
-
     @ColumnInfo(name = "word")
     val word: String,
 )
