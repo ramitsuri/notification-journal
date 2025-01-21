@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.buildKonfig)
+    alias(libs.plugins.ktlint)
 }
 
 kotlin {
@@ -165,5 +166,16 @@ fun getProperty(
         properties.getProperty(key, defaultValue)
     } else {
         defaultValue
+    }
+}
+
+ktlint {
+    verbose.set(true)
+    outputToConsole.set(true)
+    filter {
+        exclude("**/generated/**")
+        exclude("**/build/**")
+        exclude { element -> element.file.toString().contains("generated/") }
+        exclude { element -> element.file.toString().contains("build/") }
     }
 }
