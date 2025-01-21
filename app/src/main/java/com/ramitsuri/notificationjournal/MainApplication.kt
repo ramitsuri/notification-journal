@@ -51,7 +51,13 @@ class MainApplication : Application(), DefaultLifecycleObserver {
                     action = Constants.ACTION_JOURNAL,
                     text = getString(R.string.add_new_journal_content),
                     intentReceiverClass = NotificationActionReceiver::class.java,
-                    remoteInputKey = Constants.REMOTE_INPUT_JOURNAL_KEY
+                    remoteInputKey = Constants.REMOTE_INPUT_JOURNAL_KEY,
+                ),
+                NotificationActionInfo(
+                    action = Constants.ACTION_UPLOAD,
+                    text = getString(R.string.upload),
+                    intentReceiverClass = NotificationActionReceiver::class.java,
+                    remoteInputKey = null,
                 ),
             ),
             actionExtras = mapOf()

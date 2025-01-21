@@ -93,7 +93,10 @@ fun WearApp(
                     templates = viewState.journalEntryTemplates,
                     onTemplateAddRequested = onTemplateAddRequested,
                 )
-                addButton(onAddRequested)
+                addAndUploadButtons(
+                    onAddRequested = onAddRequested,
+                    onUploadRequested = onUploadRequested,
+                )
                 // Hiding because upload is not a thing anymore
                 // RequestUploadFromPhoneButton(onUploadRequested)
                 if (showOnDeviceEntries) {
@@ -125,7 +128,10 @@ private fun ScalingLazyListScope.templateItems(
         }
 }
 
-private fun ScalingLazyListScope.addButton(onAddRequested: (String) -> Unit) {
+private fun ScalingLazyListScope.addAndUploadButtons(
+    onAddRequested: (String) -> Unit,
+    onUploadRequested: () -> Unit,
+) {
     item {
         val launcher =
             rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -142,21 +148,7 @@ private fun ScalingLazyListScope.addButton(onAddRequested: (String) -> Unit) {
                 contentDescriptionRes = R.string.add_new,
                 icon = Icons.Rounded.Add
             )
-        }
-    }
-}
-
-private fun ScalingLazyListScope.loadButton(onLoadRequested: () -> Unit) {
-    item {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-        ) {
-            SmallButton(
-                onClick = onLoadRequested,
-                contentDescriptionRes = R.string.load_things,
-                icon = Icons.Rounded.Sync
-            )
+            RequestUploadFromPhoneButton(onUploadRequested = onUploadRequested)
         }
     }
 }
