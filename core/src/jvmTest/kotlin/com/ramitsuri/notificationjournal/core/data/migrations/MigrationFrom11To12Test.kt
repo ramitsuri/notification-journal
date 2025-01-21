@@ -18,7 +18,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom11To12Test : BaseMigrationTest() {
-
     @Test
     fun testDictionaryItemIndexCreated() {
         try {
@@ -120,27 +119,30 @@ class MigrationFrom11To12Test : BaseMigrationTest() {
     }
 
     private fun createAndGetEntriesFromV11(): List<JournalEntryV11> {
-        val data = listOf(
-            JournalEntryV11(
-                id = "1",
-                timeZone = "America/New_York",
-                entryTime = 1706208791347,
-                text = "Text 1",
-                tag = null,
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-        )
+        val data =
+            listOf(
+                JournalEntryV11(
+                    id = "1",
+                    timeZone = "America/New_York",
+                    entryTime = 1706208791347,
+                    text = "Text 1",
+                    tag = null,
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+            )
         createDatabase(11).apply {
             data.forEach {
-                val tag = if (it.tag == null) {
-                    null
-                } else {
-                    "'${it.tag}'"
-                }
-                val statement = "INSERT INTO JournalEntry " +
+                val tag =
+                    if (it.tag == null) {
+                        null
+                    } else {
+                        "'${it.tag}'"
+                    }
+                val statement =
+                    "INSERT INTO JournalEntry " +
                         "(id,entry_time,time_zone,text,tag,uploaded,auto_tagged,deleted,reconciled) " +
                         "VALUES(" +
                         "'${it.id}',${it.entryTime},'${it.timeZone}','${it.text}'," +
@@ -148,7 +150,7 @@ class MigrationFrom11To12Test : BaseMigrationTest() {
                         "${it.deleted},${it.reconciled}" +
                         ")"
                 execSQL(
-                    statement
+                    statement,
                 )
             }
             close()

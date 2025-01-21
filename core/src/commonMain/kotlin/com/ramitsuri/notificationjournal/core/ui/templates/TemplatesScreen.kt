@@ -125,9 +125,10 @@ fun TemplatesScreen(
     }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
         floatingActionButton = {
             if (state.canAddMore) {
                 FloatingActionButton(
@@ -135,48 +136,52 @@ fun TemplatesScreen(
                     onClick = {
                         showDialog = true
                         onAddRequested()
-                    }
+                    },
                 ) {
                     Icon(
                         Icons.Filled.Add,
-                        stringResource(Res.string.add_entry_content_description)
+                        stringResource(Res.string.add_entry_content_description),
                     )
                 }
             }
-        }) { paddingValues ->
+        },
+    ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .consumeWindowInsets(paddingValues)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Horizontal,
+                        ),
                     ),
-                ),
         ) {
             Spacer(
-                modifier = Modifier.height(
-                    WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-                )
+                modifier =
+                    Modifier.height(
+                        WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                    ),
             )
             TopRow(
                 onBack = onBack,
-                onSyncClicked = onSyncRequested
+                onSyncClicked = onSyncRequested,
             )
             if (state.templates.isEmpty()) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .navigationBarsPadding()
-                        .padding(start = 16.dp, end = 16.dp)
-                        .padding(bottom = 64.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .navigationBarsPadding()
+                            .padding(start = 16.dp, end = 16.dp)
+                            .padding(bottom = 64.dp),
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = stringResource(Res.string.no_items),
-                        style = MaterialTheme.typography.displaySmall
+                        style = MaterialTheme.typography.displaySmall,
                     )
                 }
             } else {
@@ -189,8 +194,9 @@ fun TemplatesScreen(
                         showDialog = true
                     },
                     onDeleteRequested = onDeleteRequested,
-                    modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp)
+                    modifier =
+                        Modifier
+                            .padding(start = 16.dp, end = 16.dp),
                 )
             }
         }
@@ -201,17 +207,18 @@ fun TemplatesScreen(
 private fun HelperText() {
     Column {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
         ) {
             Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(Res.string.template_info),
-                style = MaterialTheme.typography.labelSmall
+                style = MaterialTheme.typography.labelSmall,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -225,25 +232,26 @@ private fun TopRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         IconButton(
-            onClick = onBack
+            onClick = onBack,
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.back)
+                contentDescription = stringResource(Res.string.back),
             )
         }
         IconButton(
             onClick = onSyncClicked,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .padding(4.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.Sync,
-                contentDescription = stringResource(Res.string.settings_upload_title)
+                contentDescription = stringResource(Res.string.settings_upload_title),
             )
         }
     }
@@ -260,7 +268,7 @@ private fun List(
     LazyColumn(
         modifier = modifier,
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         itemsIndexed(templates, key = { _, item -> item.id }) { _, item ->
             ListItem(
@@ -279,7 +287,7 @@ private fun List(
 private fun ListItem(
     item: JournalEntryTemplate,
     onEditRequested: (JournalEntryTemplate) -> Unit,
-    onDeleteRequested: (JournalEntryTemplate) -> Unit
+    onDeleteRequested: (JournalEntryTemplate) -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
@@ -289,12 +297,14 @@ private fun ListItem(
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier =
+                Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Column(
-                modifier = Modifier
-                    .weight(1f)
+                modifier =
+                    Modifier
+                        .weight(1f),
             ) {
                 Text(
                     text = item.displayText.ifEmpty { item.text },
@@ -329,18 +339,19 @@ private fun ItemMenu(
     showMenu: Boolean,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
-    onMenuButtonClicked: () -> Unit
+    onMenuButtonClicked: () -> Unit,
 ) {
     Box {
         IconButton(
             onClick = onMenuButtonClicked,
-            modifier = Modifier
-                .size(48.dp)
-                .padding(4.dp)
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .padding(4.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.MoreVert,
-                contentDescription = stringResource(Res.string.menu_content_description)
+                contentDescription = stringResource(Res.string.menu_content_description),
             )
         }
         DropdownMenu(
@@ -352,14 +363,14 @@ private fun ItemMenu(
                 onClick = {
                     onMenuButtonClicked()
                     onEditRequested()
-                }
+                },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(Res.string.delete)) },
                 onClick = {
                     onMenuButtonClicked()
                     onDeleteRequested()
-                }
+                },
             )
         }
     }
@@ -393,16 +404,18 @@ private fun AddEditTemplateDialog(
 
     Dialog(
         onDismissRequest = { },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnClickOutside = false
-        )
+        properties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnClickOutside = false,
+            ),
     ) {
         Card {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .padding(16.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(16.dp),
             ) {
                 LaunchedEffect(focusRequester) {
                     if (showKeyboard) {
@@ -412,45 +425,51 @@ private fun AddEditTemplateDialog(
                     }
                 }
                 TextField(
-                    value = TextFieldValue(
-                        text = text,
-                        selection = textSelection
-                    ),
+                    value =
+                        TextFieldValue(
+                            text = text,
+                            selection = textSelection,
+                        ),
                     onValueChange = {
                         onTextUpdated(it.text)
                         textSelection = it.selection
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester = focusRequester),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester = focusRequester),
                     label = stringResource(Res.string.text),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 TextField(
-                    value = TextFieldValue(
-                        text = displayText,
-                        selection = displayTextSelection
-                    ),
+                    value =
+                        TextFieldValue(
+                            text = displayText,
+                            selection = displayTextSelection,
+                        ),
                     onValueChange = {
                         onDisplayTextUpdated(it.text)
                         displayTextSelection = it.selection
                     },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(),
                     label = stringResource(Res.string.display_text),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 TextField(
-                    value = TextFieldValue(
-                        text = shortDisplayText,
-                        selection = shortDisplayTextSelection
-                    ),
+                    value =
+                        TextFieldValue(
+                            text = shortDisplayText,
+                            selection = shortDisplayTextSelection,
+                        ),
                     onValueChange = {
                         onShortDisplayTextUpdated(it.text)
                         shortDisplayTextSelection = it.selection
                     },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(),
                     label = stringResource(Res.string.short_display_text),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -461,13 +480,14 @@ private fun AddEditTemplateDialog(
                             onClick = {
                                 onTagClicked(it.value)
                             },
-                            label = { Text(text = it.value) })
+                            label = { Text(text = it.value) },
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     TextButton(onClick = onNegativeClick) {
                         Text(text = stringResource(Res.string.cancel))
@@ -475,7 +495,7 @@ private fun AddEditTemplateDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         enabled = canSave,
-                        onClick = onPositiveClick
+                        onClick = onPositiveClick,
                     ) {
                         Text(text = stringResource(Res.string.ok))
                     }
@@ -495,13 +515,15 @@ private fun TextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Sentences
-        ),
-        textStyle = MaterialTheme.typography.bodyMedium
-            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+        keyboardOptions =
+            KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+            ),
+        textStyle =
+            MaterialTheme.typography.bodyMedium
+                .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
         maxLines = 1,
         modifier = modifier,
-        label = { Text(label) }
+        label = { Text(label) },
     )
 }

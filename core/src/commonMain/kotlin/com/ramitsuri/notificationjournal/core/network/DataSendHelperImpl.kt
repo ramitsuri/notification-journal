@@ -28,12 +28,14 @@ internal class DataSendHelperImpl(
     private val password: String,
     private val json: Json,
 ) : DataSendHelper {
-
     private var connection: Connection? = null
     private var channel: Channel? = null
     private val mutex: Mutex = Mutex()
 
-    override suspend fun sendEntry(entries: List<JournalEntry>, replacesLocal: Boolean): Boolean {
+    override suspend fun sendEntry(
+        entries: List<JournalEntry>,
+        replacesLocal: Boolean,
+    ): Boolean {
         return Payload.Entries(
             data = entries,
             sender = getSender(),
@@ -44,14 +46,14 @@ internal class DataSendHelperImpl(
     override suspend fun sendTags(tags: List<Tag>): Boolean {
         return Payload.Tags(
             data = tags,
-            sender = getSender()
+            sender = getSender(),
         ).send()
     }
 
     override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
         return Payload.Templates(
             data = templates,
-            sender = getSender()
+            sender = getSender(),
         ).send()
     }
 
@@ -67,7 +69,7 @@ internal class DataSendHelperImpl(
                             exchangeName,
                             "",
                             MessageProperties.PERSISTENT_TEXT_PLAIN,
-                            message
+                            message,
                         )
                         it.waitForConfirmsOrDie(5.seconds.inWholeMilliseconds)
                         true
@@ -103,13 +105,14 @@ internal class DataSendHelperImpl(
     private fun createChannelIfNecessary() {
         try {
             if (connection == null) {
-                connection = ConnectionFactory().apply {
-                    host = hostName
-                    username = this@DataSendHelperImpl.username
-                    password = this@DataSendHelperImpl.password
-                    isAutomaticRecoveryEnabled = true
-                    isTopologyRecoveryEnabled = true
-                }.newConnection()
+                connection =
+                    ConnectionFactory().apply {
+                        host = hostName
+                        username = this@DataSendHelperImpl.username
+                        password = this@DataSendHelperImpl.password
+                        isAutomaticRecoveryEnabled = true
+                        isTopologyRecoveryEnabled = true
+                    }.newConnection()
                 channel = connection?.createChannel()
                 channel?.confirmSelect()
             }
@@ -119,7 +122,10 @@ internal class DataSendHelperImpl(
         }
     }
 
-    private fun log(message: String, throwable: Throwable? = null) {
+    private fun log(
+        message: String,
+        throwable: Throwable? = null,
+    ) {
         Logger.i(TAG, throwable) { message }
     }
 

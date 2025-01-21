@@ -23,17 +23,18 @@ fun Toolbar(
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     CenterAlignedTopAppBar(
-        colors = TopAppBarDefaults
-            .centerAlignedTopAppBarColors()
-            .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
+        colors =
+            TopAppBarDefaults
+                .centerAlignedTopAppBarColors()
+                .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         navigationIcon = {
             IconButton(
-                onClick = onBackClick
+                onClick = onBackClick,
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back)
+                    contentDescription = stringResource(Res.string.back),
                 )
             }
         },

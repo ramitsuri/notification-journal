@@ -23,22 +23,22 @@ internal class DataReceiveHelperImpl(
     private val password: String,
     private val json: Json,
 ) : DataReceiveHelper {
-
     private var connection: Connection? = null
     private var channel: Channel? = null
     private val mutex: Mutex = Mutex()
 
     override suspend fun startListening(onPayloadReceived: (Payload) -> Unit) {
         log("Start receiving")
-        val deliverCallback = DeliverCallback { _: String?, delivery: Delivery ->
-            val message = String(delivery.body, Charsets.UTF_8)
-            val payload = json.decodeFromString<Payload>(message)
-            if (payload.sender.id == deviceId) {
-                log("Ignoring own message")
-                return@DeliverCallback
+        val deliverCallback =
+            DeliverCallback { _: String?, delivery: Delivery ->
+                val message = String(delivery.body, Charsets.UTF_8)
+                val payload = json.decodeFromString<Payload>(message)
+                if (payload.sender.id == deviceId) {
+                    log("Ignoring own message")
+                    return@DeliverCallback
+                }
+                onPayloadReceived(payload)
             }
-            onPayloadReceived(payload)
-        }
         withContext(ioDispatcher) {
             mutex.withLock {
                 createChannelIfNecessary()
@@ -67,13 +67,14 @@ internal class DataReceiveHelperImpl(
     private suspend fun createChannelIfNecessary() {
         try {
             if (connection == null) {
-                connection = ConnectionFactory().apply {
-                    host = hostName
-                    username = this@DataReceiveHelperImpl.username
-                    password = this@DataReceiveHelperImpl.password
-                    isAutomaticRecoveryEnabled = true
-                    isTopologyRecoveryEnabled = true
-                }.newConnection()
+                connection =
+                    ConnectionFactory().apply {
+                        host = hostName
+                        username = this@DataReceiveHelperImpl.username
+                        password = this@DataReceiveHelperImpl.password
+                        isAutomaticRecoveryEnabled = true
+                        isTopologyRecoveryEnabled = true
+                    }.newConnection()
                 channel = connection?.createChannel()
                 channel?.queueDeclare(deviceName, true, false, false, null)
                 channel?.queueBind(deviceName, exchangeName, "")
@@ -84,7 +85,10 @@ internal class DataReceiveHelperImpl(
         }
     }
 
-    private fun log(message: String, throwable: Throwable? = null) {
+    private fun log(
+        message: String,
+        throwable: Throwable? = null,
+    ) {
         Logger.i(TAG, throwable) { message }
     }
 

@@ -89,30 +89,33 @@ fun ImportScreen(
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .consumeWindowInsets(paddingValues)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Horizontal,
+                        ),
                     ),
-                ),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Toolbar(
                 onBackClick = onBackClick,
             )
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -123,7 +126,7 @@ fun ImportScreen(
                         Text(stringResource(Res.string.import_from_dir))
                     },
                     onValueChange = onFromDirChanged,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -155,7 +158,7 @@ fun ImportScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 FilledTonalButton(
                     onClick = onImportClick,
-                    enabled = state.isImportEnabled
+                    enabled = state.isImportEnabled,
                 ) {
                     Text(stringResource(Res.string.import))
                 }
@@ -167,7 +170,7 @@ fun ImportScreen(
                     onCompletedAcknowledged = {
                         showImportStatus = false
                         onBackClick()
-                    }
+                    },
                 )
             }
         }
@@ -184,19 +187,21 @@ private fun LastImportTime(
 ) {
     var showLastImportDatePicker by remember { mutableStateOf(false) }
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier =
+            Modifier
+                .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
         Row(
-            modifier = Modifier
-                .clickable(
-                    role = Role.Checkbox,
-                    onClick = onToggleUseLastImportTime,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ),
+            modifier =
+                Modifier
+                    .clickable(
+                        role = Role.Checkbox,
+                        onClick = onToggleUseLastImportTime,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ),
             horizontalArrangement = Arrangement.Center,
         ) {
             Checkbox(checked = useLastImportTime, onCheckedChange = null)
@@ -222,7 +227,7 @@ private fun LastImportTime(
             ) {
                 Icon(
                     Icons.Outlined.Today,
-                    contentDescription = stringResource(Res.string.import_last_import_time)
+                    contentDescription = stringResource(Res.string.import_last_import_time),
                 )
             }
         }
@@ -245,19 +250,21 @@ private fun LastImportTime(
 @Composable
 private fun ImportStatus(
     status: ImportStatus,
-    onCompletedAcknowledged: () -> Unit
+    onCompletedAcknowledged: () -> Unit,
 ) {
     Dialog(
         onDismissRequest = { },
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false,
-        ),
+        properties =
+            DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false,
+            ),
     ) {
         Card {
             Column(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 when (status) {
@@ -265,20 +272,22 @@ private fun ImportStatus(
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = stringResource(
-                                Res.string.import_status_in_progress,
-                                status.importCount,
-                            )
+                            text =
+                                stringResource(
+                                    Res.string.import_status_in_progress,
+                                    status.importCount,
+                                ),
                         )
                     }
 
                     is ImportStatus.Completed -> {
                         Text(
-                            text = stringResource(
-                                Res.string.import_status_completed,
-                                status.importCount,
-                                status.daysCount,
-                            )
+                            text =
+                                stringResource(
+                                    Res.string.import_status_completed,
+                                    status.importCount,
+                                    status.daysCount,
+                                ),
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -332,7 +341,7 @@ private fun DatePickers(
             ) {
                 Icon(
                     Icons.Outlined.Today,
-                    contentDescription = stringResource(Res.string.import_start_date)
+                    contentDescription = stringResource(Res.string.import_start_date),
                 )
             }
         }
@@ -344,7 +353,7 @@ private fun DatePickers(
         ) {
             DisabledTextField(
                 value = endDateFileName,
-                label = stringResource(Res.string.import_end_date)
+                label = stringResource(Res.string.import_end_date),
             )
             Spacer(modifier = Modifier.width(16.dp))
             IconButton(
@@ -352,7 +361,7 @@ private fun DatePickers(
             ) {
                 Icon(
                     Icons.Outlined.Today,
-                    contentDescription = stringResource(Res.string.import_end_date)
+                    contentDescription = stringResource(Res.string.import_end_date),
                 )
             }
         }
@@ -390,8 +399,9 @@ private fun DisabledTextField(
     value: String,
     label: String,
 ) {
-    val colors = OutlinedTextFieldDefaults
-        .colors()
+    val colors =
+        OutlinedTextFieldDefaults
+            .colors()
     OutlinedTextField(
         value = value,
         onValueChange = {},
@@ -399,11 +409,12 @@ private fun DisabledTextField(
         label = {
             Text(label)
         },
-        colors = colors
-            .copy(
-                disabledTextColor = colors.unfocusedTextColor,
-                disabledLabelColor = colors.unfocusedLabelColor,
-                disabledContainerColor = colors.unfocusedContainerColor,
-            )
+        colors =
+            colors
+                .copy(
+                    disabledTextColor = colors.unfocusedTextColor,
+                    disabledLabelColor = colors.unfocusedLabelColor,
+                    disabledContainerColor = colors.unfocusedContainerColor,
+                ),
     )
 }

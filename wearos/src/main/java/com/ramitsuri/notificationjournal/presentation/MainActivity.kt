@@ -17,7 +17,6 @@ import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.R
 
 class MainActivity : ComponentActivity() {
-
     private val viewModel: MainViewModel by viewModels {
         (applicationContext as MainApplication).getViewModelFactory()
     }
@@ -28,14 +27,15 @@ class MainActivity : ComponentActivity() {
             val viewState = viewModel.state.collectAsState().value
             val view = LocalView.current
             LaunchedEffect(key1 = viewState) {
-                val showToast = viewState.addStatus == AddStatus.SUCCESS_EXIT ||
+                val showToast =
+                    viewState.addStatus == AddStatus.SUCCESS_EXIT ||
                         viewState.addStatus == AddStatus.SUCCESS
                 val finish = viewState.addStatus == AddStatus.SUCCESS_EXIT
                 if (showToast) {
                     Toast.makeText(
                         this@MainActivity,
                         getString(R.string.add_success),
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                     viewModel.addStatusAcknowledged()
                     view.performHapticFeedback(HapticFeedbackConstantsCompat.LONG_PRESS)
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
                     Toast.makeText(
                         this,
                         getString(R.string.template_id_not_found),
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             }
@@ -87,9 +87,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun launchForInput(onAddRequested: (String) -> Unit) {
-        val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            it.processResult(onAddRequested)
-        }
+        val launcher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                it.processResult(onAddRequested)
+            }
         launcher.launchInputActivity()
     }
 

@@ -30,8 +30,14 @@ abstract class JournalEntryDao {
     @Query("SELECT * FROM journalentry WHERE id = :id")
     abstract suspend fun get(id: String): JournalEntry?
 
-    @Query("SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND tag IN (:tags) AND deleted = 0 ORDER BY entry_time DESC")
-    abstract suspend fun search(query: String, tags: List<String>): List<JournalEntry>
+    @Query(
+        "SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND tag IN (:tags) AND deleted = 0 " +
+            "ORDER BY entry_time DESC",
+    )
+    abstract suspend fun search(
+        query: String,
+        tags: List<String>,
+    ): List<JournalEntry>
 
     @Query("SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND deleted = 0 ORDER BY entry_time DESC")
     abstract suspend fun search(query: String): List<JournalEntry>
@@ -50,7 +56,10 @@ abstract class JournalEntryDao {
     }
 
     @Transaction
-    open suspend fun clearDaysAndInsert(days: List<String>, entries: List<JournalEntry>) {
+    open suspend fun clearDaysAndInsert(
+        days: List<String>,
+        entries: List<JournalEntry>,
+    ) {
         days.forEach { day ->
             clearForDateInternal(day)
         }
@@ -63,20 +72,32 @@ abstract class JournalEntryDao {
     }
 
     @Transaction
-    open suspend fun updateUploaded(entries: List<JournalEntry>, uploaded: Boolean) {
+    open suspend fun updateUploaded(
+        entries: List<JournalEntry>,
+        uploaded: Boolean,
+    ) {
         update(entries.map { it.copy(uploaded = uploaded) })
     }
 
     //region stats
 
-    @Query("SELECT entry_time from journalentry WHERE uploaded = :uploaded AND reconciled = :reconciled ORDER BY entry_time ASC")
-    abstract suspend fun getEntryTimes(uploaded: Boolean, reconciled: Boolean): List<LocalDateTime>
+    @Query(
+        "SELECT entry_time from journalentry WHERE uploaded = :uploaded AND reconciled = :reconciled " +
+            "ORDER BY entry_time ASC",
+    )
+    abstract suspend fun getEntryTimes(
+        uploaded: Boolean,
+        reconciled: Boolean,
+    ): List<LocalDateTime>
 
     @Query("SELECT entry_time from journalentry")
     abstract suspend fun getEntryTimes(): List<LocalDateTime>
 
     @Query("SELECT COUNT(*) from journalentry WHERE uploaded = :uploaded AND reconciled = :reconciled")
-    abstract suspend fun getEntryCount(uploaded: Boolean, reconciled: Boolean): Long
+    abstract suspend fun getEntryCount(
+        uploaded: Boolean,
+        reconciled: Boolean,
+    ): Long
 
     @Query("SELECT COUNT(*) from journalentry")
     abstract suspend fun getEntryCount(): Long

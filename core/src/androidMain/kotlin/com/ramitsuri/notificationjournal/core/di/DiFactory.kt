@@ -23,16 +23,15 @@ import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import java.nio.file.Path
 
-actual class Factory(private val application: Application) {
-
+actual class DiFactory(private val application: Application) {
     actual val allowJournalImport: Boolean = false
 
     actual fun getSettings(): Settings {
         return SharedPreferencesSettings(
             application.getSharedPreferences(
                 Constants.PREF_FILE,
-                Context.MODE_PRIVATE
-            )
+                Context.MODE_PRIVATE,
+            ),
         )
     }
 
@@ -42,7 +41,7 @@ actual class Factory(private val application: Application) {
             .databaseBuilder(
                 application,
                 AppDatabase::class.java,
-                dbFile.absolutePath
+                dbFile.absolutePath,
             )
     }
 
@@ -66,7 +65,7 @@ actual class Factory(private val application: Application) {
             override fun <T : ViewModel> create(
                 key: String,
                 modelClass: Class<T>,
-                handle: SavedStateHandle
+                handle: SavedStateHandle,
             ): T {
                 return getVMInstance(handle) as T
             }
@@ -85,7 +84,7 @@ actual class Factory(private val application: Application) {
             override fun <T : ViewModel> create(
                 key: String,
                 modelClass: Class<T>,
-                handle: SavedStateHandle
+                handle: SavedStateHandle,
             ): T {
                 return getVMInstance(handle) as T
             }
@@ -96,7 +95,7 @@ actual class Factory(private val application: Application) {
         return application.filesDir.resolve(DataStoreKeyValueStore.FILE).toPath()
     }
 
-    actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository{
+    actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository {
         error("Not supported on Android")
     }
 }

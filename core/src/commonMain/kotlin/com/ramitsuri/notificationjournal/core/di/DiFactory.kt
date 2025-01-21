@@ -14,8 +14,7 @@ import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineDispatcher
 import java.nio.file.Path
 
-expect class Factory {
-
+expect class DiFactory {
     val allowJournalImport: Boolean
 
     fun getSettings(): Settings

@@ -8,7 +8,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom2To3Test : BaseMigrationTest() {
-
     @Test
     fun testMigrateFrom2To3() {
         try {
@@ -28,11 +27,9 @@ class MigrationFrom2To3Test : BaseMigrationTest() {
             assertNotNull(index)
             assertTrue(index.unique)
             assertTrue(index.columns.contains("value"))
-
         } catch (e: Exception) {
             fail(e.message)
         }
-
     }
 
     private fun migrateAndDbVersionThree(): SQLiteConnection {

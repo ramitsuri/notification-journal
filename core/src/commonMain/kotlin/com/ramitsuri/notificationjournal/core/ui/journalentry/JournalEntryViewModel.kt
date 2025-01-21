@@ -47,15 +47,14 @@ class JournalEntryViewModel(
     private val prefManager: PrefManager,
     private val clock: Clock = Clock.System,
 ) : ViewModel() {
-
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
 
-    private val _selectedIndex: MutableStateFlow<Int?> = MutableStateFlow(null)
+    private val selectedIndex: MutableStateFlow<Int?> = MutableStateFlow(null)
 
-    private val _contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
+    private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
-    private val _snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
+    private val snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
 
     private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -65,9 +64,9 @@ class JournalEntryViewModel(
     val state: StateFlow<ViewState> =
         prefManager.showReconciled().flatMapLatest { showReconciled ->
             combine(
-                _selectedIndex,
-                _contentForCopy,
-                _snackBarType,
+                selectedIndex,
+                contentForCopy,
+                snackBarType,
                 repository.getFlow(showReconciled = showReconciled),
                 repository.getForUploadCountFlow(),
                 repository.getConflicts(),
@@ -76,20 +75,22 @@ class JournalEntryViewModel(
                 prefManager.showLogsButton(),
                 statsRequested,
             ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline, showLogsButton, statsRequested ->
+                showEmptyTags, showConflictDiffInline, showLogsButton, statsRequested,
+                ->
                 val tags = tagsDao.getAll()
-                val dayGroups = try {
-                    entries.toDayGroups(
-                        tagsForSort = tags.map { it.value },
-                    )
-                } catch (e: Exception) {
-                    listOf()
-                }
+                val dayGroups =
+                    try {
+                        entries.toDayGroups(
+                            tagsForSort = tags.map { it.value },
+                        )
+                    } catch (e: Exception) {
+                        listOf()
+                    }
                 val sorted = dayGroups.sortedBy { it.date }
                 // Show either today or the biggest date as initially selected
                 if (selectedIndex == null) {
                     if (sorted.isNotEmpty()) {
-                        _selectedIndex.update {
+                        this.selectedIndex.update {
                             sorted
                                 .indexOfFirst {
                                     it.date == clock.nowLocal().date
@@ -147,7 +148,10 @@ class JournalEntryViewModel(
         }
     }
 
-    fun editTag(journalEntry: JournalEntry, tag: String) {
+    fun editTag(
+        journalEntry: JournalEntry,
+        tag: String,
+    ) {
         if (journalEntry.tag == tag) {
             return
         }
@@ -169,7 +173,10 @@ class JournalEntryViewModel(
     }
 
     // Move it down in the list of entries that are ordered by ascending of display time
-    fun moveDown(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveDown(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == tagGroup.entries.lastIndex) {
             return
@@ -180,7 +187,10 @@ class JournalEntryViewModel(
     }
 
     // Move it to bottom of the list of entries that are ordered by ascending of display time
-    fun moveToBottom(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveToBottom(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == tagGroup.entries.lastIndex) {
             return
@@ -191,7 +201,10 @@ class JournalEntryViewModel(
     }
 
     // Move it up in the list of entries that are ordered by ascending of display time
-    fun moveUp(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveUp(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == 0) {
             return
@@ -202,7 +215,10 @@ class JournalEntryViewModel(
     }
 
     // Move it to top of the list of entries that are ordered by ascending of display time
-    fun moveToTop(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveToTop(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == 0) {
             return
@@ -247,14 +263,17 @@ class JournalEntryViewModel(
         }
     }
 
-    fun resolveConflict(entry: JournalEntry, selectedConflict: EntryConflict?) {
+    fun resolveConflict(
+        entry: JournalEntry,
+        selectedConflict: EntryConflict?,
+    ) {
         viewModelScope.launch {
             repository.resolveConflict(entry, selectedConflict)
         }
     }
 
     fun goToNextDay() {
-        _selectedIndex.update { existing ->
+        selectedIndex.update { existing ->
             if (existing == null) {
                 return
             }
@@ -268,7 +287,7 @@ class JournalEntryViewModel(
     }
 
     fun goToPreviousDay() {
-        _selectedIndex.update { existing ->
+        selectedIndex.update { existing ->
             if (existing == null) {
                 return
             }
@@ -284,15 +303,15 @@ class JournalEntryViewModel(
     fun showDayGroupClicked(dayGroup: DayGroup) {
         val existing = state.value
         val index = existing.dayGroups.indexOf(dayGroup)
-        _selectedIndex.update { index }
+        selectedIndex.update { index }
     }
 
     fun onCopy(entry: JournalEntry) {
-        _contentForCopy.update { entry.text }
+        contentForCopy.update { entry.text }
     }
 
     fun onCopy(tagGroup: TagGroup) {
-        _contentForCopy.update {
+        contentForCopy.update {
             tagGroup
                 .entries
                 .joinToString(separator = "\n") { it.text }
@@ -309,31 +328,32 @@ class JournalEntryViewModel(
         }
         viewModelScope.launch(Dispatchers.Default) {
             val copyEmptyTags = prefManager.copyWithEmptyTags().first()
-            val content = buildString {
-                append("# ")
-                append(dayMonthDateWithYearSuspend(dayGroup.date))
-                append("\n")
-                dayGroup.tagGroups.forEach { tagGroup ->
-                    if (tagGroup.entries.isEmpty() && !copyEmptyTags) {
-                        return@forEach
-                    }
-                    append("## ")
-                    append(tagGroup.tag)
+            val content =
+                buildString {
+                    append("# ")
+                    append(dayMonthDateWithYearSuspend(dayGroup.date))
                     append("\n")
-                    tagGroup.entries.forEach { entry ->
-                        append("- ")
-                        append(entry.text)
+                    dayGroup.tagGroups.forEach { tagGroup ->
+                        if (tagGroup.entries.isEmpty() && !copyEmptyTags) {
+                            return@forEach
+                        }
+                        append("## ")
+                        append(tagGroup.tag)
                         append("\n")
+                        tagGroup.entries.forEach { entry ->
+                            append("- ")
+                            append(entry.text)
+                            append("\n")
+                        }
                     }
                 }
-            }
-            _contentForCopy.update { content }
+            contentForCopy.update { content }
             reconcileWithDelay(dayGroup)
         }
     }
 
     fun onContentCopied() {
-        _contentForCopy.update { "" }
+        contentForCopy.update { "" }
     }
 
     fun resetReceiveHelper() {
@@ -344,29 +364,33 @@ class JournalEntryViewModel(
         statsRequested.update { !it }
     }
 
-    private fun setDate(journalEntry: JournalEntry, entryTime: LocalDateTime) {
+    private fun setDate(
+        journalEntry: JournalEntry,
+        entryTime: LocalDateTime,
+    ) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
         }
     }
 
     private fun reconcileWithDelay(dayGroup: DayGroup) {
-        _snackBarType.update {
+        snackBarType.update {
             SnackBarType.Reconcile
         }
-        reconcileDayGroupJob = viewModelScope.launch {
-            delay(1_000)
-            _snackBarType.update {
-                SnackBarType.None
+        reconcileDayGroupJob =
+            viewModelScope.launch {
+                delay(1_000)
+                snackBarType.update {
+                    SnackBarType.None
+                }
+                delay(5_000)
+                dayGroup
+                    .tagGroups
+                    .map { it.entries }
+                    .flatten()
+                    .map { it.copy(reconciled = true) }
+                    .let { repository.update(it) }
             }
-            delay(5_000)
-            dayGroup
-                .tagGroups
-                .map { it.entries }
-                .flatten()
-                .map { it.copy(reconciled = true) }
-                .let { repository.update(it) }
-        }
     }
 
     fun cancelReconcile() {
@@ -375,21 +399,21 @@ class JournalEntryViewModel(
     }
 
     companion object {
-        fun factory(receivedText: String?) = object : ViewModelProvider.Factory {
-
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: KClass<T>,
-                extras: CreationExtras
-            ): T {
-                return JournalEntryViewModel(
-                    receivedText,
-                    ServiceLocator.repository,
-                    ServiceLocator.tagsDao,
-                    prefManager = ServiceLocator.prefManager,
-                ) as T
+        fun factory(receivedText: String?) =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T {
+                    return JournalEntryViewModel(
+                        receivedText,
+                        ServiceLocator.repository,
+                        ServiceLocator.tagsDao,
+                        prefManager = ServiceLocator.prefManager,
+                    ) as T
+                }
             }
-        }
     }
 }
 
@@ -415,11 +439,13 @@ data class ViewState(
         }
 
     val dayGroupConflictCountMap
-        get() = dayGroups
-            .associateWith { it.getConflictsCount(entryConflicts) }
+        get() =
+            dayGroups
+                .associateWith { it.getConflictsCount(entryConflicts) }
 }
 
 sealed interface SnackBarType {
     data object None : SnackBarType
+
     data object Reconcile : SnackBarType
 }

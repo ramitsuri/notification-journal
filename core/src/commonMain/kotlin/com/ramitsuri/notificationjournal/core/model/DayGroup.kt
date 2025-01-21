@@ -8,19 +8,18 @@ import kotlinx.serialization.Serializable
 data class DayGroup(
     @SerialName("date")
     val date: LocalDate,
-
     @SerialName("tag_groups")
-    val tagGroups: List<TagGroup>
+    val tagGroups: List<TagGroup>,
 ) {
     val untaggedCount: Int
-        get() = tagGroups
-            .firstOrNull {
-                it.tag == Tag.NO_TAG.value
-            }
-            ?.entries
-            ?.size
-            ?: 0
-
+        get() =
+            tagGroups
+                .firstOrNull {
+                    it.tag == Tag.NO_TAG.value
+                }
+                ?.entries
+                ?.size
+                ?: 0
 
     fun getConflictsCount(conflicts: List<EntryConflict>): Int {
         val entries = entries()
@@ -31,8 +30,9 @@ data class DayGroup(
             }
     }
 
-    private fun entries() = tagGroups
-        .map { it.entries }
-        .flatten()
-        .map { it.id }
+    private fun entries() =
+        tagGroups
+            .map { it.entries }
+            .flatten()
+            .map { it.id }
 }

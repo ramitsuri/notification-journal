@@ -56,21 +56,23 @@ fun LogScreen(
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .consumeWindowInsets(paddingValues)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Horizontal,
+                        ),
                     ),
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Toolbar(
                 onBackClick = onBackClick,
@@ -80,17 +82,18 @@ fun LogScreen(
                         IconButton(onClick = onClearLogsClick) {
                             Icon(
                                 imageVector = Icons.Outlined.DeleteForever,
-                                contentDescription = null
+                                contentDescription = null,
                             )
                         }
                     }
-                }
+                },
             )
 
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(logs) { logData ->
@@ -102,13 +105,17 @@ fun LogScreen(
 }
 
 @Composable
-private fun LogItem(logData: LogData, timeZone: TimeZone) {
+private fun LogItem(
+    logData: LogData,
+    timeZone: TimeZone,
+) {
     Column(
-        modifier = Modifier.fillMaxWidth()
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .fullBorder(1.dp, MaterialTheme.colorScheme.outline, 16.dp)
-            .padding(16.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .fullBorder(1.dp, MaterialTheme.colorScheme.outline, 16.dp)
+                .padding(16.dp),
     ) {
         var showStackTrace by remember { mutableStateOf(false) }
 
@@ -117,18 +124,19 @@ private fun LogItem(logData: LogData, timeZone: TimeZone) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         style = MaterialTheme.typography.labelSmall,
-                        text = formatTimeForLogs(
-                            toFormat = logData.time,
-                            timeZone = timeZone,
-                            amString = stringResource(Res.string.am),
-                            pmString = stringResource(Res.string.pm),
-                        )
+                        text =
+                            formatTimeForLogs(
+                                toFormat = logData.time,
+                                timeZone = timeZone,
+                                amString = stringResource(Res.string.am),
+                                pmString = stringResource(Res.string.pm),
+                            ),
                     )
                     if (logData.tag.isNotEmpty()) {
                         Text(
                             text = "\u2022",
                             style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = 4.dp),
                         )
                         Text(
                             text = logData.tag,
@@ -137,18 +145,20 @@ private fun LogItem(logData: LogData, timeZone: TimeZone) {
                     }
                 }
                 Text(
-                    style = MaterialTheme.typography.bodyMedium, text = logData.message
+                    style = MaterialTheme.typography.bodyMedium,
+                    text = logData.message,
                 )
             }
             if (logData.errorMessage != null || logData.stackTrace != null) {
                 IconButton(onClick = { showStackTrace = !showStackTrace }) {
                     Icon(
-                        imageVector = if (showStackTrace) {
-                            Icons.Default.ArrowDropUp
-                        } else {
-                            Icons.Default.ArrowDropDown
-                        },
-                        contentDescription = null
+                        imageVector =
+                            if (showStackTrace) {
+                                Icons.Default.ArrowDropUp
+                            } else {
+                                Icons.Default.ArrowDropDown
+                            },
+                        contentDescription = null,
                     )
                 }
             }
@@ -157,12 +167,14 @@ private fun LogItem(logData: LogData, timeZone: TimeZone) {
             Column {
                 logData.errorMessage?.let {
                     Text(
-                        style = MaterialTheme.typography.bodySmall, text = it
+                        style = MaterialTheme.typography.bodySmall,
+                        text = it,
                     )
                 }
                 logData.stackTrace?.let {
                     Text(
-                        style = MaterialTheme.typography.bodySmall, text = it
+                        style = MaterialTheme.typography.bodySmall,
+                        text = it,
                     )
                 }
             }

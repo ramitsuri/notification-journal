@@ -20,10 +20,10 @@ class TagsViewModel(
     private val dataSendHelper: DataSendHelper?,
 ) :
     ViewModel() {
-
-    private val _state = MutableStateFlow(
-        TagsViewState(text = "", tags = listOf())
-    )
+    private val _state =
+        MutableStateFlow(
+            TagsViewState(text = "", tags = listOf()),
+        )
     val state: StateFlow<TagsViewState> = _state
 
     private var idBeingEdited: String? = null
@@ -107,19 +107,25 @@ class TagsViewModel(
         }
     }
 
-    fun editOrder(fromOrder: Int, toOrder: Int) {
+    fun editOrder(
+        fromOrder: Int,
+        toOrder: Int,
+    ) {
         val currentTags = _state.value.tags
         viewModelScope.launch {
-            val currentTagAtFromIndex = currentTags
-                .getOrNull(fromOrder)
-                ?: return@launch
-            val currentAtToOrder = currentTags
-                .getOrNull(toOrder)
-                ?: return@launch
-            val newTags = listOf(
-                currentTagAtFromIndex.copy(order = toOrder),
-                currentAtToOrder.copy(order = fromOrder),
-            )
+            val currentTagAtFromIndex =
+                currentTags
+                    .getOrNull(fromOrder)
+                    ?: return@launch
+            val currentAtToOrder =
+                currentTags
+                    .getOrNull(toOrder)
+                    ?: return@launch
+            val newTags =
+                listOf(
+                    currentTagAtFromIndex.copy(order = toOrder),
+                    currentAtToOrder.copy(order = fromOrder),
+                )
             dao.updateOrder(newTags)
         }
     }
@@ -139,24 +145,28 @@ class TagsViewModel(
 
     companion object {
         @Suppress("UNCHECKED_CAST")
-        fun factory() = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
-                return TagsViewModel(
-                    ServiceLocator.tagsDao,
-                    dataSendHelper = ServiceLocator.dataSendHelper,
-                ) as T
+        fun factory() =
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T {
+                    return TagsViewModel(
+                        ServiceLocator.tagsDao,
+                        dataSendHelper = ServiceLocator.dataSendHelper,
+                    ) as T
+                }
             }
-        }
     }
 }
 
 data class TagsViewState(
     val text: String,
     val tags: List<Tag>,
-    val error: TagError? = null
+    val error: TagError? = null,
 )
 
 enum class TagError {
     DELETE_FAIL,
-    INSERT_FAIL
+    INSERT_FAIL,
 }

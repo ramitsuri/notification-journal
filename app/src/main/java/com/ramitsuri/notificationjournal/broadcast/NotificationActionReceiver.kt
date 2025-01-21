@@ -12,9 +12,10 @@ import com.ramitsuri.notificationjournal.work.UploadWorker
 import kotlinx.coroutines.launch
 
 class NotificationActionReceiver : BroadcastReceiver() {
-
-    override fun onReceive(context: Context, intent: Intent) {
-
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         val action = intent.action ?: return
 
         if (action == Constants.ACTION_UPLOAD) {
@@ -28,7 +29,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun addEntry(context: Context, intent: Intent) {
+    private fun addEntry(
+        context: Context,
+        intent: Intent,
+    ) {
         val remoteInputBundle = RemoteInput.getResultsFromIntent(intent)
         if (remoteInputBundle == null) {
             Log.d(TAG, "RemoteInputBundle is null")

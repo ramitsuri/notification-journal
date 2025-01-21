@@ -9,7 +9,6 @@ import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryItem
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom10To11
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom11To12
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom12To13
-import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom9To10
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
@@ -18,7 +17,8 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom5To6
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom6To7
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom7To8
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom8To9
-import com.ramitsuri.notificationjournal.core.di.Factory
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom9To10
+import com.ramitsuri.notificationjournal.core.di.DiFactory
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -35,7 +35,7 @@ import kotlinx.coroutines.Dispatchers
         DictionaryItem::class,
     ],
     version = 13,
-    exportSchema = true
+    exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -51,40 +51,40 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var INSTANCE: AppDatabase? = null
+        private var instance: AppDatabase? = null
 
-        private fun getInstance(factory: Factory): AppDatabase {
-            if (INSTANCE == null) {
-                INSTANCE = factory
-                    .getDatabaseBuilder()
-                    .setDriver(BundledSQLiteDriver())
-                    .setQueryCoroutineContext(Dispatchers.IO)
-                    .addMigrations(MigrationFrom1To2())
-                    .addMigrations(MigrationFrom2To3())
-                    .addMigrations(MigrationFrom3To4())
-                    .addMigrations(MigrationFrom4To5())
-                    .addMigrations(MigrationFrom5To6())
-                    .addMigrations(MigrationFrom6To7())
-                    .addMigrations(MigrationFrom7To8())
-                    .addMigrations(MigrationFrom8To9())
-                    .addMigrations(MigrationFrom9To10())
-                    .addMigrations(MigrationFrom10To11())
-                    .addMigrations(MigrationFrom11To12())
-                    .addMigrations(MigrationFrom12To13())
-                    .build()
+        private fun getInstance(factory: DiFactory): AppDatabase {
+            if (instance == null) {
+                instance =
+                    factory
+                        .getDatabaseBuilder()
+                        .setDriver(BundledSQLiteDriver())
+                        .setQueryCoroutineContext(Dispatchers.IO)
+                        .addMigrations(MigrationFrom1To2())
+                        .addMigrations(MigrationFrom2To3())
+                        .addMigrations(MigrationFrom3To4())
+                        .addMigrations(MigrationFrom4To5())
+                        .addMigrations(MigrationFrom5To6())
+                        .addMigrations(MigrationFrom6To7())
+                        .addMigrations(MigrationFrom7To8())
+                        .addMigrations(MigrationFrom8To9())
+                        .addMigrations(MigrationFrom9To10())
+                        .addMigrations(MigrationFrom10To11())
+                        .addMigrations(MigrationFrom11To12())
+                        .addMigrations(MigrationFrom12To13())
+                        .build()
             }
-            return INSTANCE as AppDatabase
+            return instance as AppDatabase
         }
 
-        fun getJournalEntryDao(factory: Factory) = getInstance(factory).journalEntryDao()
+        fun getJournalEntryDao(factory: DiFactory) = getInstance(factory).journalEntryDao()
 
-        fun getJournalEntryTemplateDao(factory: Factory) = getInstance(factory).templateDao()
+        fun getJournalEntryTemplateDao(factory: DiFactory) = getInstance(factory).templateDao()
 
-        fun getTagsDao(factory: Factory) = getInstance(factory).tagsDao()
+        fun getTagsDao(factory: DiFactory) = getInstance(factory).tagsDao()
 
-        fun getConflictsDao(factory: Factory) = getInstance(factory).entryConflictDao()
+        fun getConflictsDao(factory: DiFactory) = getInstance(factory).entryConflictDao()
 
-        fun getDictionaryDao(factory: Factory) = getInstance(factory).dictionaryDao()
+        fun getDictionaryDao(factory: DiFactory) = getInstance(factory).dictionaryDao()
     }
 }
-

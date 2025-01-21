@@ -21,9 +21,10 @@ actual fun isDarkMode(): Boolean {
             darkTheme = it
         }
 
-        val detector = OsThemeDetector.getDetector().apply {
-            registerListener(darkThemeListener)
-        }
+        val detector =
+            OsThemeDetector.getDetector().apply {
+                registerListener(darkThemeListener)
+            }
 
         onDispose {
             detector.removeListener(darkThemeListener)

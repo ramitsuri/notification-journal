@@ -14,8 +14,9 @@ fun getDiffAsAnnotatedText(
     leftColor: Color,
     rightColor: Color,
 ): AnnotatedString {
-    val rows: List<DiffRow> = diffGenerator
-        .generateDiffRows(listOf(left), listOf(right))
+    val rows: List<DiffRow> =
+        diffGenerator
+            .generateDiffRows(listOf(left), listOf(right))
     return rows[0]
         .oldLine
         .splitByType()
@@ -63,7 +64,10 @@ private fun String.splitByType(): DiffText {
     return DiffText(splitByType)
 }
 
-private fun DiffText.annotated(leftColor: Color, rightColor: Color): AnnotatedString {
+private fun DiffText.annotated(
+    leftColor: Color,
+    rightColor: Color,
+): AnnotatedString {
     return buildAnnotatedString {
         texts.forEach { type ->
             when (type.type) {
