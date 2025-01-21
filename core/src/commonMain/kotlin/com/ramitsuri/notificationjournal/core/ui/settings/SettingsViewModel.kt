@@ -65,7 +65,7 @@ class SettingsViewModel(
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                repository.sync()
+                repository.uploadAll()
                 _uploadLoading.update { false }
             }
         }

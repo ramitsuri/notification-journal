@@ -108,11 +108,11 @@ class JournalRepository(
         update(entries.map { it.copy(deleted = true) })
     }
 
-    suspend fun sync() {
-        Logger.i(TAG) { "Attempting to sync" }
+    suspend fun uploadAll() {
+        Logger.i(TAG) { "Attempting to upload all" }
         val entries = dao.getForUpload()
         if (entries.isEmpty()) {
-            Logger.i(TAG) { "Nothing to sync" }
+            Logger.i(TAG) { "Nothing to upload all" }
             return
         }
         upload(entries)

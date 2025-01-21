@@ -243,7 +243,7 @@ class JournalEntryViewModel(
     fun sync() {
         Logger.i("JournalEntryViewModel") { "Attempting to sync" }
         viewModelScope.launch {
-            repository.sync()
+            repository.uploadAll()
         }
     }
 

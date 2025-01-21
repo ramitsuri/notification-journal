@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 object Constants {
     const val REMOTE_INPUT_JOURNAL_KEY = "remote_input_journal_text"
     const val ACTION_JOURNAL = "action_journal"
+    const val ACTION_UPLOAD = "action_upload"
     const val TEMPLATED_TIME = "{{time}}"
     const val TEMPLATED_TASK = "[ ]"
 
