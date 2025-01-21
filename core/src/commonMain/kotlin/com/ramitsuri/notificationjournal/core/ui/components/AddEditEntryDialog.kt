@@ -56,7 +56,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,9 +81,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
-import kotlinx.coroutines.delay
+import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -95,7 +93,6 @@ import notificationjournal.core.generated.resources.add_from_template
 import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.cancel
-import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.now
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
@@ -142,11 +139,6 @@ fun AddEditEntryDialog(
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         rememberTopAppBarState()
     )
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(focusRequester) {
-        delay(500)
-        focusRequester.requestFocus()
-    }
     val onCancelWithWarning = {
         if (showWarningOnExit) {
             showCancelWarningDialog = true
@@ -159,7 +151,6 @@ fun AddEditEntryDialog(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .focusRequester(focusRequester)
             .imePadding()
             .navigationBarsPadding()
             .focusable().onKeyEvent {
@@ -621,7 +612,6 @@ private fun Content(
 ) {
     val focusManager = LocalFocusManager.current
     val textFieldFocusRequester = remember { FocusRequester() }
-    val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
 
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
@@ -632,9 +622,8 @@ private fun Content(
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        LaunchedEffect(textFieldFocusRequester) {
-            if (showKeyboard && keyboard != null) {
-                delay(500)
+        LaunchedEffect(Unit) {
+            if (keyboard != null) {
                 textFieldFocusRequester.requestFocus()
                 keyboard.show()
             }
