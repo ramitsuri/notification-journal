@@ -129,7 +129,7 @@ class EntriesToDayGroupsMapperKtTest {
         text = "text",
         tag = tag,
         uploaded = false,
-        autoTagged = false,
+        replacesLocal = false,
         deleted = false,
         reconciled = false,
     )
