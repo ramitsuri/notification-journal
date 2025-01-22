@@ -9,6 +9,7 @@ import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryItem
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom10To11
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom11To12
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom12To13
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom13To14
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
@@ -34,7 +35,7 @@ import kotlinx.coroutines.Dispatchers
         EntryConflict::class,
         DictionaryItem::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
@@ -72,6 +73,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MigrationFrom10To11())
                         .addMigrations(MigrationFrom11To12())
                         .addMigrations(MigrationFrom12To13())
+                        .addMigrations(MigrationFrom13To14())
                         .build()
             }
             return instance as AppDatabase

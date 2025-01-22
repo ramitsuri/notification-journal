@@ -28,9 +28,9 @@ data class JournalEntry(
     @ColumnInfo(name = "uploaded", defaultValue = "0")
     @SerialName("uploaded")
     val uploaded: Boolean = false,
-    @ColumnInfo(name = "auto_tagged", defaultValue = "0")
+    @ColumnInfo(name = "replaces_local", defaultValue = "0")
     @SerialName("auto_tagged")
-    val autoTagged: Boolean = false,
+    val replacesLocal: Boolean = false,
     @ColumnInfo(name = "deleted", defaultValue = "0")
     @SerialName("deleted")
     val deleted: Boolean = false,
