@@ -21,6 +21,7 @@ sealed class Payload {
     @SerialName("entries")
     data class Entries(
         val data: List<JournalEntry>,
+        val replacesLocal: Boolean,
         override val sender: Sender,
     ) : Payload()
 

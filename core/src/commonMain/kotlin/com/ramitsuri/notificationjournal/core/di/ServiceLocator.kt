@@ -84,9 +84,9 @@ object ServiceLocator {
     val repository: JournalRepository by lazy {
         JournalRepository(
             coroutineScope = coroutineScope,
-            dao = AppDatabase.getInstance(factory::getDatabaseBuilder).journalEntryDao(),
+            dao = AppDatabase.getJournalEntryDao(factory),
             dataSendHelper = dataSendHelper,
-            conflictDao = AppDatabase.getInstance(factory::getDatabaseBuilder).entryConflictDao(),
+            conflictDao = AppDatabase.getConflictsDao(factory),
         )
     }
 
@@ -99,15 +99,15 @@ object ServiceLocator {
     }
 
     val tagsDao: TagsDao by lazy {
-        AppDatabase.getInstance(factory::getDatabaseBuilder).tagsDao()
+        AppDatabase.getTagsDao(factory)
     }
 
     val templatesDao: JournalEntryTemplateDao by lazy {
-        AppDatabase.getInstance(factory::getDatabaseBuilder).templateDao()
+        AppDatabase.getJournalEntryTemplateDao(factory)
     }
 
     private val dictionaryDao: DictionaryDao by lazy {
-        AppDatabase.getInstance(factory::getDatabaseBuilder).dictionaryDao()
+        AppDatabase.getDictionaryDao(factory)
     }
 
     val wearDataSharingClient: WearDataSharingClient by lazy {

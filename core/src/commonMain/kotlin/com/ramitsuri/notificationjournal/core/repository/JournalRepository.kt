@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -120,7 +121,7 @@ class JournalRepository(
         upload(entries)
     }
 
-    suspend fun upload(entries: List<JournalEntry>) {
+    fun upload(entries: List<JournalEntry>) {
         Logger.i(TAG) { "Syncing ${entries.size} entries" }
         entries.chunked(10).forEach {
             sendAndMarkUploaded(it)
@@ -134,10 +135,8 @@ class JournalRepository(
 
             // Doesn't exist locally or sender asked to replace local entry
             val existing = dao.get(payloadEntry.id)
-            if (existing == null || payloadEntry.replacesLocal) {
-                // Save with replacesLocal false because that was a one time thing, we don't want this entry to be sent
-                // with replacesLocal anymore
-                dao.upsert(payloadEntry.copy(uploaded = true, replacesLocal = false))
+            if (existing == null || payload.replacesLocal) {
+                dao.upsert(payloadEntry.copy(uploaded = true))
                 return@forEach
             }
 
@@ -177,7 +176,7 @@ class JournalRepository(
         }
 
         conflictDao.deleteForEntryId(newEntry.id)
-        sendAndMarkUploaded(listOf(newEntry.copy(replacesLocal = true)))
+        sendAndMarkUploaded(listOf(newEntry), replacesLocal = true)
     }
 
     suspend fun search(
@@ -285,14 +284,13 @@ class JournalRepository(
         }
     }
 
-    private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>) {
-        val sent = dataSendHelper?.sendEntries(entries) == true
-        if (sent) {
-            // Once sent, mark as not "replaces_local" because that was just for this upload, further
-            // changes should go through the conflict resolution flow
-            dao.updateUploaded(entries = entries.map { it.copy(replacesLocal = false) }, uploaded = true)
-        } else {
-            dao.updateUploaded(entries = entries, uploaded = false)
+    private fun sendAndMarkUploaded(
+        entries: List<JournalEntry>,
+        replacesLocal: Boolean = false,
+    ) {
+        coroutineScope.launch {
+            val sent = dataSendHelper?.sendEntry(entries, replacesLocal) == true
+            dao.updateUploaded(entries = entries, uploaded = sent)
         }
     }
 
@@ -308,8 +306,8 @@ class JournalRepository(
         }
 
         // Assume that local entry is older because the other entry now has a tag
-        if (tag == Tag.NO_TAG.value &&
-            incomingEntry.tag != Tag.NO_TAG.value
+        if ((tag == null || tag == Tag.NO_TAG.value) &&
+            !(incomingEntry.tag == null || incomingEntry.tag == Tag.NO_TAG.value)
         ) {
             return null
         }

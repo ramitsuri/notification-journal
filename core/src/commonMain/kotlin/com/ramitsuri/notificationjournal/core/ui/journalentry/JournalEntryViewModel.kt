@@ -249,15 +249,11 @@ class JournalEntryViewModel(
     }
 
     fun forceUpload(tagGroup: TagGroup) {
-        viewModelScope.launch {
-            repository.upload(tagGroup.entries)
-        }
+        repository.upload(tagGroup.entries)
     }
 
     fun forceUpload(entry: JournalEntry) {
-        viewModelScope.launch {
-            repository.upload(listOf(entry))
-        }
+        repository.upload(listOf(entry))
     }
 
     fun sync() {
