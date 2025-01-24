@@ -28,3 +28,5 @@ local.properties
 !.idea/copyright
 
 **/.DS_Store
+
+**/temp/*
