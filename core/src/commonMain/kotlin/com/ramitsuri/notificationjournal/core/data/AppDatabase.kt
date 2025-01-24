@@ -19,7 +19,6 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom6To7
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom7To8
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom8To9
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom9To10
-import com.ramitsuri.notificationjournal.core.di.DiFactory
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -54,11 +53,10 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var instance: AppDatabase? = null
 
-        private fun getInstance(factory: DiFactory): AppDatabase {
+        fun getInstance(builder: () -> Builder<AppDatabase>): AppDatabase {
             if (instance == null) {
                 instance =
-                    factory
-                        .getDatabaseBuilder()
+                    builder()
                         .setDriver(BundledSQLiteDriver())
                         .setQueryCoroutineContext(Dispatchers.IO)
                         .addMigrations(MigrationFrom1To2())
@@ -78,15 +76,5 @@ abstract class AppDatabase : RoomDatabase() {
             }
             return instance as AppDatabase
         }
-
-        fun getJournalEntryDao(factory: DiFactory) = getInstance(factory).journalEntryDao()
-
-        fun getJournalEntryTemplateDao(factory: DiFactory) = getInstance(factory).templateDao()
-
-        fun getTagsDao(factory: DiFactory) = getInstance(factory).tagsDao()
-
-        fun getConflictsDao(factory: DiFactory) = getInstance(factory).entryConflictDao()
-
-        fun getDictionaryDao(factory: DiFactory) = getInstance(factory).dictionaryDao()
     }
 }
