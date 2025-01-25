@@ -275,6 +275,17 @@ object ServiceLocator {
                     is Payload.Templates -> {
                         coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
                     }
+
+                    is Payload.ClearDaysAndInsertEntries -> {
+                        coroutineScope.launch {
+                            repository.clearDaysAndInsert(
+                                days = it.days,
+                                entries = it.entries,
+                                // We're receiving entries here, we don't want to send them back
+                                uploadEntries = false,
+                            )
+                        }
+                    }
                 }
             }
         }

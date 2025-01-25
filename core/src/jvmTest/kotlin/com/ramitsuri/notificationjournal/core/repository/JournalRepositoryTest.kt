@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -195,11 +196,18 @@ class JournalRepositoryTest {
         }
 
         override suspend fun sendTags(tags: List<Tag>): Boolean {
-            return !sendSuccessful
+            return sendSuccessful
         }
 
         override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
-            return !sendSuccessful
+            return sendSuccessful
+        }
+
+        override suspend fun sendClearDaysAndInsertEntries(
+            days: List<LocalDate>,
+            entries: List<JournalEntry>,
+        ): Boolean {
+            return sendSuccessful
         }
 
         override suspend fun closeConnection() {
