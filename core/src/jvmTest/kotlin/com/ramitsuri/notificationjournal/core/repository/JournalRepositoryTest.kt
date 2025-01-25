@@ -2,7 +2,6 @@ package com.ramitsuri.notificationjournal.core.repository
 
 import app.cash.turbine.test
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.clearDb
 import com.ramitsuri.notificationjournal.core.data.getTestDb
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -15,7 +14,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -42,12 +40,6 @@ class JournalRepositoryTest {
                     clock = clock,
                     dataSendHelper = dataSendHelper,
                 )
-        }
-
-    @After
-    fun tearDown() =
-        runTest {
-            clearDb()
         }
 
     @Test
