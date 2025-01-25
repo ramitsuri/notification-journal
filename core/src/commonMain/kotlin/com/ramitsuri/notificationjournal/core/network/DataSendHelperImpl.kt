@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
@@ -49,6 +50,17 @@ internal class DataSendHelperImpl(
     override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
         return Payload.Templates(
             data = templates,
+            sender = getSender(),
+        ).send()
+    }
+
+    override suspend fun sendClearDaysAndInsertEntries(
+        days: List<LocalDate>,
+        entries: List<JournalEntry>,
+    ): Boolean {
+        return Payload.ClearDaysAndInsertEntries(
+            days = days,
+            entries = entries,
             sender = getSender(),
         ).send()
     }
