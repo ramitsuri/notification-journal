@@ -136,6 +136,9 @@ class MainViewModel(
     fun triggerUpload() {
         longLivingCoroutineScope.launch {
             wearDataSharingClient.requestUpload()
+            _state.update {
+                it.copy(addStatus = AddStatus.SUCCESS_EXIT)
+            }
         }
     }
 
