@@ -28,13 +28,13 @@ class MainActivity : ComponentActivity() {
             val view = LocalView.current
             LaunchedEffect(key1 = viewState) {
                 val showToast =
-                    viewState.addStatus == AddStatus.SUCCESS_EXIT ||
-                        viewState.addStatus == AddStatus.SUCCESS
-                val finish = viewState.addStatus == AddStatus.SUCCESS_EXIT
+                    viewState.status is Status.SuccessExit ||
+                        viewState.status is Status.Success
+                val finish = viewState.status is Status.SuccessExit
                 if (showToast) {
                     Toast.makeText(
                         this@MainActivity,
-                        getString(R.string.add_success),
+                        viewState.status.exitText ?: getString(R.string.add_success),
                         Toast.LENGTH_SHORT,
                     ).show()
                     viewModel.addStatusAcknowledged()
