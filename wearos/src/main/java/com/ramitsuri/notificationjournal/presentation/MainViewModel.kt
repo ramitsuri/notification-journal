@@ -84,8 +84,8 @@ class MainViewModel(
 
     fun addFromTemplate(templateId: String) {
         viewModelScope.launch {
-            val entry = templateDao.getAll().firstOrNull { it.id == templateId } ?: return@launch
-            add(entry.text, entry.tag, exitOnDone = true)
+            val template = templateDao.getAll().firstOrNull { it.id == templateId } ?: return@launch
+            add(template.text, template.tag, exitOnDone = true, exitText = template.shortDisplayText)
         }
     }
 
@@ -93,6 +93,7 @@ class MainViewModel(
         value: String,
         tag: String? = null,
         exitOnDone: Boolean = false,
+        exitText: String? = null,
         time: LocalDateTime = Clock.System.nowLocal(),
     ) {
         longLivingCoroutineScope.launch {
@@ -111,7 +112,7 @@ class MainViewModel(
                 .joinAll()
 
             _state.update {
-                it.copy(addStatus = if (exitOnDone) AddStatus.SUCCESS_EXIT else AddStatus.SUCCESS)
+                it.copy(status = if (exitOnDone) Status.SuccessExit(exitText) else Status.Success)
             }
         }
     }
@@ -136,12 +137,15 @@ class MainViewModel(
     fun triggerUpload() {
         longLivingCoroutineScope.launch {
             wearDataSharingClient.requestUpload()
+            _state.update {
+                it.copy(status = Status.SuccessExit("Upload"))
+            }
         }
     }
 
     fun addStatusAcknowledged() {
         _state.update {
-            it.copy(addStatus = AddStatus.NONE)
+            it.copy(status = Status.None)
         }
     }
 
@@ -161,11 +165,16 @@ class MainViewModel(
 data class ViewState(
     val journalEntries: List<JournalEntry> = listOf(),
     val journalEntryTemplates: List<JournalEntryTemplate> = listOf(),
-    val addStatus: AddStatus = AddStatus.NONE,
+    val status: Status = Status.None,
 )
 
-enum class AddStatus {
-    NONE,
-    SUCCESS_EXIT,
-    SUCCESS,
+sealed interface Status {
+    data object None : Status
+
+    data class SuccessExit(val text: String?) : Status
+
+    data object Success : Status
+
+    val exitText
+        get() = (this as? SuccessExit)?.text
 }
