@@ -11,10 +11,10 @@ import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -28,11 +28,11 @@ import org.jetbrains.compose.resources.getString
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalRepository(
-    private val coroutineScope: CoroutineScope,
     private val dao: JournalEntryDao,
     private val conflictDao: EntryConflictDao,
     private val clock: Clock = Clock.System,
     private val dataSendHelper: DataSendHelper?,
+    private val prefManager: PrefManager,
 ) {
     fun getFlow(showReconciled: Boolean = false): Flow<List<JournalEntry>> {
         return if (showReconciled) {
@@ -96,6 +96,7 @@ class JournalRepository(
         tag: String? = null,
         time: LocalDateTime = clock.nowLocal(),
     ) {
+        val defaultTag = prefManager.getDefaultTag()
         text
             .split("\n")
             .filter { it.isNotBlank() }
@@ -106,7 +107,7 @@ class JournalRepository(
                         originalText = entry,
                         time = entryTime,
                     ).trim()
-                JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: Tag.NO_TAG.value)
+                JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: defaultTag)
             }
             .let {
                 dao.insert(it)

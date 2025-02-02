@@ -16,6 +16,7 @@
     <string name="now">Now</string>
     <string name="pick">Pick</string>
     <string name="stats">Stats</string>
+    <string name="default_tag">Default tag</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>

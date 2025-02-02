@@ -59,4 +59,5 @@ enum class Key(val value: String) {
     SHOW_LOGS_BUTTON("show_logs_button"),
     LAST_IMPORT_DATE("last_import_date"),
     LAST_IMPORT_DIRECTORY("last_import_directory"),
+    DEFAULT_TAG("default_tag"),
 }

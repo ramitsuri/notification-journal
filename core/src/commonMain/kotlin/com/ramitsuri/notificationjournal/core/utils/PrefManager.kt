@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.utils
 
+import com.ramitsuri.notificationjournal.core.model.Tag
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
@@ -68,5 +69,19 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
 
     suspend fun setLastImportDir(dir: String) {
         keyValueStore.putString(Key.LAST_IMPORT_DIRECTORY, dir)
+    }
+
+    suspend fun getDefaultTag(): String {
+        return keyValueStore.getString(Key.DEFAULT_TAG, Tag.NO_TAG.value)
+    }
+
+    fun getDefaultTagFlow(): Flow<String> {
+        return keyValueStore.getStringFlow(Key.DEFAULT_TAG, Tag.NO_TAG.value).map {
+            it ?: Tag.NO_TAG.value
+        }
+    }
+
+    suspend fun setDefaultTag(tag: String) {
+        keyValueStore.putString(Key.DEFAULT_TAG, tag)
     }
 }

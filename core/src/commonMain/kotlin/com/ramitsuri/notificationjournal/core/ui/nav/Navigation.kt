@@ -273,6 +273,7 @@ fun NavGraph(
                 onAddRequested = viewModel::addClicked,
                 onEditRequested = viewModel::editClicked,
                 onDeleteRequested = viewModel::delete,
+                onSetAsDefaultRequested = viewModel::setDefaultTag,
                 onErrorAcknowledged = viewModel::onErrorAcknowledged,
                 onBack = { navController.navigateUp() },
                 onAddOrEditApproved = viewModel::save,

@@ -86,10 +86,10 @@ object ServiceLocator {
 
     val repository: JournalRepository by lazy {
         JournalRepository(
-            coroutineScope = coroutineScope,
             dao = db.journalEntryDao(),
             dataSendHelper = dataSendHelper,
             conflictDao = db.entryConflictDao(),
+            prefManager = prefManager,
         )
     }
 
@@ -132,6 +132,7 @@ object ServiceLocator {
                 tagsDao = tagsDao,
                 templatesDao = templatesDao,
                 spellChecker = spellChecker,
+                prefManager = prefManager,
             )
         }
 

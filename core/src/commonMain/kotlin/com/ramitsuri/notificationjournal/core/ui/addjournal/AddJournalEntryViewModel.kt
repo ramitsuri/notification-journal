@@ -14,6 +14,7 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
@@ -38,6 +39,7 @@ class AddJournalEntryViewModel(
     private val templatesDao: JournalEntryTemplateDao,
     private val spellChecker: SpellChecker,
     private val clock: Clock = Clock.System,
+    private val prefManager: PrefManager,
 ) : ViewModel() {
     private val receivedText: String? =
         if (savedStateHandle.get<String?>(RECEIVED_TEXT_ARG).isNullOrEmpty()) {
@@ -247,6 +249,16 @@ class AddJournalEntryViewModel(
         viewModelScope.launch {
             _state.update {
                 it.copy(tags = tagsDao.getAll())
+            }
+        }
+        viewModelScope.launch {
+            _state.update {
+                val defaultTag = prefManager.getDefaultTag()
+                if (it.selectedTag == null || Tag.isNoTag(it.selectedTag) && Tag.isNoTag(defaultTag)) {
+                    it.copy(selectedTag = defaultTag)
+                } else {
+                    it
+                }
             }
         }
     }
