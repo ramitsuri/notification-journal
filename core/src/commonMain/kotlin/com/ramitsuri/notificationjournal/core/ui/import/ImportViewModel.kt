@@ -62,7 +62,7 @@ class ImportViewModel(
                 .collect { entries ->
                     val modifiedDays = entries.map { it.entryTime.date }
                     days.addAll(modifiedDays)
-                    journalRepository.clearDaysAndInsert(modifiedDays, entries)
+                    journalRepository.clearDaysAndInsert(modifiedDays, entries, uploadEntries = true)
                     _state.update {
                         val existingCount =
                             (it.importStatus as? ImportStatus.InProgress)

@@ -37,8 +37,11 @@ import okio.Path.Companion.toOkioPath
 import java.util.UUID
 
 object ServiceLocator {
+    private lateinit var db: AppDatabase
+
     fun init(factory: DiFactory) {
         ServiceLocator.factory = factory
+        db = AppDatabase.getDatabase { factory.getDatabaseBuilder() }
         notificationHandler.init(
             listOf(
                 NotificationChannelInfo(
@@ -83,9 +86,9 @@ object ServiceLocator {
 
     val repository: JournalRepository by lazy {
         JournalRepository(
-            dao = AppDatabase.getInstance(factory::getDatabaseBuilder).journalEntryDao(),
+            dao = db.journalEntryDao(),
             dataSendHelper = dataSendHelper,
-            conflictDao = AppDatabase.getInstance(factory::getDatabaseBuilder).entryConflictDao(),
+            conflictDao = db.entryConflictDao(),
             prefManager = prefManager,
         )
     }
@@ -98,17 +101,14 @@ object ServiceLocator {
         PrefsKeyValueStore(factory)
     }
 
-    val tagsDao: TagsDao by lazy {
-        AppDatabase.getInstance(factory::getDatabaseBuilder).tagsDao()
-    }
+    val tagsDao: TagsDao
+        get() = db.tagsDao()
 
-    val templatesDao: JournalEntryTemplateDao by lazy {
-        AppDatabase.getInstance(factory::getDatabaseBuilder).templateDao()
-    }
+    val templatesDao: JournalEntryTemplateDao
+        get() = db.templateDao()
 
-    private val dictionaryDao: DictionaryDao by lazy {
-        AppDatabase.getInstance(factory::getDatabaseBuilder).dictionaryDao()
-    }
+    private val dictionaryDao: DictionaryDao
+        get() = db.dictionaryDao()
 
     val wearDataSharingClient: WearDataSharingClient by lazy {
         factory.getWearDataSharingClient()
@@ -275,6 +275,17 @@ object ServiceLocator {
 
                     is Payload.Templates -> {
                         coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
+                    }
+
+                    is Payload.ClearDaysAndInsertEntries -> {
+                        coroutineScope.launch {
+                            repository.clearDaysAndInsert(
+                                days = it.days,
+                                entries = it.entries,
+                                // We're receiving entries here, we don't want to send them back
+                                uploadEntries = false,
+                            )
+                        }
                     }
                 }
             }

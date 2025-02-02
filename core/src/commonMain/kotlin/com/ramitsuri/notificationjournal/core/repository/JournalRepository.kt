@@ -76,8 +76,19 @@ class JournalRepository(
     suspend fun clearDaysAndInsert(
         days: List<LocalDate>,
         entries: List<JournalEntry>,
+        uploadEntries: Boolean,
     ) {
-        dao.clearDaysAndInsert(days.map { it.toString() }, entries)
+        val uploaded =
+            if (uploadEntries) {
+                // If not able to send it right away, these entries would need to be reimported for them to show up
+                // on other devices. Otherwise, need to add support for tracking which days have been imported.
+                dataSendHelper?.sendClearDaysAndInsertEntries(days, entries) == true
+            } else {
+                // If uploaded is false, then we're receiving these entries from another device, consider them uploaded
+                // because other device already has them.
+                true
+            }
+        dao.clearDaysAndInsert(days.map { it.toString() }, entries.map { it.copy(uploaded = uploaded) })
     }
 
     suspend fun insert(

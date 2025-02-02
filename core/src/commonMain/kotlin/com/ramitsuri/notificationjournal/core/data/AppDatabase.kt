@@ -50,31 +50,24 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dictionaryDao(): DictionaryDao
 
     companion object {
-        @Volatile
-        private var instance: AppDatabase? = null
-
-        fun getInstance(builder: () -> Builder<AppDatabase>): AppDatabase {
-            if (instance == null) {
-                instance =
-                    builder()
-                        .setDriver(BundledSQLiteDriver())
-                        .setQueryCoroutineContext(Dispatchers.IO)
-                        .addMigrations(MigrationFrom1To2())
-                        .addMigrations(MigrationFrom2To3())
-                        .addMigrations(MigrationFrom3To4())
-                        .addMigrations(MigrationFrom4To5())
-                        .addMigrations(MigrationFrom5To6())
-                        .addMigrations(MigrationFrom6To7())
-                        .addMigrations(MigrationFrom7To8())
-                        .addMigrations(MigrationFrom8To9())
-                        .addMigrations(MigrationFrom9To10())
-                        .addMigrations(MigrationFrom10To11())
-                        .addMigrations(MigrationFrom11To12())
-                        .addMigrations(MigrationFrom12To13())
-                        .addMigrations(MigrationFrom13To14())
-                        .build()
-            }
-            return instance as AppDatabase
+        fun getDatabase(builder: () -> Builder<AppDatabase>): AppDatabase {
+            return builder()
+                .setDriver(BundledSQLiteDriver())
+                .setQueryCoroutineContext(Dispatchers.IO)
+                .addMigrations(MigrationFrom1To2())
+                .addMigrations(MigrationFrom2To3())
+                .addMigrations(MigrationFrom3To4())
+                .addMigrations(MigrationFrom4To5())
+                .addMigrations(MigrationFrom5To6())
+                .addMigrations(MigrationFrom6To7())
+                .addMigrations(MigrationFrom7To8())
+                .addMigrations(MigrationFrom8To9())
+                .addMigrations(MigrationFrom9To10())
+                .addMigrations(MigrationFrom10To11())
+                .addMigrations(MigrationFrom11To12())
+                .addMigrations(MigrationFrom12To13())
+                .addMigrations(MigrationFrom13To14())
+                .build()
         }
     }
 }

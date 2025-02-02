@@ -2,7 +2,6 @@ package com.ramitsuri.notificationjournal.core.repository
 
 import app.cash.turbine.test
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.clearDb
 import com.ramitsuri.notificationjournal.core.data.getTestDb
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -15,8 +14,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -45,12 +44,6 @@ class JournalRepositoryTest {
                     dataSendHelper = dataSendHelper,
                     prefManager = prefManager,
                 )
-        }
-
-    @After
-    fun tearDown() =
-        runTest {
-            clearDb()
         }
 
     @Test
@@ -198,11 +191,18 @@ class JournalRepositoryTest {
         }
 
         override suspend fun sendTags(tags: List<Tag>): Boolean {
-            return !sendSuccessful
+            return sendSuccessful
         }
 
         override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
-            return !sendSuccessful
+            return sendSuccessful
+        }
+
+        override suspend fun sendClearDaysAndInsertEntries(
+            days: List<LocalDate>,
+            entries: List<JournalEntry>,
+        ): Boolean {
+            return sendSuccessful
         }
 
         override suspend fun closeConnection() {
