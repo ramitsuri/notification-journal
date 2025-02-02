@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
@@ -80,6 +81,7 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.back
 import notificationjournal.core.generated.resources.cancel
+import notificationjournal.core.generated.resources.default_tag
 import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.menu_content_description
@@ -97,6 +99,7 @@ fun TagsScreen(
     onTextUpdated: (String) -> Unit,
     onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
+    onSetAsDefaultRequested: (Tag) -> Unit,
     onAddRequested: () -> Unit,
     onAddOrEditApproved: () -> Unit,
     onAddOrEditCanceled: () -> Unit,
@@ -195,12 +198,14 @@ fun TagsScreen(
                 HelperText()
                 List(
                     tags = state.tags,
+                    defaultTag = state.defaultTag,
                     onEditOrder = onEditOrder,
                     onEditRequested = { item ->
                         onEditRequested(item)
                         showDialog = true
                     },
                     onDeleteRequested = onDeleteRequested,
+                    onSetAsDefaultRequested = onSetAsDefaultRequested,
                     modifier =
                         Modifier
                             .padding(start = 16.dp, end = 16.dp),
@@ -269,9 +274,11 @@ private fun HelperText() {
 private fun List(
     modifier: Modifier = Modifier,
     tags: List<Tag>,
+    defaultTag: String,
     onEditOrder: (Int, Int) -> Unit,
     onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
+    onSetAsDefaultRequested: (Tag) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val dragDropState =
@@ -288,9 +295,11 @@ private fun List(
                 val elevation by animateDpAsState(if (isDragging) 4.dp else 1.dp, label = "")
                 ListItem(
                     item = item,
+                    isDefault = item.value == defaultTag,
                     elevation = CardDefaults.cardElevation(defaultElevation = elevation),
                     onEditRequested = onEditRequested,
                     onDeleteRequested = onDeleteRequested,
+                    onSetAsDefaultRequested = onSetAsDefaultRequested,
                 )
             }
         }
@@ -303,9 +312,11 @@ private fun List(
 @Composable
 private fun ListItem(
     item: Tag,
+    isDefault: Boolean,
     elevation: CardElevation,
     onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
+    onSetAsDefaultRequested: (Tag) -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
@@ -329,11 +340,20 @@ private fun ListItem(
                         .padding(8.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
+            if (isDefault) {
+                Icon(
+                    Icons.Outlined.Star,
+                    contentDescription = stringResource(Res.string.default_tag),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             ItemMenu(
                 showMenu = showMenu,
+                showSetAsDefault = !isDefault,
                 onEditRequested = { onEditRequested(item) },
                 onDeleteRequested = { onDeleteRequested(item) },
                 onMenuButtonClicked = { showMenu = !showMenu },
+                onSetAsDefaultClicked = { onSetAsDefaultRequested(item) },
             )
         }
     }
@@ -342,9 +362,11 @@ private fun ListItem(
 @Composable
 private fun ItemMenu(
     showMenu: Boolean,
+    showSetAsDefault: Boolean,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
     onMenuButtonClicked: () -> Unit,
+    onSetAsDefaultClicked: () -> Unit,
 ) {
     Box {
         IconButton(
@@ -377,6 +399,15 @@ private fun ItemMenu(
                     onDeleteRequested()
                 },
             )
+            if (showSetAsDefault) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.default_tag)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onSetAsDefaultClicked()
+                    },
+                )
+            }
         }
     }
 }

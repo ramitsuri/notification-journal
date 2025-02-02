@@ -9,8 +9,11 @@ import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagTextUpdate
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
@@ -18,6 +21,7 @@ import kotlin.reflect.KClass
 class TagsViewModel(
     private val dao: TagsDao,
     private val dataSendHelper: DataSendHelper?,
+    private val prefManager: PrefManager,
 ) :
     ViewModel() {
     private val _state =
@@ -30,9 +34,14 @@ class TagsViewModel(
 
     init {
         viewModelScope.launch {
-            dao.getAllFlow().collect { tags ->
+            combine(
+                dao.getAllFlow(),
+                prefManager.getDefaultTagFlow(),
+            ) { tags, defaultTag ->
+                tags to defaultTag
+            }.collect { (tags, defaultTag) ->
                 _state.update { currentState ->
-                    currentState.copy(tags = tags)
+                    currentState.copy(tags = tags, defaultTag = defaultTag)
                 }
             }
         }
@@ -143,6 +152,12 @@ class TagsViewModel(
         }
     }
 
+    fun setDefaultTag(tag: Tag) {
+        viewModelScope.launch {
+            prefManager.setDefaultTag(tag.value)
+        }
+    }
+
     companion object {
         @Suppress("UNCHECKED_CAST")
         fun factory() =
@@ -154,6 +169,7 @@ class TagsViewModel(
                     return TagsViewModel(
                         ServiceLocator.tagsDao,
                         dataSendHelper = ServiceLocator.dataSendHelper,
+                        prefManager = ServiceLocator.prefManager,
                     ) as T
                 }
             }
@@ -163,6 +179,7 @@ class TagsViewModel(
 data class TagsViewState(
     val text: String,
     val tags: List<Tag>,
+    val defaultTag: String = Tag.NO_TAG.value,
     val error: TagError? = null,
 )
 

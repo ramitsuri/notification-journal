@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
@@ -27,6 +28,7 @@ class JournalRepositoryTest {
     private lateinit var dataSendHelper: TestDataSendHelper
     private lateinit var clock: Clock
     private lateinit var db: AppDatabase
+    private lateinit var prefManager: PrefManager
 
     @Before
     fun setUp() =
@@ -34,13 +36,14 @@ class JournalRepositoryTest {
             db = getTestDb()
             dataSendHelper = TestDataSendHelper()
             clock = TestClock()
+            prefManager = PrefManager()
             repository =
                 JournalRepository(
-                    coroutineScope = backgroundScope,
                     dao = db.journalEntryDao(),
                     conflictDao = db.entryConflictDao(),
                     clock = clock,
                     dataSendHelper = dataSendHelper,
+                    prefManager = prefManager,
                 )
         }
 
