@@ -255,7 +255,7 @@ class AddJournalEntryViewModel(
             _state.update {
                 val defaultTag = prefManager.getDefaultTag()
                 if (it.selectedTag == null || Tag.isNoTag(it.selectedTag) && Tag.isNoTag(defaultTag)) {
-                    it.copy(selectedTag = prefManager.getDefaultTag())
+                    it.copy(selectedTag = defaultTag)
                 } else {
                     it
                 }
