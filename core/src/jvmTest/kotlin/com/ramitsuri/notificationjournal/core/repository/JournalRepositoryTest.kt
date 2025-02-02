@@ -9,18 +9,24 @@ import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.getTestDataKeyValueStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.nio.file.Paths
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 class JournalRepositoryTest {
     private lateinit var repository: JournalRepository
@@ -35,7 +41,7 @@ class JournalRepositoryTest {
             db = getTestDb()
             dataSendHelper = TestDataSendHelper()
             clock = TestClock()
-            prefManager = PrefManager()
+            prefManager = PrefManager(getTestDataKeyValueStore())
             repository =
                 JournalRepository(
                     dao = db.journalEntryDao(),
@@ -45,6 +51,12 @@ class JournalRepositoryTest {
                     prefManager = prefManager,
                 )
         }
+
+    @OptIn(ExperimentalPathApi::class)
+    @After
+    fun tearDown() {
+        Paths.get(Constants.BASE_DIR).deleteRecursively()
+    }
 
     @Test
     fun sendsEntriesAsExpected() =
