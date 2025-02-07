@@ -15,10 +15,12 @@ import androidx.navigation.compose.rememberNavController
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.import.ImportScreen
 import com.ramitsuri.notificationjournal.core.ui.import.ImportViewModel
+import com.ramitsuri.notificationjournal.core.ui.journalentry.EntryScreenAction
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreen
@@ -69,7 +71,7 @@ fun NavGraph(
             )
         },
     ) {
-        composable(Destination.JOURNAL_ENTRY.route()) {
+        composable(Destination.JOURNAL_ENTRY.route()) { _ ->
             val viewModel: JournalEntryViewModel =
                 viewModel(factory = JournalEntryViewModel.factory(receivedText))
 
@@ -95,76 +97,137 @@ fun NavGraph(
             val viewState by viewModel.state.collectAsStateWithLifecycle()
             JournalEntryScreen(
                 state = viewState,
-                onAddRequested = { date ->
-                    navController.navigate(
-                        Destination.ADD_ENTRY.routeWithArgValues(
-                            mapOf(AddJournalEntryViewModel.DATE_ARG to date?.toString()),
-                        ),
-                    )
+                onEntryScreenAction = { action ->
+                    when (action) {
+                        is EntryScreenAction.AddWithDate -> {
+                            navController.navigate(
+                                Destination.ADD_ENTRY.routeWithArgValues(
+                                    mapOf(AddJournalEntryViewModel.DATE_ARG to action.date?.toString()),
+                                ),
+                            )
+                        }
+                        is EntryScreenAction.CancelReconcile -> {
+                            viewModel.cancelReconcile()
+                        }
+                        is EntryScreenAction.Copy -> {
+                            viewModel.onContentCopied()
+                        }
+                        is EntryScreenAction.NavToLogs -> {
+                            navController.navigate(
+                                Destination.LOGS.routeWithArgValues(),
+                            )
+                        }
+                        is EntryScreenAction.NavToSearch -> {
+                            navController.navigate(Destination.SEARCH.route())
+                        }
+                        is EntryScreenAction.NavToSettings -> {
+                            navController.navigate(Destination.SETTINGS.routeWithArgValues())
+                        }
+                        is EntryScreenAction.ResetReceiveHelper -> {
+                            viewModel.resetReceiveHelper()
+                        }
+                        is EntryScreenAction.ShowDayGroup -> {
+                            viewModel.showDayGroupClicked(action.dayGroup)
+                        }
+                        is EntryScreenAction.ShowStatsToggled -> {
+                            viewModel.onStatsRequestToggled()
+                        }
+                        is EntryScreenAction.Sync -> {
+                            viewModel.sync()
+                        }
+                    }
                 },
-                onEditRequested = { entryId ->
-                    navController.navigate(
-                        Destination.EDIT_ENTRY.routeWithArgValues(
-                            mapOf(
-                                EditJournalEntryViewModel.ENTRY_ID_ARG to entryId,
-                            ),
-                        ),
-                    )
+                onDayGroupAction = { action ->
+                    when (action) {
+                        is DayGroupAction.AddEntry -> {
+                            navController.navigate(
+                                Destination.ADD_ENTRY.routeWithArgValues(
+                                    mapOf(
+                                        AddJournalEntryViewModel.DATE_ARG to action.date.toString(),
+                                        AddJournalEntryViewModel.TIME_ARG to action.time?.toString(),
+                                        AddJournalEntryViewModel.TAG_ARG to action.tag,
+                                    ),
+                                ),
+                            )
+                        }
+                        is DayGroupAction.CopyDayGroup -> {
+                            viewModel.onCopy()
+                        }
+                        is DayGroupAction.CopyEntry -> {
+                            viewModel.onCopy(action.entry)
+                        }
+                        is DayGroupAction.CopyTagGroup -> {
+                            viewModel.onCopy(action.tagGroup)
+                        }
+                        is DayGroupAction.DeleteEntry -> {
+                            viewModel.delete(action.entry)
+                        }
+                        is DayGroupAction.DeleteTagGroup -> {
+                            viewModel.delete(action.tagGroup)
+                        }
+                        is DayGroupAction.DuplicateEntry -> {
+                            navController.navigate(
+                                Destination.ADD_ENTRY.routeWithArgValues(
+                                    mapOf(AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG to action.entry.id),
+                                ),
+                            )
+                        }
+                        is DayGroupAction.EditEntry -> {
+                            navController.navigate(
+                                Destination.EDIT_ENTRY.routeWithArgValues(
+                                    mapOf(
+                                        EditJournalEntryViewModel.ENTRY_ID_ARG to action.entry.id,
+                                    ),
+                                ),
+                            )
+                        }
+                        is DayGroupAction.EditTag -> {
+                            viewModel.editTag(action.entry, action.tag)
+                        }
+                        is DayGroupAction.ForceUploadEntry -> {
+                            viewModel.forceUpload(action.entry)
+                        }
+                        is DayGroupAction.ForceUploadTagGroup -> {
+                            viewModel.forceUpload(action.tagGroup)
+                        }
+                        is DayGroupAction.MoveEntryDown -> {
+                            viewModel.moveDown(action.entry, action.tagGroup)
+                        }
+                        is DayGroupAction.MoveEntryToBottom -> {
+                            viewModel.moveToBottom(action.entry, action.tagGroup)
+                        }
+                        is DayGroupAction.MoveEntryToNextDay -> {
+                            viewModel.moveToNextDay(action.entry)
+                        }
+                        is DayGroupAction.MoveEntryToPreviousDay -> {
+                            viewModel.moveToPreviousDay(action.entry)
+                        }
+                        is DayGroupAction.MoveEntryToTop -> {
+                            viewModel.moveToTop(action.entry, action.tagGroup)
+                        }
+                        is DayGroupAction.MoveEntryUp -> {
+                            viewModel.moveUp(action.entry, action.tagGroup)
+                        }
+                        is DayGroupAction.MoveTagGroupToNextDay -> {
+                            viewModel.moveToNextDay(action.tagGroup)
+                        }
+                        is DayGroupAction.MoveTagGroupToPreviousDay -> {
+                            viewModel.moveToPreviousDay(action.tagGroup)
+                        }
+                        is DayGroupAction.ResolveConflict -> {
+                            viewModel.resolveConflict(action.entry, action.conflict)
+                        }
+                        is DayGroupAction.ShowPreviousDay -> {
+                            viewModel.goToPreviousDay()
+                        }
+                        is DayGroupAction.ShowNextDay -> {
+                            viewModel.goToNextDay()
+                        }
+                        is DayGroupAction.ShowAllDays -> {
+                            error("Should already be managed in the screen and not reach here")
+                        }
+                    }
                 },
-                onDeleteRequested = viewModel::delete,
-                onEditTagRequested = viewModel::editTag,
-                onMoveToNextDayRequested = viewModel::moveToNextDay,
-                onMoveToPreviousDayRequested = viewModel::moveToPreviousDay,
-                onMoveUpRequested = viewModel::moveUp,
-                onMoveToTopRequested = viewModel::moveToTop,
-                onMoveDownRequested = viewModel::moveDown,
-                onMoveToBottomRequested = viewModel::moveToBottom,
-                onTagGroupMoveToNextDayRequested = viewModel::moveToNextDay,
-                onTagGroupMoveToPreviousDayRequested = viewModel::moveToPreviousDay,
-                onTagGroupDeleteRequested = viewModel::delete,
-                onSettingsClicked = {
-                    navController.navigate(Destination.SETTINGS.routeWithArgValues())
-                },
-                onSyncClicked = viewModel::sync,
-                onTagGroupForceUploadRequested = viewModel::forceUpload,
-                onForceUploadRequested = viewModel::forceUpload,
-                onConflictResolved = viewModel::resolveConflict,
-                onDuplicateRequested = {
-                    navController.navigate(
-                        Destination.ADD_ENTRY.routeWithArgValues(
-                            mapOf(AddJournalEntryViewModel.DUPLICATE_FROM_ENTRY_ID_ARG to it.id),
-                        ),
-                    )
-                },
-                onShowPreviousDayClicked = viewModel::goToPreviousDay,
-                onShowNextDayClicked = viewModel::goToNextDay,
-                onShowDayGroupClicked = viewModel::showDayGroupClicked,
-                onCopyEntryRequested = viewModel::onCopy,
-                onCopyTagGroupRequested = viewModel::onCopy,
-                onCopyDayGroupRequested = viewModel::onCopy,
-                onCopied = viewModel::onContentCopied,
-                onResetReceiveHelper = viewModel::resetReceiveHelper,
-                onAddFromTagRequested = { date, time, tag ->
-                    navController.navigate(
-                        Destination.ADD_ENTRY.routeWithArgValues(
-                            mapOf(
-                                AddJournalEntryViewModel.DATE_ARG to date.toString(),
-                                AddJournalEntryViewModel.TIME_ARG to time?.toString(),
-                                AddJournalEntryViewModel.TAG_ARG to tag,
-                            ),
-                        ),
-                    )
-                },
-                onCancelReconcile = viewModel::cancelReconcile,
-                onLogsClicked = {
-                    navController.navigate(
-                        Destination.LOGS.routeWithArgValues(),
-                    )
-                },
-                onSearchClicked = {
-                    navController.navigate(Destination.SEARCH.route())
-                },
-                onStatsRequestToggled = viewModel::onStatsRequestToggled,
             )
         }
 
