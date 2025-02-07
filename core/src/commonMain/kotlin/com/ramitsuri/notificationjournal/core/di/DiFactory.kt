@@ -9,6 +9,7 @@ import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,6 +38,13 @@ expect class DiFactory {
     fun editJournalEntryVMFactory(
         navBackStackEntry: NavBackStackEntry,
         getVMInstance: (SavedStateHandle) -> EditJournalEntryViewModel,
+    ): AbstractSavedStateViewModelFactory
+
+    // Because Android AbstractSavedStateViewModelFactory expects Class as a parameter but JVM
+    // AbstractSavedStateViewModelFactory expects KClass as a parameter.
+    fun viewJournalEntryDayVMFactory(
+        navBackStackEntry: NavBackStackEntry,
+        getVMInstance: (SavedStateHandle) -> ViewJournalEntryDayViewModel,
     ): AbstractSavedStateViewModelFactory
 
     fun getDataStorePath(): Path

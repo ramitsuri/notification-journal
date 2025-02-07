@@ -42,6 +42,10 @@ class JournalRepository(
         }
     }
 
+    fun getForDateFlow(date: LocalDate): Flow<List<JournalEntry>> {
+        return dao.getForDateFlow(date.toString())
+    }
+
     fun getForUploadCountFlow() = dao.getForUploadCountFlow()
 
     suspend fun getAll() = dao.getAll()

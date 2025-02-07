@@ -5,6 +5,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 
 enum class Destination(private val route: String) {
     JOURNAL_ENTRY("journal_entry"),
@@ -16,15 +17,16 @@ enum class Destination(private val route: String) {
     LOGS("logs"),
     SEARCH("search"),
     IMPORT("import"),
+    VIEW_JOURNAL_ENTRY_DAY("view_journal_entry_day"),
     ;
 
     fun routeWithArgValues(args: Map<String, String?> = mapOf()): String {
-        return when {
-            this == EDIT_ENTRY -> {
+        return when (this) {
+            EDIT_ENTRY -> {
                 route.plus("/${args[EditJournalEntryViewModel.ENTRY_ID_ARG]}")
             }
 
-            this == ADD_ENTRY -> {
+            ADD_ENTRY -> {
                 route
                     .plus("?${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}")
                     .plus("=${args[AddJournalEntryViewModel.RECEIVED_TEXT_ARG]}")
@@ -38,6 +40,12 @@ enum class Destination(private val route: String) {
                     .plus("=${args[AddJournalEntryViewModel.TAG_ARG]}")
             }
 
+            VIEW_JOURNAL_ENTRY_DAY -> {
+                route
+                    .plus("?${ViewJournalEntryDayViewModel.DATE_ARG}")
+                    .plus("=${args[ViewJournalEntryDayViewModel.DATE_ARG]}")
+            }
+
             else -> {
                 route
             }
@@ -45,12 +53,12 @@ enum class Destination(private val route: String) {
     }
 
     fun route(): String {
-        return when {
-            this == EDIT_ENTRY -> {
+        return when (this) {
+            EDIT_ENTRY -> {
                 route.plus("/{${EditJournalEntryViewModel.ENTRY_ID_ARG}}")
             }
 
-            this == ADD_ENTRY -> {
+            ADD_ENTRY -> {
                 route
                     .plus("?${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}")
                     .plus("={${AddJournalEntryViewModel.RECEIVED_TEXT_ARG}}")
@@ -64,6 +72,12 @@ enum class Destination(private val route: String) {
                     .plus("={${AddJournalEntryViewModel.TAG_ARG}}")
             }
 
+            VIEW_JOURNAL_ENTRY_DAY -> {
+                route
+                    .plus("?${ViewJournalEntryDayViewModel.DATE_ARG}")
+                    .plus("={${ViewJournalEntryDayViewModel.DATE_ARG}}")
+            }
+
             else -> {
                 route
             }
@@ -71,8 +85,8 @@ enum class Destination(private val route: String) {
     }
 
     fun navArgs(): List<NamedNavArgument> {
-        return when {
-            this == EDIT_ENTRY -> {
+        return when (this) {
+            EDIT_ENTRY -> {
                 listOf(
                     navArgument(EditJournalEntryViewModel.ENTRY_ID_ARG) {
                         type = NavType.StringType
@@ -81,7 +95,7 @@ enum class Destination(private val route: String) {
                 )
             }
 
-            this == ADD_ENTRY -> {
+            ADD_ENTRY -> {
                 listOf(
                     navArgument(AddJournalEntryViewModel.RECEIVED_TEXT_ARG) {
                         type = NavType.StringType
@@ -100,6 +114,15 @@ enum class Destination(private val route: String) {
                         nullable = true
                     },
                     navArgument(AddJournalEntryViewModel.TAG_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                    },
+                )
+            }
+
+            VIEW_JOURNAL_ENTRY_DAY -> {
+                listOf(
+                    navArgument(ViewJournalEntryDayViewModel.DATE_ARG) {
                         type = NavType.StringType
                         nullable = true
                     },

@@ -3,7 +3,6 @@ package com.ramitsuri.notificationjournal.core.ui.journalentry
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -51,7 +51,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,7 +60,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -77,15 +75,12 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
@@ -94,6 +89,7 @@ import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.ui.components.CountdownSnackbar
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
+import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import kotlinx.coroutines.launch
 import notificationjournal.core.generated.resources.Res
@@ -117,6 +113,7 @@ import notificationjournal.core.generated.resources.stats_row_uploaded_reconcile
 import notificationjournal.core.generated.resources.sync_down
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged_format
+import notificationjournal.core.generated.resources.view_journal_entry_day
 import notificationjournal.core.generated.resources.will_reconcile
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -168,23 +165,6 @@ fun JournalEntryScreen(
                     }
                 }
             }
-        }
-    }
-
-    var showContent by remember { mutableStateOf(false) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, lifecycleEvent ->
-                if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
-                    showContent = true
-                } else if (lifecycleEvent == Lifecycle.Event.ON_PAUSE) {
-                    showContent = false
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -332,6 +312,7 @@ fun JournalEntryScreen(
                 onResetReceiveHelper = { onEntryScreenAction(EntryScreenAction.ResetReceiveHelper) },
                 onLogsClicked = { onEntryScreenAction(EntryScreenAction.NavToLogs) },
                 onStatsRequestToggled = { onEntryScreenAction(EntryScreenAction.ShowStatsToggled) },
+                onViewJournalEntryDayClicked = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
                 scrollBehavior = scrollBehavior,
             )
 
@@ -376,15 +357,6 @@ fun JournalEntryScreen(
                             else -> onDayGroupAction(action)
                         }
                     },
-                    modifier =
-                        Modifier.fillMaxSize()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = {},
-                                enabled = !showContent,
-                            )
-                            .alpha(if (showContent) 1f else 0f),
                 )
             }
         }
@@ -509,6 +481,7 @@ private fun Toolbar(
     onResetReceiveHelper: () -> Unit,
     onLogsClicked: () -> Unit,
     onStatsRequestToggled: () -> Unit,
+    onViewJournalEntryDayClicked: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
         colors =
@@ -589,6 +562,18 @@ private fun Toolbar(
                 )
             }
             IconButton(
+                onClick = onViewJournalEntryDayClicked,
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.CalendarToday,
+                    contentDescription = stringResource(Res.string.view_journal_entry_day),
+                )
+            }
+            IconButton(
                 onClick = onSettingsClicked,
                 modifier =
                     Modifier
@@ -630,6 +615,7 @@ private fun List(
         showEmptyTags = showEmptyTags,
         showConflictDiffInline = showConflictDiffInline,
         onAction = onAction,
+        config = JournalEntryDayConfig.allEnabled,
         modifier = modifier,
     )
     ShowAllDaysDialog(
