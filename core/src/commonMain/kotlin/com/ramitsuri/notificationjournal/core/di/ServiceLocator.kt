@@ -20,6 +20,7 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
@@ -133,6 +134,17 @@ object ServiceLocator {
                 templatesDao = templatesDao,
                 spellChecker = spellChecker,
                 prefManager = prefManager,
+            )
+        }
+
+    fun getViewJournalEntryDayVMFactory(navBackStackEntry: NavBackStackEntry) =
+        factory.viewJournalEntryDayVMFactory(
+            navBackStackEntry,
+        ) { savedStateHandle ->
+            ViewJournalEntryDayViewModel(
+                savedStateHandle = savedStateHandle,
+                repository = repository,
+                tagsDao = tagsDao,
             )
         }
 

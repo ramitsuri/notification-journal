@@ -14,6 +14,7 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
@@ -116,6 +117,25 @@ actual class DiFactory {
     actual fun editJournalEntryVMFactory(
         navBackStackEntry: NavBackStackEntry,
         getVMInstance: (SavedStateHandle) -> EditJournalEntryViewModel,
+    ): AbstractSavedStateViewModelFactory {
+        return object : AbstractSavedStateViewModelFactory(
+            owner = navBackStackEntry,
+            defaultArgs = navBackStackEntry.arguments,
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                key: String,
+                modelClass: KClass<T>,
+                handle: SavedStateHandle,
+            ): T {
+                return getVMInstance(handle) as T
+            }
+        }
+    }
+
+    actual fun viewJournalEntryDayVMFactory(
+        navBackStackEntry: NavBackStackEntry,
+        getVMInstance: (SavedStateHandle) -> ViewJournalEntryDayViewModel,
     ): AbstractSavedStateViewModelFactory {
         return object : AbstractSavedStateViewModelFactory(
             owner = navBackStackEntry,

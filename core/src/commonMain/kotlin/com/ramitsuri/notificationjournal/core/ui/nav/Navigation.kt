@@ -23,6 +23,8 @@ import com.ramitsuri.notificationjournal.core.ui.import.ImportViewModel
 import com.ramitsuri.notificationjournal.core.ui.journalentry.EntryScreenAction
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayScreen
+import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreen
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreenViewModel
 import com.ramitsuri.notificationjournal.core.ui.search.SearchScreen
@@ -106,34 +108,47 @@ fun NavGraph(
                                 ),
                             )
                         }
+
                         is EntryScreenAction.CancelReconcile -> {
                             viewModel.cancelReconcile()
                         }
+
                         is EntryScreenAction.Copy -> {
                             viewModel.onContentCopied()
                         }
+
                         is EntryScreenAction.NavToLogs -> {
                             navController.navigate(
                                 Destination.LOGS.routeWithArgValues(),
                             )
                         }
+
                         is EntryScreenAction.NavToSearch -> {
                             navController.navigate(Destination.SEARCH.route())
                         }
+
                         is EntryScreenAction.NavToSettings -> {
                             navController.navigate(Destination.SETTINGS.routeWithArgValues())
                         }
+
                         is EntryScreenAction.ResetReceiveHelper -> {
                             viewModel.resetReceiveHelper()
                         }
+
                         is EntryScreenAction.ShowDayGroup -> {
                             viewModel.showDayGroupClicked(action.dayGroup)
                         }
+
                         is EntryScreenAction.ShowStatsToggled -> {
                             viewModel.onStatsRequestToggled()
                         }
+
                         is EntryScreenAction.Sync -> {
                             viewModel.sync()
+                        }
+
+                        is EntryScreenAction.NavToViewJournalEntryDay -> {
+                            navController.navigate(Destination.VIEW_JOURNAL_ENTRY_DAY.routeWithArgValues())
                         }
                     }
                 },
@@ -150,21 +165,27 @@ fun NavGraph(
                                 ),
                             )
                         }
+
                         is DayGroupAction.CopyDayGroup -> {
                             viewModel.onCopy()
                         }
+
                         is DayGroupAction.CopyEntry -> {
                             viewModel.onCopy(action.entry)
                         }
+
                         is DayGroupAction.CopyTagGroup -> {
                             viewModel.onCopy(action.tagGroup)
                         }
+
                         is DayGroupAction.DeleteEntry -> {
                             viewModel.delete(action.entry)
                         }
+
                         is DayGroupAction.DeleteTagGroup -> {
                             viewModel.delete(action.tagGroup)
                         }
+
                         is DayGroupAction.DuplicateEntry -> {
                             navController.navigate(
                                 Destination.ADD_ENTRY.routeWithArgValues(
@@ -172,6 +193,7 @@ fun NavGraph(
                                 ),
                             )
                         }
+
                         is DayGroupAction.EditEntry -> {
                             navController.navigate(
                                 Destination.EDIT_ENTRY.routeWithArgValues(
@@ -181,48 +203,63 @@ fun NavGraph(
                                 ),
                             )
                         }
+
                         is DayGroupAction.EditTag -> {
                             viewModel.editTag(action.entry, action.tag)
                         }
+
                         is DayGroupAction.ForceUploadEntry -> {
                             viewModel.forceUpload(action.entry)
                         }
+
                         is DayGroupAction.ForceUploadTagGroup -> {
                             viewModel.forceUpload(action.tagGroup)
                         }
+
                         is DayGroupAction.MoveEntryDown -> {
                             viewModel.moveDown(action.entry, action.tagGroup)
                         }
+
                         is DayGroupAction.MoveEntryToBottom -> {
                             viewModel.moveToBottom(action.entry, action.tagGroup)
                         }
+
                         is DayGroupAction.MoveEntryToNextDay -> {
                             viewModel.moveToNextDay(action.entry)
                         }
+
                         is DayGroupAction.MoveEntryToPreviousDay -> {
                             viewModel.moveToPreviousDay(action.entry)
                         }
+
                         is DayGroupAction.MoveEntryToTop -> {
                             viewModel.moveToTop(action.entry, action.tagGroup)
                         }
+
                         is DayGroupAction.MoveEntryUp -> {
                             viewModel.moveUp(action.entry, action.tagGroup)
                         }
+
                         is DayGroupAction.MoveTagGroupToNextDay -> {
                             viewModel.moveToNextDay(action.tagGroup)
                         }
+
                         is DayGroupAction.MoveTagGroupToPreviousDay -> {
                             viewModel.moveToPreviousDay(action.tagGroup)
                         }
+
                         is DayGroupAction.ResolveConflict -> {
                             viewModel.resolveConflict(action.entry, action.conflict)
                         }
+
                         is DayGroupAction.ShowPreviousDay -> {
                             viewModel.goToPreviousDay()
                         }
+
                         is DayGroupAction.ShowNextDay -> {
                             viewModel.goToNextDay()
                         }
+
                         is DayGroupAction.ShowAllDays -> {
                             error("Should already be managed in the screen and not reach here")
                         }
@@ -409,6 +446,21 @@ fun NavGraph(
                 onLastImportDateChanged = viewModel::onLastImportDateChanged,
                 onResetLastImportTime = viewModel::resetLastImportDate,
                 onToggleUseLastImportTime = viewModel::toggleUseLastImportTime,
+            )
+        }
+
+        composable(
+            route = Destination.VIEW_JOURNAL_ENTRY_DAY.route(),
+            arguments = Destination.VIEW_JOURNAL_ENTRY_DAY.navArgs(),
+        ) { backStackEntry ->
+            val viewModel: ViewJournalEntryDayViewModel =
+                viewModel(factory = ServiceLocator.getViewJournalEntryDayVMFactory(backStackEntry))
+
+            val viewState by viewModel.state.collectAsStateWithLifecycle()
+            ViewJournalEntryDayScreen(
+                state = viewState,
+                onBackClick = { navController.navigateUp() },
+                onDateSelected = viewModel::onDateSelected,
             )
         }
     }
