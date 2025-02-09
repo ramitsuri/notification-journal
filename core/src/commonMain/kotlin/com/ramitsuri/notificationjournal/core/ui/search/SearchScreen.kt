@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -44,12 +45,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,6 +78,7 @@ import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import kotlinx.coroutines.delay
+import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.search_select_all
 import notificationjournal.core.generated.resources.search_tip_empty_text
@@ -88,6 +94,7 @@ fun SearchScreen(
     onTagClicked: (String) -> Unit,
     onSelectAllTagsClicked: () -> Unit,
     onUnselectAllTagsClicked: () -> Unit,
+    onNavToViewJournalEntryDay: (LocalDate) -> Unit,
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -136,8 +143,11 @@ fun SearchScreen(
                         .nestedScroll(scrollBehavior.nestedScrollConnection),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(state.results) {
-                    SearchItem(it)
+                items(state.results) { journalEntry ->
+                    SwipeableSearchItem(
+                        journalEntry = journalEntry,
+                        onEntrySwiped = { onNavToViewJournalEntryDay(journalEntry.entryTime.date) },
+                    )
                 }
             }
         }
@@ -313,6 +323,57 @@ private fun SearchFilterDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SwipeableSearchItem(
+    journalEntry: JournalEntry,
+    onEntrySwiped: () -> Unit,
+) {
+    val dismissState = rememberSwipeToDismissBoxState()
+    val swiped by remember {
+        derivedStateOf { dismissState.currentValue == SwipeToDismissBoxValue.EndToStart }
+    }
+    LaunchedEffect(swiped) {
+        if (swiped) {
+            dismissState.reset()
+            onEntrySwiped()
+        }
+    }
+    SwipeToDismissBox(
+        modifier = Modifier,
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text =
+                        dayMonthDateWithYear(
+                            toFormat = journalEntry.entryTime.date,
+                        ),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Outlined.CalendarToday,
+                    contentDescription = null,
+                )
+            }
+        },
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+        ) {
+            SearchItem(journalEntry = journalEntry)
         }
     }
 }
