@@ -470,6 +470,15 @@ fun NavGraph(
                 state = viewState,
                 onBackClick = { navController.navigateUp() },
                 onDateSelected = viewModel::onDateSelected,
+                onAction = { action ->
+                    when (action) {
+                        is DayGroupAction.CopyEntry -> {
+                            viewModel.onCopy(action.entry)
+                        }
+                        else -> {}
+                    }
+                },
+                onContentCopied = viewModel::onContentCopied,
             )
         }
     }

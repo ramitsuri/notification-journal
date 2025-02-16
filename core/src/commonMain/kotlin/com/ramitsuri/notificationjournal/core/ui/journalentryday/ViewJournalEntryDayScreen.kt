@@ -25,14 +25,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.ramitsuri.notificationjournal.core.ui.components.Date
+import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
@@ -47,7 +52,16 @@ fun ViewJournalEntryDayScreen(
     state: ViewState,
     onBackClick: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
+    onAction: (DayGroupAction) -> Unit,
+    onContentCopied: () -> Unit,
 ) {
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
+    LaunchedEffect(state.contentForCopy) {
+        if (state.contentForCopy.isNotEmpty()) {
+            clipboardManager.setText(AnnotatedString(state.contentForCopy))
+            onContentCopied()
+        }
+    }
     var showDatePicker by remember { mutableStateOf(false) }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -114,7 +128,7 @@ fun ViewJournalEntryDayScreen(
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     showEmptyTags = false,
                     showConflictDiffInline = false,
-                    onAction = { },
+                    onAction = onAction,
                     config = JournalEntryDayConfig.allDisabled,
                 )
             }
