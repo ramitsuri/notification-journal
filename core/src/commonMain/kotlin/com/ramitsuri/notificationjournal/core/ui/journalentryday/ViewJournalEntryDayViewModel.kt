@@ -5,15 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.model.DayGroup
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.LocalDate
 
 class ViewJournalEntryDayViewModel(
@@ -22,6 +25,7 @@ class ViewJournalEntryDayViewModel(
     tagsDao: TagsDao,
 ) : ViewModel() {
     private val selectedDate = MutableStateFlow<LocalDate?>(null)
+    private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
     init {
         savedStateHandle.get<String>(DATE_ARG)?.let {
@@ -34,17 +38,19 @@ class ViewJournalEntryDayViewModel(
         selectedDate
             .filterNotNull()
             .flatMapLatest { date ->
-                repository
-                    .getForDateFlow(date)
-                    .map { entries ->
-                        ViewState(
-                            dayGroup =
-                                entries.toDayGroups(
-                                    tagsForSort = tagsDao.getAll().map { it.value },
-                                ).firstOrNull(),
-                            selectedDate = date,
-                        )
-                    }
+                combine(
+                    repository.getForDateFlow(date),
+                    contentForCopy,
+                ) { entries, contentForCopy ->
+                    ViewState(
+                        dayGroup =
+                            entries.toDayGroups(
+                                tagsForSort = tagsDao.getAll().map { it.value },
+                            ).firstOrNull(),
+                        selectedDate = date,
+                        contentForCopy = contentForCopy,
+                    )
+                }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -55,6 +61,14 @@ class ViewJournalEntryDayViewModel(
         selectedDate.value = date
     }
 
+    fun onCopy(entry: JournalEntry) {
+        contentForCopy.update { entry.text }
+    }
+
+    fun onContentCopied() {
+        contentForCopy.update { "" }
+    }
+
     companion object {
         const val DATE_ARG = "date"
     }
@@ -63,4 +77,5 @@ class ViewJournalEntryDayViewModel(
 data class ViewState(
     val dayGroup: DayGroup? = null,
     val selectedDate: LocalDate? = null,
+    val contentForCopy: String = "",
 )
