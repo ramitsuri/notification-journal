@@ -427,11 +427,12 @@ fun NavGraph(
                 onTagClicked = viewModel::tagClicked,
                 onSelectAllTagsClicked = viewModel::selectAllTagsClicked,
                 onUnselectAllTagsClicked = viewModel::unselectAllTagsClicked,
-                onNavToViewJournalEntryDay = {
+                onNavToViewJournalEntryDay = { entry ->
                     navController.navigate(
                         Destination.VIEW_JOURNAL_ENTRY_DAY.routeWithArgValues(
                             mapOf(
-                                ViewJournalEntryDayViewModel.DATE_ARG to it.toString(),
+                                ViewJournalEntryDayViewModel.DATE_ARG to entry.entryTime.date.toString(),
+                                ViewJournalEntryDayViewModel.ENTRY_ID_ARG to entry.id,
                             ),
                         ),
                     )

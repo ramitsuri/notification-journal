@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -130,6 +131,7 @@ fun JournalEntryDay(
     showEmptyTags: Boolean,
     showConflictDiffInline: Boolean,
     config: JournalEntryDayConfig,
+    entryDayHighlight: EntryDayHighlight? = null,
     onAction: (DayGroupAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -139,6 +141,8 @@ fun JournalEntryDay(
     val topShape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
     val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
 
+    val lazyColumnState = rememberLazyListState(initialFirstVisibleItemIndex = entryDayHighlight?.index ?: 0)
+    var highlightEntryId: String? by remember { mutableStateOf(null) }
     var showContent by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -155,6 +159,14 @@ fun JournalEntryDay(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
+    LaunchedEffect(entryDayHighlight) {
+        repeat(3) {
+            delay(200)
+            highlightEntryId = entryDayHighlight?.entryId
+            delay(200)
+            highlightEntryId = null
+        }
+    }
     HeaderItem(
         headerText = dayMonthDate(toFormat = dayGroup.date),
         untaggedCount = dayGroup.untaggedCount,
@@ -168,6 +180,7 @@ fun JournalEntryDay(
     )
     var swipeAmount by remember { mutableStateOf(0f) }
     LazyColumn(
+        state = lazyColumnState,
         modifier =
             modifier
                 .fillMaxSize()
@@ -271,6 +284,7 @@ fun JournalEntryDay(
                 val entry = entries[index]
                 ListItem(
                     item = entry,
+                    highlight = highlightEntryId == entry.id,
                     allowEdits = config.allowEdits,
                     conflicts = conflicts.filter { it.entryId == entry.id },
                     onCopyRequested = { onAction(DayGroupAction.CopyEntry(entry)) },
@@ -535,6 +549,7 @@ private fun SubHeaderItem(
 @Composable
 private fun ListItem(
     item: JournalEntry,
+    highlight: Boolean,
     allowEdits: Boolean,
     conflicts: List<EntryConflict>,
     onCopyRequested: () -> Unit,
@@ -557,12 +572,15 @@ private fun ListItem(
 ) {
     var showDetails by remember { mutableStateOf(false) }
     var showConflictResolutionDialog by remember { mutableStateOf(false) }
-
+    val highlightColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
     Row(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             modifier
+                .applyIf(highlight) {
+                    background(highlightColor)
+                }
                 .clickable(onClick = { if (allowEdits) showDetails = true else onCopyRequested() }),
     ) {
         Row(

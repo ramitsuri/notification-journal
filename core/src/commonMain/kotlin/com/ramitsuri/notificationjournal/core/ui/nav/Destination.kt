@@ -44,6 +44,8 @@ enum class Destination(private val route: String) {
                 route
                     .plus("?${ViewJournalEntryDayViewModel.DATE_ARG}")
                     .plus("=${args[ViewJournalEntryDayViewModel.DATE_ARG]}")
+                    .plus("&${ViewJournalEntryDayViewModel.ENTRY_ID_ARG}")
+                    .plus("=${args[ViewJournalEntryDayViewModel.ENTRY_ID_ARG]}")
             }
 
             else -> {
@@ -76,6 +78,8 @@ enum class Destination(private val route: String) {
                 route
                     .plus("?${ViewJournalEntryDayViewModel.DATE_ARG}")
                     .plus("={${ViewJournalEntryDayViewModel.DATE_ARG}}")
+                    .plus("&${ViewJournalEntryDayViewModel.ENTRY_ID_ARG}")
+                    .plus("={${ViewJournalEntryDayViewModel.ENTRY_ID_ARG}}")
             }
 
             else -> {
@@ -123,6 +127,10 @@ enum class Destination(private val route: String) {
             VIEW_JOURNAL_ENTRY_DAY -> {
                 listOf(
                     navArgument(ViewJournalEntryDayViewModel.DATE_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                    },
+                    navArgument(ViewJournalEntryDayViewModel.ENTRY_ID_ARG) {
                         type = NavType.StringType
                         nullable = true
                     },
