@@ -130,6 +130,7 @@ fun ViewJournalEntryDayScreen(
                     showConflictDiffInline = false,
                     onAction = onAction,
                     config = JournalEntryDayConfig.allDisabled,
+                    entryDayHighlight = state.highlight,
                 )
             }
         }

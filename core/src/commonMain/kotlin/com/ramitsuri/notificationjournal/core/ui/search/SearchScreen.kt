@@ -78,7 +78,6 @@ import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import kotlinx.coroutines.delay
-import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.search_select_all
 import notificationjournal.core.generated.resources.search_tip_empty_text
@@ -94,7 +93,7 @@ fun SearchScreen(
     onTagClicked: (String) -> Unit,
     onSelectAllTagsClicked: () -> Unit,
     onUnselectAllTagsClicked: () -> Unit,
-    onNavToViewJournalEntryDay: (LocalDate) -> Unit,
+    onNavToViewJournalEntryDay: (JournalEntry) -> Unit,
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -146,7 +145,7 @@ fun SearchScreen(
                 items(state.results) { journalEntry ->
                     SwipeableSearchItem(
                         journalEntry = journalEntry,
-                        onEntrySwiped = { onNavToViewJournalEntryDay(journalEntry.entryTime.date) },
+                        onEntrySwiped = { onNavToViewJournalEntryDay(journalEntry) },
                     )
                 }
             }
