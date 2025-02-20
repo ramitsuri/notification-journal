@@ -288,7 +288,6 @@ fun NavGraph(
                 state = viewState,
                 onTagClicked = viewModel::tagClicked,
                 onTemplateClicked = viewModel::templateClicked,
-                onUseSuggestedText = viewModel::useSuggestedText,
                 onSave = viewModel::save,
                 onAddAnother = viewModel::saveAndAddAnother,
                 onCancel = { navController.navigateUp() },
@@ -302,6 +301,7 @@ fun NavGraph(
                 onResetTimeToNow = viewModel::resetTimeToNow,
                 onCorrectionAccepted = viewModel::correctionAccepted,
                 onAddDictionaryWord = viewModel::addDictionaryWord,
+                onSuggestionClicked = viewModel::onSuggestionClicked,
             )
         }
 
@@ -335,6 +335,7 @@ fun NavGraph(
                 onResetTime = viewModel::resetTime,
                 onCorrectionAccepted = viewModel::correctionAccepted,
                 onAddDictionaryWord = viewModel::addDictionaryWord,
+                onSuggestionClicked = viewModel::onSuggestionClicked,
             )
         }
 

@@ -6,12 +6,14 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -38,11 +39,15 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -75,6 +80,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -99,7 +105,6 @@ import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.reset
 import notificationjournal.core.generated.resources.tags
 import notificationjournal.core.generated.resources.unsaved_warning_message
-import notificationjournal.core.generated.resources.use
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,15 +114,15 @@ fun AddEditEntryDialog(
     textState: TextFieldState,
     tags: List<Tag>,
     selectedTag: String?,
-    suggestedText: String?,
     showAddAnother: Boolean,
     dateTime: LocalDateTime,
     templates: List<JournalEntryTemplate>,
     textCorrections: Map<String, List<String>>,
     showWarningOnExit: Boolean,
+    suggestions: List<String>,
+    onSuggestionClicked: (String?) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
-    onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
@@ -534,14 +539,14 @@ fun AddEditEntryDialog(
                     textState = textState,
                     tags = tags,
                     selectedTag = selectedTag,
-                    suggestedText = suggestedText,
                     templates = templates,
                     textCorrections = textCorrections,
                     showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
                     showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
+                    suggestions = suggestions,
+                    onSuggestionClicked = onSuggestionClicked,
                     onTagClicked = onTagClicked,
                     onTemplateClicked = onTemplateClicked,
-                    onUseSuggestedText = onUseSuggestedText,
                     onCorrectionAccepted = onCorrectionAccepted,
                     onAddDictionaryWord = onAddDictionaryWord,
                 )
@@ -605,22 +610,20 @@ private fun Content(
     textState: TextFieldState,
     tags: List<Tag>,
     selectedTag: String?,
-    suggestedText: String?,
     textCorrections: Map<String, List<String>>,
     templates: List<JournalEntryTemplate>,
     showTagsKeyboardShortcutHint: Boolean,
     showTemplatesKeyboardShortcutHint: Boolean,
+    suggestions: List<String>,
+    onSuggestionClicked: (String?) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
-    onUseSuggestedText: () -> Unit,
     onCorrectionAccepted: (String, String) -> Unit,
     onAddDictionaryWord: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     val textFieldFocusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
-
-    var showTextCorrectionsDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier =
@@ -636,56 +639,16 @@ private fun Content(
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicTextField(
-                state = textState,
-                keyboardOptions =
-                    KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences,
-                    ),
-                textStyle =
-                    MaterialTheme.typography.bodyMedium
-                        .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
-                lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .focusRequester(focusRequester = textFieldFocusRequester),
-                decorator = { innerTextField ->
-                    Box(
-                        modifier =
-                            Modifier
-                                .clip(RoundedCornerShape(5.dp))
-                                .border(
-                                    BorderStroke(
-                                        1.dp,
-                                        SolidColor(MaterialTheme.colorScheme.outline),
-                                    ),
-                                    RoundedCornerShape(5.dp),
-                                )
-                                .padding(8.dp),
-                    ) {
-                        innerTextField()
-                    }
-                },
-            )
-            Spacer(Modifier.width(4.dp))
-            OutlinedButton(
-                onClick = { showTextCorrectionsDialog = true },
-                enabled = textCorrections.isNotEmpty(),
-            ) {
-                Text(text = textCorrections.size.toString())
-            }
-        }
+        TextField(
+            textState = textState,
+            textFieldFocusRequester = textFieldFocusRequester,
+            textCorrections = textCorrections,
+            suggestions = suggestions,
+            onSuggestionClicked = onSuggestionClicked,
+            onCorrectionAccepted = onCorrectionAccepted,
+            onAddDictionaryWord = onAddDictionaryWord,
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        if (!suggestedText.isNullOrEmpty()) {
-            SuggestedText(suggestedText, onUseSuggestedText = onUseSuggestedText)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
         if (templates.isNotEmpty()) {
             Templates(
                 templates = templates,
@@ -779,6 +742,105 @@ private fun Content(
                     },
             )
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TextField(
+    textState: TextFieldState,
+    textFieldFocusRequester: FocusRequester,
+    textCorrections: Map<String, List<String>>,
+    suggestions: List<String>,
+    onSuggestionClicked: (String?) -> Unit,
+    onCorrectionAccepted: (String, String) -> Unit,
+    onAddDictionaryWord: (String) -> Unit,
+) {
+    var showTextCorrectionsDialog by remember { mutableStateOf(false) }
+    var suggestionsEnabled by remember { mutableStateOf(false) }
+    val showSuggestions by remember(suggestions) { mutableStateOf(suggestions.isNotEmpty()) }
+    ExposedDropdownMenuBox(
+        expanded = showSuggestions && suggestionsEnabled,
+        onExpandedChange = { },
+        modifier = Modifier.focusable(false),
+    ) {
+        Column(
+            modifier =
+                Modifier.fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryEditable, true),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BasicTextField(
+                    state = textState,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                        ),
+                    textStyle =
+                        MaterialTheme.typography.bodyMedium
+                            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
+                    lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester = textFieldFocusRequester),
+                    decorator = { innerTextField ->
+                        Box(
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .border(
+                                        BorderStroke(
+                                            1.dp,
+                                            SolidColor(MaterialTheme.colorScheme.outline),
+                                        ),
+                                        RoundedCornerShape(5.dp),
+                                    )
+                                    .padding(8.dp),
+                        ) {
+                            innerTextField()
+                        }
+                    },
+                )
+                Spacer(Modifier.width(4.dp))
+                OutlinedButton(
+                    onClick = { showTextCorrectionsDialog = true },
+                    enabled = textCorrections.isNotEmpty(),
+                ) {
+                    Text(text = textCorrections.size.toString())
+                }
+            }
+            Row(
+                modifier =
+                    Modifier
+                        .clickable(role = Role.Checkbox, onClick = {}),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Show suggestions",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Checkbox(suggestionsEnabled, { suggestionsEnabled = it })
+            }
+        }
+        ExposedDropdownMenu(
+            expanded = showSuggestions && suggestionsEnabled,
+            onDismissRequest = { onSuggestionClicked(null) },
+            modifier = Modifier.focusable(false),
+        ) {
+            suggestions.forEach { suggestion ->
+                DropdownMenuItem(
+                    text = { Text(suggestion) },
+                    onClick = { onSuggestionClicked(suggestion) },
+                    contentPadding = PaddingValues(8.dp),
+                )
+            }
         }
     }
 
@@ -973,23 +1035,29 @@ private fun Time(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     onResetTimeToNow?.let {
-                        TextButton(onClick = {
-                            onResetTimeToNow()
-                            onDismiss()
-                        }) {
+                        TextButton(
+                            onClick = {
+                                onResetTimeToNow()
+                                onDismiss()
+                            },
+                        ) {
                             Text(stringResource(Res.string.now))
                         }
                     }
-                    TextButton(onClick = {
-                        onResetTime()
-                        onDismiss()
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onResetTime()
+                            onDismiss()
+                        },
+                    ) {
                         Text(stringResource(Res.string.reset))
                     }
-                    TextButton(onClick = {
-                        onTimeSelected(LocalTime(state.hour, state.minute))
-                        onDismiss()
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onTimeSelected(LocalTime(state.hour, state.minute))
+                            onDismiss()
+                        },
+                    ) {
                         Text(stringResource(Res.string.ok))
                     }
                 }
@@ -1082,31 +1150,6 @@ private fun Templates(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun SuggestedText(
-    suggestedText: String,
-    onUseSuggestedText: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .sizeIn(minHeight = 64.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = suggestedText,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.weight(1f),
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        TextButton(onClick = { onUseSuggestedText() }) {
-            Text(text = stringResource(Res.string.use))
         }
     }
 }

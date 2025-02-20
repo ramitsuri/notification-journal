@@ -21,20 +21,20 @@ fun EditJournalEntryScreen(
     onResetTime: () -> Unit,
     onCorrectionAccepted: (String, String) -> Unit,
     onAddDictionaryWord: (String) -> Unit,
+    onSuggestionClicked: (String?) -> Unit,
 ) {
     AddEditEntryDialog(
         isLoading = state.isLoading,
         textState = state.textFieldState,
         tags = state.tags,
         selectedTag = state.selectedTag,
-        suggestedText = state.suggestedText,
         templates = state.templates,
         dateTime = state.dateTime,
         textCorrections = state.corrections,
         showWarningOnExit = state.showWarningOnExit,
+        suggestions = state.suggestions,
         onTagClicked = onTagClicked,
         onTemplateClicked = onTemplateClicked,
-        onUseSuggestedText = { },
         onSave = onSave,
         showAddAnother = false,
         onAddAnother = { },
@@ -49,5 +49,6 @@ fun EditJournalEntryScreen(
         onResetTimeToNow = null,
         onCorrectionAccepted = onCorrectionAccepted,
         onAddDictionaryWord = onAddDictionaryWord,
+        onSuggestionClicked = onSuggestionClicked,
     )
 }

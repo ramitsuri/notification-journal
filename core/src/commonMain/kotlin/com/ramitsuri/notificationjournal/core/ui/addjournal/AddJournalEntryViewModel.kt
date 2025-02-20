@@ -75,25 +75,24 @@ class AddJournalEntryViewModel(
             ),
         )
     val state: StateFlow<AddJournalEntryViewState> = _state
+    private var enableGettingSuggestions = true
 
     init {
         loadTags()
         loadTemplates()
         loadFromDuplicateEntryId()
         loadCorrections()
+        loadSuggestions()
     }
 
     fun tagClicked(tag: String) {
         _state.update {
             it.copy(selectedTag = tag)
         }
-    }
-
-    fun useSuggestedText() {
-        val suggestedText = _state.value.suggestedText
-        if (suggestedText != null) {
+        viewModelScope.launch {
+            val text = _state.value.textFieldState.text
             _state.update {
-                it.copy(textFieldState = TextFieldState(suggestedText), suggestedText = null)
+                it.copy(suggestions = getSuggestions(text = text, tag = tag))
             }
         }
     }
@@ -209,6 +208,17 @@ class AddJournalEntryViewModel(
         }
     }
 
+    fun onSuggestionClicked(suggestion: String?) {
+        if (suggestion != null) {
+            enableGettingSuggestions = false
+            _state.value.textFieldState.edit {
+                delete(0, length)
+                insert(0, suggestion)
+            }
+        }
+        _state.update { it.copy(suggestions = listOf()) }
+    }
+
     override fun onCleared() {
         super.onCleared()
         spellChecker.reset()
@@ -238,7 +248,6 @@ class AddJournalEntryViewModel(
                         isLoading = false,
                         textFieldState = TextFieldState(),
                         selectedTag = null,
-                        suggestedText = null,
                     )
                 }
             }
@@ -310,6 +319,39 @@ class AddJournalEntryViewModel(
         }
     }
 
+    @OptIn(FlowPreview::class)
+    private fun loadSuggestions() {
+        viewModelScope.launch {
+            snapshotFlow {
+                _state.value.textFieldState.text
+            }.debounce(300)
+                .collect { text ->
+                    val tag = _state.value.selectedTag
+                    _state.update {
+                        it.copy(suggestions = getSuggestions(text = text, tag = tag))
+                    }
+                }
+        }
+    }
+
+    private suspend fun getSuggestions(
+        text: CharSequence,
+        tag: String?,
+    ): List<String> {
+        // Disable so that we don't get the same suggestion again from text field changing from selected suggestion
+        if (!enableGettingSuggestions) {
+            enableGettingSuggestions = true
+            return listOf()
+        }
+        if (tag == null || Tag.isNoTag(tag)) {
+            return listOf()
+        }
+        if (text.length < 2) {
+            return listOf()
+        }
+        return repository.search(text.toString(), listOf(tag)).take(10).map { it.text }
+    }
+
     companion object {
         const val RECEIVED_TEXT_ARG = "received_text"
         const val DUPLICATE_FROM_ENTRY_ID_ARG = "duplicate_from_entry_id"
@@ -324,10 +366,10 @@ data class AddJournalEntryViewState(
     val textFieldState: TextFieldState = TextFieldState(),
     val tags: List<Tag> = listOf(),
     val selectedTag: String? = null,
-    val suggestedText: String? = null,
     val templates: List<JournalEntryTemplate> = listOf(),
     val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: LocalDateTime,
+    val suggestions: List<String> = listOf(),
 ) {
     val showWarningOnExit
         get() = textFieldState.text.toString().isNotEmpty()
