@@ -58,7 +58,6 @@ interface KeyValueStoreV2 {
 enum class Key(val value: String) {
     SHOW_EMPTY_TAGS("show_empty_tags"),
     COPY_WITH_EMPTY_TAGS("copy_with_empty_tags"),
-    SHOW_RECONCILED("show_reconciled"),
     CONFLICT_DIFF_INLINE("show_conflict_diff_inline"),
     LAST_IMPORT_DATE("last_import_date"),
     LAST_IMPORT_DIRECTORY("last_import_directory"),

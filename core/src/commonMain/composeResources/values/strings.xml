@@ -69,7 +69,6 @@
 
     <string name="settings_app_version">App version</string>
 
-    <string name="settings_showReconciled">Show reconciled</string>
     <string name="settings_show_empty_tags">Show empty tags</string>
     <string name="settings_copy_with_empty_tags">Copy empty tags</string>
 

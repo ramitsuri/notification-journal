@@ -15,6 +15,7 @@ import com.ramitsuri.notificationjournal.core.utils.combine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,9 +41,8 @@ class SettingsViewModel(
             uploadLoading,
             prefManager.showEmptyTags(),
             prefManager.copyWithEmptyTags(),
-            prefManager.showReconciled(),
             prefManager.showConflictDiffInline(),
-        ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showReconciled, showConflictDiffInline,
+        ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showConflictDiffInline,
             ->
             SettingsViewState(
                 uploadLoading = uploadLoading,
@@ -52,7 +52,6 @@ class SettingsViewModel(
                 username = Username(getUsername()),
                 password = Password(getPassword()),
                 appVersion = getAppVersion(),
-                showReconciled = showReconciled,
                 showConflictDiffInline = showConflictDiffInline,
                 showEmptyTags = showEmptyTags,
                 copyWithEmptyTags = copyWithEmptyTags,
@@ -88,12 +87,6 @@ class SettingsViewModel(
         keyValueStore.putString(Constants.PREF_KEY_USERNAME, username.username)
         keyValueStore.putString(Constants.PREF_KEY_PASSWORD, password.password)
         prefUpdated.update { it + 1 }
-    }
-
-    fun toggleShowReconciled() {
-        viewModelScope.launch {
-            prefManager.setShowReconciled(state.value.showReconciled.not())
-        }
     }
 
     fun toggleShowConflictDiffInline() {
@@ -160,7 +153,6 @@ data class SettingsViewState(
     val username: Username = Username(""),
     val password: Password = Password(""),
     val appVersion: String = "",
-    val showReconciled: Boolean = false,
     val showConflictDiffInline: Boolean = false,
     val showEmptyTags: Boolean = false,
     val copyWithEmptyTags: Boolean = false,

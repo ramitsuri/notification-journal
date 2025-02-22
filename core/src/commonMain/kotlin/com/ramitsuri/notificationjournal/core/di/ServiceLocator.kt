@@ -218,7 +218,11 @@ object ServiceLocator {
             .also {
                 coroutineScope.launch {
                     it.removeLegacy(
-                        booleanPrefs = listOf("show_logs_button"),
+                        booleanPrefs =
+                            listOf(
+                                "show_logs_button",
+                                "show_reconciled",
+                            ),
                     )
                 }
             }

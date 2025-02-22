@@ -52,7 +52,6 @@ import notificationjournal.core.generated.resources.settings_journal_import_subt
 import notificationjournal.core.generated.resources.settings_journal_import_title
 import notificationjournal.core.generated.resources.settings_logs
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
-import notificationjournal.core.generated.resources.settings_showReconciled
 import notificationjournal.core.generated.resources.settings_show_empty_tags
 import notificationjournal.core.generated.resources.settings_tags_subtitle
 import notificationjournal.core.generated.resources.settings_tags_title
@@ -73,7 +72,6 @@ fun SettingsScreen(
     onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName, Username, Password) -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
-    onToggleShowReconciled: () -> Unit,
     onToggleShowConflictDiffInline: () -> Unit,
     onToggleShowEmptyTags: () -> Unit,
     onToggleCopyWithEmptyTags: () -> Unit,
@@ -150,13 +148,6 @@ fun SettingsScreen(
                         subtitle = stringResource(Res.string.settings_templates_subtitle),
                         onClick = onTemplatesClicked,
                         showProgress = false,
-                    )
-                }
-                item {
-                    SettingsItemWithToggle(
-                        title = stringResource(Res.string.settings_showReconciled),
-                        value = state.showReconciled,
-                        onClick = onToggleShowReconciled,
                     )
                 }
                 item {
