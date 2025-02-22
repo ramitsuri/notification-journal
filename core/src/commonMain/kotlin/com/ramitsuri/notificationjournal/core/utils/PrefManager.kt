@@ -22,14 +22,6 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
         keyValueStore.putBoolean(Key.COPY_WITH_EMPTY_TAGS, copyWithEmptyTags)
     }
 
-    fun showReconciled(): Flow<Boolean> {
-        return keyValueStore.getBooleanFlow(Key.SHOW_RECONCILED, false)
-    }
-
-    suspend fun setShowReconciled(showReconciled: Boolean) {
-        keyValueStore.putBoolean(Key.SHOW_RECONCILED, showReconciled)
-    }
-
     fun showConflictDiffInline(): Flow<Boolean> {
         return keyValueStore.getBooleanFlow(Key.CONFLICT_DIFF_INLINE, true)
     }

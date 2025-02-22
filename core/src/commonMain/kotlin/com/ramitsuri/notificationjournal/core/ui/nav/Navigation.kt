@@ -355,7 +355,6 @@ fun NavGraph(
                 onTemplatesClicked = {
                     navController.navigate(Destination.TEMPLATES.routeWithArgValues())
                 },
-                onToggleShowReconciled = viewModel::toggleShowReconciled,
                 onToggleShowConflictDiffInline = viewModel::toggleShowConflictDiffInline,
                 onToggleCopyWithEmptyTags = viewModel::toggleCopyWithEmptyTags,
                 onToggleShowEmptyTags = viewModel::toggleShowEmptyTags,

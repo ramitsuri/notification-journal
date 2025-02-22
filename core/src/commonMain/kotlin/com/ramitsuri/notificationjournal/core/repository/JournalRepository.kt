@@ -38,12 +38,8 @@ class JournalRepository(
     private val dataSendHelper: DataSendHelper?,
     private val prefManager: PrefManager,
 ) {
-    fun getFlow(showReconciled: Boolean = false): Flow<List<JournalEntry>> {
-        return if (showReconciled) {
-            dao.getAllFlow()
-        } else {
-            dao.getAllFlowNotReconciled()
-        }
+    fun getFlow(): Flow<List<JournalEntry>> {
+        return dao.getAllFlowNotReconciled()
     }
 
     fun getNotReconciledEntryDatesFlow(): Flow<List<DateWithCount>> {

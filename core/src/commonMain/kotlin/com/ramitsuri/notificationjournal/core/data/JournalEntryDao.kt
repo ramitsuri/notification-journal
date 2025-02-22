@@ -12,9 +12,6 @@ import kotlinx.datetime.LocalDateTime
 
 @Dao
 abstract class JournalEntryDao {
-    @Query("SELECT * FROM journalentry WHERE deleted = 0")
-    abstract fun getAllFlow(): Flow<List<JournalEntry>>
-
     @Query("SELECT * FROM journalentry WHERE deleted = 0 AND entry_time LIKE :date||'%'")
     abstract fun getForDateFlow(date: String): Flow<List<JournalEntry>>
 
