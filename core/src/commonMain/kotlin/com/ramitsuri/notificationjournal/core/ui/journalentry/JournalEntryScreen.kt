@@ -81,6 +81,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
@@ -92,6 +93,7 @@ import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.alert
@@ -225,7 +227,7 @@ fun JournalEntryScreen(
                         !it.isShiftPressed &&
                         it.type == KeyEventType.KeyUp
                     ) {
-                        onEntryScreenAction(EntryScreenAction.AddWithDate(state.selectedDayGroup.date))
+                        onEntryScreenAction(EntryScreenAction.AddWithDate(state.dayGroup.date))
                         true
                     } else if (
                         it.isMetaPressed &&
@@ -316,7 +318,7 @@ fun JournalEntryScreen(
                 scrollBehavior = scrollBehavior,
             )
 
-            if (state.dayGroups.isEmpty()) {
+            if (state.dayGroup.tagGroups.isEmpty()) {
                 Column(
                     modifier =
                         Modifier
@@ -334,11 +336,10 @@ fun JournalEntryScreen(
             } else {
                 List(
                     showAllDays = showAllDays,
-                    dayGroup = state.selectedDayGroup,
-                    items = state.dayGroups,
+                    dayGroup = state.dayGroup,
+                    dateWithCountList = state.dateWithCountList,
                     conflicts = state.entryConflicts,
                     tags = state.tags,
-                    dayGroupConflictCountMap = state.dayGroupConflictCountMap,
                     showEmptyTags = state.showEmptyTags,
                     showConflictDiffInline = state.showConflictDiffInline,
                     allowNotify = state.allowNotify,
@@ -595,23 +596,22 @@ private fun Toolbar(
 private fun List(
     showAllDays: Boolean,
     dayGroup: DayGroup,
-    items: List<DayGroup>,
+    dateWithCountList: List<DateWithCount>,
     conflicts: List<EntryConflict>,
     tags: List<Tag>,
-    dayGroupConflictCountMap: Map<DayGroup, Int>,
     showEmptyTags: Boolean,
     showConflictDiffInline: Boolean,
     allowNotify: Boolean,
     modifier: Modifier = Modifier,
     scrollConnection: NestedScrollConnection,
-    onShowDayGroupClicked: (DayGroup) -> Unit,
+    onShowDayGroupClicked: (LocalDate) -> Unit,
     onHideAllDays: () -> Unit,
     onAction: (DayGroupAction) -> Unit,
 ) {
     JournalEntryDay(
         dayGroup = dayGroup,
         tags = tags,
-        conflictCount = dayGroupConflictCountMap[dayGroup] ?: 0,
+        conflictCount = dateWithCountList.firstOrNull { it.date == dayGroup.date }?.conflictCount ?: 0,
         conflicts = conflicts,
         scrollConnection = scrollConnection,
         showEmptyTags = showEmptyTags,
@@ -623,8 +623,7 @@ private fun List(
     )
     ShowAllDaysDialog(
         showAllDays = showAllDays,
-        dayGroups = items,
-        dayGroupConflictCountMap = dayGroupConflictCountMap,
+        dateWithCountList = dateWithCountList,
         onDismiss = onHideAllDays,
         onDayGroupSelected = onShowDayGroupClicked,
     )
@@ -633,10 +632,9 @@ private fun List(
 @Composable
 private fun ShowAllDaysDialog(
     showAllDays: Boolean,
-    dayGroups: List<DayGroup>,
-    dayGroupConflictCountMap: Map<DayGroup, Int>,
+    dateWithCountList: List<DateWithCount>,
     onDismiss: () -> Unit,
-    onDayGroupSelected: (DayGroup) -> Unit,
+    onDayGroupSelected: (LocalDate) -> Unit,
 ) {
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -663,10 +661,10 @@ private fun ShowAllDaysDialog(
                             .padding(16.dp),
                 ) {
                     items(
-                        count = dayGroups.size,
-                        key = { index -> dayGroups[index].date.toString() },
+                        count = dateWithCountList.size,
+                        key = { index -> dateWithCountList[index].date.toString() },
                     ) { index ->
-                        val dayGroup = dayGroups[index]
+                        val dateWithCount = dateWithCountList[index]
                         Column(
                             modifier =
                                 Modifier
@@ -679,24 +677,25 @@ private fun ShowAllDaysDialog(
                                         .clickable(
                                             onClick = {
                                                 onDismiss()
-                                                onDayGroupSelected(dayGroup)
+                                                onDayGroupSelected(dateWithCount.date)
                                             },
                                         )
                                         .padding(8.dp),
                             ) {
-                                Text(dayMonthDate(toFormat = dayGroup.date))
+                                Text(dayMonthDate(toFormat = dateWithCount.date))
                                 val text =
                                     buildString {
-                                        if (dayGroup.untaggedCount > 0) {
+                                        if (dateWithCount.untaggedCount > 0) {
                                             append(
                                                 stringResource(
                                                     Res.string.untagged_format,
-                                                    dayGroup.untaggedCount,
+                                                    dateWithCount.untaggedCount,
                                                 ),
                                             )
                                         }
-                                        dayGroupConflictCountMap[dayGroup]
-                                            ?.takeIf { it > 0 }
+                                        dateWithCount
+                                            .conflictCount
+                                            .takeIf { it > 0 }
                                             ?.let {
                                                 if (isNotEmpty()) {
                                                     append(", ")
@@ -716,7 +715,7 @@ private fun ShowAllDaysDialog(
                                     )
                                 }
                             }
-                            if (index != dayGroups.lastIndex) {
+                            if (index != dateWithCountList.lastIndex) {
                                 HorizontalDivider()
                             }
                         }
