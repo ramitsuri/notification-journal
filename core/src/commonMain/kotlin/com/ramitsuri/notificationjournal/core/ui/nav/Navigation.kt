@@ -369,6 +369,7 @@ fun NavGraph(
                 onJournalImportClicked = {
                     navController.navigate(Destination.IMPORT.routeWithArgValues())
                 },
+                onDeleteAll = viewModel::deleteAll,
             )
         }
 

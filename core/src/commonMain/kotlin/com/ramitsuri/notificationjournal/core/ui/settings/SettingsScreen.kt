@@ -46,6 +46,8 @@ import notificationjournal.core.generated.resources.settings_app_version
 import notificationjournal.core.generated.resources.settings_copy_with_empty_tags
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
 import notificationjournal.core.generated.resources.settings_data_sharing_title
+import notificationjournal.core.generated.resources.settings_delete_all_subtitle
+import notificationjournal.core.generated.resources.settings_delete_all_title
 import notificationjournal.core.generated.resources.settings_journal_import_subtitle
 import notificationjournal.core.generated.resources.settings_journal_import_title
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
@@ -77,6 +79,7 @@ fun SettingsScreen(
     onToggleCopyWithEmptyTags: () -> Unit,
     onToggleShowLogsButton: () -> Unit,
     onJournalImportClicked: () -> Unit,
+    onDeleteAll: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -198,6 +201,16 @@ fun SettingsScreen(
                             title = stringResource(Res.string.settings_journal_import_title),
                             subtitle = stringResource(Res.string.settings_journal_import_subtitle),
                             onClick = onJournalImportClicked,
+                            showProgress = false,
+                        )
+                    }
+                }
+                if (state.allowDelete) {
+                    item {
+                        SettingsItem(
+                            title = stringResource(Res.string.settings_delete_all_title),
+                            subtitle = stringResource(Res.string.settings_delete_all_subtitle),
+                            onClick = onDeleteAll,
                             showProgress = false,
                         )
                     }
