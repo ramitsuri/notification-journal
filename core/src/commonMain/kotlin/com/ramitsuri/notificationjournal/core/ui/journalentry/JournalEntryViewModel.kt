@@ -409,6 +409,7 @@ class JournalEntryViewModel(
                     SnackBarType.None
                 }
                 delay(5_000)
+                goToNextDay()
                 dayGroup
                     .tagGroups
                     .map { it.entries }
