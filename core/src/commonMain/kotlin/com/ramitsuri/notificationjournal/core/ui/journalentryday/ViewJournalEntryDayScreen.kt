@@ -62,7 +62,7 @@ fun ViewJournalEntryDayScreen(
             onContentCopied()
         }
     }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var showDatePicker by remember(state.dayGroup) { mutableStateOf(state.dayGroup == null) }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier =

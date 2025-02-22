@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -25,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -295,7 +295,6 @@ fun JournalEntryScreen(
                 onSettingsClicked = { onEntryScreenAction(EntryScreenAction.NavToSettings) },
                 onSearchClicked = { onEntryScreenAction(EntryScreenAction.NavToSearch) },
                 onResetReceiveHelper = { onEntryScreenAction(EntryScreenAction.ResetReceiveHelper) },
-                onViewJournalEntryDayClicked = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
                 scrollBehavior = scrollBehavior,
             )
 
@@ -327,6 +326,7 @@ fun JournalEntryScreen(
                     onShowDayGroupClicked = { onEntryScreenAction(EntryScreenAction.ShowDayGroup(it)) },
                     onHideAllDays = { showAllDays = false },
                     scrollConnection = scrollBehavior.nestedScrollConnection,
+                    onViewByDate = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
                     onAction = { action ->
                         when (action) {
                             is DayGroupAction.DeleteEntry -> {
@@ -355,7 +355,6 @@ private fun Toolbar(
     onSettingsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
     onResetReceiveHelper: () -> Unit,
-    onViewJournalEntryDayClicked: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
         colors =
@@ -410,18 +409,6 @@ private fun Toolbar(
                 )
             }
             IconButton(
-                onClick = onViewJournalEntryDayClicked,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .padding(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.CalendarToday,
-                    contentDescription = stringResource(Res.string.view_journal_entry_day),
-                )
-            }
-            IconButton(
                 onClick = onSettingsClicked,
                 modifier =
                     Modifier
@@ -452,6 +439,7 @@ private fun List(
     scrollConnection: NestedScrollConnection,
     onShowDayGroupClicked: (LocalDate) -> Unit,
     onHideAllDays: () -> Unit,
+    onViewByDate: () -> Unit,
     onAction: (DayGroupAction) -> Unit,
 ) {
     JournalEntryDay(
@@ -472,6 +460,7 @@ private fun List(
         dateWithCountList = dateWithCountList,
         onDismiss = onHideAllDays,
         onDayGroupSelected = onShowDayGroupClicked,
+        onViewByDate = onViewByDate,
     )
 }
 
@@ -481,6 +470,7 @@ private fun ShowAllDaysDialog(
     dateWithCountList: List<DateWithCount>,
     onDismiss: () -> Unit,
     onDayGroupSelected: (LocalDate) -> Unit,
+    onViewByDate: () -> Unit,
 ) {
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -494,7 +484,6 @@ private fun ShowAllDaysDialog(
             onDismissRequest = onDismiss,
             properties =
                 DialogProperties(
-                    usePlatformDefaultWidth = false,
                     dismissOnClickOutside = true,
                 ),
         ) {
@@ -503,8 +492,9 @@ private fun ShowAllDaysDialog(
                     modifier =
                         Modifier
                             .focusRequester(focusRequester)
-                            .fillMaxWidth(0.9f)
+                            .fillMaxWidth()
                             .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     items(
                         count = dateWithCountList.size,
@@ -561,9 +551,16 @@ private fun ShowAllDaysDialog(
                                     )
                                 }
                             }
-                            if (index != dateWithCountList.lastIndex) {
-                                HorizontalDivider()
-                            }
+                            HorizontalDivider()
+                        }
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        TextButton(
+                            onClick = onViewByDate,
+                            modifier = Modifier,
+                        ) {
+                            Text(text = stringResource(Res.string.view_journal_entry_day))
                         }
                     }
                 }

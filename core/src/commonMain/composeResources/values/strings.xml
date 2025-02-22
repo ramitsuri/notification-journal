@@ -18,7 +18,7 @@
     <string name="stats">Stats</string>
     <string name="default_tag">Default tag</string>
     <string name="not_default_tag">Not default tag</string>
-    <string name="view_journal_entry_day">View day</string>
+    <string name="view_journal_entry_day">View by date</string>
     <string name="notify">Notify</string>
     <string name="notify_now">Now</string>
     <string name="notify_fifteen_minutes">15 minutes</string>
