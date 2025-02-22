@@ -48,8 +48,8 @@ class JournalRepository(
 
     fun getNotReconciledEntryDatesFlow(): Flow<List<DateWithCount>> {
         return combine(
-            conflictDao.getFlow(),
             // Used so that it refreshes the data
+            conflictDao.getFlow(),
             dao.getNotReconciledEntryTimesFlow(),
         ) { _, entryTimes ->
             entryTimes.map { it.date }.distinct()
