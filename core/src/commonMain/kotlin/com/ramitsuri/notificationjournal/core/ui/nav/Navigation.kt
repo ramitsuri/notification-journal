@@ -137,10 +137,6 @@ fun NavGraph(
                             viewModel.showDayGroupClicked(action.date)
                         }
 
-                        is EntryScreenAction.ShowStatsToggled -> {
-                            viewModel.onStatsRequestToggled()
-                        }
-
                         is EntryScreenAction.Sync -> {
                             viewModel.sync()
                         }
@@ -367,6 +363,7 @@ fun NavGraph(
                     navController.navigate(Destination.IMPORT.routeWithArgValues())
                 },
                 onDeleteAll = viewModel::deleteAll,
+                onShowStatsToggled = viewModel::onStatsRequestToggled,
             )
         }
 

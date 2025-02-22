@@ -13,7 +13,6 @@ import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
@@ -62,8 +61,6 @@ class JournalEntryViewModel(
 
     private val snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
 
-    private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
     private var reconcileDayGroupJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -92,9 +89,8 @@ class JournalEntryViewModel(
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
-                statsRequested,
             ) { contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline, statsRequested,
+                showEmptyTags, showConflictDiffInline,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
@@ -108,7 +104,6 @@ class JournalEntryViewModel(
                     contentForCopy = contentForCopy,
                     showEmptyTags = showEmptyTags,
                     snackBarType = snackBarType,
-                    stats = if (statsRequested) repository.getStats() else null,
                     allowNotify = allowNotify,
                 )
             }
@@ -376,10 +371,6 @@ class JournalEntryViewModel(
         ServiceLocator.resetReceiveHelper()
     }
 
-    fun onStatsRequestToggled() {
-        statsRequested.update { !it }
-    }
-
     fun notify(
         entry: JournalEntry,
         inTime: Duration,
@@ -452,7 +443,6 @@ data class ViewState(
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
     val snackBarType: SnackBarType = SnackBarType.None,
-    val stats: EntryStats? = null,
     val allowNotify: Boolean = false,
 ) {
     companion object {
