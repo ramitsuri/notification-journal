@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
@@ -31,6 +32,7 @@ class SettingsViewModel(
     private val conflictDao: EntryConflictDao?,
 ) : ViewModel() {
     private val uploadLoading = MutableStateFlow(false)
+    private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     // Because some prefs are stored in non reactive storage
     private val prefUpdated = MutableStateFlow(0)
@@ -42,7 +44,8 @@ class SettingsViewModel(
             prefManager.showEmptyTags(),
             prefManager.copyWithEmptyTags(),
             prefManager.showConflictDiffInline(),
-        ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showConflictDiffInline,
+            statsRequested,
+        ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showConflictDiffInline, statsRequested,
             ->
             SettingsViewState(
                 uploadLoading = uploadLoading,
@@ -56,6 +59,7 @@ class SettingsViewModel(
                 showEmptyTags = showEmptyTags,
                 copyWithEmptyTags = copyWithEmptyTags,
                 allowDelete = journalEntryDao != null && conflictDao != null,
+                stats = if (statsRequested) repository.getStats() else null,
             )
         }.stateIn(
             viewModelScope,
@@ -114,6 +118,10 @@ class SettingsViewModel(
         }
     }
 
+    fun onStatsRequestToggled() {
+        statsRequested.update { !it }
+    }
+
     private fun getDeviceName() = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "") ?: ""
 
     private fun getExchangeName() = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "") ?: ""
@@ -158,4 +166,5 @@ data class SettingsViewState(
     val copyWithEmptyTags: Boolean = false,
     val showJournalImportButton: Boolean = ServiceLocator.allowJournalImport,
     val allowDelete: Boolean = false,
+    val stats: EntryStats? = null,
 )

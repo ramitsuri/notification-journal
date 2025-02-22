@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -21,15 +20,12 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -75,8 +71,6 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -85,7 +79,6 @@ import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.ui.components.CountdownSnackbar
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
@@ -103,14 +96,6 @@ import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
-import notificationjournal.core.generated.resources.stats
-import notificationjournal.core.generated.resources.stats_column_days
-import notificationjournal.core.generated.resources.stats_column_entries
-import notificationjournal.core.generated.resources.stats_row_all
-import notificationjournal.core.generated.resources.stats_row_not_uploaded_not_reconciled
-import notificationjournal.core.generated.resources.stats_row_not_uploaded_reconciled
-import notificationjournal.core.generated.resources.stats_row_uploaded_not_reconciled
-import notificationjournal.core.generated.resources.stats_row_uploaded_reconciled
 import notificationjournal.core.generated.resources.sync_down
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged_format
@@ -310,7 +295,6 @@ fun JournalEntryScreen(
                 onSettingsClicked = { onEntryScreenAction(EntryScreenAction.NavToSettings) },
                 onSearchClicked = { onEntryScreenAction(EntryScreenAction.NavToSearch) },
                 onResetReceiveHelper = { onEntryScreenAction(EntryScreenAction.ResetReceiveHelper) },
-                onStatsRequestToggled = { onEntryScreenAction(EntryScreenAction.ShowStatsToggled) },
                 onViewJournalEntryDayClicked = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
                 scrollBehavior = scrollBehavior,
             )
@@ -359,112 +343,6 @@ fun JournalEntryScreen(
                 )
             }
         }
-        if (state.stats != null) {
-            StatsDialog(
-                stats = state.stats,
-                onStatsRequestToggled = { onEntryScreenAction(EntryScreenAction.ShowStatsToggled) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatsDialog(
-    stats: EntryStats,
-    onStatsRequestToggled: () -> Unit,
-) {
-    Dialog(
-        onDismissRequest = onStatsRequestToggled,
-    ) {
-        Card {
-            Column(
-                modifier =
-                    Modifier.fillMaxWidth()
-                        .padding(16.dp)
-                        .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                StatRow()
-                StatRow(
-                    rowTitle = stringResource(Res.string.stats_row_uploaded_reconciled),
-                    statCount = stats.uploadedAndReconciled,
-                    applyBackground = true,
-                )
-                StatRow(
-                    rowTitle = stringResource(Res.string.stats_row_uploaded_not_reconciled),
-                    statCount = stats.uploadedAndNotReconciled,
-                )
-                StatRow(
-                    rowTitle = stringResource(Res.string.stats_row_not_uploaded_reconciled),
-                    statCount = stats.notUploadedAndReconciled,
-                    applyBackground = true,
-                )
-                StatRow(
-                    rowTitle = stringResource(Res.string.stats_row_not_uploaded_not_reconciled),
-                    statCount = stats.notUploadedAndNotReconciled,
-                )
-                StatRow(
-                    rowTitle = stringResource(Res.string.stats_row_all),
-                    statCount = stats.all,
-                    applyBackground = true,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun StatRow(
-    rowTitle: String? = null,
-    statCount: EntryStats.Count? = null,
-    applyBackground: Boolean = false,
-) {
-    val background =
-        if (applyBackground) {
-            Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f))
-        } else {
-            Modifier
-        }
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .then(background)
-                .padding(4.dp),
-    ) {
-        if (rowTitle != null) {
-            Text(
-                text = rowTitle,
-                modifier = Modifier.weight(3.5f),
-            )
-        } else {
-            Spacer(modifier = Modifier.weight(3.5f))
-        }
-        if (statCount != null) {
-            Text(
-                text = statCount.days,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.End,
-            )
-            Text(
-                text = statCount.entries,
-                modifier = Modifier.weight(1.5f),
-                textAlign = TextAlign.End,
-            )
-        } else {
-            Text(
-                text = stringResource(Res.string.stats_column_days),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.End,
-            )
-            Text(
-                text = stringResource(Res.string.stats_column_entries),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1.5f),
-                textAlign = TextAlign.End,
-            )
-        }
     }
 }
 
@@ -477,7 +355,6 @@ private fun Toolbar(
     onSettingsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
     onResetReceiveHelper: () -> Unit,
-    onStatsRequestToggled: () -> Unit,
     onViewJournalEntryDayClicked: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
@@ -530,18 +407,6 @@ private fun Toolbar(
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = stringResource(Res.string.search),
-                )
-            }
-            IconButton(
-                onClick = onStatsRequestToggled,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .padding(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = stringResource(Res.string.stats),
                 )
             }
             IconButton(

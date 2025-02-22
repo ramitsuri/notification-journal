@@ -19,7 +19,5 @@ sealed interface EntryScreenAction {
 
     data object NavToSearch : EntryScreenAction
 
-    data object ShowStatsToggled : EntryScreenAction
-
     data object NavToViewJournalEntryDay : EntryScreenAction
 }

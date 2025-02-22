@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.ui.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,7 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
@@ -31,9 +34,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.cancel
@@ -53,12 +59,20 @@ import notificationjournal.core.generated.resources.settings_journal_import_titl
 import notificationjournal.core.generated.resources.settings_logs
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
 import notificationjournal.core.generated.resources.settings_show_empty_tags
+import notificationjournal.core.generated.resources.settings_show_stats_title
 import notificationjournal.core.generated.resources.settings_tags_subtitle
 import notificationjournal.core.generated.resources.settings_tags_title
 import notificationjournal.core.generated.resources.settings_templates_subtitle
 import notificationjournal.core.generated.resources.settings_templates_title
 import notificationjournal.core.generated.resources.settings_upload_subtitle
 import notificationjournal.core.generated.resources.settings_upload_title
+import notificationjournal.core.generated.resources.stats_column_days
+import notificationjournal.core.generated.resources.stats_column_entries
+import notificationjournal.core.generated.resources.stats_row_all
+import notificationjournal.core.generated.resources.stats_row_not_uploaded_not_reconciled
+import notificationjournal.core.generated.resources.stats_row_not_uploaded_reconciled
+import notificationjournal.core.generated.resources.stats_row_uploaded_not_reconciled
+import notificationjournal.core.generated.resources.stats_row_uploaded_reconciled
 import notificationjournal.core.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 
@@ -78,6 +92,7 @@ fun SettingsScreen(
     onLogsClicked: () -> Unit,
     onJournalImportClicked: () -> Unit,
     onDeleteAll: () -> Unit,
+    onShowStatsToggled: () -> Unit,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -93,6 +108,12 @@ fun SettingsScreen(
                 onDataSharingPropertiesSet(dataHost, exchangeName, deviceName, username, password)
             },
             onNegativeClick = { showDialog = !showDialog },
+        )
+    }
+    if (state.stats != null) {
+        StatsDialog(
+            stats = state.stats,
+            onStatsRequestToggled = onShowStatsToggled,
         )
     }
     Surface {
@@ -169,6 +190,13 @@ fun SettingsScreen(
                         title = stringResource(Res.string.settings_copy_with_empty_tags),
                         value = state.copyWithEmptyTags,
                         onClick = onToggleCopyWithEmptyTags,
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = stringResource(Res.string.settings_show_stats_title),
+                        onClick = onShowStatsToggled,
+                        showProgress = false,
                     )
                 }
                 item {
@@ -382,6 +410,106 @@ private fun DataSharingPropertiesDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun StatsDialog(
+    stats: EntryStats,
+    onStatsRequestToggled: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onStatsRequestToggled,
+    ) {
+        Card {
+            Column(
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                StatRow()
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_uploaded_reconciled),
+                    statCount = stats.uploadedAndReconciled,
+                    applyBackground = true,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_uploaded_not_reconciled),
+                    statCount = stats.uploadedAndNotReconciled,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_not_uploaded_reconciled),
+                    statCount = stats.notUploadedAndReconciled,
+                    applyBackground = true,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_not_uploaded_not_reconciled),
+                    statCount = stats.notUploadedAndNotReconciled,
+                )
+                StatRow(
+                    rowTitle = stringResource(Res.string.stats_row_all),
+                    statCount = stats.all,
+                    applyBackground = true,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StatRow(
+    rowTitle: String? = null,
+    statCount: EntryStats.Count? = null,
+    applyBackground: Boolean = false,
+) {
+    val background =
+        if (applyBackground) {
+            Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f))
+        } else {
+            Modifier
+        }
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(background)
+                .padding(4.dp),
+    ) {
+        if (rowTitle != null) {
+            Text(
+                text = rowTitle,
+                modifier = Modifier.weight(3.5f),
+            )
+        } else {
+            Spacer(modifier = Modifier.weight(3.5f))
+        }
+        if (statCount != null) {
+            Text(
+                text = statCount.days,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = statCount.entries,
+                modifier = Modifier.weight(1.5f),
+                textAlign = TextAlign.End,
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.stats_column_days),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = stringResource(Res.string.stats_column_entries),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1.5f),
+                textAlign = TextAlign.End,
+            )
         }
     }
 }
