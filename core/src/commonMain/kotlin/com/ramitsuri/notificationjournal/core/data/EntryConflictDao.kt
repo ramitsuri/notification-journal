@@ -16,4 +16,7 @@ abstract class EntryConflictDao {
 
     @Insert
     abstract suspend fun insert(entryConflict: EntryConflict)
+
+    @Query("DELETE FROM entryconflict")
+    abstract suspend fun deleteAll()
 }

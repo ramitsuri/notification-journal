@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
+import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -24,6 +26,8 @@ class SettingsViewModel(
     private val repository: JournalRepository,
     private val getAppVersion: () -> String,
     private val prefManager: PrefManager,
+    private val journalEntryDao: JournalEntryDao?,
+    private val conflictDao: EntryConflictDao?,
 ) : ViewModel() {
     private val uploadLoading = MutableStateFlow(false)
 
@@ -55,6 +59,7 @@ class SettingsViewModel(
                 showEmptyTags = showEmptyTags,
                 copyWithEmptyTags = copyWithEmptyTags,
                 showLogsButton = showLogsButton,
+                allowDelete = journalEntryDao != null && conflictDao != null,
             )
         }.stateIn(
             viewModelScope,
@@ -118,6 +123,13 @@ class SettingsViewModel(
         }
     }
 
+    fun deleteAll() {
+        viewModelScope.launch {
+            journalEntryDao?.deleteAll()
+            conflictDao?.deleteAll()
+        }
+    }
+
     private fun getDeviceName() = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "") ?: ""
 
     private fun getExchangeName() = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "") ?: ""
@@ -141,6 +153,8 @@ class SettingsViewModel(
                         repository = ServiceLocator.repository,
                         getAppVersion = ServiceLocator::getAppVersion,
                         prefManager = ServiceLocator.prefManager,
+                        journalEntryDao = ServiceLocator.journalEntryDao,
+                        conflictDao = ServiceLocator.conflictDao,
                     ) as T
                 }
             }
@@ -161,4 +175,5 @@ data class SettingsViewState(
     val copyWithEmptyTags: Boolean = false,
     val showLogsButton: Boolean = false,
     val showJournalImportButton: Boolean = ServiceLocator.allowJournalImport,
+    val allowDelete: Boolean = false,
 )

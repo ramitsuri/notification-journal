@@ -6,6 +6,8 @@ import androidx.navigation.NavDeepLink
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
+import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
+import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
@@ -120,6 +122,12 @@ object ServiceLocator {
     val keyValueStore: KeyValueStore by lazy {
         PrefsKeyValueStore(factory)
     }
+
+    val journalEntryDao: JournalEntryDao?
+        get() = if (BuildKonfig.IS_DEBUG) db.journalEntryDao() else null
+
+    val conflictDao: EntryConflictDao?
+        get() = if (BuildKonfig.IS_DEBUG) db.entryConflictDao() else null
 
     val tagsDao: TagsDao
         get() = db.tagsDao()
