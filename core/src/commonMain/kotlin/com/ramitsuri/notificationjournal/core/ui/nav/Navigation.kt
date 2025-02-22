@@ -75,6 +75,7 @@ fun NavGraph(
     ) {
         composable(
             route = Destination.JOURNAL_ENTRY.route(),
+            // Getting from ServiceLocator because deep links not supported on multiplatform
             deepLinks = ServiceLocator.getJournalEntryScreenDeepLinks(),
         ) {
             val viewModel: JournalEntryViewModel =
