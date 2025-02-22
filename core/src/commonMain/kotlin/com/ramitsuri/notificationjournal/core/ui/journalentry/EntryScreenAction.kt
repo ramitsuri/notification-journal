@@ -17,8 +17,6 @@ sealed interface EntryScreenAction {
 
     data object CancelReconcile : EntryScreenAction
 
-    data object NavToLogs : EntryScreenAction
-
     data object NavToSearch : EntryScreenAction
 
     data object ShowStatsToggled : EntryScreenAction

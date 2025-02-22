@@ -65,6 +65,8 @@
     <string name="settings_templates_title">Templates</string>
     <string name="settings_templates_subtitle">Add or edit templates</string>
 
+    <string name= "settings_logs">Logs</string>
+
     <string name="settings_app_version">App version</string>
 
     <string name="settings_showReconciled">Show reconciled</string>
@@ -72,8 +74,6 @@
     <string name="settings_copy_with_empty_tags">Copy empty tags</string>
 
     <string name="settings_showConflictDiffInline">Show conflict diff inline</string>
-
-    <string name="settings_showLogsButton">Show logs button</string>
 
     <string name="settings_journal_import_title">Import</string>
     <string name="settings_journal_import_subtitle">Import journal entries</string>

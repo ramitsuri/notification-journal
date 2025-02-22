@@ -48,7 +48,11 @@ interface KeyValueStoreV2 {
         value: Int,
     )
 
-    suspend fun hasKey(key: Key): Boolean
+    suspend fun removeLegacy(
+        stringPrefs: List<String>,
+        booleanPrefs: List<String>,
+        intPrefs: List<String>,
+    )
 }
 
 enum class Key(val value: String) {
@@ -56,7 +60,6 @@ enum class Key(val value: String) {
     COPY_WITH_EMPTY_TAGS("copy_with_empty_tags"),
     SHOW_RECONCILED("show_reconciled"),
     CONFLICT_DIFF_INLINE("show_conflict_diff_inline"),
-    SHOW_LOGS_BUTTON("show_logs_button"),
     LAST_IMPORT_DATE("last_import_date"),
     LAST_IMPORT_DIRECTORY("last_import_directory"),
     DEFAULT_TAG("default_tag"),

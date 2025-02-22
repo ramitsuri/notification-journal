@@ -92,10 +92,9 @@ class JournalEntryViewModel(
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
-                prefManager.showLogsButton(),
                 statsRequested,
             ) { contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline, showLogsButton, statsRequested,
+                showEmptyTags, showConflictDiffInline, statsRequested,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
@@ -109,7 +108,6 @@ class JournalEntryViewModel(
                     contentForCopy = contentForCopy,
                     showEmptyTags = showEmptyTags,
                     snackBarType = snackBarType,
-                    showLogsButton = showLogsButton,
                     stats = if (statsRequested) repository.getStats() else null,
                     allowNotify = allowNotify,
                 )
@@ -453,7 +451,6 @@ data class ViewState(
     val showConflictDiffInline: Boolean = false,
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
-    val showLogsButton: Boolean = false,
     val snackBarType: SnackBarType = SnackBarType.None,
     val stats: EntryStats? = null,
     val allowNotify: Boolean = false,
