@@ -86,6 +86,7 @@ import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.edit
 import notificationjournal.core.generated.resources.menu_content_description
 import notificationjournal.core.generated.resources.no_items
+import notificationjournal.core.generated.resources.not_default_tag
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.tag_delete_fail_message
@@ -99,7 +100,7 @@ fun TagsScreen(
     onTextUpdated: (String) -> Unit,
     onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
-    onSetAsDefaultRequested: (Tag) -> Unit,
+    onSetAsDefaultRequested: (Tag?) -> Unit,
     onAddRequested: () -> Unit,
     onAddOrEditApproved: () -> Unit,
     onAddOrEditCanceled: () -> Unit,
@@ -278,7 +279,7 @@ private fun List(
     onEditOrder: (Int, Int) -> Unit,
     onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
-    onSetAsDefaultRequested: (Tag) -> Unit,
+    onSetAsDefaultRequested: (Tag?) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val dragDropState =
@@ -316,7 +317,7 @@ private fun ListItem(
     elevation: CardElevation,
     onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
-    onSetAsDefaultRequested: (Tag) -> Unit,
+    onSetAsDefaultRequested: (Tag?) -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
@@ -349,11 +350,12 @@ private fun ListItem(
             }
             ItemMenu(
                 showMenu = showMenu,
-                showSetAsDefault = !isDefault,
+                isDefault = isDefault,
                 onEditRequested = { onEditRequested(item) },
                 onDeleteRequested = { onDeleteRequested(item) },
                 onMenuButtonClicked = { showMenu = !showMenu },
                 onSetAsDefaultClicked = { onSetAsDefaultRequested(item) },
+                onUnsetAsDefaultClicked = { onSetAsDefaultRequested(null) },
             )
         }
     }
@@ -362,11 +364,12 @@ private fun ListItem(
 @Composable
 private fun ItemMenu(
     showMenu: Boolean,
-    showSetAsDefault: Boolean,
+    isDefault: Boolean,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
     onMenuButtonClicked: () -> Unit,
     onSetAsDefaultClicked: () -> Unit,
+    onUnsetAsDefaultClicked: () -> Unit,
 ) {
     Box {
         IconButton(
@@ -399,7 +402,15 @@ private fun ItemMenu(
                     onDeleteRequested()
                 },
             )
-            if (showSetAsDefault) {
+            if (isDefault) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.not_default_tag)) },
+                    onClick = {
+                        onMenuButtonClicked()
+                        onUnsetAsDefaultClicked()
+                    },
+                )
+            } else {
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.default_tag)) },
                     onClick = {
