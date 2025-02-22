@@ -50,8 +50,8 @@ import notificationjournal.core.generated.resources.settings_delete_all_subtitle
 import notificationjournal.core.generated.resources.settings_delete_all_title
 import notificationjournal.core.generated.resources.settings_journal_import_subtitle
 import notificationjournal.core.generated.resources.settings_journal_import_title
+import notificationjournal.core.generated.resources.settings_logs
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
-import notificationjournal.core.generated.resources.settings_showLogsButton
 import notificationjournal.core.generated.resources.settings_showReconciled
 import notificationjournal.core.generated.resources.settings_show_empty_tags
 import notificationjournal.core.generated.resources.settings_tags_subtitle
@@ -77,7 +77,7 @@ fun SettingsScreen(
     onToggleShowConflictDiffInline: () -> Unit,
     onToggleShowEmptyTags: () -> Unit,
     onToggleCopyWithEmptyTags: () -> Unit,
-    onToggleShowLogsButton: () -> Unit,
+    onLogsClicked: () -> Unit,
     onJournalImportClicked: () -> Unit,
     onDeleteAll: () -> Unit,
 ) {
@@ -181,10 +181,10 @@ fun SettingsScreen(
                     )
                 }
                 item {
-                    SettingsItemWithToggle(
-                        title = stringResource(Res.string.settings_showLogsButton),
-                        value = state.showLogsButton,
-                        onClick = onToggleShowLogsButton,
+                    SettingsItem(
+                        title = stringResource(Res.string.settings_logs),
+                        onClick = onLogsClicked,
+                        showProgress = false,
                     )
                 }
                 item {
@@ -231,7 +231,7 @@ fun SettingsScreen(
 @Composable
 private fun SettingsItem(
     title: String,
-    subtitle: String,
+    subtitle: String = "",
     onClick: () -> Unit,
     showProgress: Boolean,
     modifier: Modifier = Modifier,
@@ -253,7 +253,7 @@ private fun SettingsItem(
         if (showProgress) {
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        } else {
+        } else if (subtitle.isNotEmpty()) {
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,

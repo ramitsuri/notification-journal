@@ -25,7 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -307,12 +306,10 @@ fun JournalEntryScreen(
 
             Toolbar(
                 notUploadedCount = state.notUploadedCount,
-                showLogsButton = state.showLogsButton,
                 onSyncClicked = { onEntryScreenAction(EntryScreenAction.Sync) },
                 onSettingsClicked = { onEntryScreenAction(EntryScreenAction.NavToSettings) },
                 onSearchClicked = { onEntryScreenAction(EntryScreenAction.NavToSearch) },
                 onResetReceiveHelper = { onEntryScreenAction(EntryScreenAction.ResetReceiveHelper) },
-                onLogsClicked = { onEntryScreenAction(EntryScreenAction.NavToLogs) },
                 onStatsRequestToggled = { onEntryScreenAction(EntryScreenAction.ShowStatsToggled) },
                 onViewJournalEntryDayClicked = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
                 scrollBehavior = scrollBehavior,
@@ -476,12 +473,10 @@ fun StatRow(
 private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     notUploadedCount: Int,
-    showLogsButton: Boolean,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
     onResetReceiveHelper: () -> Unit,
-    onLogsClicked: () -> Unit,
     onStatsRequestToggled: () -> Unit,
     onViewJournalEntryDayClicked: () -> Unit,
 ) {
@@ -492,20 +487,6 @@ private fun Toolbar(
                 .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         actions = {
-            if (showLogsButton) {
-                IconButton(
-                    onClick = onLogsClicked,
-                    modifier =
-                        Modifier
-                            .size(48.dp)
-                            .padding(4.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ListAlt,
-                        contentDescription = null,
-                    )
-                }
-            }
             if (notUploadedCount > 0) {
                 Box(
                     modifier =

@@ -38,14 +38,6 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
         keyValueStore.putBoolean(Key.CONFLICT_DIFF_INLINE, showConflictDiffInline)
     }
 
-    fun showLogsButton(): Flow<Boolean> {
-        return keyValueStore.getBooleanFlow(Key.SHOW_LOGS_BUTTON, true)
-    }
-
-    suspend fun setShowLogsButton(showLogsButton: Boolean) {
-        keyValueStore.putBoolean(Key.SHOW_LOGS_BUTTON, showLogsButton)
-    }
-
     fun getLastImportDate(): Flow<Instant?> {
         return keyValueStore
             .getStringFlow(Key.LAST_IMPORT_DATE, "")
@@ -83,5 +75,13 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
 
     suspend fun setDefaultTag(tag: String) {
         keyValueStore.putString(Key.DEFAULT_TAG, tag)
+    }
+
+    suspend fun removeLegacy(
+        stringPrefs: List<String> = listOf(),
+        booleanPrefs: List<String> = listOf(),
+        intPrefs: List<String> = listOf(),
+    ) {
+        keyValueStore.removeLegacy(stringPrefs = stringPrefs, booleanPrefs = booleanPrefs, intPrefs = intPrefs)
     }
 }

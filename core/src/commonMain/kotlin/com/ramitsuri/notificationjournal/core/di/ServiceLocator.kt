@@ -215,6 +215,13 @@ object ServiceLocator {
                     ),
             )
         PrefManager(keyValueStore)
+            .also {
+                coroutineScope.launch {
+                    it.removeLegacy(
+                        booleanPrefs = listOf("show_logs_button"),
+                    )
+                }
+            }
     }
 
     val dataSendHelper: DataSendHelper? by lazy {

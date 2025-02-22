@@ -121,12 +121,6 @@ fun NavGraph(
                             viewModel.onContentCopied()
                         }
 
-                        is EntryScreenAction.NavToLogs -> {
-                            navController.navigate(
-                                Destination.LOGS.routeWithArgValues(),
-                            )
-                        }
-
                         is EntryScreenAction.NavToSearch -> {
                             navController.navigate(Destination.SEARCH.route())
                         }
@@ -365,7 +359,11 @@ fun NavGraph(
                 onToggleShowConflictDiffInline = viewModel::toggleShowConflictDiffInline,
                 onToggleCopyWithEmptyTags = viewModel::toggleCopyWithEmptyTags,
                 onToggleShowEmptyTags = viewModel::toggleShowEmptyTags,
-                onToggleShowLogsButton = viewModel::toggleShowLogsButton,
+                onLogsClicked = {
+                    navController.navigate(
+                        Destination.LOGS.routeWithArgValues(),
+                    )
+                },
                 onJournalImportClicked = {
                     navController.navigate(Destination.IMPORT.routeWithArgValues())
                 },

@@ -94,10 +94,22 @@ class DataStoreKeyValueStore(
         }
     }
 
-    override suspend fun hasKey(key: Key): Boolean {
-        return dataStore.data.map {
-            it.contains(stringPreferencesKey(key.value))
-        }.firstOrNull() ?: false
+    override suspend fun removeLegacy(
+        stringPrefs: List<String>,
+        booleanPrefs: List<String>,
+        intPrefs: List<String>,
+    ) {
+        dataStore.edit { ds ->
+            stringPrefs.forEach {
+                ds.remove(stringPreferencesKey(it))
+            }
+            booleanPrefs.forEach {
+                ds.remove(booleanPreferencesKey(it))
+            }
+            intPrefs.forEach {
+                ds.remove(intPreferencesKey(it))
+            }
+        }
     }
 
     companion object {

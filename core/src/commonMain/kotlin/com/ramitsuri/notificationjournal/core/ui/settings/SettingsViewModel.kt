@@ -42,9 +42,7 @@ class SettingsViewModel(
             prefManager.copyWithEmptyTags(),
             prefManager.showReconciled(),
             prefManager.showConflictDiffInline(),
-            prefManager.showLogsButton(),
         ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showReconciled, showConflictDiffInline,
-            showLogsButton,
             ->
             SettingsViewState(
                 uploadLoading = uploadLoading,
@@ -58,7 +56,6 @@ class SettingsViewModel(
                 showConflictDiffInline = showConflictDiffInline,
                 showEmptyTags = showEmptyTags,
                 copyWithEmptyTags = copyWithEmptyTags,
-                showLogsButton = showLogsButton,
                 allowDelete = journalEntryDao != null && conflictDao != null,
             )
         }.stateIn(
@@ -117,12 +114,6 @@ class SettingsViewModel(
         }
     }
 
-    fun toggleShowLogsButton() {
-        viewModelScope.launch {
-            prefManager.setShowLogsButton(state.value.showLogsButton.not())
-        }
-    }
-
     fun deleteAll() {
         viewModelScope.launch {
             journalEntryDao?.deleteAll()
@@ -173,7 +164,6 @@ data class SettingsViewState(
     val showConflictDiffInline: Boolean = false,
     val showEmptyTags: Boolean = false,
     val copyWithEmptyTags: Boolean = false,
-    val showLogsButton: Boolean = false,
     val showJournalImportButton: Boolean = ServiceLocator.allowJournalImport,
     val allowDelete: Boolean = false,
 )
