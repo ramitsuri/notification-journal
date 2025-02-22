@@ -152,9 +152,9 @@ class TagsViewModel(
         }
     }
 
-    fun setDefaultTag(tag: Tag) {
+    fun setDefaultTag(tag: Tag?) {
         viewModelScope.launch {
-            prefManager.setDefaultTag(tag.value)
+            prefManager.setDefaultTag((tag ?: Tag.NO_TAG).value)
         }
     }
 
