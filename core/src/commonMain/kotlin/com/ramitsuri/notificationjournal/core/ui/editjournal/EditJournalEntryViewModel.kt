@@ -259,11 +259,10 @@ class EditJournalEntryViewModel(
         tag: String?,
     ): List<String> {
         // Disable so that we don't get the same suggestion again from text field changing from selected suggestion
-        if (!enableGettingSuggestions)
-            {
-                enableGettingSuggestions = true
-                return listOf()
-            }
+        if (!enableGettingSuggestions) {
+            enableGettingSuggestions = true
+            return listOf()
+        }
         if (tag == null || Tag.isNoTag(tag)) {
             return listOf()
         }

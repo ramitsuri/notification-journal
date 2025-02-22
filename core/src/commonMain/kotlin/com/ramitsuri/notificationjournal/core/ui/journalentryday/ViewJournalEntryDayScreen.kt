@@ -131,6 +131,7 @@ fun ViewJournalEntryDayScreen(
                     onAction = onAction,
                     config = JournalEntryDayConfig.allDisabled,
                     entryDayHighlight = state.highlight,
+                    allowNotify = false,
                 )
             }
         }

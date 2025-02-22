@@ -37,6 +37,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -46,6 +47,7 @@ class JournalEntryViewModel(
     private val tagsDao: TagsDao,
     private val prefManager: PrefManager,
     private val clock: Clock = Clock.System,
+    private val allowNotify: Boolean,
 ) : ViewModel() {
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
@@ -113,6 +115,7 @@ class JournalEntryViewModel(
                         snackBarType = snackBarType,
                         showLogsButton = showLogsButton,
                         stats = if (statsRequested) repository.getStats() else null,
+                        allowNotify = allowNotify,
                     )
                 }
             }
@@ -368,6 +371,13 @@ class JournalEntryViewModel(
         statsRequested.update { !it }
     }
 
+    fun notify(
+        entry: JournalEntry,
+        inTime: Duration,
+    ) {
+        ServiceLocator.showNotification(entry, inTime)
+    }
+
     private fun setDate(
         journalEntry: JournalEntry,
         entryTime: LocalDateTime,
@@ -415,6 +425,7 @@ class JournalEntryViewModel(
                         ServiceLocator.repository,
                         ServiceLocator.tagsDao,
                         prefManager = ServiceLocator.prefManager,
+                        allowNotify = ServiceLocator.allowJournalEntryNotify(),
                     ) as T
                 }
             }
@@ -433,6 +444,7 @@ data class ViewState(
     val showLogsButton: Boolean = false,
     val snackBarType: SnackBarType = SnackBarType.None,
     val stats: EntryStats? = null,
+    val allowNotify: Boolean = false,
 ) {
     val selectedDayGroup: DayGroup
         get() {

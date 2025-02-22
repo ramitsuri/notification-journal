@@ -18,6 +18,14 @@
     <string name="stats">Stats</string>
     <string name="default_tag">Default tag</string>
     <string name="view_journal_entry_day">View day</string>
+    <string name="notify">Notify</string>
+    <string name="notify_now">Now</string>
+    <string name="notify_fifteen_minutes">15 minutes</string>
+    <string name="notify_one_hour">1 hour</string>
+    <string name="notify_two_hours">2 hours</string>
+    <string name="notify_six_hours">6 hours</string>
+    <string name="notify_twelve_hours">12 hours</string>
+    <string name="notify_twenty_four_hours">24 hours</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>

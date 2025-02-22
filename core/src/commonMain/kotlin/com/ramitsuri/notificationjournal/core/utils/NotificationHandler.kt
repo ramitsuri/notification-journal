@@ -25,8 +25,7 @@ data class NotificationInfo(
     val cancelOnTouch: Boolean = false,
     val isForegroundServiceImmediate: Boolean = false,
     val isOngoing: Boolean = false,
-    val intentClass: Class<*>,
-    val intentExtras: Map<String, Any>? = null,
+    val clickDeepLinkUri: String,
     val actions: List<NotificationActionInfo>? = null,
     val actionExtras: Map<String, Any>? = null,
 )
@@ -49,6 +48,7 @@ enum class Importance(val key: Int) {
 
 enum class NotificationChannelType(val id: String) {
     MAIN("main"),
+    REMINDERS("reminders"),
 }
 
 interface NotificationHandler {

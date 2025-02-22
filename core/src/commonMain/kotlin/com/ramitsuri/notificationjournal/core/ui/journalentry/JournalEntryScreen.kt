@@ -341,6 +341,7 @@ fun JournalEntryScreen(
                     dayGroupConflictCountMap = state.dayGroupConflictCountMap,
                     showEmptyTags = state.showEmptyTags,
                     showConflictDiffInline = state.showConflictDiffInline,
+                    allowNotify = state.allowNotify,
                     onShowDayGroupClicked = { onEntryScreenAction(EntryScreenAction.ShowDayGroup(it)) },
                     onHideAllDays = { showAllDays = false },
                     scrollConnection = scrollBehavior.nestedScrollConnection,
@@ -600,6 +601,7 @@ private fun List(
     dayGroupConflictCountMap: Map<DayGroup, Int>,
     showEmptyTags: Boolean,
     showConflictDiffInline: Boolean,
+    allowNotify: Boolean,
     modifier: Modifier = Modifier,
     scrollConnection: NestedScrollConnection,
     onShowDayGroupClicked: (DayGroup) -> Unit,
@@ -616,6 +618,7 @@ private fun List(
         showConflictDiffInline = showConflictDiffInline,
         onAction = onAction,
         config = JournalEntryDayConfig.allEnabled,
+        allowNotify = allowNotify,
         modifier = modifier,
     )
     ShowAllDaysDialog(

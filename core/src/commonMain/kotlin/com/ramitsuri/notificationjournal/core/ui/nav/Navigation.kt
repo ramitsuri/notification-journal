@@ -73,7 +73,11 @@ fun NavGraph(
             )
         },
     ) {
-        composable(Destination.JOURNAL_ENTRY.route()) { _ ->
+        composable(
+            route = Destination.JOURNAL_ENTRY.route(),
+            // Getting from ServiceLocator because deep links not supported on multiplatform
+            deepLinks = ServiceLocator.getJournalEntryScreenDeepLinks(),
+        ) {
             val viewModel: JournalEntryViewModel =
                 viewModel(factory = JournalEntryViewModel.factory(receivedText))
 
@@ -258,6 +262,10 @@ fun NavGraph(
 
                         is DayGroupAction.ShowNextDay -> {
                             viewModel.goToNextDay()
+                        }
+
+                        is DayGroupAction.Notify -> {
+                            viewModel.notify(action.entry, action.inTime)
                         }
 
                         is DayGroupAction.ShowAllDays -> {
@@ -477,6 +485,7 @@ fun NavGraph(
                         is DayGroupAction.CopyEntry -> {
                             viewModel.onCopy(action.entry)
                         }
+
                         else -> {}
                     }
                 },

@@ -4,6 +4,7 @@ import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDeepLink
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.BuildKonfig
@@ -158,6 +159,10 @@ actual class DiFactory {
 
     actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository {
         return ImportRepositoryImpl(ioDispatcher)
+    }
+
+    actual fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> {
+        return emptyList()
     }
 
     companion object {
