@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.di
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDeepLink
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
@@ -50,4 +51,6 @@ expect class DiFactory {
     fun getDataStorePath(): Path
 
     fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository
+
+    fun getJournalEntryScreenDeepLinks(): List<NavDeepLink>
 }

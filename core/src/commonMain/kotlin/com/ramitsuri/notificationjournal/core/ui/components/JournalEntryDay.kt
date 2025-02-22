@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -87,6 +89,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
+import com.ramitsuri.notificationjournal.core.model.NotifyTime
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -114,11 +117,13 @@ import notificationjournal.core.generated.resources.force_upload
 import notificationjournal.core.generated.resources.menu_content_description
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.next_day
+import notificationjournal.core.generated.resources.notify
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
+import kotlin.time.Duration
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -132,6 +137,7 @@ fun JournalEntryDay(
     showConflictDiffInline: Boolean,
     config: JournalEntryDayConfig,
     entryDayHighlight: EntryDayHighlight? = null,
+    allowNotify: Boolean,
     onAction: (DayGroupAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -286,6 +292,7 @@ fun JournalEntryDay(
                     item = entry,
                     highlight = highlightEntryId == entry.id,
                     allowEdits = config.allowEdits,
+                    allowNotify = allowNotify,
                     conflicts = conflicts.filter { it.entryId == entry.id },
                     onCopyRequested = { onAction(DayGroupAction.CopyEntry(entry)) },
                     onDeleteRequested = { onAction(DayGroupAction.DeleteEntry(entry)) },
@@ -316,6 +323,7 @@ fun JournalEntryDay(
                     onDuplicateRequested = { onAction(DayGroupAction.DuplicateEntry(entry)) },
                     onForceUploadRequested = { onAction(DayGroupAction.ForceUploadEntry(entry)) },
                     onConflictResolved = { onAction(DayGroupAction.ResolveConflict(entry, it)) },
+                    onNotifyTimePicked = { onAction(DayGroupAction.Notify(entry, it)) },
                     showConflictDiffInline = showConflictDiffInline,
                     modifier =
                         Modifier
@@ -551,6 +559,7 @@ private fun ListItem(
     item: JournalEntry,
     highlight: Boolean,
     allowEdits: Boolean,
+    allowNotify: Boolean,
     conflicts: List<EntryConflict>,
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
@@ -567,6 +576,7 @@ private fun ListItem(
     onDuplicateRequested: () -> Unit,
     onForceUploadRequested: () -> Unit,
     onConflictResolved: (EntryConflict?) -> Unit,
+    onNotifyTimePicked: (Duration) -> Unit,
     showConflictDiffInline: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -619,6 +629,7 @@ private fun ListItem(
         tags = tags,
         selectedTag = selectedTag,
         time = item.entryTime,
+        allowNotify = allowNotify,
         onCopyRequested = onCopyRequested,
         onEditRequested = onEditRequested,
         onDeleteRequested = onDeleteRequested,
@@ -632,6 +643,7 @@ private fun ListItem(
         onDuplicateRequested = onDuplicateRequested,
         onForceUploadRequested = onForceUploadRequested,
         onDismiss = { showDetails = false },
+        onNotifyTimePicked = onNotifyTimePicked,
     )
 
     ConflictResolutionDialog(
@@ -788,6 +800,7 @@ private fun DetailsDialog(
     tags: List<Tag>,
     selectedTag: String?,
     time: LocalDateTime,
+    allowNotify: Boolean,
     onCopyRequested: () -> Unit,
     onEditRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
@@ -801,6 +814,7 @@ private fun DetailsDialog(
     onDuplicateRequested: () -> Unit,
     onForceUploadRequested: () -> Unit,
     onDismiss: () -> Unit,
+    onNotifyTimePicked: (Duration) -> Unit,
 ) {
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -905,16 +919,19 @@ private fun DetailsDialog(
                                         onEditRequested()
                                     },
                                 )
-                                .padding(vertical = 16.dp, horizontal = 8.dp),
+                                .padding(vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = text,
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (allowNotify) {
+                            NotifyButton(onNotifyTimePicked = onNotifyTimePicked)
+                        }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -969,6 +986,41 @@ private fun DetailsDialog(
                         },
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.NotifyButton(onNotifyTimePicked: (Duration) -> Unit) {
+    var showNotifyTimes by remember { mutableStateOf(false) }
+    Spacer(modifier = Modifier.weight(1f))
+    Box {
+        IconButton(
+            onClick = { showNotifyTimes = true },
+            modifier =
+                Modifier
+                    .size(48.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Notifications,
+                contentDescription = stringResource(Res.string.notify),
+            )
+        }
+        DropdownMenu(
+            expanded = showNotifyTimes,
+            onDismissRequest = {
+                showNotifyTimes = false
+            },
+        ) {
+            NotifyTime.entries.forEach { notifyTime ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(notifyTime.res)) },
+                    onClick = {
+                        showNotifyTimes = false
+                        onNotifyTimePicked(notifyTime.duration)
+                    },
+                )
             }
         }
     }

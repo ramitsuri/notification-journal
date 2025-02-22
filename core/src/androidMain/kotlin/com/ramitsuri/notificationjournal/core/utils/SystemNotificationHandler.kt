@@ -14,12 +14,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.app.TaskStackBuilder
+import androidx.core.net.toUri
 
 class SystemNotificationHandler(
     context: Context,
 ) : NotificationHandler {
     private val appContext = context.applicationContext
     private val notificationManager = NotificationManagerCompat.from(appContext)
+    private var remindersNotificationId = 2
 
     override fun init(channels: List<NotificationChannelInfo>) {
         createChannels(channels)
@@ -41,10 +43,20 @@ class SystemNotificationHandler(
     override fun getNotificationId(notificationInfo: NotificationInfo): Int {
         return when (notificationInfo.channel) {
             NotificationChannelType.MAIN -> 1
+            NotificationChannelType.REMINDERS -> {
+                remindersNotificationId++
+                if (remindersNotificationId > REMINDERS_NOTIFICATION_ID_MAX) {
+                    remindersNotificationId = 2
+                }
+                remindersNotificationId
+            }
         }
     }
 
-    private fun toSystemNotification(notificationInfo: NotificationInfo): Notification {
+    private fun toSystemNotification(
+        notificationInfo: NotificationInfo,
+        notificationId: Int? = null,
+    ): Notification {
         val builder = NotificationCompat.Builder(appContext, notificationInfo.channel.id)
         builder.apply {
             setSmallIcon(notificationInfo.iconResId)
@@ -79,10 +91,14 @@ class SystemNotificationHandler(
             setAutoCancel(notificationInfo.cancelOnTouch)
             val contentIntent =
                 TaskStackBuilder.create(appContext).run {
-                    val mainIntent = Intent(appContext, notificationInfo.intentClass)
+                    val mainIntent =
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            notificationInfo.clickDeepLinkUri.toUri(),
+                        )
                     addNextIntentWithParentStack(mainIntent)
                     val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                    getPendingIntent(1001, flags)
+                    getPendingIntent(notificationId ?: 1001, flags)
                 }
             setContentIntent(contentIntent)
 
@@ -178,4 +194,8 @@ class SystemNotificationHandler(
     }
 
     private fun toImportance(importance: Importance) = importance.key
+
+    companion object {
+        private const val REMINDERS_NOTIFICATION_ID_MAX = 1000
+    }
 }

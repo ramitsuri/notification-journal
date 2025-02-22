@@ -5,6 +5,7 @@ import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlin.time.Duration
 
 sealed interface DayGroupAction {
     data class AddEntry(val date: LocalDate, val time: LocalTime?, val tag: String?) :
@@ -44,6 +45,8 @@ sealed interface DayGroupAction {
     data class ForceUploadTagGroup(val tagGroup: TagGroup) : DayGroupAction
 
     data class CopyTagGroup(val tagGroup: TagGroup) : DayGroupAction
+
+    data class Notify(val entry: JournalEntry, val inTime: Duration) : DayGroupAction
 
     data object CopyDayGroup : DayGroupAction
 

@@ -8,10 +8,16 @@ import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
 import com.ramitsuri.notificationjournal.core.di.DiFactory
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.ui.nav.DeepLink
+import com.ramitsuri.notificationjournal.core.ui.nav.uriWithArgsValues
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.JournalEntryNotificationHelper
 import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
+import com.ramitsuri.notificationjournal.work.ShowNotificationWorker
+import kotlin.time.Duration
 
 class MainApplication : Application(), DefaultLifecycleObserver {
     override fun onCreate() {
@@ -19,7 +25,17 @@ class MainApplication : Application(), DefaultLifecycleObserver {
 
         DynamicColors.applyToActivitiesIfAvailable(this)
         val factory = DiFactory(this)
-        ServiceLocator.init(factory)
+        ServiceLocator.init(
+            factory,
+            object : JournalEntryNotificationHelper {
+                override fun show(
+                    journalEntry: JournalEntry,
+                    showIn: Duration,
+                ) {
+                    ShowNotificationWorker.enqueue(this@MainApplication, journalEntry.id, showIn)
+                }
+            },
+        )
         showJournalNotification()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }
@@ -45,8 +61,7 @@ class MainApplication : Application(), DefaultLifecycleObserver {
                 cancelOnTouch = false,
                 isForegroundServiceImmediate = false,
                 isOngoing = true,
-                intentClass = MainActivity::class.java,
-                intentExtras = mapOf(),
+                clickDeepLinkUri = DeepLink.HOME_SCREEN.uriWithArgsValues(),
                 actions =
                     listOf(
                         NotificationActionInfo(

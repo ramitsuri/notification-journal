@@ -68,6 +68,7 @@ kotlin {
             implementation(libs.playservices.wearable)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.playservices.coroutines)
+            implementation(libs.androidx.work.runtime.ktx)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

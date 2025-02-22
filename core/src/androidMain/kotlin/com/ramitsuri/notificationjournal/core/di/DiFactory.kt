@@ -6,6 +6,7 @@ import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDeepLink
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
@@ -15,6 +16,8 @@ import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
+import com.ramitsuri.notificationjournal.core.ui.nav.DeepLink
+import com.ramitsuri.notificationjournal.core.ui.nav.uriWithArgNames
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
@@ -117,5 +120,12 @@ actual class DiFactory(private val application: Application) {
 
     actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository {
         error("Not supported on Android")
+    }
+
+    actual fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> {
+        return listOf(
+            DeepLink.REMINDER.uriWithArgNames(),
+            DeepLink.HOME_SCREEN.uriWithArgNames(),
+        )
     }
 }

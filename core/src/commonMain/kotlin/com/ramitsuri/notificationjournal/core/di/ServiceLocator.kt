@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.di
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDeepLink
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
@@ -10,6 +11,7 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
 import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
+import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
@@ -23,6 +25,8 @@ import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryVie
 import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.Importance
+import com.ramitsuri.notificationjournal.core.utils.JournalEntryNotificationHelper
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
@@ -36,12 +40,18 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okio.Path.Companion.toOkioPath
 import java.util.UUID
+import kotlin.time.Duration
 
 object ServiceLocator {
     private lateinit var db: AppDatabase
+    private var notificationHelper: JournalEntryNotificationHelper? = null
 
-    fun init(factory: DiFactory) {
+    fun init(
+        factory: DiFactory,
+        notificationHelper: JournalEntryNotificationHelper? = null,
+    ) {
         ServiceLocator.factory = factory
+        ServiceLocator.notificationHelper = notificationHelper
         db = AppDatabase.getDatabase { factory.getDatabaseBuilder() }
         notificationHandler.init(
             listOf(
@@ -49,6 +59,15 @@ object ServiceLocator {
                     channelType = NotificationChannelType.MAIN,
                     name = NotificationChannelType.MAIN.id,
                     description = "For main notification",
+                ),
+                NotificationChannelInfo(
+                    channelType = NotificationChannelType.REMINDERS,
+                    name = NotificationChannelType.REMINDERS.id,
+                    description = "For reminder notification",
+                    importance = Importance.HIGH,
+                    playSound = true,
+                    vibrate = true,
+                    showBadge = true,
                 ),
             ),
         )
@@ -165,6 +184,19 @@ object ServiceLocator {
         val suffix = if (BuildKonfig.IS_DEBUG) "_debug" else ""
         return "${BuildKonfig.APP_VERSION}$suffix"
     }
+
+    fun showNotification(
+        journalEntry: JournalEntry,
+        inTime: Duration,
+    ) {
+        notificationHelper?.show(journalEntry, inTime)
+    }
+
+    fun allowJournalEntryNotify(): Boolean {
+        return notificationHelper != null
+    }
+
+    fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> = factory.getJournalEntryScreenDeepLinks()
 
     val prefManager by lazy {
         val keyValueStore =

@@ -158,16 +158,11 @@ fun hourMinute(
 suspend fun dayMonthDateWithYearSuspend(toFormat: LocalDate): String {
     val monthNames = getStringArray(Res.array.month_names)
     val dayOfWeekNames = getStringArray(Res.array.day_of_week_names)
-    return LocalDate.Format {
-        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-        char(',')
-        char(' ')
-        monthName(MonthNames(monthNames))
-        char(' ')
-        dayOfMonth()
-        char(' ')
-        year()
-    }.format(toFormat)
+    return dayMonthDateWithYearInternal(
+        toFormat = toFormat,
+        monthNames = monthNames,
+        dayOfWeekNames = dayOfWeekNames,
+    )
 }
 
 // Saturday, November 16 2024
@@ -177,16 +172,11 @@ fun dayMonthDateWithYear(
     monthNames: List<String> = stringArrayResource(Res.array.month_names),
     dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
 ): String {
-    return LocalDate.Format {
-        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-        char(',')
-        char(' ')
-        monthName(MonthNames(monthNames))
-        char(' ')
-        dayOfMonth()
-        char(' ')
-        year()
-    }.format(toFormat)
+    return dayMonthDateWithYearInternal(
+        toFormat = toFormat,
+        monthNames = monthNames,
+        dayOfWeekNames = dayOfWeekNames,
+    )
 }
 
 fun LocalDateTime.plus(duration: Duration) =
@@ -212,3 +202,20 @@ fun LocalDate.asImportFileName() =
         append(String.format("%02d", dayOfMonth))
         append(".md")
     }
+
+private fun dayMonthDateWithYearInternal(
+    toFormat: LocalDate,
+    monthNames: List<String>,
+    dayOfWeekNames: List<String>,
+): String {
+    return LocalDate.Format {
+        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
+        char(',')
+        char(' ')
+        monthName(MonthNames(monthNames))
+        char(' ')
+        dayOfMonth()
+        char(' ')
+        year()
+    }.format(toFormat)
+}
