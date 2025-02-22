@@ -140,7 +140,7 @@ fun NavGraph(
                         }
 
                         is EntryScreenAction.ShowDayGroup -> {
-                            viewModel.showDayGroupClicked(action.dayGroup)
+                            viewModel.showDayGroupClicked(action.date)
                         }
 
                         is EntryScreenAction.ShowStatsToggled -> {

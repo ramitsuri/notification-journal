@@ -21,6 +21,9 @@ abstract class JournalEntryDao {
     @Query("SELECT * FROM journalentry WHERE reconciled = 0 AND deleted = 0")
     abstract fun getAllFlowNotReconciled(): Flow<List<JournalEntry>>
 
+    @Query("SELECT DISTINCT entry_time FROM journalentry WHERE reconciled = 0 AND deleted = 0 ORDER BY entry_time ASC")
+    abstract fun getNotReconciledEntryTimesFlow(): Flow<List<LocalDateTime>>
+
     @Query("SELECT * FROM journalentry WHERE reconciled = 0 AND deleted = 0 ORDER BY entry_time ASC")
     abstract suspend fun getAll(): List<JournalEntry>
 

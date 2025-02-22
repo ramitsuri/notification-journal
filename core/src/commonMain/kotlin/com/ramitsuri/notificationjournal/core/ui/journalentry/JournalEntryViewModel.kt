@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
@@ -28,6 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -36,6 +38,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.minus
+import kotlin.math.absoluteValue
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -52,7 +56,7 @@ class JournalEntryViewModel(
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
 
-    private val selectedIndex: MutableStateFlow<Int?> = MutableStateFlow(null)
+    private val selectedDate = MutableStateFlow<LocalDate?>(null)
 
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
@@ -64,60 +68,51 @@ class JournalEntryViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ViewState> =
-        prefManager.showReconciled().flatMapLatest { showReconciled ->
+        combine(
+            selectedDate,
+            repository.getNotReconciledEntryDatesFlow(),
+        ) { selectedDate, countAndDates ->
+            val today = clock.nowLocal().date
+            if (selectedDate == null) {
+                val closestDateToToday =
+                    countAndDates.minByOrNull { countAndDate ->
+                        today.minus(countAndDate.date).seconds.absoluteValue
+                    }?.date
+                this.selectedDate.update {
+                    closestDateToToday ?: countAndDates.lastOrNull()?.date
+                }
+            }
+            countAndDates to (selectedDate ?: today)
+        }.flatMapLatest { (countAndDates, selectedDate) ->
             combine(
-                selectedIndex,
                 contentForCopy,
                 snackBarType,
-                repository.getFlow(showReconciled = showReconciled),
+                repository.getForDateFlow(selectedDate),
                 repository.getForUploadCountFlow(),
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
                 prefManager.showLogsButton(),
                 statsRequested,
-            ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
+            ) { contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
                 showEmptyTags, showConflictDiffInline, showLogsButton, statsRequested,
                 ->
                 val tags = tagsDao.getAll()
-                val dayGroups =
-                    try {
-                        entries.toDayGroups(
-                            tagsForSort = tags.map { it.value },
-                        )
-                    } catch (e: Exception) {
-                        listOf()
-                    }
-                val sorted = dayGroups.sortedBy { it.date }
-                // Show either today or the biggest date as initially selected
-                if (selectedIndex == null) {
-                    if (sorted.isNotEmpty()) {
-                        this.selectedIndex.update {
-                            sorted
-                                .indexOfFirst {
-                                    it.date == clock.nowLocal().date
-                                }
-                                .takeIf { it >= 0 }
-                                ?: sorted.lastIndex
-                        }
-                    }
-                    ViewState()
-                } else {
-                    ViewState(
-                        dayGroups = sorted,
-                        tags = tags,
-                        notUploadedCount = forUploadCount,
-                        entryConflicts = entryConflicts,
-                        showConflictDiffInline = showConflictDiffInline,
-                        selectedIndex = selectedIndex,
-                        contentForCopy = contentForCopy,
-                        showEmptyTags = showEmptyTags,
-                        snackBarType = snackBarType,
-                        showLogsButton = showLogsButton,
-                        stats = if (statsRequested) repository.getStats() else null,
-                        allowNotify = allowNotify,
-                    )
-                }
+                val entryIds = entries.map { it.id }
+                ViewState(
+                    dateWithCountList = countAndDates,
+                    dayGroup = entries.toDayGroups().firstOrNull() ?: ViewState.defaultDayGroup,
+                    tags = tags,
+                    notUploadedCount = forUploadCount,
+                    entryConflicts = entryConflicts.filter { entryIds.contains(it.entryId) },
+                    showConflictDiffInline = showConflictDiffInline,
+                    contentForCopy = contentForCopy,
+                    showEmptyTags = showEmptyTags,
+                    snackBarType = snackBarType,
+                    showLogsButton = showLogsButton,
+                    stats = if (statsRequested) repository.getStats() else null,
+                    allowNotify = allowNotify,
+                )
             }
         }.stateIn(
             scope = viewModelScope,
@@ -280,37 +275,45 @@ class JournalEntryViewModel(
     }
 
     fun goToNextDay() {
-        selectedIndex.update { existing ->
+        selectedDate.update { existing ->
+            val dateWithCountList = state.value.dateWithCountList
+            if (dateWithCountList.isEmpty()) {
+                return
+            }
             if (existing == null) {
                 return
             }
-            val new = existing + 1
-            if (new > state.value.dayGroups.lastIndex) {
-                0
+            val existingIndex = state.value.dateWithCountList.indexOfFirst { it.date == existing }
+            val newIndex = existingIndex + 1
+            if (newIndex > dateWithCountList.lastIndex) {
+                dateWithCountList.first().date
             } else {
-                new
+                dateWithCountList[newIndex].date
             }
         }
     }
 
     fun goToPreviousDay() {
-        selectedIndex.update { existing ->
+        selectedDate.update { existing ->
+            val dateWithCountList = state.value.dateWithCountList
+            if (dateWithCountList.isEmpty()) {
+                return
+            }
             if (existing == null) {
                 return
             }
-            val new = existing - 1
-            if (new < 0) {
-                state.value.dayGroups.lastIndex
+            val existingIndex = state.value.dateWithCountList.indexOfFirst { it.date == existing }
+            val newIndex = existingIndex - 1
+            if (newIndex < 0) {
+                dateWithCountList.last().date
             } else {
-                new
+                dateWithCountList[newIndex].date
             }
         }
     }
 
-    fun showDayGroupClicked(dayGroup: DayGroup) {
-        val existing = state.value
-        val index = existing.dayGroups.indexOf(dayGroup)
-        selectedIndex.update { index }
+    fun showDayGroupClicked(date: LocalDate) {
+        selectedDate.update { date }
     }
 
     fun onCopy(entry: JournalEntry) {
@@ -326,11 +329,19 @@ class JournalEntryViewModel(
     }
 
     fun onCopy() {
-        val dayGroup = state.value.selectedDayGroup
+        val conflicts = state.value.entryConflicts
+        val dayGroup = state.value.dayGroup
+        if (dayGroup == ViewState.defaultDayGroup) {
+            return
+        }
         if (dayGroup.untaggedCount > 0) {
             return
         }
-        if ((state.value.dayGroupConflictCountMap[dayGroup] ?: 0) > 0) {
+        val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }
+        if (dayGroupEntryIds.isEmpty()) {
+            return
+        }
+        if (conflicts.any { dayGroupEntryIds.contains(it.id) }) {
             return
         }
         viewModelScope.launch(Dispatchers.Default) {
@@ -398,6 +409,7 @@ class JournalEntryViewModel(
                     SnackBarType.None
                 }
                 delay(5_000)
+                goToNextDay()
                 dayGroup
                     .tagGroups
                     .map { it.entries }
@@ -433,12 +445,12 @@ class JournalEntryViewModel(
 }
 
 data class ViewState(
-    val dayGroups: List<DayGroup> = listOf(),
+    val dateWithCountList: List<DateWithCount> = listOf(),
+    val dayGroup: DayGroup = defaultDayGroup,
     val tags: List<Tag> = listOf(),
     val notUploadedCount: Int = 0,
     val entryConflicts: List<EntryConflict> = listOf(),
     val showConflictDiffInline: Boolean = false,
-    val selectedIndex: Int = 0,
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
     val showLogsButton: Boolean = false,
@@ -446,18 +458,9 @@ data class ViewState(
     val stats: EntryStats? = null,
     val allowNotify: Boolean = false,
 ) {
-    val selectedDayGroup: DayGroup
-        get() {
-            return dayGroups.getOrNull(selectedIndex) ?: DayGroup(
-                LocalDate(1970, 1, 1),
-                listOf(),
-            )
-        }
-
-    val dayGroupConflictCountMap
-        get() =
-            dayGroups
-                .associateWith { it.getConflictsCount(entryConflicts) }
+    companion object {
+        val defaultDayGroup = DayGroup(LocalDate(1970, 1, 1), listOf())
+    }
 }
 
 sealed interface SnackBarType {

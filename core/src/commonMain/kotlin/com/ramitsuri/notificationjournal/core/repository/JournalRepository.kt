@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.repository
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
+import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -18,6 +19,9 @@ import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -39,6 +43,23 @@ class JournalRepository(
             dao.getAllFlow()
         } else {
             dao.getAllFlowNotReconciled()
+        }
+    }
+
+    fun getNotReconciledEntryDatesFlow(): Flow<List<DateWithCount>> {
+        return combine(
+            // Used so that it refreshes the data
+            conflictDao.getFlow(),
+            dao.getNotReconciledEntryTimesFlow(),
+        ) { _, entryTimes ->
+            entryTimes.map { it.date }.distinct()
+        }.map { entryDates ->
+            entryDates.map { date ->
+                val entriesForDate = getForDateFlow(date).first()
+                val conflictCount = entriesForDate.map { it.id }.let { conflictDao.getCount(it) }
+                val untaggedCount = entriesForDate.count { Tag.isNoTag(it.tag) }
+                DateWithCount(date = date, conflictCount = conflictCount, untaggedCount = untaggedCount)
+            }
         }
     }
 
@@ -170,7 +191,7 @@ class JournalRepository(
     }
 
     fun getConflicts(): Flow<List<EntryConflict>> {
-        return conflictDao.getAllFlow()
+        return conflictDao.getFlow()
     }
 
     suspend fun resolveConflict(

@@ -151,7 +151,7 @@ class JournalRepositoryTest {
             assertEquals(1, entries.size)
             assertEquals("one", entries.first().text)
 
-            val conflicts = db.entryConflictDao().getAllFlow().first()
+            val conflicts = db.entryConflictDao().getFlow().first()
             assertEquals(1, conflicts.size)
             assertEquals("one-corrected", conflicts.first().text)
             assertEquals("1", conflicts.first().entryId)
@@ -178,7 +178,7 @@ class JournalRepositoryTest {
             assertEquals(1, entries.size)
             assertEquals("one", entries.first().text)
 
-            db.entryConflictDao().getAllFlow().test { expectNoEvents() }
+            db.entryConflictDao().getFlow().test { expectNoEvents() }
         }
 
     private class TestClock : Clock {

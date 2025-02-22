@@ -1,12 +1,11 @@
 package com.ramitsuri.notificationjournal.core.ui.journalentry
 
-import com.ramitsuri.notificationjournal.core.model.DayGroup
 import kotlinx.datetime.LocalDate
 
 sealed interface EntryScreenAction {
     data class AddWithDate(val date: LocalDate? = null) : EntryScreenAction
 
-    data class ShowDayGroup(val dayGroup: DayGroup) : EntryScreenAction
+    data class ShowDayGroup(val date: LocalDate) : EntryScreenAction
 
     data object NavToSettings : EntryScreenAction
 
