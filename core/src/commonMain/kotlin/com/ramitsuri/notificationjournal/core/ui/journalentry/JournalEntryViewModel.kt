@@ -73,7 +73,7 @@ class JournalEntryViewModel(
             if (selectedDate == null) {
                 val closestDateToToday =
                     countAndDates.minByOrNull { countAndDate ->
-                        today.minus(countAndDate.date).seconds.absoluteValue
+                        today.minus(countAndDate.date).days.absoluteValue
                     }?.date
                 this.selectedDate.update {
                     closestDateToToday ?: countAndDates.lastOrNull()?.date
@@ -96,7 +96,7 @@ class JournalEntryViewModel(
                 val entryIds = entries.map { it.id }
                 ViewState(
                     dateWithCountList = countAndDates,
-                    dayGroup = entries.toDayGroups().firstOrNull() ?: ViewState.defaultDayGroup,
+                    dayGroup = entries.toDayGroups(tags.map { it.value }).firstOrNull() ?: ViewState.defaultDayGroup,
                     tags = tags,
                     notUploadedCount = forUploadCount,
                     entryConflicts = entryConflicts.filter { entryIds.contains(it.entryId) },
