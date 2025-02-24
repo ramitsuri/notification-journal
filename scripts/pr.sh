@@ -4,7 +4,7 @@
 REMOTE="origin"
 RESTRICTED_BRANCHES=("main")
 REVIEWERS=()
-REPO="git@github.com:ramitsuri/notification-journal.git"
+REPO="ramitsuri/notification-journal.git"
 
 # Variables
 CreatingPr=false
@@ -15,6 +15,7 @@ KeepCurrentBranchAfterPr=false
 RunTests=false
 Draft=false
 ReadyFromDraft=false
+ExitEarly=false
 
 Help()
 {
@@ -39,6 +40,7 @@ b    Set the BaseBranch var to squash commits and create PR against
 t    Run tests when creating or updating PR
 d    Create PR in draft mode (applies only when creating)
 r    Mark draft PR ready (applies only when updating)
+x    Exit early, without pushing any changes to the repository. Useful for running tests, formatting
 
 Branch for an existing PR can be checked out by using the input flag p
 
@@ -91,7 +93,7 @@ SquashCommits()
 
     # We don't want to rewrite history if the branch exists on remote, so squash against
     # remote branch, otherwise against the base branch
-    if git ls-remote --exit-code --heads "$REPO" refs/heads/"$current"
+    if git ls-remote --exit-code --heads git@github.com:"$REPO" refs/heads/"$current"
     then
         against="$REMOTE/$current"
     else
@@ -134,22 +136,23 @@ Push()
     echo "Push End"
 }
 
-
 CreatePr()
 {
     echo "CreatePr Start"
-    command="gh pr create --fill --base $BaseBranch --assignee @me"
+    reviewers_command=""
     if [ "$Draft" = true ]
     then
-        command="$command --draft"
+        reviewers_command="$reviewers_command --draft"
     else
         for reviewer in "${REVIEWERS[@]}"
         do
-            command="$command --reviewer $reviewer"
+            reviewers_command="$reviewers_command --reviewer $reviewer"
         done
     fi
 
-    $command
+    title=$(git log -1 --format=%s)
+    body=$(git log -1 --format=%b)
+    echo -e "$body" | gh pr create -t "$title" --base "$BaseBranch" --assignee @me $reviewers_command --body-file -
     echo "CreatePr End"
 }
 
@@ -244,19 +247,16 @@ CheckCurrentBranchRestricted()
 
 Tests()
 {
-    # If changing this list, update <project_root>/build-tools/cloud/scripts/cloud_run_unit_tests.sh as well
     test_commands=(
-        app:testInternalDebugUnitTest
-        common:testDebugUnitTest
-        core:testDebugUnitTest
-        data-models:testDebugUnitTest
-        vde-sdk:testDebugUnitTest
-        ui-components:testDebugUnitTest
+        core:jvmTest
     )
 
     for c in "${test_commands[@]}"
     do
-        ./gradlew "$c"
+        if ! ./gradlew "$c";
+        then
+            exit $?
+        fi
     done
 }
 
@@ -265,7 +265,7 @@ SetVars()
     echo "SetVars Start"
 
     # Check if PR exists for current branch
-    if ! pr_view_output=$(gh pr view --json state --template '{{ .state }}' 2>&1)
+    if ! pr_view_output=$(gh pr view --json state,baseRefName --template '{{ .state }};;;{{ .baseRefName }}' 2>&1)
     then
         error_code=$?
         # If output contains "no pull requests" it means we're creating a PR
@@ -278,10 +278,16 @@ SetVars()
             exit $error_code
         fi
     else
-        if [ "$pr_view_output" == "CLOSED" ] || [ "$pr_view_output" == "MERGED" ]
+        status_base_branch=(${pr_view_output//;;;/ })
+        status=${status_base_branch[0]}
+        if [ "$status" == "CLOSED" ] || [ "$status" == "MERGED" ]
         then
             echo "Previous PR for the same branch merged or closed, can create PR"
             CreatingPr=true
+        else
+            pr_base_branch=${status_base_branch[1]}
+            echo "Updating PR, will use base branch of the PR: $pr_base_branch"
+            CreatingPr=false
         fi
     fi
 
@@ -296,7 +302,10 @@ SetVars()
     }
 
     # Override script default with script input, if not provided override with value in properties
-    if [ -n "$Input_BaseBranch" ]
+    if [ -n "$pr_base_branch" ]
+    then
+        BaseBranch=$pr_base_branch
+    elif [ -n "$Input_BaseBranch" ]
     then
         BaseBranch=$Input_BaseBranch
     elif [ -n "$(prop 'base_branch')" ]
@@ -376,6 +385,7 @@ ${normal}LintCheck: ${bold}$RunLintCheck
 ${normal}Squash: ${bold}$SquashCommits
 ${normal}KeepCurrentBranchAfterPR: ${bold}$KeepCurrentBranchAfterPr
 ${normal}RunTests: ${bold}$RunTests
+${normal}ExitEarly: ${bold}$ExitEarly
 
 ${normal}SetVars End"
 }
@@ -400,6 +410,12 @@ Run()
         Tests
     fi
 
+    if [ "$ExitEarly" = true ]
+    then
+        echo "Exiting early"
+        exit
+    fi
+
     if [ "$SquashCommits" = true ]
     then
         SquashCommits
@@ -421,7 +437,7 @@ Run()
 }
 
 # Main program
-while getopts "hlsktdrb:p:" option; do
+while getopts "hlsktdrxb:p:" option; do
     case $option in
         h)
             Help
@@ -446,6 +462,9 @@ while getopts "hlsktdrb:p:" option; do
         r)
             Input_Draft=false
             ReadyFromDraft=true;;
+
+        x)
+            ExitEarly=true;;
 
         b)
             Input_BaseBranch=$OPTARG;;
