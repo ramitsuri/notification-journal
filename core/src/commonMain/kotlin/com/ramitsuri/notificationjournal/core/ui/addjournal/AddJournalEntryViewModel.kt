@@ -349,7 +349,7 @@ class AddJournalEntryViewModel(
         if (text.length < 2) {
             return listOf()
         }
-        return repository.search(text.toString(), listOf(tag)).take(10).map { it.text }
+        return repository.search(text.toString(), listOf(tag)).take(10).map { it.text }.distinct()
     }
 
     companion object {
