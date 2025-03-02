@@ -269,7 +269,7 @@ class EditJournalEntryViewModel(
         if (text.length < 2) {
             return listOf()
         }
-        return repository.search(text.toString(), listOf(tag)).take(10).map { it.text }.distinct()
+        return repository.search(text.toString(), listOf(tag)).take(10).map { it.text }.distinctBy { it.lowercase() }
     }
 
     companion object {
