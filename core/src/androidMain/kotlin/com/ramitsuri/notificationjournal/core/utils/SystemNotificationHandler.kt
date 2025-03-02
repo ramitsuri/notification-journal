@@ -101,6 +101,7 @@ class SystemNotificationHandler(
                     getPendingIntent(notificationId ?: 1001, flags)
                 }
             setContentIntent(contentIntent)
+            setGroup(notificationInfo.channel.id)
 
             if (notificationInfo.isForegroundServiceImmediate) {
                 foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
