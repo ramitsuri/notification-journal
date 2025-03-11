@@ -300,6 +300,7 @@ fun NavGraph(
                 onCorrectionAccepted = viewModel::correctionAccepted,
                 onAddDictionaryWord = viewModel::addDictionaryWord,
                 onSuggestionClicked = viewModel::onSuggestionClicked,
+                onSuggestionsEnabledChanged = viewModel::onSuggestionEnabledChanged,
             )
         }
 
@@ -334,6 +335,7 @@ fun NavGraph(
                 onCorrectionAccepted = viewModel::correctionAccepted,
                 onAddDictionaryWord = viewModel::addDictionaryWord,
                 onSuggestionClicked = viewModel::onSuggestionClicked,
+                onSuggestionsEnabledChanged = viewModel::onSuggestionEnabledChanged,
             )
         }
 

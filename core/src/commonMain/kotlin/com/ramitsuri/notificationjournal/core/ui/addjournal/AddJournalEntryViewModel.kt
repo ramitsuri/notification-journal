@@ -212,11 +212,20 @@ class AddJournalEntryViewModel(
         if (suggestion != null) {
             enableGettingSuggestions = false
             _state.value.textFieldState.edit {
-                delete(0, length)
-                insert(0, suggestion)
+                // Since new lines in the text block get broken up into separate entries later on, look at the last
+                // line in the whole text block to replace with selected suggestion
+                val startIndexOfTextBeingReplaced = originalText.lastIndexOf("\n") + 1
+                delete(startIndexOfTextBeingReplaced, length)
+                insert(startIndexOfTextBeingReplaced, suggestion)
             }
         }
         _state.update { it.copy(suggestions = listOf()) }
+    }
+
+    fun onSuggestionEnabledChanged() {
+        viewModelScope.launch {
+            prefManager.setShowSuggestions(!state.value.suggestionsEnabled)
+        }
     }
 
     override fun onCleared() {
@@ -332,6 +341,13 @@ class AddJournalEntryViewModel(
                     }
                 }
         }
+        viewModelScope.launch {
+            prefManager.showSuggestions().collect { showSuggestions ->
+                _state.update {
+                    it.copy(suggestionsEnabled = showSuggestions)
+                }
+            }
+        }
     }
 
     private suspend fun getSuggestions(
@@ -346,10 +362,16 @@ class AddJournalEntryViewModel(
         if (tag == null || Tag.isNoTag(tag)) {
             return listOf()
         }
-        if (text.length < 2) {
+        // Since new lines in the text block get broken up into separate entries later on, look at the last
+        // line in the whole text block to get suggestions for
+        val actualLineOfText = text.split("\n").lastOrNull()
+        if (actualLineOfText == null || actualLineOfText.length < 2) {
             return listOf()
         }
-        return repository.search(text.toString(), listOf(tag)).take(10).map { it.text }.distinctBy { it.lowercase() }
+        return repository.search(actualLineOfText.toString(), listOf(tag))
+            .map { it.text }
+            .distinctBy { it.lowercase() }
+            .take(10)
     }
 
     companion object {
@@ -370,6 +392,7 @@ data class AddJournalEntryViewState(
     val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: LocalDateTime,
     val suggestions: List<String> = listOf(),
+    val suggestionsEnabled: Boolean = false,
 ) {
     val showWarningOnExit
         get() = textFieldState.text.toString().isNotEmpty()

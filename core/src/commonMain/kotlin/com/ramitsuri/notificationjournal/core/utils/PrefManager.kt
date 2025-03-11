@@ -76,4 +76,12 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
     ) {
         keyValueStore.removeLegacy(stringPrefs = stringPrefs, booleanPrefs = booleanPrefs, intPrefs = intPrefs)
     }
+
+    fun showSuggestions(): Flow<Boolean> {
+        return keyValueStore.getBooleanFlow(Key.SHOW_SUGGESTIONS, false)
+    }
+
+    suspend fun setShowSuggestions(showSuggestions: Boolean) {
+        keyValueStore.putBoolean(Key.SHOW_SUGGESTIONS, showSuggestions)
+    }
 }

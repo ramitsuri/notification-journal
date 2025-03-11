@@ -185,6 +185,7 @@ object ServiceLocator {
                 tagsDao = tagsDao,
                 templatesDao = templatesDao,
                 spellChecker = spellChecker,
+                prefManager = prefManager,
             )
         }
 
