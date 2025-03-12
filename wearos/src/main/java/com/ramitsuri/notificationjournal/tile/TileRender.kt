@@ -29,6 +29,7 @@ class TileRenderer(context: Context) :
         deviceParameters: DeviceParametersBuilders.DeviceParameters,
     ): LayoutElementBuilders.LayoutElement {
         return PrimaryLayout.Builder(deviceParameters)
+            .setResponsiveContentInsetEnabled(true)
             .setContent(
                 MultiButtonLayout.Builder()
                     .apply {
@@ -60,7 +61,7 @@ class TileRenderer(context: Context) :
     override fun ResourceBuilders.Resources.Builder.produceRequestedResources(
         resourceState: Unit,
         deviceParameters: DeviceParametersBuilders.DeviceParameters,
-        resourceIds: MutableList<String>,
+        resourceIds: List<String>,
     ) {
         for (icon in Icon.entries) {
             addIdToImageMapping(icon.id, drawableResToImageResource(icon.resId))

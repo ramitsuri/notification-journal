@@ -2,7 +2,6 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals

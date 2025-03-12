@@ -6,6 +6,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -68,6 +69,7 @@ kotlin {
             implementation(libs.playservices.wearable)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.playservices.coroutines)
+            implementation(libs.androidx.work.runtime.ktx)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
