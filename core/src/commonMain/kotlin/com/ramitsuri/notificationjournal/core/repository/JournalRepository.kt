@@ -151,6 +151,7 @@ class JournalRepository(
             return
         }
         upload(entries)
+        dao.deleteDeleted()
     }
 
     suspend fun upload(entries: List<JournalEntry>) {
