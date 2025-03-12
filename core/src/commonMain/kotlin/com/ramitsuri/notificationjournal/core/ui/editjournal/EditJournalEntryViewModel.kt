@@ -16,6 +16,7 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
@@ -39,6 +40,7 @@ class EditJournalEntryViewModel(
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
     private val spellChecker: SpellChecker,
+    private val prefManager: PrefManager,
 ) : ViewModel() {
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
@@ -188,6 +190,12 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(suggestions = listOf()) }
     }
 
+    fun onSuggestionEnabledChanged() {
+        viewModelScope.launch {
+            prefManager.setShowSuggestions(!state.value.suggestionsEnabled)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         spellChecker.reset()
@@ -252,6 +260,13 @@ class EditJournalEntryViewModel(
                     }
                 }
         }
+        viewModelScope.launch {
+            prefManager.showSuggestions().collect { showSuggestions ->
+                _state.update {
+                    it.copy(suggestionsEnabled = showSuggestions)
+                }
+            }
+        }
     }
 
     private suspend fun getSuggestions(
@@ -269,7 +284,10 @@ class EditJournalEntryViewModel(
         if (text.length < 2) {
             return listOf()
         }
-        return repository.search(text.toString(), listOf(tag)).take(10).map { it.text }.distinctBy { it.lowercase() }
+        return repository.search(text.toString(), listOf(tag))
+            .map { it.text }
+            .distinctBy { it.lowercase() }
+            .take(10)
     }
 
     companion object {
@@ -287,4 +305,5 @@ data class EditJournalEntryViewState(
     val dateTime: LocalDateTime = Clock.System.nowLocal(),
     val showWarningOnExit: Boolean = false,
     val suggestions: List<String> = listOf(),
+    val suggestionsEnabled: Boolean = false,
 )

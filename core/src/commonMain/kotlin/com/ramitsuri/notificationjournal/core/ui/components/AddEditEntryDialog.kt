@@ -120,7 +120,9 @@ fun AddEditEntryDialog(
     textCorrections: Map<String, List<String>>,
     showWarningOnExit: Boolean,
     suggestions: List<String>,
+    showSuggestions: Boolean,
     onSuggestionClicked: (String?) -> Unit,
+    onSuggestionsEnabledChanged: () -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
@@ -544,6 +546,8 @@ fun AddEditEntryDialog(
                     showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
                     showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
                     suggestions = suggestions,
+                    showSuggestions = showSuggestions,
+                    onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
                     onSuggestionClicked = onSuggestionClicked,
                     onTagClicked = onTagClicked,
                     onTemplateClicked = onTemplateClicked,
@@ -615,6 +619,8 @@ private fun Content(
     showTagsKeyboardShortcutHint: Boolean,
     showTemplatesKeyboardShortcutHint: Boolean,
     suggestions: List<String>,
+    showSuggestions: Boolean,
+    onSuggestionsEnabledChanged: () -> Unit,
     onSuggestionClicked: (String?) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
@@ -644,6 +650,8 @@ private fun Content(
             textFieldFocusRequester = textFieldFocusRequester,
             textCorrections = textCorrections,
             suggestions = suggestions,
+            showSuggestions = showSuggestions,
+            onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
             onSuggestionClicked = onSuggestionClicked,
             onCorrectionAccepted = onCorrectionAccepted,
             onAddDictionaryWord = onAddDictionaryWord,
@@ -753,15 +761,15 @@ private fun TextField(
     textFieldFocusRequester: FocusRequester,
     textCorrections: Map<String, List<String>>,
     suggestions: List<String>,
+    showSuggestions: Boolean,
+    onSuggestionsEnabledChanged: () -> Unit,
     onSuggestionClicked: (String?) -> Unit,
     onCorrectionAccepted: (String, String) -> Unit,
     onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
-    var suggestionsEnabled by remember { mutableStateOf(false) }
-    val showSuggestions by remember(suggestions) { mutableStateOf(suggestions.isNotEmpty()) }
     ExposedDropdownMenuBox(
-        expanded = showSuggestions && suggestionsEnabled,
+        expanded = showSuggestions && suggestions.isNotEmpty(),
         onExpandedChange = { },
         modifier = Modifier.focusable(false),
     ) {
@@ -826,11 +834,11 @@ private fun TextField(
                     text = "Show suggestions",
                     style = MaterialTheme.typography.bodySmall,
                 )
-                Checkbox(suggestionsEnabled, { suggestionsEnabled = it })
+                Checkbox(showSuggestions, { onSuggestionsEnabledChanged() })
             }
         }
         ExposedDropdownMenu(
-            expanded = showSuggestions && suggestionsEnabled,
+            expanded = showSuggestions && suggestions.isNotEmpty(),
             onDismissRequest = { onSuggestionClicked(null) },
             modifier = Modifier.focusable(false),
         ) {
