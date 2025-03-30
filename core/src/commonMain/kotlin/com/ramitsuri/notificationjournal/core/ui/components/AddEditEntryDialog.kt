@@ -177,6 +177,14 @@ fun AddEditEntryDialog(
                             true
                         }
 
+                        // Meta + F -> Toggle show suggestions
+                        it.isMetaPressed &&
+                            it.key == Key.F &&
+                            it.type == KeyEventType.KeyUp -> {
+                            onSuggestionsEnabledChanged()
+                            true
+                        }
+
                         // Meta + S -> Save
                         it.isMetaPressed &&
                             it.key == Key.S &&
@@ -826,15 +834,16 @@ private fun TextField(
             Row(
                 modifier =
                     Modifier
-                        .clickable(role = Role.Checkbox, onClick = {}),
+                        .clickable(role = Role.Checkbox, onClick = { onSuggestionsEnabledChanged() })
+                        .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = "Show suggestions",
                     style = MaterialTheme.typography.bodySmall,
                 )
-                Checkbox(showSuggestions, { onSuggestionsEnabledChanged() })
+                Checkbox(checked = showSuggestions, onCheckedChange = null)
             }
         }
         ExposedDropdownMenu(
