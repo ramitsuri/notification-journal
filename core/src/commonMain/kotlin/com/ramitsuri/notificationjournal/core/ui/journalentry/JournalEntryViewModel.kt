@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.minus
+import kotlinx.datetime.daysUntil
 import kotlin.math.absoluteValue
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -73,7 +73,7 @@ class JournalEntryViewModel(
             if (selectedDate == null) {
                 val closestDateToToday =
                     countAndDates.minByOrNull { countAndDate ->
-                        today.minus(countAndDate.date).days.absoluteValue
+                        countAndDate.date.daysUntil(today).absoluteValue
                     }?.date
                 this.selectedDate.update {
                     closestDateToToday ?: countAndDates.lastOrNull()?.date
