@@ -171,11 +171,13 @@ fun dayMonthDateWithYear(
     toFormat: LocalDate,
     monthNames: List<String> = stringArrayResource(Res.array.month_names),
     dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
+    dayDateSeparatorUsesNewLine: Boolean = false,
 ): String {
     return dayMonthDateWithYearInternal(
         toFormat = toFormat,
         monthNames = monthNames,
         dayOfWeekNames = dayOfWeekNames,
+        dayDateSeparatorUsesNewLine = dayDateSeparatorUsesNewLine,
     )
 }
 
@@ -207,11 +209,16 @@ private fun dayMonthDateWithYearInternal(
     toFormat: LocalDate,
     monthNames: List<String>,
     dayOfWeekNames: List<String>,
+    dayDateSeparatorUsesNewLine: Boolean = false,
 ): String {
     return LocalDate.Format {
         dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-        char(',')
-        char(' ')
+        if (dayDateSeparatorUsesNewLine) {
+            char('\n')
+        } else {
+            char(',')
+            char(' ')
+        }
         monthName(MonthNames(monthNames))
         char(' ')
         dayOfMonth()

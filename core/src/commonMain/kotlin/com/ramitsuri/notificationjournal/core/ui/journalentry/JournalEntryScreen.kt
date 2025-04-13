@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.ui.journalentry
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -71,6 +72,7 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -80,10 +82,12 @@ import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.components.CountdownSnackbar
+import com.ramitsuri.notificationjournal.core.ui.components.CyclicViewPager
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
@@ -111,7 +115,6 @@ fun JournalEntryScreen(
     onEntryScreenAction: (EntryScreenAction) -> Unit,
     onDayGroupAction: (DayGroupAction) -> Unit,
 ) {
-    var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -156,38 +159,6 @@ fun JournalEntryScreen(
 
     var showAllDays by remember { mutableStateOf(false) }
 
-    if (journalEntryForDelete != null) {
-        AlertDialog(
-            onDismissRequest = { journalEntryForDelete = null },
-            title = {
-                Text(text = stringResource(Res.string.alert))
-            },
-            text = {
-                Text(stringResource(Res.string.delete_warning_message))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        journalEntryForDelete?.let { forDeletion ->
-                            onDayGroupAction(DayGroupAction.DeleteEntry(forDeletion))
-                        }
-                        journalEntryForDelete = null
-                    },
-                ) {
-                    Text(stringResource(Res.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        journalEntryForDelete = null
-                    },
-                ) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            },
-        )
-    }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier =
@@ -297,52 +268,171 @@ fun JournalEntryScreen(
                 onResetReceiveHelper = { onEntryScreenAction(EntryScreenAction.ResetReceiveHelper) },
                 scrollBehavior = scrollBehavior,
             )
+            if (state.dateWithCountList.isNotEmpty()) {
+                ViewPagerContent(
+                    state = state,
+                    showAllDays = showAllDays,
+                    onShowHideAllDays = { showAllDays = it },
+                    onEntryScreenAction = onEntryScreenAction,
+                    onDayGroupAction = onDayGroupAction,
+                    scrollBehavior = scrollBehavior,
+                )
+            }
+        }
+    }
+}
 
-            if (state.dayGroup.tagGroups.isEmpty()) {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ViewPagerContent(
+    state: ViewState,
+    showAllDays: Boolean,
+    onShowHideAllDays: (Boolean) -> Unit,
+    onEntryScreenAction: (EntryScreenAction) -> Unit,
+    onDayGroupAction: (DayGroupAction) -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior,
+) {
+    val initialPage =
+        state
+            .dateWithCountList
+            .indexOfFirst { it.date == state.dayGroup.date }
+            .takeIf { it > 0 }
+            ?: 0
+    var currentPage by remember { mutableStateOf(initialPage) }
+    var isScrollInProgress by remember { mutableStateOf(false) }
+    CyclicViewPager(
+        initialPage = initialPage,
+        pageCount = state.dateWithCountList.size,
+        onActualPageChange = {
+            currentPage = it
+            onEntryScreenAction(EntryScreenAction.ShowDayGroup(state.dateWithCountList[it].date))
+        },
+        isScrollInProgress = { isScrollInProgress = it },
+    ) { page ->
+        AnimatedContent(isScrollInProgress) { scrollInProgress ->
+            if (scrollInProgress) {
                 Column(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .navigationBarsPadding()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
+                            .padding(16.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = stringResource(Res.string.no_items),
+                        text =
+                            dayMonthDateWithYear(
+                                toFormat = state.dateWithCountList[page].date,
+                                dayDateSeparatorUsesNewLine = true,
+                            ),
                         style = MaterialTheme.typography.displaySmall,
+                        textAlign = TextAlign.Center,
                     )
                 }
             } else {
-                List(
-                    showAllDays = showAllDays,
-                    dayGroup = state.dayGroup,
-                    dateWithCountList = state.dateWithCountList,
-                    conflicts = state.entryConflicts,
-                    tags = state.tags,
-                    showEmptyTags = state.showEmptyTags,
-                    showConflictDiffInline = state.showConflictDiffInline,
-                    allowNotify = state.allowNotify,
-                    onShowDayGroupClicked = { onEntryScreenAction(EntryScreenAction.ShowDayGroup(it)) },
-                    onHideAllDays = { showAllDays = false },
-                    scrollConnection = scrollBehavior.nestedScrollConnection,
-                    onViewByDate = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
-                    onAction = { action ->
-                        when (action) {
-                            is DayGroupAction.DeleteEntry -> {
-                                journalEntryForDelete = action.entry
-                            }
-
-                            is DayGroupAction.ShowAllDays -> {
-                                showAllDays = true
-                            }
-
-                            else -> onDayGroupAction(action)
-                        }
-                    },
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    JournalEntryDayOrEmptyContent(
+                        state = state,
+                        showAllDays = showAllDays,
+                        onEntryScreenAction = onEntryScreenAction,
+                        scrollBehavior = scrollBehavior,
+                        onDayGroupAction = onDayGroupAction,
+                        onShowHideAllDays = onShowHideAllDays,
+                    )
+                }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun JournalEntryDayOrEmptyContent(
+    state: ViewState,
+    showAllDays: Boolean,
+    onEntryScreenAction: (EntryScreenAction) -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior,
+    onDayGroupAction: (DayGroupAction) -> Unit,
+    onShowHideAllDays: (Boolean) -> Unit,
+) {
+    var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
+    if (state.dayGroup.tagGroups.isEmpty()) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(Res.string.no_items),
+                style = MaterialTheme.typography.displaySmall,
+            )
+        }
+    } else {
+        JournalEntryDay(
+            showAllDays = showAllDays,
+            dayGroup = state.dayGroup,
+            dateWithCountList = state.dateWithCountList,
+            conflicts = state.entryConflicts,
+            tags = state.tags,
+            showEmptyTags = state.showEmptyTags,
+            showConflictDiffInline = state.showConflictDiffInline,
+            allowNotify = state.allowNotify,
+            onShowDayGroupClicked = { onEntryScreenAction(EntryScreenAction.ShowDayGroup(it)) },
+            onHideAllDays = { onShowHideAllDays(false) },
+            scrollConnection = scrollBehavior.nestedScrollConnection,
+            onViewByDate = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
+            onAction = { action ->
+                when (action) {
+                    is DayGroupAction.DeleteEntry -> {
+                        journalEntryForDelete = action.entry
+                    }
+
+                    is DayGroupAction.ShowAllDays -> {
+                        onShowHideAllDays(true)
+                    }
+
+                    else -> onDayGroupAction(action)
+                }
+            },
+        )
+    }
+    if (journalEntryForDelete != null) {
+        AlertDialog(
+            onDismissRequest = { journalEntryForDelete = null },
+            title = {
+                Text(text = stringResource(Res.string.alert))
+            },
+            text = {
+                Text(stringResource(Res.string.delete_warning_message))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        journalEntryForDelete?.let { forDeletion ->
+                            onDayGroupAction(DayGroupAction.DeleteEntry(forDeletion))
+                        }
+                        journalEntryForDelete = null
+                    },
+                ) {
+                    Text(stringResource(Res.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        journalEntryForDelete = null
+                    },
+                ) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+        )
     }
 }
 
@@ -426,7 +516,7 @@ private fun Toolbar(
 }
 
 @Composable
-private fun List(
+private fun JournalEntryDay(
     showAllDays: Boolean,
     dayGroup: DayGroup,
     dateWithCountList: List<DateWithCount>,
