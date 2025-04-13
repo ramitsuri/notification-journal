@@ -129,6 +129,10 @@ fun dayMonthDate(
                     monthName(MonthNames(monthNames))
                     char(' ')
                     dayOfMonth()
+                    if (nowLocalDate.year != toFormat.year) {
+                        char(' ')
+                        year()
+                    }
                 }
             return toFormat
                 .atTime(hour = 0, minute = 0)
