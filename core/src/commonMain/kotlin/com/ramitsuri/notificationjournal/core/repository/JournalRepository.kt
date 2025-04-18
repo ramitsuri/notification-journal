@@ -229,6 +229,10 @@ class JournalRepository(
         return dao.getEntryTags()
     }
 
+    suspend fun markAllReconciled() {
+        dao.markAllReconciled()
+    }
+
     suspend fun getStats(): EntryStats =
         coroutineScope {
             fun List<LocalDateTime>.dates() =

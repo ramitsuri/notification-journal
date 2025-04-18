@@ -89,8 +89,9 @@ class JournalEntryViewModel(
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
-            ) { contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline,
+            ) {
+                    contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
+                    showEmptyTags, showConflictDiffInline,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
@@ -376,6 +377,19 @@ class JournalEntryViewModel(
         inTime: Duration,
     ) {
         ServiceLocator.showNotification(entry, inTime)
+    }
+
+    fun onReconcileAll(upload: Boolean) {
+        val anyConflictsOrUntagged = state.value.dateWithCountList.any { it.untaggedCount > 0 || it.conflictCount > 0 }
+        if (anyConflictsOrUntagged) {
+            return
+        }
+        viewModelScope.launch {
+            repository.markAllReconciled()
+            if (upload) {
+                repository.uploadAll()
+            }
+        }
     }
 
     private fun setDate(
