@@ -97,7 +97,11 @@ class JournalEntryViewModel(
                 val entryIds = entries.map { it.id }
                 ViewState(
                     dateWithCountList = countAndDates,
-                    dayGroup = entries.toDayGroups(tags.map { it.value }).firstOrNull() ?: ViewState.defaultDayGroup,
+                    dayGroup = if (countAndDates.isEmpty()) {
+                        ViewState.defaultDayGroup
+                    } else {
+                        entries.toDayGroups(tags.map { it.value }).firstOrNull() ?: ViewState.defaultDayGroup
+                    },
                     tags = tags,
                     notUploadedCount = forUploadCount,
                     entryConflicts = entryConflicts.filter { entryIds.contains(it.entryId) },
@@ -382,10 +386,12 @@ class JournalEntryViewModel(
     fun onReconcileAll(upload: Boolean) {
         val anyConflictsOrUntagged = state.value.dateWithCountList.any { it.untaggedCount > 0 || it.conflictCount > 0 }
         if (anyConflictsOrUntagged) {
+            Logger.i { "Entries have conflicts or untagged entries, cannot reconcile" }
             return
         }
         viewModelScope.launch {
             repository.markAllReconciled()
+            selectedDate.value = null
             if (upload) {
                 repository.uploadAll()
             }
