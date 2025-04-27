@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -70,6 +71,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -94,6 +96,10 @@ import notificationjournal.core.generated.resources.conflicts_format
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
+import notificationjournal.core.generated.resources.proceed
+import notificationjournal.core.generated.resources.reconcile_all
+import notificationjournal.core.generated.resources.reconcile_all_body
+import notificationjournal.core.generated.resources.reconcile_all_upload_on_success
 import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_down
@@ -340,6 +346,9 @@ fun JournalEntryScreen(
                             else -> onDayGroupAction(action)
                         }
                     },
+                    onReconcileAll = {
+                        onEntryScreenAction(EntryScreenAction.ReconcileAll(it))
+                    },
                 )
             }
         }
@@ -438,6 +447,7 @@ private fun List(
     modifier: Modifier = Modifier,
     scrollConnection: NestedScrollConnection,
     onShowDayGroupClicked: (LocalDate) -> Unit,
+    onReconcileAll: (Boolean) -> Unit,
     onHideAllDays: () -> Unit,
     onViewByDate: () -> Unit,
     onAction: (DayGroupAction) -> Unit,
@@ -461,6 +471,7 @@ private fun List(
         onDismiss = onHideAllDays,
         onDayGroupSelected = onShowDayGroupClicked,
         onViewByDate = onViewByDate,
+        onReconcileAll = onReconcileAll,
     )
 }
 
@@ -471,7 +482,9 @@ private fun ShowAllDaysDialog(
     onDismiss: () -> Unit,
     onDayGroupSelected: (LocalDate) -> Unit,
     onViewByDate: () -> Unit,
+    onReconcileAll: (Boolean) -> Unit,
 ) {
+    var showReconcileAllConfirmation by remember { mutableStateOf(false) }
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(showAllDays, focusRequester) {
@@ -563,8 +576,80 @@ private fun ShowAllDaysDialog(
                             Text(text = stringResource(Res.string.view_journal_entry_day))
                         }
                     }
+                    item {
+                        TextButton(
+                            onClick = {
+                                onDismiss()
+                                showReconcileAllConfirmation = true
+                            },
+                            modifier = Modifier,
+                        ) {
+                            Text(text = stringResource(Res.string.reconcile_all))
+                        }
+                    }
                 }
             }
         }
+    }
+    ReconcileAllConfirmationDialog(
+        showReconcileAllConfirmation = showReconcileAllConfirmation,
+        onDismiss = { showReconcileAllConfirmation = false },
+        onReconcileAll = {
+            showReconcileAllConfirmation = false
+            onReconcileAll(it)
+        },
+    )
+}
+
+@Composable
+private fun ReconcileAllConfirmationDialog(
+    showReconcileAllConfirmation: Boolean,
+    onDismiss: () -> Unit,
+    onReconcileAll: (Boolean) -> Unit,
+) {
+    var uploadOnSuccess by remember { mutableStateOf(true) }
+    if (showReconcileAllConfirmation) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(text = stringResource(Res.string.reconcile_all))
+            },
+            text = {
+                Column {
+                    Text(stringResource(Res.string.reconcile_all_body))
+                    Row(
+                        modifier =
+                            Modifier
+                                .clickable(role = Role.Checkbox, onClick = { uploadOnSuccess = !uploadOnSuccess })
+                                .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.reconcile_all_upload_on_success),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Checkbox(checked = uploadOnSuccess, onCheckedChange = null)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDismiss()
+                        onReconcileAll(uploadOnSuccess)
+                    },
+                ) {
+                    Text(stringResource(Res.string.proceed))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = onDismiss,
+                ) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+        )
     }
 }

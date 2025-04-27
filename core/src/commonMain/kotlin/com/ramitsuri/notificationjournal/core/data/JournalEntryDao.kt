@@ -82,6 +82,9 @@ abstract class JournalEntryDao {
         update(entries.map { it.copy(uploaded = uploaded) })
     }
 
+    @Query("UPDATE journalentry SET reconciled = 1, uploaded = 0 WHERE reconciled = 0 AND deleted = 0")
+    abstract suspend fun markAllReconciled()
+
     //region stats
 
     @Query(

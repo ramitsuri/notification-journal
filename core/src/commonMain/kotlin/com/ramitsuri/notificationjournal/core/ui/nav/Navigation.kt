@@ -144,6 +144,10 @@ fun NavGraph(
                         is EntryScreenAction.NavToViewJournalEntryDay -> {
                             navController.navigate(Destination.VIEW_JOURNAL_ENTRY_DAY.routeWithArgValues())
                         }
+
+                        is EntryScreenAction.ReconcileAll -> {
+                            viewModel.onReconcileAll(action.uploadOnSuccess)
+                        }
                     }
                 },
                 onDayGroupAction = { action ->

@@ -20,4 +20,6 @@ sealed interface EntryScreenAction {
     data object NavToSearch : EntryScreenAction
 
     data object NavToViewJournalEntryDay : EntryScreenAction
+
+    data class ReconcileAll(val uploadOnSuccess: Boolean) : EntryScreenAction
 }
