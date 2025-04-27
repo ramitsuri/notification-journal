@@ -346,9 +346,9 @@ fun JournalEntryScreen(
                             else -> onDayGroupAction(action)
                         }
                     },
-                    onReconcileAll =  {
+                    onReconcileAll = {
                         onEntryScreenAction(EntryScreenAction.ReconcileAll(it))
-                    }
+                    },
                 )
             }
         }
@@ -616,7 +616,7 @@ private fun ReconcileAllConfirmationDialog(
             },
             text = {
                 Column {
-                Text(stringResource(Res.string.reconcile_all_body))
+                    Text(stringResource(Res.string.reconcile_all_body))
                     Row(
                         modifier =
                             Modifier

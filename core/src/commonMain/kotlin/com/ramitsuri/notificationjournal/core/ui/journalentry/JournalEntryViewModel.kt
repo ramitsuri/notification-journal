@@ -89,19 +89,19 @@ class JournalEntryViewModel(
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
-            ) {
-                    contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                    showEmptyTags, showConflictDiffInline,
+            ) { contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
+                showEmptyTags, showConflictDiffInline,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
                 ViewState(
                     dateWithCountList = countAndDates,
-                    dayGroup = if (countAndDates.isEmpty()) {
-                        ViewState.defaultDayGroup
-                    } else {
-                        entries.toDayGroups(tags.map { it.value }).firstOrNull() ?: ViewState.defaultDayGroup
-                    },
+                    dayGroup =
+                        if (countAndDates.isEmpty()) {
+                            ViewState.defaultDayGroup
+                        } else {
+                            entries.toDayGroups(tags.map { it.value }).firstOrNull() ?: ViewState.defaultDayGroup
+                        },
                     tags = tags,
                     notUploadedCount = forUploadCount,
                     entryConflicts = entryConflicts.filter { entryIds.contains(it.entryId) },
