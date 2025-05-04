@@ -824,11 +824,11 @@ private fun DetailsDialog(
         }
     }
 
-    var showTime by remember { mutableStateOf(false) }
-    LaunchedEffect(showTime) {
-        if (showTime) {
+    var showDate by remember { mutableStateOf(false) }
+    LaunchedEffect(showDate) {
+        if (showDate) {
             delay(2000)
-            showTime = false
+            showDate = false
         }
     }
 
@@ -879,15 +879,15 @@ private fun DetailsDialog(
                             }
                         }
                         Text(
-                            if (showTime) {
-                                hourMinute(toFormat = time.time)
-                            } else {
+                            if (showDate) {
                                 dayMonthDate(toFormat = time.date)
+                            } else {
+                                hourMinute(toFormat = time.time)
                             },
                             modifier =
                                 Modifier
                                     .clickable {
-                                        showTime = !showTime
+                                        showDate = !showDate
                                     }
                                     .padding(8.dp),
                         )
