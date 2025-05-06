@@ -65,7 +65,7 @@ internal class DataSendHelperImpl(
         ).send()
     }
 
-    private suspend fun Payload.send(): Boolean {
+    private suspend fun Payload.send(isRetry: Boolean = false): Boolean {
         log("Sending payload")
         return withContext(ioDispatcher) {
             mutex.withLock {
@@ -87,13 +87,18 @@ internal class DataSendHelperImpl(
                     }
                 } catch (e: Exception) {
                     log("failed to send message", e)
-                    false
+                    if (isRetry) {
+                        return@withContext false
+                    } else {
+                        return@withContext send(isRetry = true)
+                    }
                 }
             }
         }
     }
 
     override suspend fun closeConnection() {
+        log("Closing connection")
         mutex.withLock {
             closeConnectionInternal()
         }
@@ -105,6 +110,7 @@ internal class DataSendHelperImpl(
             connection = null
             channel?.close()
             channel = null
+            log("Connection closed")
         }
     }
 
