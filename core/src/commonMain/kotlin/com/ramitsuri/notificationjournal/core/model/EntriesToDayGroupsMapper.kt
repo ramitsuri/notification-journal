@@ -10,9 +10,8 @@ fun List<JournalEntry>.toDayGroups(tagsForSort: List<String> = listOf()): List<D
             entriesByDate
                 .groupBy { it.tag }
                 .map { (tag, entriesByTag) ->
-                    val nonNullTag = tag ?: Tag.NO_TAG.value
                     val entries = entriesByTag.sortedBy { it.entryTime }
-                    nonNullTag to entries
+                    tag to entries
                 }
                 .toMap()
 
@@ -22,6 +21,7 @@ fun List<JournalEntry>.toDayGroups(tagsForSort: List<String> = listOf()): List<D
                     Tag.isNoTag(it.tag)
                 }
                 .takeIf { it.isNotEmpty() }
+                ?.sortedBy { it.entryTime }
                 ?.let {
                     TagGroup(Tag.NO_TAG.value, it)
                 }
