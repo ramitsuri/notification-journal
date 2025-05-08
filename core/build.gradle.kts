@@ -131,8 +131,12 @@ compose.desktop {
             macOS {
                 iconFile.set(iconsRoot.resolve("macos.icns"))
             }
+            windows {
+                iconFile.set(iconsRoot.resolve("windows.ico"))
+                includeAllModules = true
+            }
             // https://issuetracker.google.com/issues/342609814
-            modules("jdk.unsupported")
+            modules("java.instrument", "java.naming", "java.prefs", "java.security.sasl", "jdk.unsupported")
         }
     }
 }
