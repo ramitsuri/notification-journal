@@ -94,8 +94,15 @@ class JournalEntryViewModel(
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
                 requestExportDirectory,
-            ) { contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline, requestExportDirectory,
+            ) {
+                    contentForCopy,
+                    snackBarType,
+                    entries,
+                    forUploadCount,
+                    entryConflicts,
+                    showEmptyTags,
+                    showConflictDiffInline,
+                    requestExportDirectory,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
