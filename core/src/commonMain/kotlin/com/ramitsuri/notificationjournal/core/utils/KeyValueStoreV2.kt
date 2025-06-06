@@ -64,4 +64,7 @@ enum class Key(val value: String) {
     DEFAULT_TAG("default_tag"),
     SHOW_SUGGESTIONS("show_suggestions"),
     EXPORT_DIRECTORY("export_directory"),
+    DATA_HOST_PROPERTIES("data_host_properties"),
+    WINDOW_SIZE("window_size"),
+    WINDOW_POSITION("window_position"),
 }

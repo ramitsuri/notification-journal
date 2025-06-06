@@ -10,7 +10,6 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagTextUpdate
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
-import com.ramitsuri.notificationjournal.core.utils.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -20,7 +19,7 @@ import kotlin.reflect.KClass
 
 class TagsViewModel(
     private val dao: TagsDao,
-    private val dataSendHelper: DataSendHelper?,
+    private val dataSendHelper: DataSendHelper,
     private val prefManager: PrefManager,
 ) :
     ViewModel() {
@@ -148,7 +147,7 @@ class TagsViewModel(
     fun sync() {
         viewModelScope.launch {
             val tags = _state.value.tags
-            dataSendHelper?.sendTags(tags)
+            dataSendHelper.sendTags(tags)
         }
     }
 

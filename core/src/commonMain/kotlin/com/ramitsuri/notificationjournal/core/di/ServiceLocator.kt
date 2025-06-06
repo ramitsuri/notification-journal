@@ -13,6 +13,9 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
 import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
+import com.ramitsuri.notificationjournal.core.model.DataHostProperties
+import com.ramitsuri.notificationjournal.core.model.WindowPosition
+import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
@@ -26,11 +29,9 @@ import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
-import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.Importance
 import com.ramitsuri.notificationjournal.core.utils.JournalEntryNotificationHelper
-import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
@@ -39,7 +40,9 @@ import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okio.Path.Companion.toOkioPath
 import java.util.UUID
@@ -74,9 +77,13 @@ object ServiceLocator {
                 ),
             ),
         )
-        val deviceId = keyValueStore.getString(Constants.PREF_KEY_DEVICE_ID, "")
-        if (deviceId.isNullOrEmpty()) {
-            keyValueStore.putString(Constants.PREF_KEY_DEVICE_ID, UUID.randomUUID().toString())
+        runBlocking {
+            migrateFromKeyValueStore()
+            prefManager.getDataHostProperties().first().let { dataHostProperties ->
+                if (dataHostProperties.deviceId.isEmpty()) {
+                    prefManager.setDataHostProperties(dataHostProperties.copy(deviceId = UUID.randomUUID().toString()))
+                }
+            }
         }
         Logger.setLogWriters(listOf(inMemoryLogWriter))
     }
@@ -94,7 +101,7 @@ object ServiceLocator {
                 dataReceiveHelper?.closeConnection()
             }
             launch {
-                dataSendHelper?.closeConnection()
+                dataSendHelper.closeConnection()
             }
         }
     }
@@ -118,10 +125,6 @@ object ServiceLocator {
 
     val notificationHandler: NotificationHandler by lazy {
         factory.getNotificationHandler()
-    }
-
-    val keyValueStore: KeyValueStore by lazy {
-        PrefsKeyValueStore(factory)
     }
 
     val journalEntryDao: JournalEntryDao?
@@ -216,7 +219,7 @@ object ServiceLocator {
                         produceFile = { factory.getDataStorePath().toOkioPath() },
                     ),
             )
-        PrefManager(keyValueStore)
+        PrefManager(keyValueStore = keyValueStore, json = json)
             .also {
                 coroutineScope.launch {
                     it.removeLegacy(
@@ -230,33 +233,12 @@ object ServiceLocator {
             }
     }
 
-    val dataSendHelper: DataSendHelper? by lazy {
-        val hostName = keyValueStore.getString(Constants.PREF_KEY_DATA_HOST, "")
-        val exchangeName = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "")
-        val deviceName = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "")
-        val deviceId = keyValueStore.getString(Constants.PREF_KEY_DEVICE_ID, "")
-        val username = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "")
-        val password = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "")
-        if (hostName.isNullOrEmpty() ||
-            exchangeName.isNullOrEmpty() ||
-            deviceName.isNullOrEmpty() ||
-            deviceId.isNullOrEmpty() ||
-            username.isNullOrEmpty() ||
-            password.isNullOrEmpty()
-        ) {
-            null
-        } else {
-            DataSendHelperImpl(
-                ioDispatcher = ioDispatcher,
-                hostName = hostName,
-                exchangeName = exchangeName,
-                deviceName = deviceName,
-                deviceId = deviceId,
-                username = username,
-                password = password,
-                json = json,
-            )
-        }
+    val dataSendHelper: DataSendHelper by lazy {
+        DataSendHelperImpl(
+            ioDispatcher = ioDispatcher,
+            getDataHostProperties = prefManager.getDataHostProperties()::first,
+            json = json,
+        )
     }
 
     private val spellChecker by lazy {
@@ -300,33 +282,12 @@ object ServiceLocator {
         Dispatchers.Default
     }
 
-    private fun getReceiver(): DataReceiveHelper? {
-        val hostName = keyValueStore.getString(Constants.PREF_KEY_DATA_HOST, "")
-        val exchangeName = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "")
-        val deviceName = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "")
-        val deviceId = keyValueStore.getString(Constants.PREF_KEY_DEVICE_ID, "")
-        val username = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "")
-        val password = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "")
-        return if (hostName.isNullOrEmpty() ||
-            exchangeName.isNullOrEmpty() ||
-            deviceName.isNullOrEmpty() ||
-            deviceId.isNullOrEmpty() ||
-            username.isNullOrEmpty() ||
-            password.isNullOrEmpty()
-        ) {
-            null
-        } else {
-            DataReceiveHelperImpl(
-                ioDispatcher = ioDispatcher,
-                hostName = hostName,
-                exchangeName = exchangeName,
-                deviceName = deviceName,
-                deviceId = deviceId,
-                username = username,
-                password = password,
-                json = json,
-            )
-        }
+    private fun getReceiver(): DataReceiveHelper {
+        return DataReceiveHelperImpl(
+            ioDispatcher = ioDispatcher,
+            getDataHostProperties = prefManager.getDataHostProperties()::first,
+            json = json,
+        )
     }
 
     private fun startReceiving() {
@@ -358,6 +319,38 @@ object ServiceLocator {
                 }
             }
         }
+    }
+
+    private suspend fun migrateFromKeyValueStore() {
+        val oldKVStore = PrefsKeyValueStore(factory)
+        if (!oldKVStore.hasKeys()) {
+            return
+        }
+        DataHostProperties(
+            deviceName = oldKVStore.getString("device_name") ?: "",
+            deviceId = oldKVStore.getString("device_id") ?: "",
+            exchangeName = oldKVStore.getString("exchange_name") ?: "",
+            dataHost = oldKVStore.getString("data_host") ?: "",
+            username = oldKVStore.getString("username") ?: "",
+            password = oldKVStore.getString("password") ?: "",
+        ).let {
+            prefManager.setDataHostProperties(it)
+        }
+
+        WindowSize(
+            height = oldKVStore.getInt("window_size_height", 0).toFloat(),
+            width = oldKVStore.getInt("window_size_width", 0).toFloat(),
+        ).let {
+            prefManager.setWindowSize(it)
+        }
+
+        WindowPosition(
+            x = oldKVStore.getInt("window_position_x", 0).toFloat(),
+            y = oldKVStore.getInt("window_position_y", 0).toFloat(),
+        ).let {
+            prefManager.setWindowPosition(it)
+        }
+        oldKVStore.clear()
     }
 
     private lateinit var factory: DiFactory

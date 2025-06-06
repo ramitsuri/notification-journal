@@ -7,16 +7,15 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
-import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.KeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,7 +23,6 @@ import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
 class SettingsViewModel(
-    private val keyValueStore: KeyValueStore,
     private val repository: JournalRepository,
     private val getAppVersion: () -> String,
     private val prefManager: PrefManager,
@@ -34,26 +32,25 @@ class SettingsViewModel(
     private val uploadLoading = MutableStateFlow(false)
     private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    // Because some prefs are stored in non reactive storage
-    private val prefUpdated = MutableStateFlow(0)
-
     val state =
         combine(
-            prefUpdated,
             uploadLoading,
             prefManager.showEmptyTags(),
             prefManager.copyWithEmptyTags(),
             prefManager.showConflictDiffInline(),
             statsRequested,
-        ) { _, uploadLoading, showEmptyTags, copyWithEmptyTags, showConflictDiffInline, statsRequested,
+            prefManager.getDataHostProperties(),
+        ) {
+                uploadLoading,
+                showEmptyTags,
+                copyWithEmptyTags,
+                showConflictDiffInline,
+                statsRequested,
+                dataHostProperties,
             ->
             SettingsViewState(
                 uploadLoading = uploadLoading,
-                dataHost = DataHost(getDataHost()),
-                exchangeName = ExchangeName(getExchangeName()),
-                deviceName = DeviceName(getDeviceName()),
-                username = Username(getUsername()),
-                password = Password(getPassword()),
+                dataHostProperties = dataHostProperties,
                 appVersion = getAppVersion(),
                 showConflictDiffInline = showConflictDiffInline,
                 showEmptyTags = showEmptyTags,
@@ -85,12 +82,17 @@ class SettingsViewModel(
         username: Username,
         password: Password,
     ) {
-        keyValueStore.putString(Constants.PREF_KEY_DATA_HOST, dataHost.host)
-        keyValueStore.putString(Constants.PREF_KEY_EXCHANGE_NAME, exchangeName.name)
-        keyValueStore.putString(Constants.PREF_KEY_DEVICE_NAME, deviceName.name)
-        keyValueStore.putString(Constants.PREF_KEY_USERNAME, username.username)
-        keyValueStore.putString(Constants.PREF_KEY_PASSWORD, password.password)
-        prefUpdated.update { it + 1 }
+        viewModelScope.launch {
+            val newDataHostProperties =
+                prefManager.getDataHostProperties().first().copy(
+                    deviceName = deviceName.name,
+                    exchangeName = exchangeName.name,
+                    dataHost = dataHost.host,
+                    username = username.username,
+                    password = password.password,
+                )
+            prefManager.setDataHostProperties(newDataHostProperties)
+        }
     }
 
     fun toggleShowConflictDiffInline() {
@@ -122,16 +124,6 @@ class SettingsViewModel(
         statsRequested.update { !it }
     }
 
-    private fun getDeviceName() = keyValueStore.getString(Constants.PREF_KEY_DEVICE_NAME, "") ?: ""
-
-    private fun getExchangeName() = keyValueStore.getString(Constants.PREF_KEY_EXCHANGE_NAME, "") ?: ""
-
-    private fun getDataHost() = keyValueStore.getString(Constants.PREF_KEY_DATA_HOST, "") ?: ""
-
-    private fun getUsername() = keyValueStore.getString(Constants.PREF_KEY_USERNAME, "") ?: ""
-
-    private fun getPassword() = keyValueStore.getString(Constants.PREF_KEY_PASSWORD, "") ?: ""
-
     companion object {
         fun factory() =
             object : ViewModelProvider.Factory {
@@ -141,7 +133,6 @@ class SettingsViewModel(
                     extras: CreationExtras,
                 ): T {
                     return SettingsViewModel(
-                        keyValueStore = ServiceLocator.keyValueStore,
                         repository = ServiceLocator.repository,
                         getAppVersion = ServiceLocator::getAppVersion,
                         prefManager = ServiceLocator.prefManager,
@@ -155,11 +146,7 @@ class SettingsViewModel(
 
 data class SettingsViewState(
     val uploadLoading: Boolean = false,
-    val dataHost: DataHost = DataHost(""),
-    val exchangeName: ExchangeName = ExchangeName(""),
-    val deviceName: DeviceName = DeviceName(""),
-    val username: Username = Username(""),
-    val password: Password = Password(""),
+    val dataHostProperties: DataHostProperties = DataHostProperties(),
     val appVersion: String = "",
     val showConflictDiffInline: Boolean = false,
     val showEmptyTags: Boolean = false,

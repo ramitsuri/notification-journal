@@ -6,6 +6,7 @@ import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.DeliverCallback
 import com.rabbitmq.client.Delivery
+import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
@@ -15,12 +16,7 @@ import kotlinx.serialization.json.Json
 
 internal class DataReceiveHelperImpl(
     private val ioDispatcher: CoroutineDispatcher,
-    private val hostName: String,
-    private val exchangeName: String,
-    private val deviceName: String,
-    private val deviceId: String,
-    private val username: String,
-    private val password: String,
+    private val getDataHostProperties: suspend () -> DataHostProperties,
     private val json: Json,
 ) : DataReceiveHelper {
     private var connection: Connection? = null
@@ -29,11 +25,16 @@ internal class DataReceiveHelperImpl(
 
     override suspend fun startListening(onPayloadReceived: (Payload) -> Unit) {
         log("Start receiving")
+        val dataHostProperties = getDataHostProperties()
+        if (!dataHostProperties.isValid()) {
+            log("Cannot start receiving, invalid data host properties")
+            return
+        }
         val deliverCallback =
             DeliverCallback { _: String?, delivery: Delivery ->
                 val message = String(delivery.body, Charsets.UTF_8)
                 val payload = json.decodeFromString<Payload>(message)
-                if (payload.sender.id == deviceId) {
+                if (payload.sender.id == dataHostProperties.deviceId) {
                     log("Ignoring own message")
                     return@DeliverCallback
                 }
@@ -41,10 +42,10 @@ internal class DataReceiveHelperImpl(
             }
         withContext(ioDispatcher) {
             mutex.withLock {
-                createChannelIfNecessary()
+                createChannelIfNecessary(dataHostProperties)
                 try {
                     channel?.let {
-                        it.basicConsume(deviceName, true, deliverCallback) { _ -> }
+                        it.basicConsume(dataHostProperties.deviceName, true, deliverCallback) { _ -> }
                     } ?: log("Channel not available")
                 } catch (e: Exception) {
                     log("Failed to setup receiver", e)
@@ -64,20 +65,20 @@ internal class DataReceiveHelperImpl(
         }
     }
 
-    private suspend fun createChannelIfNecessary() {
+    private suspend fun createChannelIfNecessary(dataHostProperties: DataHostProperties) {
         try {
             if (connection == null) {
                 connection =
                     ConnectionFactory().apply {
-                        host = hostName
-                        username = this@DataReceiveHelperImpl.username
-                        password = this@DataReceiveHelperImpl.password
+                        host = dataHostProperties.dataHost
+                        username = dataHostProperties.username
+                        password = dataHostProperties.password
                         isAutomaticRecoveryEnabled = true
                         isTopologyRecoveryEnabled = true
                     }.newConnection()
                 channel = connection?.createChannel()
-                channel?.queueDeclare(deviceName, true, false, false, null)
-                channel?.queueBind(deviceName, exchangeName, "")
+                channel?.queueDeclare(dataHostProperties.deviceName, true, false, false, null)
+                channel?.queueBind(dataHostProperties.deviceName, dataHostProperties.exchangeName, "")
             }
         } catch (e: Exception) {
             log("Failed to connect to RabbitMQ", e)

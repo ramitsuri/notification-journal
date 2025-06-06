@@ -15,14 +15,14 @@ sealed class Payload {
     @SerialName("tags")
     data class Tags(
         val data: List<Tag>,
-        override val sender: Sender,
+        override val sender: Sender = Sender(),
     ) : Payload()
 
     @Serializable
     @SerialName("entries")
     data class Entries(
         val data: List<JournalEntry>,
-        override val sender: Sender,
+        override val sender: Sender = Sender(),
     ) : Payload()
 
     @Serializable
@@ -30,13 +30,22 @@ sealed class Payload {
     data class ClearDaysAndInsertEntries(
         val days: List<LocalDate>,
         val entries: List<JournalEntry>,
-        override val sender: Sender,
+        override val sender: Sender = Sender(),
     ) : Payload()
 
     @Serializable
     @SerialName("templates")
     data class Templates(
         val data: List<JournalEntryTemplate>,
-        override val sender: Sender,
+        override val sender: Sender = Sender(),
     ) : Payload()
+
+    fun attachSender(sender: Sender): Payload {
+        return when (this) {
+            is Tags -> copy(sender = sender)
+            is Entries -> copy(sender = sender)
+            is ClearDaysAndInsertEntries -> copy(sender = sender)
+            is Templates -> copy(sender = sender)
+        }
+    }
 }

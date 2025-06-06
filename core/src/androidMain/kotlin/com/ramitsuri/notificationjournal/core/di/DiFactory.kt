@@ -19,7 +19,6 @@ import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryVie
 import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.ui.nav.DeepLink
 import com.ramitsuri.notificationjournal.core.ui.nav.uriWithArgNames
-import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
@@ -34,7 +33,7 @@ actual class DiFactory(private val application: Application) {
     actual fun getSettings(): Settings {
         return SharedPreferencesSettings(
             application.getSharedPreferences(
-                Constants.PREF_FILE,
+                "com.ramitsuri.notificationjournal.prefs",
                 Context.MODE_PRIVATE,
             ),
         )
