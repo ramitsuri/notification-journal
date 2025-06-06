@@ -22,7 +22,7 @@ class TemplatesViewModel(
     private val dao: JournalEntryTemplateDao,
     private val tagsDao: TagsDao,
     private val wearDataSharingClient: WearDataSharingClient,
-    private val dataSendHelper: DataSendHelper?,
+    private val dataSendHelper: DataSendHelper,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TemplatesViewState())
     val state: StateFlow<TemplatesViewState> = _state
@@ -135,7 +135,7 @@ class TemplatesViewModel(
                 }
                 wearDataSharingClient.updateTile()
             }
-            dataSendHelper?.sendTemplates(templates)
+            dataSendHelper.sendTemplates(templates)
         }
     }
 

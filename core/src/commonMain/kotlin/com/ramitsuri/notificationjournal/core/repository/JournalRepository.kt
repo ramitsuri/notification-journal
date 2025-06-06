@@ -35,7 +35,7 @@ class JournalRepository(
     private val dao: JournalEntryDao,
     private val conflictDao: EntryConflictDao,
     private val clock: Clock = Clock.System,
-    private val dataSendHelper: DataSendHelper?,
+    private val dataSendHelper: DataSendHelper,
     private val prefManager: PrefManager,
 ) {
     fun getFlow(): Flow<List<JournalEntry>> {
@@ -103,7 +103,7 @@ class JournalRepository(
             if (uploadEntries) {
                 // If not able to send it right away, these entries would need to be reimported for them to show up
                 // on other devices. Otherwise, need to add support for tracking which days have been imported.
-                dataSendHelper?.sendClearDaysAndInsertEntries(days, entries) == true
+                dataSendHelper.sendClearDaysAndInsertEntries(days, entries) == true
             } else {
                 // If uploaded is false, then we're receiving these entries from another device, consider them uploaded
                 // because other device already has them.
@@ -324,7 +324,7 @@ class JournalRepository(
     }
 
     private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>) {
-        val sent = dataSendHelper?.sendEntries(entries) == true
+        val sent = dataSendHelper.sendEntries(entries) == true
         if (sent) {
             // Once sent, mark as not "replaces_local" because that was just for this upload, further
             // changes should go through the conflict resolution flow

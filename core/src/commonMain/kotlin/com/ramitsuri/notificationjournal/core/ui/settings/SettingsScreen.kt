@@ -39,6 +39,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import notificationjournal.core.generated.resources.Res
@@ -98,11 +99,7 @@ fun SettingsScreen(
 
     if (showDialog) {
         DataSharingPropertiesDialog(
-            dataHost = state.dataHost,
-            exchangeName = state.exchangeName,
-            deviceName = state.deviceName,
-            username = state.username,
-            password = state.password,
+            dataHostProperties = state.dataHostProperties,
             onPositiveClick = { dataHost, exchangeName, deviceName, username, password ->
                 showDialog = !showDialog
                 onDataSharingPropertiesSet(dataHost, exchangeName, deviceName, username, password)
@@ -133,16 +130,16 @@ fun SettingsScreen(
                 item {
                     val subtitle =
                         buildString {
-                            if (state.dataHost.host.isNotEmpty()) {
-                                append(state.dataHost.host)
+                            if (state.dataHostProperties.dataHost.isNotEmpty()) {
+                                append(state.dataHostProperties.dataHost)
                                 append(" : ")
                             }
-                            if (state.exchangeName.name.isNotEmpty()) {
-                                append(state.exchangeName.name)
+                            if (state.dataHostProperties.exchangeName.isNotEmpty()) {
+                                append(state.dataHostProperties.exchangeName)
                                 append(" : ")
                             }
-                            if (state.deviceName.name.isNotEmpty()) {
-                                append(state.deviceName.name)
+                            if (state.dataHostProperties.deviceName.isNotEmpty()) {
+                                append(state.dataHostProperties.deviceName)
                             }
                         }
                     SettingsItem(
@@ -313,20 +310,16 @@ private fun SettingsItemWithToggle(
 
 @Composable
 private fun DataSharingPropertiesDialog(
-    dataHost: DataHost,
-    exchangeName: ExchangeName,
-    deviceName: DeviceName,
-    username: Username,
-    password: Password,
+    dataHostProperties: DataHostProperties,
     onPositiveClick: (DataHost, ExchangeName, DeviceName, Username, Password) -> Unit,
     onNegativeClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var dataHostText by rememberSaveable { mutableStateOf(dataHost.host) }
-    var exchangeNameText by rememberSaveable { mutableStateOf(exchangeName.name) }
-    var deviceNameText by rememberSaveable { mutableStateOf(deviceName.name) }
-    var usernameText by rememberSaveable { mutableStateOf(username.username) }
-    var passwordText by rememberSaveable { mutableStateOf(password.password) }
+    var dataHostText by rememberSaveable { mutableStateOf(dataHostProperties.dataHost) }
+    var exchangeNameText by rememberSaveable { mutableStateOf(dataHostProperties.exchangeName) }
+    var deviceNameText by rememberSaveable { mutableStateOf(dataHostProperties.deviceName) }
+    var usernameText by rememberSaveable { mutableStateOf(dataHostProperties.username) }
+    var passwordText by rememberSaveable { mutableStateOf(dataHostProperties.password) }
 
     Dialog(onDismissRequest = { }) {
         Card {

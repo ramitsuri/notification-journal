@@ -1,11 +1,19 @@
 package com.ramitsuri.notificationjournal.core.utils
 
+import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.Tag
+import com.ramitsuri.notificationjournal.core.model.WindowPosition
+import com.ramitsuri.notificationjournal.core.model.WindowSize
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
+import kotlinx.serialization.json.Json
 
-class PrefManager(private val keyValueStore: KeyValueStoreV2) {
+class PrefManager(
+    private val json: Json,
+    private val keyValueStore: KeyValueStoreV2,
+) {
     fun showEmptyTags(): Flow<Boolean> {
         return keyValueStore.getBooleanFlow(Key.SHOW_EMPTY_TAGS, false)
     }
@@ -93,5 +101,47 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
 
     suspend fun setExportDirectory(directory: String) {
         keyValueStore.putString(Key.EXPORT_DIRECTORY, directory)
+    }
+
+    fun getDataHostProperties(): Flow<DataHostProperties> {
+        return keyValueStore
+            .getStringFlow(Key.DATA_HOST_PROPERTIES, "")
+            .map { string ->
+                runCatching {
+                    json.decodeFromString<DataHostProperties>(
+                        string ?: "",
+                    )
+                }.getOrDefault(DataHostProperties())
+            }
+    }
+
+    suspend fun setDataHostProperties(dataHostProperties: DataHostProperties) {
+        keyValueStore.putString(Key.DATA_HOST_PROPERTIES, json.encodeToString(dataHostProperties))
+    }
+
+    suspend fun getWindowSize(): WindowSize? {
+        return keyValueStore
+            .getStringFlow(Key.WINDOW_SIZE, "")
+            .map { string ->
+                runCatching { json.decodeFromString<WindowSize>(string ?: "") }.getOrNull()
+            }
+            .first()
+    }
+
+    suspend fun setWindowSize(windowSize: WindowSize) {
+        keyValueStore.putString(Key.WINDOW_SIZE, json.encodeToString(windowSize))
+    }
+
+    suspend fun getWindowPosition(): WindowPosition? {
+        return keyValueStore
+            .getStringFlow(Key.WINDOW_POSITION, "")
+            .map { string ->
+                runCatching { json.decodeFromString<WindowPosition>(string ?: "") }.getOrNull()
+            }
+            .first()
+    }
+
+    suspend fun setWindowPosition(windowPosition: WindowPosition) {
+        keyValueStore.putString(Key.WINDOW_POSITION, json.encodeToString(windowPosition))
     }
 }

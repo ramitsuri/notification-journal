@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
@@ -19,7 +20,7 @@ class DataStoreKeyValueStore(
     ): Flow<Boolean> {
         return dataStore
             .data
-            .map {
+            .mapDistinct {
                 it[booleanPreferencesKey(key.value)] ?: defaultValue
             }
     }
@@ -46,7 +47,7 @@ class DataStoreKeyValueStore(
     ): Flow<String?> {
         return dataStore
             .data
-            .map {
+            .mapDistinct {
                 it[stringPreferencesKey(key.value)] ?: fallback
             }
     }
@@ -73,7 +74,7 @@ class DataStoreKeyValueStore(
     ): Flow<Int> {
         return dataStore
             .data
-            .map {
+            .mapDistinct {
                 it[intPreferencesKey(key.value)] ?: fallback
             }
     }
@@ -111,6 +112,9 @@ class DataStoreKeyValueStore(
             }
         }
     }
+
+    private inline fun <T, R> Flow<T>.mapDistinct(crossinline transform: suspend (value: T) -> R) =
+        map(transform).distinctUntilChanged()
 
     companion object {
         const val FILE = "datastore.preferences_pb"

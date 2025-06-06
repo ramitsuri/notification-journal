@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -16,13 +15,16 @@ import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.ramitsuri.notificationjournal.core.di.DiFactory
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
-import com.ramitsuri.notificationjournal.core.utils.Constants
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlin.math.roundToInt
+import kotlinx.coroutines.runBlocking
+import com.ramitsuri.notificationjournal.core.model.WindowPosition as AppWindowPosition
 
 fun main() =
     application {
@@ -47,11 +49,15 @@ fun main() =
             }
             LaunchedEffect(windowState) {
                 snapshotFlow { windowState.size }
+                    .distinctUntilChanged()
+                    .debounce(300L)
                     .onEach(::setWindowSize)
                     .launchIn(this)
 
                 snapshotFlow { windowState.position }
                     .filter { it.isSpecified }
+                    .distinctUntilChanged()
+                    .debounce(300L)
                     .onEach(::setWindowPosition)
                     .launchIn(this)
             }
@@ -71,47 +77,48 @@ fun main() =
     }
 
 private fun getWindowPosition(): WindowPosition {
-    val positionX = getDpValue(Constants.PREF_WINDOW_POSITION_X)
-    val positionY = getDpValue(Constants.PREF_WINDOW_POSITION_Y)
-    return if (positionX != null && positionY != null) {
-        WindowPosition(positionX, positionY)
-    } else {
-        WindowPosition.PlatformDefault
+    return runBlocking {
+        ServiceLocator
+            .prefManager
+            .getWindowPosition()
+            ?.let {
+                WindowPosition(x = it.x.dp, y = it.y.dp)
+            }
+            ?: defaultWindowPosition
     }
 }
 
-private fun setWindowPosition(position: WindowPosition) {
-    setDpValue(Constants.PREF_WINDOW_POSITION_X, position.x)
-    setDpValue(Constants.PREF_WINDOW_POSITION_Y, position.y)
+private suspend fun setWindowPosition(position: WindowPosition) {
+    ServiceLocator.prefManager.setWindowPosition(
+        AppWindowPosition(
+            x = position.x.value,
+            y = position.y.value,
+        ),
+    )
 }
 
 private fun getWindowSize(): DpSize {
-    val height = getDpValue(Constants.PREF_WINDOW_SIZE_HEIGHT)
-    val width = getDpValue(Constants.PREF_WINDOW_SIZE_WIDTH)
-    return if (height != null && width != null) {
-        DpSize(width = width, height = height)
-    } else {
-        DpSize(800.dp, 600.dp)
+    return runBlocking {
+        ServiceLocator
+            .prefManager
+            .getWindowSize()
+            ?.let {
+                DpSize(
+                    width = it.width.dp, height = it.height.dp,
+                )
+            }
+            ?: defaultWindowSize
     }
 }
 
-private fun setWindowSize(size: DpSize) {
-    setDpValue(Constants.PREF_WINDOW_SIZE_HEIGHT, size.height)
-    setDpValue(Constants.PREF_WINDOW_SIZE_WIDTH, size.width)
+private suspend fun setWindowSize(size: DpSize) {
+    ServiceLocator.prefManager.setWindowSize(
+        WindowSize(
+            height = size.height.value,
+            width = size.width.value,
+        ),
+    )
 }
 
-private fun setDpValue(
-    key: String,
-    value: Dp,
-) {
-    ServiceLocator.keyValueStore.putInt(key, value.value.roundToInt())
-}
-
-private fun getDpValue(key: String): Dp? {
-    val hasKey = ServiceLocator.keyValueStore.hasKey(key)
-    return if (!hasKey) {
-        null
-    } else {
-        ServiceLocator.keyValueStore.getInt(key, 0).dp
-    }
-}
+private val defaultWindowSize = DpSize(height = 800.dp, width = 600.dp)
+private val defaultWindowPosition = WindowPosition.PlatformDefault

@@ -9,18 +9,6 @@ object Constants {
     const val TEMPLATED_TIME = "{{time}}"
     const val TEMPLATED_TASK = "[ ]"
 
-    const val PREF_FILE = "com.ramitsuri.notificationjournal.prefs"
-    const val PREF_KEY_DATA_HOST = "data_host"
-    const val PREF_KEY_DEVICE_NAME = "device_name"
-    const val PREF_KEY_DEVICE_ID = "device_id"
-    const val PREF_KEY_EXCHANGE_NAME = "exchange_name"
-    const val PREF_KEY_USERNAME = "username"
-    const val PREF_KEY_PASSWORD = "password"
-    const val PREF_WINDOW_SIZE_HEIGHT = "window_size_height"
-    const val PREF_WINDOW_SIZE_WIDTH = "window_size_width"
-    const val PREF_WINDOW_POSITION_X = "window_position_x"
-    const val PREF_WINDOW_POSITION_Y = "window_position_y"
-
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"
         const val JOURNAL_ENTRY_VALUE = "journal_entry_value"

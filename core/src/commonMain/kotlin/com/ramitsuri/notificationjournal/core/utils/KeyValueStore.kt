@@ -5,7 +5,7 @@ import com.ramitsuri.notificationjournal.core.di.DiFactory
 interface KeyValueStore {
     fun getString(
         key: String,
-        fallback: String,
+        fallback: String = "",
     ): String?
 
     fun putString(
@@ -34,6 +34,10 @@ interface KeyValueStore {
     )
 
     fun hasKey(key: String): Boolean
+
+    fun hasKeys(): Boolean
+
+    fun clear()
 }
 
 class PrefsKeyValueStore(factory: DiFactory) : KeyValueStore {
@@ -95,5 +99,13 @@ class PrefsKeyValueStore(factory: DiFactory) : KeyValueStore {
 
     override fun hasKey(key: String): Boolean {
         return prefs.hasKey(key)
+    }
+
+    override fun hasKeys(): Boolean {
+        return prefs.keys.isNotEmpty()
+    }
+
+    override fun clear() {
+        prefs.clear()
     }
 }
