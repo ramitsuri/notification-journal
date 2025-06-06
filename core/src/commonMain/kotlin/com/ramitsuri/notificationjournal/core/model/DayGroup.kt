@@ -21,18 +21,25 @@ data class DayGroup(
                 ?.size
                 ?: 0
 
-    fun getConflictsCount(conflicts: List<EntryConflict>): Int {
-        val entries = entries()
-        return conflicts
-            .distinctBy { it.entryId }
-            .count {
-                entries.contains(it.entryId)
+    fun contentForExport(
+        dayMonthDateWithYear: String,
+        copyEmptyTags: Boolean,
+    ) = buildString {
+        append("# ")
+        append(dayMonthDateWithYear)
+        append("\n")
+        tagGroups.forEach { tagGroup ->
+            if (tagGroup.entries.isEmpty() && !copyEmptyTags) {
+                return@forEach
             }
+            append("## ")
+            append(tagGroup.tag)
+            append("\n")
+            tagGroup.entries.forEach { entry ->
+                append("- ")
+                append(entry.text)
+                append("\n")
+            }
+        }
     }
-
-    private fun entries() =
-        tagGroups
-            .map { it.entries }
-            .flatten()
-            .map { it.id }
 }

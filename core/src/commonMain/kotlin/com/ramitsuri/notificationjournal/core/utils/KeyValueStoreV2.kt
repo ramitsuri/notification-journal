@@ -63,4 +63,5 @@ enum class Key(val value: String) {
     LAST_IMPORT_DIRECTORY("last_import_directory"),
     DEFAULT_TAG("default_tag"),
     SHOW_SUGGESTIONS("show_suggestions"),
+    EXPORT_DIRECTORY("export_directory"),
 }

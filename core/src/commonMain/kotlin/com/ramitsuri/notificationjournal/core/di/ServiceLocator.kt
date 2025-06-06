@@ -19,6 +19,7 @@ import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
+import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
@@ -287,6 +288,9 @@ object ServiceLocator {
 
     val importRepository: ImportRepository
         get() = factory.getImportRepository(ioDispatcher)
+
+    val exportRepository: ExportRepository?
+        get() = factory.getExportRepository(ioDispatcher)
 
     private val ioDispatcher by lazy {
         Dispatchers.IO
