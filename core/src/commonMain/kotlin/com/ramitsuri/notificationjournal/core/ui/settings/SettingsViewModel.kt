@@ -84,13 +84,22 @@ class SettingsViewModel(
     ) {
         viewModelScope.launch {
             val newDataHostProperties =
-                prefManager.getDataHostProperties().first().copy(
-                    deviceName = deviceName.name,
-                    exchangeName = exchangeName.name,
-                    dataHost = dataHost.host,
-                    username = username.username,
-                    password = password.password,
-                )
+                prefManager.getDataHostProperties().first().let { existing ->
+                    val newOtherHosts =
+                        existing
+                            .otherHosts
+                            .plus(existing.dataHost)
+                            .filter { it.isNotEmpty() && it != "http://" }
+                            .toSet()
+                    existing.copy(
+                        deviceName = deviceName.name,
+                        exchangeName = exchangeName.name,
+                        dataHost = dataHost.host,
+                        username = username.username,
+                        password = password.password,
+                        otherHosts = newOtherHosts,
+                    )
+                }
             prefManager.setDataHostProperties(newDataHostProperties)
         }
     }
