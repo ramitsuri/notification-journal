@@ -7,6 +7,7 @@ import androidx.navigation.NavDeepLink
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
+import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
@@ -51,6 +52,8 @@ expect class DiFactory {
     fun getDataStorePath(): Path
 
     fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository
+
+    fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository?
 
     fun getJournalEntryScreenDeepLinks(): List<NavDeepLink>
 }

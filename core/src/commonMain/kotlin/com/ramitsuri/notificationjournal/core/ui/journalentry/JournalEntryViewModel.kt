@@ -14,6 +14,7 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
+import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
@@ -47,6 +48,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class JournalEntryViewModel(
     receivedText: String?,
     private val repository: JournalRepository,
+    private val exportRepository: ExportRepository?,
     private val tagsDao: TagsDao,
     private val prefManager: PrefManager,
     private val clock: Clock = Clock.System,
@@ -60,6 +62,8 @@ class JournalEntryViewModel(
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
     private val snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
+
+    private val requestExportDirectory = MutableStateFlow(false)
 
     private var reconcileDayGroupJob: Job? = null
 
@@ -89,8 +93,9 @@ class JournalEntryViewModel(
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
+                requestExportDirectory,
             ) { contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline,
+                showEmptyTags, showConflictDiffInline, requestExportDirectory,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
@@ -110,6 +115,7 @@ class JournalEntryViewModel(
                     showEmptyTags = showEmptyTags,
                     snackBarType = snackBarType,
                     allowNotify = allowNotify,
+                    requestExportDirectory = requestExportDirectory,
                 )
             }
         }.stateIn(
@@ -327,43 +333,35 @@ class JournalEntryViewModel(
     }
 
     fun onCopy() {
-        val conflicts = state.value.entryConflicts
-        val dayGroup = state.value.dayGroup
-        if (dayGroup == ViewState.defaultDayGroup) {
-            return
-        }
-        if (dayGroup.untaggedCount > 0) {
-            return
-        }
-        val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }
-        if (dayGroupEntryIds.isEmpty()) {
-            return
-        }
-        if (conflicts.any { dayGroupEntryIds.contains(it.id) }) {
-            return
-        }
         viewModelScope.launch(Dispatchers.Default) {
-            val copyEmptyTags = prefManager.copyWithEmptyTags().first()
-            val content =
-                buildString {
-                    append("# ")
-                    append(dayMonthDateWithYearSuspend(dayGroup.date))
-                    append("\n")
-                    dayGroup.tagGroups.forEach { tagGroup ->
-                        if (tagGroup.entries.isEmpty() && !copyEmptyTags) {
-                            return@forEach
-                        }
-                        append("## ")
-                        append(tagGroup.tag)
-                        append("\n")
-                        tagGroup.entries.forEach { entry ->
-                            append("- ")
-                            append(entry.text)
-                            append("\n")
-                        }
-                    }
-                }
-            contentForCopy.update { content }
+            val exportDirectory = prefManager.getExportDirectory().first()
+            if (exportRepository != null && exportDirectory.isBlank()) {
+                // Export directory is not set but we need to export
+                requestExportDirectory.update { true }
+                return@launch
+            }
+            val dayGroup = state.value.dayGroup
+            if (dayGroup == ViewState.defaultDayGroup) {
+                Logger.i { "Cannot export default day group" }
+                return@launch
+            }
+            if (dayGroup.untaggedCount > 0) {
+                Logger.i { "Cannot export day group with untagged entries" }
+                return@launch
+            }
+            val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }
+            if (dayGroupEntryIds.isEmpty()) {
+                Logger.i { "Cannot export empty day group" }
+                return@launch
+            }
+            if (state.value.entryConflicts.any { dayGroupEntryIds.contains(it.id) }) {
+                Logger.i { "Cannot export day group with conflicting entries" }
+                return@launch
+            }
+            // Copy to clipboard if not being exported
+            if (exportRepository == null) {
+                contentForCopy.update { dayGroup.content() }
+            }
             reconcileWithDelay(dayGroup)
         }
     }
@@ -419,6 +417,7 @@ class JournalEntryViewModel(
                 }
                 delay(5_000)
                 goToNextDay()
+                export(listOf(dayGroup))
                 dayGroup
                     .tagGroups
                     .map { it.entries }
@@ -426,6 +425,39 @@ class JournalEntryViewModel(
                     .map { it.copy(reconciled = true) }
                     .let { repository.update(it) }
             }
+    }
+
+    private suspend fun export(dayGroups: List<DayGroup>) {
+        val exportRepository = exportRepository ?: return
+        val exportDirectory = prefManager.getExportDirectory().first()
+        if (exportDirectory.isBlank()) {
+            // Export directory is not set but we need to export
+            requestExportDirectory.update { true }
+            return
+        }
+        dayGroups.forEach { dayGroup ->
+            exportRepository.export(
+                baseDir = exportDirectory,
+                forDate = dayGroup.date,
+                content = dayGroup.content(),
+            )
+        }
+    }
+
+    private suspend fun DayGroup.content() =
+        contentForExport(
+            dayMonthDateWithYear = dayMonthDateWithYearSuspend(date),
+            copyEmptyTags = prefManager.copyWithEmptyTags().first(),
+        )
+
+    fun onExportDirectorySet(directory: String) {
+        viewModelScope.launch {
+            prefManager.setExportDirectory(directory)
+            requestExportDirectory.update { false }
+            if (directory.isNotBlank()) {
+                onCopy()
+            }
+        }
     }
 
     fun cancelReconcile() {
@@ -442,9 +474,10 @@ class JournalEntryViewModel(
                     extras: CreationExtras,
                 ): T {
                     return JournalEntryViewModel(
-                        receivedText,
-                        ServiceLocator.repository,
-                        ServiceLocator.tagsDao,
+                        receivedText = receivedText,
+                        repository = ServiceLocator.repository,
+                        exportRepository = ServiceLocator.exportRepository,
+                        tagsDao = ServiceLocator.tagsDao,
                         prefManager = ServiceLocator.prefManager,
                         allowNotify = ServiceLocator.allowJournalEntryNotify(),
                     ) as T
@@ -464,6 +497,7 @@ data class ViewState(
     val showEmptyTags: Boolean = false,
     val snackBarType: SnackBarType = SnackBarType.None,
     val allowNotify: Boolean = false,
+    val requestExportDirectory: Boolean = false,
 ) {
     companion object {
         val defaultDayGroup = DayGroup(LocalDate(1970, 1, 1), listOf())

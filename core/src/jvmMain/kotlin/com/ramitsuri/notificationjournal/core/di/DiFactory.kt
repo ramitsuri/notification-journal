@@ -8,10 +8,12 @@ import androidx.navigation.NavDeepLink
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.BuildKonfig
+import com.ramitsuri.notificationjournal.core.ExportRepositoryImpl
 import com.ramitsuri.notificationjournal.core.ImportRepositoryImpl
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
@@ -159,6 +161,10 @@ actual class DiFactory {
 
     actual fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository {
         return ImportRepositoryImpl(ioDispatcher)
+    }
+
+    actual fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository? {
+        return ExportRepositoryImpl(ioDispatcher)
     }
 
     actual fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> {

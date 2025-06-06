@@ -84,4 +84,14 @@ class PrefManager(private val keyValueStore: KeyValueStoreV2) {
     suspend fun setShowSuggestions(showSuggestions: Boolean) {
         keyValueStore.putBoolean(Key.SHOW_SUGGESTIONS, showSuggestions)
     }
+
+    fun getExportDirectory(): Flow<String> {
+        return keyValueStore
+            .getStringFlow(Key.EXPORT_DIRECTORY, "")
+            .map { it ?: "" }
+    }
+
+    suspend fun setExportDirectory(directory: String) {
+        keyValueStore.putString(Key.EXPORT_DIRECTORY, directory)
+    }
 }

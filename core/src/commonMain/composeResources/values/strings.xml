@@ -174,4 +174,7 @@
     <string name="search_tip_empty_text">Tip: to get all results even for empty text, select only a single tag</string>
     <string name="search_select_all">Select all tags</string>
     <string name="search_unselect_all">Unselect all tags</string>
+
+    <string name="export_directory_dialog_title">Set Export Directory</string>
+    <string name="export_directory_input_label">Export Path</string>
 </resources>

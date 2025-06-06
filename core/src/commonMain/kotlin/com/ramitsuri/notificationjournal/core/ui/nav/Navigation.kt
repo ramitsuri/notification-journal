@@ -148,6 +148,10 @@ fun NavGraph(
                         is EntryScreenAction.ReconcileAll -> {
                             viewModel.onReconcileAll(action.uploadOnSuccess)
                         }
+
+                        is EntryScreenAction.ExportDirectorySet -> {
+                            viewModel.onExportDirectorySet(action.directory)
+                        }
                     }
                 },
                 onDayGroupAction = { action ->
