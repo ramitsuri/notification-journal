@@ -18,7 +18,6 @@ import com.ramitsuri.notificationjournal.core.model.WindowPosition
 import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
-import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
@@ -92,13 +91,15 @@ object ServiceLocator {
         get() = factory.allowJournalImport
 
     fun onAppStart() {
-        startReceiving()
+        coroutineScope.launch {
+            startReceiving()
+        }
     }
 
     fun onAppStop() {
         coroutineScope.launch {
             launch {
-                dataReceiveHelper?.closeConnection()
+                dataReceiveHelper.closeConnection()
             }
             launch {
                 dataSendHelper.closeConnection()
@@ -108,8 +109,7 @@ object ServiceLocator {
 
     fun resetReceiveHelper() {
         coroutineScope.launch {
-            dataReceiveHelper?.closeConnection()
-            dataReceiveHelper = null
+            dataReceiveHelper.closeConnection()
             startReceiving()
         }
     }
@@ -250,15 +250,13 @@ object ServiceLocator {
         )
     }
 
-    private var dataReceiveHelper: DataReceiveHelper? = null
-        get() =
-            if (field == null) {
-                synchronized(this) {
-                    return if (field == null) getReceiver() else field
-                }
-            } else {
-                field
-            }
+    private val dataReceiveHelper by lazy {
+        DataReceiveHelperImpl(
+            ioDispatcher = ioDispatcher,
+            getDataHostProperties = prefManager.getDataHostProperties()::first,
+            json = json,
+        )
+    }
 
     val coroutineScope by lazy {
         CoroutineScope(SupervisorJob())
@@ -282,39 +280,29 @@ object ServiceLocator {
         Dispatchers.Default
     }
 
-    private fun getReceiver(): DataReceiveHelper {
-        return DataReceiveHelperImpl(
-            ioDispatcher = ioDispatcher,
-            getDataHostProperties = prefManager.getDataHostProperties()::first,
-            json = json,
-        )
-    }
+    private suspend fun startReceiving() {
+        dataReceiveHelper.startListening {
+            when (it) {
+                is Payload.Entries -> {
+                    coroutineScope.launch { repository.handlePayload(it) }
+                }
 
-    private fun startReceiving() {
-        coroutineScope.launch {
-            dataReceiveHelper?.startListening {
-                when (it) {
-                    is Payload.Entries -> {
-                        coroutineScope.launch { repository.handlePayload(it) }
-                    }
+                is Payload.Tags -> {
+                    coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
+                }
 
-                    is Payload.Tags -> {
-                        coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
-                    }
+                is Payload.Templates -> {
+                    coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
+                }
 
-                    is Payload.Templates -> {
-                        coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
-                    }
-
-                    is Payload.ClearDaysAndInsertEntries -> {
-                        coroutineScope.launch {
-                            repository.clearDaysAndInsert(
-                                days = it.days,
-                                entries = it.entries,
-                                // We're receiving entries here, we don't want to send them back
-                                uploadEntries = false,
-                            )
-                        }
+                is Payload.ClearDaysAndInsertEntries -> {
+                    coroutineScope.launch {
+                        repository.clearDaysAndInsert(
+                            days = it.days,
+                            entries = it.entries,
+                            // We're receiving entries here, we don't want to send them back
+                            uploadEntries = false,
+                        )
                     }
                 }
             }
