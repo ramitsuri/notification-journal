@@ -88,6 +88,7 @@ internal class DataSendHelperImpl(
                     if (isRetry) {
                         return@withContext false
                     } else {
+                        closeConnectionInternal()
                         return@withContext send(isRetry = true)
                     }
                 }
