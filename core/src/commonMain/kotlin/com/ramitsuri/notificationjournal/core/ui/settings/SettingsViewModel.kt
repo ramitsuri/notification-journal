@@ -88,6 +88,7 @@ class SettingsViewModel(
                     val newOtherHosts =
                         existing
                             .otherHosts
+                            .minus(dataHost.host)
                             .plus(existing.dataHost)
                             .filter { it.isNotEmpty() && it != "http://" }
                             .toSet()

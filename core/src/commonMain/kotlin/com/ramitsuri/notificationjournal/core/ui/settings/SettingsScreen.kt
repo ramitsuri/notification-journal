@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.ui.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,14 +13,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -47,6 +55,7 @@ import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.data_host
 import notificationjournal.core.generated.resources.device_name
 import notificationjournal.core.generated.resources.exchange_name
+import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.password
 import notificationjournal.core.generated.resources.settings_app_version
@@ -324,15 +333,26 @@ private fun DataSharingPropertiesDialog(
     Dialog(onDismissRequest = { }) {
         Card {
             Column(modifier = modifier.padding(16.dp)) {
-                OutlinedTextField(
-                    value = dataHostText,
-                    singleLine = true,
-                    label = {
-                        Text(stringResource(Res.string.data_host))
-                    },
-                    onValueChange = { dataHostText = it },
-                    modifier = modifier.fillMaxWidth(),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedTextField(
+                        value = dataHostText,
+                        singleLine = true,
+                        label = {
+                            Text(stringResource(Res.string.data_host))
+                        },
+                        onValueChange = { dataHostText = it },
+                        modifier = modifier.weight(1f),
+                    )
+                    OtherHostsButton(
+                        otherHosts = dataHostProperties.otherHosts,
+                        otherHostPicked = {
+                            dataHostText = it
+                        },
+                    )
+                }
                 Spacer(modifier = modifier.height(16.dp))
                 OutlinedTextField(
                     value = exchangeNameText,
@@ -382,9 +402,11 @@ private fun DataSharingPropertiesDialog(
                     horizontalArrangement = Arrangement.End,
                     modifier = modifier.fillMaxWidth(),
                 ) {
-                    TextButton(onClick = {
-                        onNegativeClick()
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onNegativeClick()
+                        },
+                    ) {
                         Text(text = stringResource(Res.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -401,6 +423,45 @@ private fun DataSharingPropertiesDialog(
                     ) {
                         Text(text = stringResource(Res.string.ok))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OtherHostsButton(
+    otherHosts: Set<String>,
+    otherHostPicked: (String) -> Unit,
+) {
+    var showOtherHosts by rememberSaveable { mutableStateOf(false) }
+    if (otherHosts.isNotEmpty()) {
+        Box {
+            IconButton(
+                onClick = { showOtherHosts = true },
+                modifier =
+                    Modifier
+                        .size(48.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = stringResource(Res.string.more),
+                )
+            }
+            DropdownMenu(
+                expanded = showOtherHosts,
+                onDismissRequest = {
+                    showOtherHosts = false
+                },
+            ) {
+                otherHosts.forEach { otherHost ->
+                    DropdownMenuItem(
+                        text = { Text(otherHost) },
+                        onClick = {
+                            showOtherHosts = false
+                            otherHostPicked(otherHost)
+                        },
+                    )
                 }
             }
         }
