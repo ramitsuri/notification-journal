@@ -193,7 +193,8 @@ actual class DiFactory {
                                 } else if (os.indexOf("win") >= 0) {
                                     "Documents"
                                 } else {
-                                    error("OS not supported")
+                                    // Setting this for tests, not fully tested
+                                    "Journal"
                                 }
                             }
                     val appPath = "com.ramitsuri.notificationjournal"

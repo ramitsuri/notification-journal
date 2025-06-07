@@ -1,63 +1,20 @@
 package com.ramitsuri.notificationjournal.core.repository
 
 import app.cash.turbine.test
-import com.ramitsuri.notificationjournal.core.data.AppDatabase
-import com.ramitsuri.notificationjournal.core.data.getTestDb
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
-import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import com.ramitsuri.notificationjournal.core.network.DataSendHelper
-import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.PrefManager
-import com.ramitsuri.notificationjournal.core.utils.getTestDataKeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.BaseTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
-import java.nio.file.Paths
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 
-class JournalRepositoryTest {
-    private lateinit var repository: JournalRepository
-    private lateinit var dataSendHelper: TestDataSendHelper
-    private lateinit var clock: Clock
-    private lateinit var db: AppDatabase
-    private lateinit var prefManager: PrefManager
-
-    @Before
-    fun setUp() =
-        runTest {
-            db = getTestDb()
-            dataSendHelper = TestDataSendHelper()
-            clock = TestClock()
-            prefManager = PrefManager(getTestDataKeyValueStore())
-            repository =
-                JournalRepository(
-                    dao = db.journalEntryDao(),
-                    conflictDao = db.entryConflictDao(),
-                    clock = clock,
-                    dataSendHelper = dataSendHelper,
-                    prefManager = prefManager,
-                )
-        }
-
-    @OptIn(ExperimentalPathApi::class)
-    @After
-    fun tearDown() {
-        Paths.get(Constants.BASE_DIR).deleteRecursively()
-    }
-
+class JournalRepositoryTest : BaseTest() {
     @Test
     fun sendsEntriesAsExpected() =
         runTest {
@@ -180,47 +137,6 @@ class JournalRepositoryTest {
 
             db.entryConflictDao().getFlow().test { expectNoEvents() }
         }
-
-    private class TestClock : Clock {
-        var now: Instant? = null
-
-        override fun now(): Instant {
-            return now!!
-        }
-    }
-
-    private class TestDataSendHelper : DataSendHelper {
-        var sendSuccessful = true
-        val entriesSent = mutableListOf<JournalEntry>()
-
-        override suspend fun sendEntries(entries: List<JournalEntry>): Boolean {
-            if (sendSuccessful) {
-                entriesSent.addAll(entries)
-            } else {
-                entriesSent.removeAll { true }
-            }
-            return sendSuccessful
-        }
-
-        override suspend fun sendTags(tags: List<Tag>): Boolean {
-            return sendSuccessful
-        }
-
-        override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
-            return sendSuccessful
-        }
-
-        override suspend fun sendClearDaysAndInsertEntries(
-            days: List<LocalDate>,
-            entries: List<JournalEntry>,
-        ): Boolean {
-            return sendSuccessful
-        }
-
-        override suspend fun closeConnection() {
-            println("Closed")
-        }
-    }
 
     private fun journalEntry() =
         JournalEntry(
