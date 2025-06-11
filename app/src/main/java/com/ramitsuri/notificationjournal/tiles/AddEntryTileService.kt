@@ -2,13 +2,13 @@ package com.ramitsuri.notificationjournal.tiles
 
 import android.app.PendingIntent
 import android.content.Intent
-import android.graphics.drawable.Icon // Required for Icon.createWithResource
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.core.app.TaskStackBuilder
 import androidx.core.net.toUri
-import com.ramitsuri.notificationjournal.R // Required for R.drawable.ic_add_entry_tile
+import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.ui.nav.DeepLink
 
 class AddEntryTileService : TileService() {
