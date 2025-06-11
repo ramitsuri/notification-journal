@@ -369,6 +369,7 @@ class AddJournalEntryViewModel(
             return listOf()
         }
         return repository.search(actualLineOfText.toString(), listOf(tag))
+            .filter { it.text != actualLineOfText }
             .map { it.text }
             .distinctBy { it.lowercase() }
             .take(10)
