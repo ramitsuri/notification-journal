@@ -285,6 +285,7 @@ class EditJournalEntryViewModel(
             return listOf()
         }
         return repository.search(text.toString(), listOf(tag))
+            .filter { it.text != text }
             .map { it.text }
             .distinctBy { it.lowercase() }
             .take(10)
