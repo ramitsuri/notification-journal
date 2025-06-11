@@ -211,6 +211,8 @@ object ServiceLocator {
 
     fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> = factory.getJournalEntryScreenDeepLinks()
 
+    fun getAddEntryScreenDeepLinks(): List<NavDeepLink> = factory.getAddEntryScreenDeepLinks()
+
     val prefManager by lazy {
         val keyValueStore =
             DataStoreKeyValueStore(

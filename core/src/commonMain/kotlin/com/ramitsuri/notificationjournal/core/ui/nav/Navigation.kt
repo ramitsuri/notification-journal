@@ -42,12 +42,11 @@ import java.net.URLEncoder
 fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Destination.JOURNAL_ENTRY.route(),
     receivedText: String? = null,
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = Destination.JOURNAL_ENTRY.route(),
         modifier = modifier,
         enterTransition = {
             slideIntoContainer(
@@ -278,6 +277,7 @@ fun NavGraph(
         composable(
             route = Destination.ADD_ENTRY.route(),
             arguments = Destination.ADD_ENTRY.navArgs(),
+            deepLinks = ServiceLocator.getAddEntryScreenDeepLinks(),
         ) { backStackEntry ->
             val viewModel: AddJournalEntryViewModel =
                 viewModel(factory = ServiceLocator.getAddJournalEntryVMFactory(backStackEntry))

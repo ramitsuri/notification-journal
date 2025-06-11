@@ -12,17 +12,11 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.ramitsuri.notificationjournal.core.ui.nav.Destination
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import com.ramitsuri.notificationjournal.core.utils.receivedText
 
 class MainActivity : ComponentActivity() {
-
-    companion object {
-        const val ACTION_ADD_ENTRY = "com.ramitsuri.notificationjournal.ADD_ENTRY"
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -30,14 +24,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         showNotification()
-
-        var startDestination = Destination.JOURNAL_ENTRY.route()
-        if (intent?.action == ACTION_ADD_ENTRY) {
-            startDestination = Destination.ADD_ENTRY.route() // Use base route
-            // Clear the action to prevent re-processing
-            intent.action = null
-        }
-
         setContent {
             val darkTheme = isSystemInDarkTheme()
             DisposableEffect(darkTheme) {
@@ -61,7 +47,6 @@ class MainActivity : ComponentActivity() {
                 dynamicLightColorScheme = dynamicLightColorScheme(this),
             ) {
                 NavGraph(
-                    startDestination = startDestination,
                     receivedText = this@MainActivity.intent?.receivedText(),
                 )
             }

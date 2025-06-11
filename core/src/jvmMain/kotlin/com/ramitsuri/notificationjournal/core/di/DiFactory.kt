@@ -171,6 +171,10 @@ actual class DiFactory {
         return emptyList()
     }
 
+    actual fun getAddEntryScreenDeepLinks(): List<NavDeepLink> {
+        return emptyList()
+    }
+
     companion object {
         private val packageName =
             if (BuildKonfig.IS_DEBUG) {

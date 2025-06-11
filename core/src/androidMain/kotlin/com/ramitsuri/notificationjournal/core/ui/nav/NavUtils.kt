@@ -12,6 +12,10 @@ fun DeepLink.uriWithArgsValues(args: List<String> = listOf()): String {
         DeepLink.HOME_SCREEN -> {
             uri
         }
+
+        DeepLink.ADD_ENTRY -> {
+            uri
+        }
     }
 }
 
@@ -23,6 +27,10 @@ fun DeepLink.uriWithArgNames(): NavDeepLink {
             }
 
             DeepLink.HOME_SCREEN -> {
+                uri
+            }
+
+            DeepLink.ADD_ENTRY -> {
                 uri
             }
         }

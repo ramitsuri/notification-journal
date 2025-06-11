@@ -132,4 +132,10 @@ actual class DiFactory(private val application: Application) {
             DeepLink.HOME_SCREEN.uriWithArgNames(),
         )
     }
+
+    actual fun getAddEntryScreenDeepLinks(): List<NavDeepLink> {
+        return listOf(
+            DeepLink.ADD_ENTRY.uriWithArgNames(),
+        )
+    }
 }
