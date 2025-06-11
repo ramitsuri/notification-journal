@@ -1,6 +1,6 @@
 [versions]
 
-appVersion = "9.8"
+appVersion = "9.9"
 
 activityCompose = "1.10.1"
 amqpClient = "5.21.0"
