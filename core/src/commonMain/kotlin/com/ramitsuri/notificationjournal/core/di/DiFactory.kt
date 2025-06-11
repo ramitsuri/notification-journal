@@ -56,4 +56,6 @@ expect class DiFactory {
     fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository?
 
     fun getJournalEntryScreenDeepLinks(): List<NavDeepLink>
+
+    fun getAddEntryScreenDeepLinks(): List<NavDeepLink>
 }

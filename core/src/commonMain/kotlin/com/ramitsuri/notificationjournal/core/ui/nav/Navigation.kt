@@ -277,6 +277,7 @@ fun NavGraph(
         composable(
             route = Destination.ADD_ENTRY.route(),
             arguments = Destination.ADD_ENTRY.navArgs(),
+            deepLinks = ServiceLocator.getAddEntryScreenDeepLinks(),
         ) { backStackEntry ->
             val viewModel: AddJournalEntryViewModel =
                 viewModel(factory = ServiceLocator.getAddJournalEntryVMFactory(backStackEntry))
