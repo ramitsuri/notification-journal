@@ -42,11 +42,12 @@ import java.net.URLEncoder
 fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+    startDestination: String = Destination.JOURNAL_ENTRY.route(),
     receivedText: String? = null,
 ) {
     NavHost(
         navController = navController,
-        startDestination = Destination.JOURNAL_ENTRY.route(),
+        startDestination = startDestination,
         modifier = modifier,
         enterTransition = {
             slideIntoContainer(
