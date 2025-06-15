@@ -7,9 +7,11 @@ import com.ramitsuri.notificationjournal.core.model.sync.Entity.Entries
 import com.ramitsuri.notificationjournal.core.model.sync.Entity.Tags
 import com.ramitsuri.notificationjournal.core.model.sync.Entity.Templates
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Serializable
 sealed interface Payload {
@@ -30,6 +32,8 @@ sealed interface Diagnostic : Payload
 
 @Serializable
 sealed interface Entity : Payload {
+sealed interface Entity : Payload {
+
     @Serializable
     @SerialName("tags")
     data class Tags(

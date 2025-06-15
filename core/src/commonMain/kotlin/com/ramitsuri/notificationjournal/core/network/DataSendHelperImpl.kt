@@ -41,6 +41,19 @@ internal class DataSendHelperImpl(
         ).send()
     }
 
+    override suspend fun sendPing(): Boolean {
+        return Payload.PingRequest(
+            time = kotlinx.datetime.Clock.System.now(),
+        ).send()
+    }
+
+    override suspend fun sendPingResponse(pingRequest: Payload.PingRequest): Boolean {
+        return Payload.PingResponse(
+            requestId = pingRequest.id,
+            time = kotlinx.datetime.Clock.System.now(),
+        ).send()
+    }
+
     private suspend fun Payload.send(): Boolean {
         log("Sending payload")
         return rabbitMqHelper.send(

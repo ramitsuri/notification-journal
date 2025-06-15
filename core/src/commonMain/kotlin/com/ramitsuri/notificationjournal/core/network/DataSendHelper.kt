@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.network
 
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.datetime.LocalDate
 
@@ -16,4 +17,8 @@ interface DataSendHelper {
         days: List<LocalDate>,
         entries: List<JournalEntry>,
     ): Boolean
+
+    suspend fun sendPing(): Boolean
+
+    suspend fun sendPingResponse(pingRequest: Payload.PingRequest): Boolean
 }

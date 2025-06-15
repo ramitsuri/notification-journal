@@ -22,6 +22,7 @@ import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
+import com.ramitsuri.notificationjournal.core.network.PeerDiscoveryHelper
 import com.ramitsuri.notificationjournal.core.network.RabbitMqHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
@@ -97,6 +98,12 @@ object ServiceLocator {
 
     fun onAppStart() {
         startReceiving()
+        PeerDiscoveryHelper(
+            coroutineScope = coroutineScope,
+            ioDispatcher = ioDispatcher,
+            dataSendHelper = dataSendHelper,
+            dataReceiveHelper = dataReceiveHelper,
+        ).start()
     }
 
     fun onAppStop() {
@@ -315,6 +322,11 @@ object ServiceLocator {
                                 )
                             }
                         }
+
+                        is Payload.PingRequest -> {
+                            dataSendHelper.sendPingResponse(it)
+                        }
+                        else -> {}
                     }
                 }
             }
