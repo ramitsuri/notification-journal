@@ -3,7 +3,7 @@ package com.ramitsuri.notificationjournal.core.repository
 import app.cash.turbine.test
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.utils.BaseTest
 import kotlinx.coroutines.flow.first
@@ -74,7 +74,7 @@ class JournalRepositoryTest : BaseTest() {
                 ),
             )
             repository.handlePayload(
-                Payload.Entries(
+                Entity.Entries(
                     sender = Sender(name = "name", id = "id"),
                     data =
                         listOf(
@@ -96,7 +96,7 @@ class JournalRepositoryTest : BaseTest() {
                 ),
             )
             repository.handlePayload(
-                Payload.Entries(
+                Entity.Entries(
                     sender = Sender(name = "name", id = "id"),
                     data =
                         listOf(
@@ -123,7 +123,7 @@ class JournalRepositoryTest : BaseTest() {
                 ),
             )
             repository.handlePayload(
-                Payload.Entries(
+                Entity.Entries(
                     sender = Sender(name = "name", id = "id"),
                     data =
                         listOf(

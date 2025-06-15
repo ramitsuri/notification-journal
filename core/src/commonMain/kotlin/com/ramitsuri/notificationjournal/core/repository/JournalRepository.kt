@@ -8,7 +8,7 @@ import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
-import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.Constants
@@ -161,7 +161,7 @@ class JournalRepository(
         }
     }
 
-    suspend fun handlePayload(payload: Payload.Entries) {
+    suspend fun handlePayload(payload: Entity.Entries) {
         payload.data.forEach { payloadEntry ->
             // Since they're coming from a different client, they should be considered
             // uploaded for this client so that we don't upload them again.
