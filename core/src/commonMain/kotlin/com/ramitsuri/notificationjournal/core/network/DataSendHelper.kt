@@ -16,6 +16,4 @@ interface DataSendHelper {
         days: List<LocalDate>,
         entries: List<JournalEntry>,
     ): Boolean
-
-    suspend fun closeConnection()
 }

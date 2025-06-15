@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.model
 
+import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -24,4 +25,11 @@ data class DataHostProperties(
         return deviceName.isNotBlank() && deviceId.isNotBlank() && exchangeName.isNotBlank() &&
             dataHost.isNotBlank() && username.isNotBlank() && password.isNotBlank()
     }
+}
+
+fun DataHostProperties.toSender(): Sender {
+    return Sender(
+        name = deviceName,
+        id = deviceId,
+    )
 }

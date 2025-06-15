@@ -33,8 +33,4 @@ class TestDataSendHelper : DataSendHelper {
     ): Boolean {
         return sendSuccessful
     }
-
-    override suspend fun closeConnection() {
-        println("Closed")
-    }
 }

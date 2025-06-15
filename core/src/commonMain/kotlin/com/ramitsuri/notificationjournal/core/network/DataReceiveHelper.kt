@@ -1,9 +1,8 @@
 package com.ramitsuri.notificationjournal.core.network
 
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import kotlinx.coroutines.flow.SharedFlow
 
 interface DataReceiveHelper {
-    suspend fun startListening(onPayloadReceived: (Payload) -> Unit)
-
-    suspend fun closeConnection()
+    val payloadFlow: SharedFlow<Payload>
 }

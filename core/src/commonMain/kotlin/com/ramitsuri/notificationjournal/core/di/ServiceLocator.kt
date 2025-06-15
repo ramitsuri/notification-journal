@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.di
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
+import co.touchlab.kermit.CommonWriter
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
@@ -21,6 +22,7 @@ import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
+import com.ramitsuri.notificationjournal.core.network.RabbitMqHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -38,6 +40,7 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -50,6 +53,7 @@ import kotlin.time.Duration
 object ServiceLocator {
     private lateinit var db: AppDatabase
     private var notificationHelper: JournalEntryNotificationHelper? = null
+    private var receiveJob: Job? = null
 
     fun init(
         factory: DiFactory,
@@ -84,32 +88,26 @@ object ServiceLocator {
                 }
             }
         }
-        Logger.setLogWriters(listOf(inMemoryLogWriter))
+        Logger.setLogWriters(inMemoryLogWriter, CommonWriter())
     }
 
     val allowJournalImport: Boolean
         get() = factory.allowJournalImport
 
     fun onAppStart() {
-        coroutineScope.launch {
-            startReceiving()
-        }
+        startReceiving()
     }
 
     fun onAppStop() {
         coroutineScope.launch {
-            launch {
-                dataReceiveHelper.closeConnection()
-            }
-            launch {
-                dataSendHelper.closeConnection()
-            }
+            receiveJob?.cancel()
+            rabbitMqHelper.close()
         }
     }
 
     fun resetReceiveHelper() {
         coroutineScope.launch {
-            dataReceiveHelper.closeConnection()
+            rabbitMqHelper.close()
             startReceiving()
         }
     }
@@ -237,9 +235,15 @@ object ServiceLocator {
 
     val dataSendHelper: DataSendHelper by lazy {
         DataSendHelperImpl(
-            ioDispatcher = ioDispatcher,
             getDataHostProperties = prefManager.getDataHostProperties()::first,
+            rabbitMqHelper = rabbitMqHelper,
+        )
+    }
+
+    private val rabbitMqHelper by lazy {
+        RabbitMqHelper(
             json = json,
+            ioDispatcher = ioDispatcher,
         )
     }
 
@@ -256,7 +260,7 @@ object ServiceLocator {
         DataReceiveHelperImpl(
             ioDispatcher = ioDispatcher,
             getDataHostProperties = prefManager.getDataHostProperties()::first,
-            json = json,
+            rabbitMqHelper = rabbitMqHelper,
         )
     }
 
@@ -282,33 +286,37 @@ object ServiceLocator {
         Dispatchers.Default
     }
 
-    private suspend fun startReceiving() {
-        dataReceiveHelper.startListening {
-            when (it) {
-                is Payload.Entries -> {
-                    coroutineScope.launch { repository.handlePayload(it) }
-                }
+    private fun startReceiving() {
+        receiveJob?.cancel()
+        receiveJob =
+            coroutineScope.launch {
+                dataReceiveHelper.payloadFlow.collect {
+                    when (it) {
+                        is Payload.Entries -> {
+                            coroutineScope.launch { repository.handlePayload(it) }
+                        }
 
-                is Payload.Tags -> {
-                    coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
-                }
+                        is Payload.Tags -> {
+                            coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
+                        }
 
-                is Payload.Templates -> {
-                    coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
-                }
+                        is Payload.Templates -> {
+                            coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
+                        }
 
-                is Payload.ClearDaysAndInsertEntries -> {
-                    coroutineScope.launch {
-                        repository.clearDaysAndInsert(
-                            days = it.days,
-                            entries = it.entries,
-                            // We're receiving entries here, we don't want to send them back
-                            uploadEntries = false,
-                        )
+                        is Payload.ClearDaysAndInsertEntries -> {
+                            coroutineScope.launch {
+                                repository.clearDaysAndInsert(
+                                    days = it.days,
+                                    entries = it.entries,
+                                    // We're receiving entries here, we don't want to send them back
+                                    uploadEntries = false,
+                                )
+                            }
+                        }
                     }
                 }
             }
-        }
     }
 
     private suspend fun migrateFromKeyValueStore() {
