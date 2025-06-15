@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.datetime.LocalDate
@@ -13,19 +14,19 @@ internal class DataSendHelperImpl(
     private val rabbitMqHelper: RabbitMqHelper,
 ) : DataSendHelper {
     override suspend fun sendEntries(entries: List<JournalEntry>): Boolean {
-        return Payload.Entries(
+        return Entity.Entries(
             data = entries,
         ).send()
     }
 
     override suspend fun sendTags(tags: List<Tag>): Boolean {
-        return Payload.Tags(
+        return Entity.Tags(
             data = tags,
         ).send()
     }
 
     override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
-        return Payload.Templates(
+        return Entity.Templates(
             data = templates,
         ).send()
     }
@@ -34,7 +35,7 @@ internal class DataSendHelperImpl(
         days: List<LocalDate>,
         entries: List<JournalEntry>,
     ): Boolean {
-        return Payload.ClearDaysAndInsertEntries(
+        return Entity.ClearDaysAndInsertEntries(
             days = days,
             entries = entries,
         ).send()

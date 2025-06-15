@@ -18,7 +18,7 @@ import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.WindowPosition
 import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
@@ -42,6 +42,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -290,21 +291,21 @@ object ServiceLocator {
         receiveJob?.cancel()
         receiveJob =
             coroutineScope.launch {
-                dataReceiveHelper.payloadFlow.collect {
+                dataReceiveHelper.payloadFlow.filterIsInstance<Entity>().collect {
                     when (it) {
-                        is Payload.Entries -> {
+                        is Entity.Entries -> {
                             coroutineScope.launch { repository.handlePayload(it) }
                         }
 
-                        is Payload.Tags -> {
+                        is Entity.Tags -> {
                             coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
                         }
 
-                        is Payload.Templates -> {
+                        is Entity.Templates -> {
                             coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
                         }
 
-                        is Payload.ClearDaysAndInsertEntries -> {
+                        is Entity.ClearDaysAndInsertEntries -> {
                             coroutineScope.launch {
                                 repository.clearDaysAndInsert(
                                     days = it.days,
