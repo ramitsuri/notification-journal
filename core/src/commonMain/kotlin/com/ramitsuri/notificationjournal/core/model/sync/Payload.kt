@@ -2,10 +2,6 @@ package com.ramitsuri.notificationjournal.core.model.sync
 
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.sync.Entity.ClearDaysAndInsertEntries
-import com.ramitsuri.notificationjournal.core.model.sync.Entity.Entries
-import com.ramitsuri.notificationjournal.core.model.sync.Entity.Tags
-import com.ramitsuri.notificationjournal.core.model.sync.Entity.Templates
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -17,23 +13,38 @@ import java.util.UUID
 sealed interface Payload {
     val sender: Sender
 
-    fun attachSender(sender: Sender): Entity {
+    fun attachSender(sender: Sender): Payload {
         return when (this) {
-            is Tags -> copy(sender = sender)
-            is Entries -> copy(sender = sender)
-            is ClearDaysAndInsertEntries -> copy(sender = sender)
-            is Templates -> copy(sender = sender)
+            is Entity.Tags -> copy(sender = sender)
+            is Entity.Entries -> copy(sender = sender)
+            is Entity.ClearDaysAndInsertEntries -> copy(sender = sender)
+            is Entity.Templates -> copy(sender = sender)
+
+            is Diagnostic.PingRequest -> copy(sender = sender)
+            is Diagnostic.PingResponse -> copy(sender = sender)
         }
     }
 }
 
 @Serializable
-sealed interface Diagnostic : Payload
+sealed interface Diagnostic : Payload {
+    val time: Instant
+
+    @Serializable
+    data class PingRequest(
+        override val time: Instant,
+        override val sender: Sender = Sender(),
+    ) : Diagnostic
+
+    @Serializable
+    data class PingResponse(
+        override val time: Instant,
+        override val sender: Sender = Sender(),
+    ) : Diagnostic
+}
 
 @Serializable
 sealed interface Entity : Payload {
-sealed interface Entity : Payload {
-
     @Serializable
     @SerialName("tags")
     data class Tags(

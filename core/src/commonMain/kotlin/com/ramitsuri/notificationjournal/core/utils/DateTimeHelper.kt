@@ -49,6 +49,20 @@ fun hourMinute(
     return toFormat.format(format)
 }
 
+@Composable
+fun hourMinute(
+    toFormat: Instant,
+    timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    amString: String = stringResource(Res.string.am),
+    pmString: String = stringResource(Res.string.pm),
+): String {
+    return hourMinute(
+        toFormat = toFormat.toLocalDateTime(timeZone),
+        amString = amString,
+        pmString = pmString,
+    )
+}
+
 fun formatTimeForLogs(
     toFormat: Instant,
     timeZone: TimeZone,

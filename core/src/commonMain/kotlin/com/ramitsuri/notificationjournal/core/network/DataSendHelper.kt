@@ -2,8 +2,10 @@ package com.ramitsuri.notificationjournal.core.network
 
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.sync.Diagnostic
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
 interface DataSendHelper {
@@ -18,7 +20,7 @@ interface DataSendHelper {
         entries: List<JournalEntry>,
     ): Boolean
 
-    suspend fun sendPing(): Boolean
+    suspend fun sendPing(time: Instant): Boolean
 
-    suspend fun sendPingResponse(pingRequest: Payload.PingRequest): Boolean
+    suspend fun sendPingResponse(time: Instant): Boolean
 }

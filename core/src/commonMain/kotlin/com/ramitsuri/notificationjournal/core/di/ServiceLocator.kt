@@ -98,12 +98,7 @@ object ServiceLocator {
 
     fun onAppStart() {
         startReceiving()
-        PeerDiscoveryHelper(
-            coroutineScope = coroutineScope,
-            ioDispatcher = ioDispatcher,
-            dataSendHelper = dataSendHelper,
-            dataReceiveHelper = dataReceiveHelper,
-        ).start()
+        peerDiscoveryHelper.start()
     }
 
     fun onAppStop() {
@@ -111,6 +106,7 @@ object ServiceLocator {
             receiveJob?.cancel()
             rabbitMqHelper.close()
         }
+        peerDiscoveryHelper.stop()
     }
 
     fun resetReceiveHelper() {
@@ -118,6 +114,15 @@ object ServiceLocator {
             rabbitMqHelper.close()
             startReceiving()
         }
+    }
+
+    val peerDiscoveryHelper: PeerDiscoveryHelper by lazy {
+        PeerDiscoveryHelper(
+            coroutineScope = coroutineScope,
+            ioDispatcher = ioDispatcher,
+            dataSendHelper = dataSendHelper,
+            dataReceiveHelper = dataReceiveHelper,
+        )
     }
 
     val repository: JournalRepository by lazy {
@@ -322,11 +327,6 @@ object ServiceLocator {
                                 )
                             }
                         }
-
-                        is Payload.PingRequest -> {
-                            dataSendHelper.sendPingResponse(it)
-                        }
-                        else -> {}
                     }
                 }
             }
