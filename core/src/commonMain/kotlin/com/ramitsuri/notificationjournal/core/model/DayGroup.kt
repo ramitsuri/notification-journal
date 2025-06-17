@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.model
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.security.MessageDigest
 
 @Serializable
 data class DayGroup(
@@ -41,5 +42,9 @@ data class DayGroup(
                 append("\n")
             }
         }
+    }
+
+    fun sha(){
+        println(MessageDigest.getInstance("SHA-1").digest(toString().toByteArray()).joinToString(""))
     }
 }

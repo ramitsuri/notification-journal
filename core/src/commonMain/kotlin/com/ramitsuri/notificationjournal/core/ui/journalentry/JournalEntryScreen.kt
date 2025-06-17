@@ -336,6 +336,7 @@ fun JournalEntryScreen(
                             }
 
                             is DayGroupAction.ShowAllDays -> {
+                                println(state.dayGroup.sha())
                                 showAllDays = true
                             }
 
