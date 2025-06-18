@@ -6,8 +6,13 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.timeout
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
@@ -57,9 +62,10 @@ class VerifyEntriesHelper(
 
     // Returns name of the peer with which entries hash matches otherwise null
     suspend fun requestVerifyEntries(date: LocalDate): String? {
+        Logger.i(TAG) { "Verifying for date $date" }
         val hash = repository.getHashForDate(date)
         if (hash == null) {
-            Logger.i(TAG) { "Unable to compute hash for date" }
+            Logger.i(TAG) { "Unable to compute hash for date $date" }
             return null
         }
         val sent = dataSendHelper.sendVerifyEntriesRequest(
@@ -68,31 +74,41 @@ class VerifyEntriesHelper(
             date = date,
         )
         if (!sent) {
-            Logger.i(TAG) { "Verify entries request unable to send" }
+            Logger.i(TAG) { "Verify entries request unable to send for date $date" }
             return null
         }
         val response =
             dataReceiveHelper
                 .payloadFlow
                 .filterIsInstance<VerifyEntries.Response>()
+                .filter { it.date == date }
+                .timeout(REQUEST_RESPONSE_STALE_SECONDS.seconds)
+                .catch {
+                    if (it is TimeoutCancellationException) {
+                        Logger.i(TAG) { "canceled from timeout for date $date" }
+                    }
+                }
                 .firstOrNull()
         if (response == null) {
-            Logger.i(TAG) { "Verify entries response not received" }
+            Logger.i(TAG) { "Verify entries response not received for date $date" }
             return null
         }
         if (clock.now() - response.time > REQUEST_RESPONSE_STALE_SECONDS.seconds) {
-            Logger.i(TAG) { "Verify entries response is too old" }
+            Logger.i(TAG) { "Verify entries response is too old for date $date" }
             return null
         }
         if (response.hash != hash) {
-            Logger.i(TAG) { "Verify entries response hash doesn't match" }
+            Logger.i(TAG) { "Verify entries response hash doesn't match for date $date" }
             return null
         }
+        Logger.i(TAG) { "Matches with ${response.sender.name} for date $date" }
         return response.sender.name
     }
 
     companion object {
         private const val TAG = "VerifyEntriesHelper"
-        private const val REQUEST_RESPONSE_STALE_SECONDS = 30
+
+        // tODO
+        private const val REQUEST_RESPONSE_STALE_SECONDS = 3
     }
 }

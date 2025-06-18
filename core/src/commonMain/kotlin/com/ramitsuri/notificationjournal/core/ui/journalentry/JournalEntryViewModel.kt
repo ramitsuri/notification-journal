@@ -28,6 +28,9 @@ import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,6 +73,8 @@ class JournalEntryViewModel(
 
     private val requestExportDirectory = MutableStateFlow(false)
 
+    private val verifyEntries = MutableStateFlow(false)
+
     private var reconcileDayGroupJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -100,6 +105,7 @@ class JournalEntryViewModel(
                 prefManager.showConflictDiffInline(),
                 requestExportDirectory,
                 peerDiscoveryHelper.connectedPeers,
+                verifyEntries,
             ) {
                     contentForCopy,
                     snackBarType,
@@ -110,11 +116,12 @@ class JournalEntryViewModel(
                     showConflictDiffInline,
                     requestExportDirectory,
                     connectedPeers,
+                    verifyEntries,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
                 ViewState(
-                    dateWithCountList = countAndDates,
+                    dateWithCountList = if (verifyEntries) afterVerify(countAndDates) else countAndDates,
                     dayGroup =
                         if (countAndDates.isEmpty()) {
                             ViewState.defaultDayGroup
@@ -411,11 +418,20 @@ class JournalEntryViewModel(
         }
     }
 
-    fun verifyEntries(date: LocalDate) {
-        viewModelScope.launch {
-            val matchesWith = verifyEntriesHelper.requestVerifyEntries(date)
-            println("Matches with: $matchesWith")
-        }
+    fun toggleVerifyEntries() {
+        verifyEntries.update { !it }
+    }
+
+    private suspend fun afterVerify(dateWithCounts: List<DateWithCount>): List<DateWithCount> = coroutineScope {
+        dateWithCounts
+            .map { dateWithCount ->
+                async {
+                    dateWithCount to verifyEntriesHelper.requestVerifyEntries(dateWithCount.date)
+                }
+            }.awaitAll()
+            .map { (dateWithCount, matchesWith) ->
+                dateWithCount.copy(verifiedWith = matchesWith)
+            }
     }
 
     private fun setDate(

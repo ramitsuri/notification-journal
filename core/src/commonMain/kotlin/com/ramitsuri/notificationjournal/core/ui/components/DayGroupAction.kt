@@ -55,6 +55,8 @@ sealed interface DayGroupAction {
 
     data object ShowAllDays : DayGroupAction
 
+    data object ToggleVerifyEntries : DayGroupAction
+
     data object ShowNextDay : DayGroupAction
 
     data object ShowPreviousDay : DayGroupAction

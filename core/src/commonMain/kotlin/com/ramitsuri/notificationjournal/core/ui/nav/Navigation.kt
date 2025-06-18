@@ -266,6 +266,10 @@ fun NavGraph(
                             viewModel.notify(action.entry, action.inTime)
                         }
 
+                        is DayGroupAction.ToggleVerifyEntries -> {
+                            viewModel.toggleVerifyEntries()
+                        }
+
                         is DayGroupAction.ShowAllDays -> {
                             error("Should already be managed in the screen and not reach here")
                         }

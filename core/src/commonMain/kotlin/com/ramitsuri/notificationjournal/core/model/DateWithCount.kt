@@ -6,4 +6,5 @@ data class DateWithCount(
     val date: LocalDate,
     val conflictCount: Int,
     val untaggedCount: Int,
+    val verifiedWith: String? = null,
 )
