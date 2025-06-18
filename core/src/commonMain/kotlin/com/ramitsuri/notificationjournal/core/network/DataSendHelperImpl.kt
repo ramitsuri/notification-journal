@@ -7,6 +7,7 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Diagnostic
 import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -49,6 +50,30 @@ internal class DataSendHelperImpl(
 
     override suspend fun sendPingResponse(time: Instant): Boolean {
         return Diagnostic.PingResponse(time).send()
+    }
+
+    override suspend fun sendVerifyEntriesRequest(
+        date: LocalDate,
+        hash: String,
+        time: Instant
+    ): Boolean {
+        return VerifyEntries.Request(
+            date = date,
+            hash = hash,
+            time = time,
+        ).send()
+    }
+
+    override suspend fun sendVerifyEntriesResponse(
+        date: LocalDate,
+        hash: String,
+        time: Instant
+    ): Boolean {
+        return VerifyEntries.Response(
+            date = date,
+            hash = hash,
+            time = time,
+        ).send()
     }
 
     private suspend fun Payload.send(): Boolean {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
@@ -29,6 +30,7 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.pm
 import org.jetbrains.compose.resources.getString
+import java.security.MessageDigest
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalRepository(
@@ -304,6 +306,12 @@ class JournalRepository(
                     ),
             )
         }
+
+    suspend fun getHashForDate(date: LocalDate): String? {
+        return getForDateFlow(date).firstOrNull()?.let {
+            MessageDigest.getInstance("SHA-1").digest(it.toString().toByteArray()).joinToString("")
+        }
+    }
 
     private suspend fun replaceWithTimeTemplateIfNecessary(
         originalText: String,

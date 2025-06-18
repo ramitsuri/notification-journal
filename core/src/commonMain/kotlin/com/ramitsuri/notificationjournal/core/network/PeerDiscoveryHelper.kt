@@ -38,7 +38,7 @@ class PeerDiscoveryHelper(
                         .payloadFlow
                         .filterIsInstance<Diagnostic.PingRequest>()
                         .collect { request ->
-                            if (clock.now() - request.time > 30.seconds) {
+                            if (clock.now() - request.time > REQUEST_RESPONSE_STALE_SECONDS.seconds) {
                                 Logger.i(TAG) { "Ping request is too old" }
                                 return@collect
                             }
@@ -88,8 +88,8 @@ class PeerDiscoveryHelper(
                     }
                 }
                 .collect { response ->
-                    if (clock.now() - response.time > 30.seconds) {
-                        Logger.i(TAG) { "Ping request is too old" }
+                    if (clock.now() - response.time > REQUEST_RESPONSE_STALE_SECONDS.seconds) {
+                        Logger.i(TAG) { "Ping response is too old" }
                         return@collect
                     }
                     responseReceived = true
@@ -122,6 +122,7 @@ class PeerDiscoveryHelper(
     companion object {
         private const val BASE_PING_REPEAT_SECONDS = 30
         private const val RECEIVE_TIMEOUT_SECONDS = 30
+        private const val REQUEST_RESPONSE_STALE_SECONDS = 30
         private const val TAG = "PeerDiscoveryHelper"
     }
 }

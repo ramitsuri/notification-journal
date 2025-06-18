@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.utils
 
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import kotlinx.datetime.Instant
@@ -40,6 +41,22 @@ class TestDataSendHelper : DataSendHelper {
     }
 
     override suspend fun sendPingResponse(time: Instant): Boolean {
+        return sendSuccessful
+    }
+
+    override suspend fun sendVerifyEntriesRequest(
+        date: LocalDate,
+        hash: String,
+        time: Instant
+    ): Boolean {
+        return sendSuccessful
+    }
+
+    override suspend fun sendVerifyEntriesResponse(
+        date: LocalDate,
+        hash: String,
+        time: Instant
+    ): Boolean {
         return sendSuccessful
     }
 }
