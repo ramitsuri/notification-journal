@@ -458,10 +458,9 @@ private fun Toolbar(
                     }
                 }
             }
-            if (peers.isNotEmpty())
-                {
-                    Peers(peers)
-                }
+            if (peers.isNotEmpty()) {
+                Peers(peers)
+            }
             IconButton(
                 onClick = onResetReceiveHelper,
                 modifier =
