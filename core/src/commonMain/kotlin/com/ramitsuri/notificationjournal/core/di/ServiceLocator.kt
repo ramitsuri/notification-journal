@@ -22,6 +22,7 @@ import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
+import com.ramitsuri.notificationjournal.core.network.PeerDiscoveryHelper
 import com.ramitsuri.notificationjournal.core.network.RabbitMqHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
@@ -97,6 +98,7 @@ object ServiceLocator {
 
     fun onAppStart() {
         startReceiving()
+        peerDiscoveryHelper.start()
     }
 
     fun onAppStop() {
@@ -104,6 +106,7 @@ object ServiceLocator {
             receiveJob?.cancel()
             rabbitMqHelper.close()
         }
+        peerDiscoveryHelper.stop()
     }
 
     fun resetReceiveHelper() {
@@ -111,6 +114,15 @@ object ServiceLocator {
             rabbitMqHelper.close()
             startReceiving()
         }
+    }
+
+    val peerDiscoveryHelper: PeerDiscoveryHelper by lazy {
+        PeerDiscoveryHelper(
+            coroutineScope = coroutineScope,
+            ioDispatcher = ioDispatcher,
+            dataSendHelper = dataSendHelper,
+            dataReceiveHelper = dataReceiveHelper,
+        )
     }
 
     val repository: JournalRepository by lazy {

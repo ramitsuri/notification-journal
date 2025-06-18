@@ -4,6 +4,7 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
 class TestDataSendHelper : DataSendHelper {
@@ -31,6 +32,14 @@ class TestDataSendHelper : DataSendHelper {
         days: List<LocalDate>,
         entries: List<JournalEntry>,
     ): Boolean {
+        return sendSuccessful
+    }
+
+    override suspend fun sendPing(time: Instant): Boolean {
+        return sendSuccessful
+    }
+
+    override suspend fun sendPingResponse(time: Instant): Boolean {
         return sendSuccessful
     }
 }

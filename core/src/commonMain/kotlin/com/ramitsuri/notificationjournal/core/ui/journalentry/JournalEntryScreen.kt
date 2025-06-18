@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.AutoGraph
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -37,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -44,8 +47,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -80,6 +86,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
+import com.ramitsuri.notificationjournal.core.model.Peer
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.components.CountdownSnackbar
@@ -87,6 +94,7 @@ import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
+import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
@@ -282,6 +290,7 @@ fun JournalEntryScreen(
 
             Toolbar(
                 notUploadedCount = state.notUploadedCount,
+                peers = state.peers,
                 onSyncClicked = { onEntryScreenAction(EntryScreenAction.Sync) },
                 onSettingsClicked = { onEntryScreenAction(EntryScreenAction.NavToSettings) },
                 onSearchClicked = { onEntryScreenAction(EntryScreenAction.NavToSearch) },
@@ -415,6 +424,7 @@ private fun DeleteDialog(
 private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     notUploadedCount: Int,
+    peers: List<Peer>,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
@@ -447,6 +457,9 @@ private fun Toolbar(
                         )
                     }
                 }
+            }
+            if (peers.isNotEmpty()) {
+                Peers(peers)
             }
             IconButton(
                 onClick = onResetReceiveHelper,
@@ -487,6 +500,48 @@ private fun Toolbar(
         },
         scrollBehavior = scrollBehavior,
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Peers(peers: List<Peer>) {
+    val tooltipState = rememberTooltipState(isPersistent = true)
+    val coroutineScope = rememberCoroutineScope()
+
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+        tooltip = {
+            RichTooltip {
+                peers
+                    .forEach {
+                        Peer(it)
+                    }
+            }
+        },
+        state = tooltipState,
+    ) {
+        IconButton(
+            onClick = {
+                coroutineScope.launch {
+                    tooltipState.show()
+                }
+            },
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AutoGraph,
+                contentDescription = null,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Peer(peer: Peer) {
+    Row {
+        Text(peer.name)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(hourMinute(peer.lastSeenTime))
+    }
 }
 
 @Composable
