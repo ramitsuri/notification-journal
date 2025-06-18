@@ -80,7 +80,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -98,7 +97,6 @@ import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.format
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.alert
@@ -336,7 +334,6 @@ fun JournalEntryScreen(
                             }
 
                             is DayGroupAction.ShowAllDays -> {
-                                println(state.dayGroup.sha())
                                 showAllDays = true
                             }
 
@@ -461,9 +458,10 @@ private fun Toolbar(
                     }
                 }
             }
-            if (peers.isNotEmpty()){
-                Peers(peers)
-            }
+            if (peers.isNotEmpty())
+                {
+                    Peers(peers)
+                }
             IconButton(
                 onClick = onResetReceiveHelper,
                 modifier =

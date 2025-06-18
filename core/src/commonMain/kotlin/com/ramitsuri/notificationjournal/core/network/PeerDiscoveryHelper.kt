@@ -31,24 +31,25 @@ class PeerDiscoveryHelper(
     val connectedPeers = _connectedPeers.asStateFlow()
 
     fun start() {
-        job = coroutineScope.launch(ioDispatcher) {
-            launch {
-                dataReceiveHelper
-                    .payloadFlow
-                    .filterIsInstance<Diagnostic.PingRequest>()
-                    .collect { request ->
-                        if (clock.now() - request.time > 30.seconds) {
-                            Logger.i(TAG) { "Ping request is too old" }
-                            return@collect
+        job =
+            coroutineScope.launch(ioDispatcher) {
+                launch {
+                    dataReceiveHelper
+                        .payloadFlow
+                        .filterIsInstance<Diagnostic.PingRequest>()
+                        .collect { request ->
+                            if (clock.now() - request.time > 30.seconds) {
+                                Logger.i(TAG) { "Ping request is too old" }
+                                return@collect
+                            }
+                            Logger.i(TAG) { "Ping request received from ${request.sender.name}" }
+                            dataSendHelper.sendPingResponse(clock.now())
                         }
-                        Logger.i(TAG) { "Ping request received from ${request.sender.name}" }
-                        dataSendHelper.sendPingResponse(clock.now())
-                    }
+                }
+                launch {
+                    sendPing()
+                }
             }
-            launch {
-                sendPing()
-            }
-        }
     }
 
     fun stop() {
@@ -56,9 +57,7 @@ class PeerDiscoveryHelper(
         _connectedPeers.update { emptyList() }
     }
 
-    private suspend fun sendPing(
-        delay: Duration = BASE_PING_REPEAT_SECONDS.seconds
-    ) {
+    private suspend fun sendPing(delay: Duration = BASE_PING_REPEAT_SECONDS.seconds) {
         Logger.i(TAG) { "sendPing, waiting for $delay" }
         var pingSent = true
         delay(delay)
@@ -73,6 +72,7 @@ class PeerDiscoveryHelper(
                 }
             }
         if (pingSent) {
+            var responseReceived = false
             Logger.i(TAG) { "Will wait for ping response" }
             dataReceiveHelper
                 .payloadFlow
@@ -81,6 +81,10 @@ class PeerDiscoveryHelper(
                 .catch {
                     if (it is TimeoutCancellationException) {
                         Logger.i(TAG) { "canceled from timeout" }
+                        if (!responseReceived) {
+                            _connectedPeers.update { emptyList() }
+                            pingSent = false
+                        }
                     }
                 }
                 .collect { response ->
@@ -88,12 +92,9 @@ class PeerDiscoveryHelper(
                         Logger.i(TAG) { "Ping request is too old" }
                         return@collect
                     }
+                    responseReceived = true
                     Logger.i(TAG) { "response received" }
-                    _connectedPeers
-                        .update { currentPeers ->
-                            (currentPeers + Peer.fromSender(response.sender, clock.now()))
-                                .distinctBy { it.id }
-                        }
+                    _connectedPeers.update(Peer.fromSender(response.sender, clock.now()))
                 }
         }
         if (pingSent) {
@@ -104,9 +105,23 @@ class PeerDiscoveryHelper(
         }
     }
 
+    private fun MutableStateFlow<List<Peer>>.update(newPeer: Peer) {
+        // Remove any old peers with that Id and add the new one
+        update { currentPeers ->
+            val newPeers =
+                currentPeers
+                    .toMutableList()
+                    .apply {
+                        removeAll { it.id == newPeer.id }
+                        add(newPeer)
+                    }
+            newPeers
+        }
+    }
+
     companion object {
-        private const val BASE_PING_REPEAT_SECONDS = 3
-        private const val RECEIVE_TIMEOUT_SECONDS = 3
+        private const val BASE_PING_REPEAT_SECONDS = 30
+        private const val RECEIVE_TIMEOUT_SECONDS = 30
         private const val TAG = "PeerDiscoveryHelper"
     }
 }
