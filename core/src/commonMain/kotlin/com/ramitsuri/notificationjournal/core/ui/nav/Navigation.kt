@@ -267,7 +267,7 @@ fun NavGraph(
                         }
 
                         is DayGroupAction.ToggleVerifyEntries -> {
-                            viewModel.toggleVerifyEntries()
+                            viewModel.onVerifyEntriesRequested(action.verify)
                         }
 
                         is DayGroupAction.ShowAllDays -> {

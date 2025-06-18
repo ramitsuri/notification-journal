@@ -132,10 +132,14 @@ class RabbitMqHelper(
         mutex.withLock {
             withContext(ioDispatcher) {
                 try {
+                    connection?.addShutdownListener {
+                        log("Connection shutdown: ${it.reason}")
+                    }
                     connection?.close()
-                    connection = null
                 } catch (e: Exception) {
                     log("Failed to close connection", e)
+                } finally {
+                    connection = null
                 }
             }
         }
@@ -161,6 +165,7 @@ class RabbitMqHelper(
                         password = dataHostProperties.password
                         isAutomaticRecoveryEnabled = true
                         isTopologyRecoveryEnabled = true
+                        connectionTimeout = 30_000 // 30 seconds
                     }.let {
                         try {
                             it.newConnection()

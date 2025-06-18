@@ -418,8 +418,8 @@ class JournalEntryViewModel(
         }
     }
 
-    fun toggleVerifyEntries() {
-        verifyEntries.update { !it }
+    fun onVerifyEntriesRequested(verify: Boolean) {
+        verifyEntries.update { verify }
     }
 
     private suspend fun afterVerify(dateWithCounts: List<DateWithCount>): List<DateWithCount> = coroutineScope {

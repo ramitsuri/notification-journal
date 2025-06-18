@@ -55,7 +55,7 @@ sealed interface DayGroupAction {
 
     data object ShowAllDays : DayGroupAction
 
-    data object ToggleVerifyEntries : DayGroupAction
+    data class ToggleVerifyEntries(val verify: Boolean) : DayGroupAction
 
     data object ShowNextDay : DayGroupAction
 

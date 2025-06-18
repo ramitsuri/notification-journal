@@ -326,7 +326,7 @@ fun JournalEntryScreen(
                     onShowDayGroupClicked = { onEntryScreenAction(EntryScreenAction.ShowDayGroup(it)) },
                     onHideAllDays = {
                         showAllDays = false
-                        onDayGroupAction(DayGroupAction.ToggleVerifyEntries)
+                        onDayGroupAction(DayGroupAction.ToggleVerifyEntries(verify = false))
                     },
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     onViewByDate = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
@@ -338,7 +338,7 @@ fun JournalEntryScreen(
 
                             is DayGroupAction.ShowAllDays -> {
                                 showAllDays = true
-                                onDayGroupAction(DayGroupAction.ToggleVerifyEntries)
+                                onDayGroupAction(DayGroupAction.ToggleVerifyEntries(verify = true))
                             }
 
                             else -> onDayGroupAction(action)
@@ -721,7 +721,7 @@ private fun ShowAllDaysDialogItem(
                             if (isNotEmpty()) {
                                 append(", ")
                             }
-                            append("✔ ")
+                            append("✅ ")
                             append(it)
                         }
                 }
