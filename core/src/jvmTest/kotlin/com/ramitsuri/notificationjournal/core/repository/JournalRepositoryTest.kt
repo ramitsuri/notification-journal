@@ -138,6 +138,35 @@ class JournalRepositoryTest : BaseTest() {
             db.entryConflictDao().getFlow().test { expectNoEvents() }
         }
 
+    @Test
+    fun shouldCreateConflictIfReplacesLocalFalseAndContentDifferentAndUntagged() =
+        runTest {
+            db.journalEntryDao().insert(
+                listOf(
+                    journalEntry().copy(id = "1", text = "one"),
+                ),
+            )
+            repository.handlePayload(
+                Entity.Entries(
+                    sender = Sender(name = "name", id = "id"),
+                    data =
+                        listOf(
+                            journalEntry().copy(id = "1", text = "one-", replacesLocal = false),
+                        ),
+                ),
+            )
+            val entries = db.journalEntryDao().getAll()
+            assertEquals(1, entries.size)
+            assertEquals("one", entries.first().text)
+
+            db.entryConflictDao().getFlow().test {
+                val conflicts = awaitItem()
+                assertEquals(1, conflicts.size)
+                assertEquals("one-", conflicts.first().text)
+                assertEquals("1", conflicts.first().entryId)
+            }
+        }
+
     private fun journalEntry() =
         JournalEntry(
             id = "id",
