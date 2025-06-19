@@ -24,6 +24,7 @@ import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
 import com.ramitsuri.notificationjournal.core.network.PeerDiscoveryHelper
 import com.ramitsuri.notificationjournal.core.network.RabbitMqHelper
+import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -99,6 +100,7 @@ object ServiceLocator {
     fun onAppStart() {
         startReceiving()
         peerDiscoveryHelper.start()
+        verifyEntriesHelper.start()
     }
 
     fun onAppStop() {
@@ -107,6 +109,7 @@ object ServiceLocator {
             rabbitMqHelper.close()
         }
         peerDiscoveryHelper.stop()
+        verifyEntriesHelper.stop()
     }
 
     fun resetReceiveHelper() {
@@ -122,6 +125,16 @@ object ServiceLocator {
             ioDispatcher = ioDispatcher,
             dataSendHelper = dataSendHelper,
             dataReceiveHelper = dataReceiveHelper,
+        )
+    }
+
+    val verifyEntriesHelper: VerifyEntriesHelper by lazy {
+        VerifyEntriesHelper(
+            coroutineScope = coroutineScope,
+            ioDispatcher = ioDispatcher,
+            dataSendHelper = dataSendHelper,
+            dataReceiveHelper = dataReceiveHelper,
+            repository = repository,
         )
     }
 
@@ -271,6 +284,7 @@ object ServiceLocator {
 
     private val dataReceiveHelper by lazy {
         DataReceiveHelperImpl(
+            coroutineScope = coroutineScope,
             ioDispatcher = ioDispatcher,
             getDataHostProperties = prefManager.getDataHostProperties()::first,
             rabbitMqHelper = rabbitMqHelper,

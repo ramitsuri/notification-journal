@@ -21,6 +21,9 @@ sealed interface Payload {
 
             is Diagnostic.PingRequest -> copy(sender = sender)
             is Diagnostic.PingResponse -> copy(sender = sender)
+
+            is VerifyEntries.Request -> copy(sender = sender)
+            is VerifyEntries.Response -> copy(sender = sender)
         }
     }
 }
@@ -40,6 +43,27 @@ sealed interface Diagnostic : Payload {
         override val time: Instant,
         override val sender: Sender = Sender(),
     ) : Diagnostic
+}
+
+sealed interface VerifyEntries : Diagnostic {
+    val date: LocalDate
+    val hash: String
+
+    @Serializable
+    data class Request(
+        override val date: LocalDate,
+        override val hash: String,
+        override val time: Instant,
+        override val sender: Sender = Sender(),
+    ) : VerifyEntries
+
+    @Serializable
+    data class Response(
+        override val date: LocalDate,
+        override val hash: String,
+        override val time: Instant,
+        override val sender: Sender = Sender(),
+    ) : VerifyEntries
 }
 
 @Serializable

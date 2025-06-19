@@ -21,4 +21,16 @@ interface DataSendHelper {
     suspend fun sendPing(time: Instant): Boolean
 
     suspend fun sendPingResponse(time: Instant): Boolean
+
+    suspend fun sendVerifyEntriesRequest(
+        date: LocalDate,
+        hash: String,
+        time: Instant,
+    ): Boolean
+
+    suspend fun sendVerifyEntriesResponse(
+        date: LocalDate,
+        hash: String,
+        time: Instant,
+    ): Boolean
 }

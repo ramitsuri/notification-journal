@@ -16,6 +16,7 @@ import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.network.PeerDiscoveryHelper
+import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
@@ -27,6 +28,9 @@ import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -56,6 +60,7 @@ class JournalEntryViewModel(
     private val clock: Clock = Clock.System,
     private val allowNotify: Boolean,
     private val peerDiscoveryHelper: PeerDiscoveryHelper,
+    private val verifyEntriesHelper: VerifyEntriesHelper,
 ) : ViewModel() {
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
@@ -67,6 +72,8 @@ class JournalEntryViewModel(
     private val snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
 
     private val requestExportDirectory = MutableStateFlow(false)
+
+    private val verifyEntries = MutableStateFlow(false)
 
     private var reconcileDayGroupJob: Job? = null
 
@@ -98,6 +105,7 @@ class JournalEntryViewModel(
                 prefManager.showConflictDiffInline(),
                 requestExportDirectory,
                 peerDiscoveryHelper.connectedPeers,
+                verifyEntries,
             ) {
                     contentForCopy,
                     snackBarType,
@@ -108,11 +116,12 @@ class JournalEntryViewModel(
                     showConflictDiffInline,
                     requestExportDirectory,
                     connectedPeers,
+                    verifyEntries,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
                 ViewState(
-                    dateWithCountList = countAndDates,
+                    dateWithCountList = if (verifyEntries) afterVerify(countAndDates) else countAndDates,
                     dayGroup =
                         if (countAndDates.isEmpty()) {
                             ViewState.defaultDayGroup
@@ -409,6 +418,23 @@ class JournalEntryViewModel(
         }
     }
 
+    fun onVerifyEntriesRequested(verify: Boolean) {
+        verifyEntries.update { verify }
+    }
+
+    private suspend fun afterVerify(dateWithCounts: List<DateWithCount>): List<DateWithCount> =
+        coroutineScope {
+            dateWithCounts
+                .map { dateWithCount ->
+                    async {
+                        dateWithCount to verifyEntriesHelper.requestVerifyEntries(dateWithCount.date)
+                    }
+                }.awaitAll()
+                .map { (dateWithCount, matchesWith) ->
+                    dateWithCount.copy(verifiedWith = matchesWith)
+                }
+        }
+
     private fun setDate(
         journalEntry: JournalEntry,
         entryTime: LocalDateTime,
@@ -494,6 +520,7 @@ class JournalEntryViewModel(
                         prefManager = ServiceLocator.prefManager,
                         allowNotify = ServiceLocator.allowJournalEntryNotify(),
                         peerDiscoveryHelper = ServiceLocator.peerDiscoveryHelper,
+                        verifyEntriesHelper = ServiceLocator.verifyEntriesHelper,
                     ) as T
                 }
             }
