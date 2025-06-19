@@ -3,8 +3,8 @@ package com.ramitsuri.notificationjournal.core.di
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
-import co.touchlab.kermit.CommonWriter
 import co.touchlab.kermit.Logger
+import co.touchlab.kermit.platformLogWriter
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
@@ -44,6 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -52,11 +53,13 @@ import kotlinx.serialization.json.Json
 import okio.Path.Companion.toOkioPath
 import java.util.UUID
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 object ServiceLocator {
     private lateinit var db: AppDatabase
     private var notificationHelper: JournalEntryNotificationHelper? = null
     private var receiveJob: Job? = null
+    private var appStopJob: Job? = null
 
     fun init(
         factory: DiFactory,
@@ -91,25 +94,32 @@ object ServiceLocator {
                 }
             }
         }
-        Logger.setLogWriters(inMemoryLogWriter, CommonWriter())
+        Logger.setLogWriters(inMemoryLogWriter, platformLogWriter())
     }
 
     val allowJournalImport: Boolean
         get() = factory.allowJournalImport
 
     fun onAppStart() {
+        appStopJob?.cancel()
         startReceiving()
         peerDiscoveryHelper.start()
         verifyEntriesHelper.start()
     }
 
     fun onAppStop() {
-        coroutineScope.launch {
-            receiveJob?.cancel()
-            rabbitMqHelper.close()
-        }
-        peerDiscoveryHelper.stop()
-        verifyEntriesHelper.stop()
+        appStopJob =
+            coroutineScope.launch {
+                Logger.i { "Will wait for 2 minutes before stopping jobs" }
+                delay(2.minutes)
+                Logger.i { "Stopping jobs" }
+                launch {
+                    receiveJob?.cancel()
+                    rabbitMqHelper.close()
+                }
+                peerDiscoveryHelper.stop()
+                verifyEntriesHelper.stop()
+            }
     }
 
     fun resetReceiveHelper() {

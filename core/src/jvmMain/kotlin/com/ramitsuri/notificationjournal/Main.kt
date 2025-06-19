@@ -24,13 +24,15 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
+import java.awt.Desktop
+import java.awt.desktop.AppForegroundEvent
+import java.awt.desktop.AppForegroundListener
 import com.ramitsuri.notificationjournal.core.model.WindowPosition as AppWindowPosition
 
 fun main() =
     application {
         val factory = DiFactory()
         ServiceLocator.init(factory)
-        ServiceLocator.onAppStart()
         var sizeIncreasedLastTime by remember { mutableStateOf(false) }
 
         val windowState =
@@ -39,11 +41,30 @@ fun main() =
                 position = getWindowPosition(),
             )
 
+        LaunchedEffect(Unit) {
+            Desktop.getDesktop().addAppEventListener(
+                object : AppForegroundListener {
+                    override fun appRaisedToForeground(e: AppForegroundEvent?) {
+                        ServiceLocator.onAppStart()
+                    }
+
+                    override fun appMovedToBackground(e: AppForegroundEvent?) {
+                        ServiceLocator.onAppStop()
+                    }
+                },
+            )
+        }
         Window(
             onCloseRequest = ::exitApplication,
             title = "Journal",
             state = windowState,
         ) {
+            LaunchedEffect(window.rootPane) {
+                with(window.rootPane) {
+                    putClientProperty("apple.awt.transparentTitleBar", true)
+                    putClientProperty("apple.awt.fullWindowContent", true)
+                }
+            }
             NotificationJournalTheme {
                 NavGraph()
             }
