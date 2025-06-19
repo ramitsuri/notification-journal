@@ -6,6 +6,7 @@ data class JournalEntryDayConfig(
     val allowTagMenu: Boolean,
     val allowEdits: Boolean,
     val allowDaySelection: Boolean,
+    val allowUpload: Boolean,
 ) {
     companion object {
         val allEnabled =
@@ -15,6 +16,7 @@ data class JournalEntryDayConfig(
                 allowTagMenu = true,
                 allowEdits = true,
                 allowDaySelection = true,
+                allowUpload = true,
             )
         val allDisabled =
             JournalEntryDayConfig(
@@ -23,6 +25,7 @@ data class JournalEntryDayConfig(
                 allowTagMenu = false,
                 allowEdits = false,
                 allowDaySelection = false,
+                allowUpload = false,
             )
     }
 }

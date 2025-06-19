@@ -21,7 +21,7 @@ sealed interface DayGroupAction {
 
     data class DuplicateEntry(val entry: JournalEntry) : DayGroupAction
 
-    data class ForceUploadEntry(val entry: JournalEntry) : DayGroupAction
+    data class UploadEntry(val entry: JournalEntry) : DayGroupAction
 
     data class CopyEntry(val entry: JournalEntry) : DayGroupAction
 
@@ -42,7 +42,9 @@ sealed interface DayGroupAction {
 
     data class DeleteTagGroup(val tagGroup: TagGroup) : DayGroupAction
 
-    data class ForceUploadTagGroup(val tagGroup: TagGroup) : DayGroupAction
+    data class UploadTagGroup(val tagGroup: TagGroup) : DayGroupAction
+
+    data object UploadDayGroup : DayGroupAction
 
     data class CopyTagGroup(val tagGroup: TagGroup) : DayGroupAction
 

@@ -211,12 +211,16 @@ fun NavGraph(
                             viewModel.editTag(action.entry, action.tag)
                         }
 
-                        is DayGroupAction.ForceUploadEntry -> {
-                            viewModel.forceUpload(action.entry)
+                        is DayGroupAction.UploadEntry -> {
+                            viewModel.upload(action.entry)
                         }
 
-                        is DayGroupAction.ForceUploadTagGroup -> {
-                            viewModel.forceUpload(action.tagGroup)
+                        is DayGroupAction.UploadTagGroup -> {
+                            viewModel.upload(action.tagGroup)
+                        }
+
+                        is DayGroupAction.UploadDayGroup -> {
+                            viewModel.upload()
                         }
 
                         is DayGroupAction.MoveEntryDown -> {

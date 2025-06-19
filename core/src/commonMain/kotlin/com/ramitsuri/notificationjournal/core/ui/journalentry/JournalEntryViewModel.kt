@@ -272,13 +272,23 @@ class JournalEntryViewModel(
         }
     }
 
-    fun forceUpload(tagGroup: TagGroup) {
+    fun upload() {
+        val dayGroup = state.value.dayGroup
+        if (dayGroup == ViewState.defaultDayGroup) {
+            return
+        }
+        viewModelScope.launch {
+            repository.upload(dayGroup.tagGroups.flatMap { it.entries })
+        }
+    }
+
+    fun upload(tagGroup: TagGroup) {
         viewModelScope.launch {
             repository.upload(tagGroup.entries)
         }
     }
 
-    fun forceUpload(entry: JournalEntry) {
+    fun upload(entry: JournalEntry) {
         viewModelScope.launch {
             repository.upload(listOf(entry))
         }

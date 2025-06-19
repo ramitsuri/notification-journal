@@ -113,14 +113,13 @@ import notificationjournal.core.generated.resources.conflicts_format
 import notificationjournal.core.generated.resources.copy
 import notificationjournal.core.generated.resources.delete
 import notificationjournal.core.generated.resources.duplicate
-import notificationjournal.core.generated.resources.force_upload
 import notificationjournal.core.generated.resources.menu_content_description
-import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.next_day
 import notificationjournal.core.generated.resources.notify
 import notificationjournal.core.generated.resources.previous_day
 import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
+import notificationjournal.core.generated.resources.upload
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
@@ -178,11 +177,11 @@ fun JournalEntryDay(
         untaggedCount = dayGroup.untaggedCount,
         conflictCount = conflictCount,
         allowCopy = config.allowCopy,
-        allowAdd = config.allowAdd,
+        allowUpload = config.allowUpload,
         allowDaySelection = config.allowDaySelection,
         onCopyRequested = { onAction(DayGroupAction.CopyDayGroup) },
         onShowAllDaysClicked = { onAction(DayGroupAction.ShowAllDays) },
-        onAddRequested = { onAction(DayGroupAction.AddEntry(dayGroup.date, null, null)) },
+        onUploadRequested = { onAction(DayGroupAction.UploadDayGroup) },
     )
     var swipeAmount by remember { mutableStateOf(0f) }
     LazyColumn(
@@ -250,7 +249,7 @@ fun JournalEntryDay(
                         onMoveToPreviousDayRequested = {
                             onAction(DayGroupAction.MoveTagGroupToPreviousDay(it))
                         },
-                        onForceUploadRequested = { onAction(DayGroupAction.ForceUploadTagGroup(it)) },
+                        onUploadRequested = { onAction(DayGroupAction.UploadTagGroup(it)) },
                         modifier =
                             Modifier
                                 .fillMaxWidth()
@@ -321,7 +320,7 @@ fun JournalEntryDay(
                         )
                     },
                     onDuplicateRequested = { onAction(DayGroupAction.DuplicateEntry(entry)) },
-                    onForceUploadRequested = { onAction(DayGroupAction.ForceUploadEntry(entry)) },
+                    onUploadRequested = { onAction(DayGroupAction.UploadEntry(entry)) },
                     onConflictResolved = { onAction(DayGroupAction.ResolveConflict(entry, it)) },
                     onNotifyTimePicked = { onAction(DayGroupAction.Notify(entry, it)) },
                     showConflictDiffInline = showConflictDiffInline,
@@ -422,11 +421,11 @@ private fun HeaderItem(
     untaggedCount: Int,
     conflictCount: Int,
     allowCopy: Boolean,
-    allowAdd: Boolean,
+    allowUpload: Boolean,
     allowDaySelection: Boolean,
     onCopyRequested: () -> Unit,
     onShowAllDaysClicked: () -> Unit,
-    onAddRequested: () -> Unit,
+    onUploadRequested: () -> Unit,
 ) {
     Box(
         modifier =
@@ -480,17 +479,17 @@ private fun HeaderItem(
         }
         Spacer(modifier = Modifier.width(4.dp))
         Row(modifier = Modifier.align(Alignment.CenterEnd)) {
-            if (allowAdd) {
+            if (allowUpload) {
                 IconButton(
-                    onClick = onAddRequested,
+                    onClick = onUploadRequested,
                     modifier =
                         Modifier
                             .size(48.dp)
                             .padding(4.dp),
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = stringResource(Res.string.add_entry_content_description),
+                        imageVector = Icons.Filled.Sync,
+                        contentDescription = null,
                     )
                 }
             }
@@ -504,7 +503,7 @@ private fun HeaderItem(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ContentCopy,
-                        contentDescription = stringResource(Res.string.add_entry_content_description),
+                        contentDescription = null,
                     )
                 }
             }
@@ -520,7 +519,7 @@ private fun SubHeaderItem(
     onDeleteRequested: (TagGroup) -> Unit,
     onMoveToNextDayRequested: (TagGroup) -> Unit,
     onMoveToPreviousDayRequested: (TagGroup) -> Unit,
-    onForceUploadRequested: (TagGroup) -> Unit,
+    onUploadRequested: (TagGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -548,7 +547,7 @@ private fun SubHeaderItem(
                 onMenuButtonClicked = { showMenu = !showMenu },
                 onMoveToNextDayRequested = { onMoveToNextDayRequested(tagGroup) },
                 onMoveToPreviousDayRequested = { onMoveToPreviousDayRequested(tagGroup) },
-                onForceUploadRequested = { onForceUploadRequested(tagGroup) },
+                onUploadRequested = { onUploadRequested(tagGroup) },
             )
         }
     }
@@ -574,7 +573,7 @@ private fun ListItem(
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
     onDuplicateRequested: () -> Unit,
-    onForceUploadRequested: () -> Unit,
+    onUploadRequested: () -> Unit,
     onConflictResolved: (EntryConflict?) -> Unit,
     onNotifyTimePicked: (Duration) -> Unit,
     showConflictDiffInline: Boolean,
@@ -641,7 +640,7 @@ private fun ListItem(
         onMoveToPreviousDayRequested = onMoveToPreviousDayRequested,
         onTagClicked = { tag -> onTagClicked(tag) },
         onDuplicateRequested = onDuplicateRequested,
-        onForceUploadRequested = onForceUploadRequested,
+        onUploadRequested = onUploadRequested,
         onDismiss = { showDetails = false },
         onNotifyTimePicked = onNotifyTimePicked,
     )
@@ -812,7 +811,7 @@ private fun DetailsDialog(
     onMoveToPreviousDayRequested: () -> Unit,
     onTagClicked: (String) -> Unit,
     onDuplicateRequested: () -> Unit,
-    onForceUploadRequested: () -> Unit,
+    onUploadRequested: () -> Unit,
     onDismiss: () -> Unit,
     onNotifyTimePicked: (Duration) -> Unit,
 ) {
@@ -980,8 +979,8 @@ private fun DetailsDialog(
                             onDuplicateRequested()
                             onDismiss()
                         },
-                        onForceUploadRequested = {
-                            onForceUploadRequested()
+                        onUploadRequested = {
+                            onUploadRequested()
                             onDismiss()
                         },
                     )
@@ -1095,7 +1094,7 @@ private fun ButtonRow(
     onCopyRequested: () -> Unit,
     onDeleteRequested: () -> Unit,
     onDuplicateRequested: () -> Unit,
-    onForceUploadRequested: () -> Unit,
+    onUploadRequested: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Button(
@@ -1124,8 +1123,8 @@ private fun ButtonRow(
         )
         Button(
             icon = Icons.Filled.Sync,
-            contentDescription = stringResource(Res.string.force_upload),
-            onClick = onForceUploadRequested,
+            contentDescription = stringResource(Res.string.upload),
+            onClick = onUploadRequested,
             modifier =
                 Modifier
                     .weight(1f),
@@ -1141,10 +1140,8 @@ private fun SubHeaderItemMenu(
     onMenuButtonClicked: () -> Unit,
     onMoveToNextDayRequested: () -> Unit,
     onMoveToPreviousDayRequested: () -> Unit,
-    onForceUploadRequested: () -> Unit,
+    onUploadRequested: () -> Unit,
 ) {
-    var showingMoreMenu by remember { mutableStateOf(false) }
-
     Box {
         IconButton(
             onClick = onMenuButtonClicked,
@@ -1161,53 +1158,43 @@ private fun SubHeaderItemMenu(
             expanded = showMenu,
             onDismissRequest = {
                 onMenuButtonClicked()
-                showingMoreMenu = false
             },
         ) {
-            if (showingMoreMenu.not()) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.copy)) },
-                    onClick = {
-                        onMenuButtonClicked()
-                        onCopyRequested()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.more)) },
-                    onClick = {
-                        showingMoreMenu = true
-                    },
-                )
-            } else {
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.next_day)) },
-                    onClick = {
-                        onMenuButtonClicked()
-                        onMoveToNextDayRequested()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.previous_day)) },
-                    onClick = {
-                        onMenuButtonClicked()
-                        onMoveToPreviousDayRequested()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.delete)) },
-                    onClick = {
-                        onMenuButtonClicked()
-                        onDeleteRequested()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.force_upload)) },
-                    onClick = {
-                        onMenuButtonClicked()
-                        onForceUploadRequested()
-                    },
-                )
-            }
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.copy)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onCopyRequested()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.next_day)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onMoveToNextDayRequested()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.previous_day)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onMoveToPreviousDayRequested()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.delete)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onDeleteRequested()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.upload)) },
+                onClick = {
+                    onMenuButtonClicked()
+                    onUploadRequested()
+                },
+            )
         }
     }
 }
