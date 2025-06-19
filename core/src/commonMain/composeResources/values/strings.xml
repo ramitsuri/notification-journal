@@ -47,7 +47,7 @@
     <string name="reconcile_all_upload_on_success">Upload all entries on success</string>
     <string name="copy_reconcile">Copy &amp; reconcile</string>
     <string name="more">More</string>
-    <string name="force_upload">Force upload</string>
+    <string name="upload">Upload</string>
     <string name="duplicate">Duplicate</string>
     <string name="conflicts">Conflicts</string>
     <string name="search">Search</string>
