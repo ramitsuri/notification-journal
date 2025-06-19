@@ -42,7 +42,7 @@ class VerifyEntriesHelper(
                             log { "Request for ${request.date} from ${request.sender.name}" }
                             val hash = repository.getHashForDate(request.date)
                             if (hash == null) {
-                                log { "Unable to compute hash for $date" }
+                                log { "Unable to compute hash for ${request.date}" }
                                 return@collect
                             }
                             dataSendHelper.sendVerifyEntriesResponse(
