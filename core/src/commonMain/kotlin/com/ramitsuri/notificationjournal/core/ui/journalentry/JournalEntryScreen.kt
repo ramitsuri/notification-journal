@@ -672,7 +672,7 @@ private fun ShowAllDaysDialog(
 private fun ShowAllDaysDialogItem(
     onDismiss: () -> Unit,
     onDayGroupSelected: (LocalDate) -> Unit,
-    dateWithCount: DateWithCount
+    dateWithCount: DateWithCount,
 ) {
     Column(
         modifier =

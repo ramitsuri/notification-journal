@@ -55,7 +55,7 @@ internal class DataSendHelperImpl(
     override suspend fun sendVerifyEntriesRequest(
         date: LocalDate,
         hash: String,
-        time: Instant
+        time: Instant,
     ): Boolean {
         return VerifyEntries.Request(
             date = date,
@@ -67,7 +67,7 @@ internal class DataSendHelperImpl(
     override suspend fun sendVerifyEntriesResponse(
         date: LocalDate,
         hash: String,
-        time: Instant
+        time: Instant,
     ): Boolean {
         return VerifyEntries.Response(
             date = date,

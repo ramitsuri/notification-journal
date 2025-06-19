@@ -422,17 +422,18 @@ class JournalEntryViewModel(
         verifyEntries.update { verify }
     }
 
-    private suspend fun afterVerify(dateWithCounts: List<DateWithCount>): List<DateWithCount> = coroutineScope {
-        dateWithCounts
-            .map { dateWithCount ->
-                async {
-                    dateWithCount to verifyEntriesHelper.requestVerifyEntries(dateWithCount.date)
+    private suspend fun afterVerify(dateWithCounts: List<DateWithCount>): List<DateWithCount> =
+        coroutineScope {
+            dateWithCounts
+                .map { dateWithCount ->
+                    async {
+                        dateWithCount to verifyEntriesHelper.requestVerifyEntries(dateWithCount.date)
+                    }
+                }.awaitAll()
+                .map { (dateWithCount, matchesWith) ->
+                    dateWithCount.copy(verifiedWith = matchesWith)
                 }
-            }.awaitAll()
-            .map { (dateWithCount, matchesWith) ->
-                dateWithCount.copy(verifiedWith = matchesWith)
-            }
-    }
+        }
 
     private fun setDate(
         journalEntry: JournalEntry,

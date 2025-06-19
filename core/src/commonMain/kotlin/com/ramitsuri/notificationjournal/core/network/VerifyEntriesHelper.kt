@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.timeout
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
@@ -37,13 +36,13 @@ class VerifyEntriesHelper(
                         .filterIsInstance<VerifyEntries.Request>()
                         .collect { request ->
                             if (clock.now() - request.time > REQUEST_RESPONSE_STALE_SECONDS.seconds) {
-                                Logger.i(TAG) { "Verify entries request is too old" }
+                                log { "Request is too old for ${request.date}" }
                                 return@collect
                             }
-                            Logger.i(TAG) { "Verify entries request received from ${request.sender.name}" }
+                            log { "Request for ${request.date} from ${request.sender.name}" }
                             val hash = repository.getHashForDate(request.date)
                             if (hash == null) {
-                                Logger.i(TAG) { "Unable to compute hash for date" }
+                                log { "Unable to compute hash for date" }
                                 return@collect
                             }
                             dataSendHelper.sendVerifyEntriesResponse(
@@ -62,19 +61,20 @@ class VerifyEntriesHelper(
 
     // Returns name of the peer with which entries hash matches otherwise null
     suspend fun requestVerifyEntries(date: LocalDate): String? {
-        Logger.i(TAG) { "Verifying for date $date" }
+        log { "Verifying for date $date" }
         val hash = repository.getHashForDate(date)
         if (hash == null) {
-            Logger.i(TAG) { "Unable to compute hash for date $date" }
+            log { "Unable to compute hash for date $date" }
             return null
         }
-        val sent = dataSendHelper.sendVerifyEntriesRequest(
-            hash = hash,
-            time = clock.now(),
-            date = date,
-        )
+        val sent =
+            dataSendHelper.sendVerifyEntriesRequest(
+                hash = hash,
+                time = clock.now(),
+                date = date,
+            )
         if (!sent) {
-            Logger.i(TAG) { "Verify entries request unable to send for date $date" }
+            log { "Verify entries request unable to send for date $date" }
             return null
         }
         val response =
@@ -85,30 +85,32 @@ class VerifyEntriesHelper(
                 .timeout(REQUEST_RESPONSE_STALE_SECONDS.seconds)
                 .catch {
                     if (it is TimeoutCancellationException) {
-                        Logger.i(TAG) { "canceled from timeout for date $date" }
+                        log { "canceled from timeout for date $date" }
                     }
                 }
                 .firstOrNull()
         if (response == null) {
-            Logger.i(TAG) { "Verify entries response not received for date $date" }
+            log { "Verify entries response not received for date $date" }
             return null
         }
         if (clock.now() - response.time > REQUEST_RESPONSE_STALE_SECONDS.seconds) {
-            Logger.i(TAG) { "Verify entries response is too old for date $date" }
+            log { "Verify entries response is too old for date $date" }
             return null
         }
         if (response.hash != hash) {
-            Logger.i(TAG) { "Verify entries response hash doesn't match for date $date" }
+            log { "Verify entries response hash doesn't match for date $date" }
             return null
         }
-        Logger.i(TAG) { "Matches with ${response.sender.name} for date $date" }
+        log { "Matches with ${response.sender.name} for date $date" }
         return response.sender.name
+    }
+
+    private fun log(message: () -> String) {
+        Logger.i(TAG, message = message)
     }
 
     companion object {
         private const val TAG = "VerifyEntriesHelper"
-
-        // tODO
-        private const val REQUEST_RESPONSE_STALE_SECONDS = 3
+        private const val REQUEST_RESPONSE_STALE_SECONDS = 30
     }
 }
