@@ -42,4 +42,20 @@ class TestDataSendHelper : DataSendHelper {
     override suspend fun sendPingResponse(time: Instant): Boolean {
         return sendSuccessful
     }
+
+    override suspend fun sendVerifyEntriesRequest(
+        date: LocalDate,
+        hash: String,
+        time: Instant,
+    ): Boolean {
+        return sendSuccessful
+    }
+
+    override suspend fun sendVerifyEntriesResponse(
+        date: LocalDate,
+        hash: String,
+        time: Instant,
+    ): Boolean {
+        return sendSuccessful
+    }
 }

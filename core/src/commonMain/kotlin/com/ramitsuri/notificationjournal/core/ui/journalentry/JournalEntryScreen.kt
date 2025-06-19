@@ -324,7 +324,10 @@ fun JournalEntryScreen(
                     showConflictDiffInline = state.showConflictDiffInline,
                     allowNotify = state.allowNotify,
                     onShowDayGroupClicked = { onEntryScreenAction(EntryScreenAction.ShowDayGroup(it)) },
-                    onHideAllDays = { showAllDays = false },
+                    onHideAllDays = {
+                        showAllDays = false
+                        onDayGroupAction(DayGroupAction.ToggleVerifyEntries(verify = false))
+                    },
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     onViewByDate = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
                     onAction = { action ->
@@ -335,6 +338,7 @@ fun JournalEntryScreen(
 
                             is DayGroupAction.ShowAllDays -> {
                                 showAllDays = true
+                                onDayGroupAction(DayGroupAction.ToggleVerifyEntries(verify = true))
                             }
 
                             else -> onDayGroupAction(action)
@@ -624,58 +628,11 @@ private fun ShowAllDaysDialog(
                         key = { index -> dateWithCountList[index].date.toString() },
                     ) { index ->
                         val dateWithCount = dateWithCountList[index]
-                        Column(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth(),
-                        ) {
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable(
-                                            onClick = {
-                                                onDismiss()
-                                                onDayGroupSelected(dateWithCount.date)
-                                            },
-                                        )
-                                        .padding(8.dp),
-                            ) {
-                                Text(dayMonthDate(toFormat = dateWithCount.date))
-                                val text =
-                                    buildString {
-                                        if (dateWithCount.untaggedCount > 0) {
-                                            append(
-                                                stringResource(
-                                                    Res.string.untagged_format,
-                                                    dateWithCount.untaggedCount,
-                                                ),
-                                            )
-                                        }
-                                        dateWithCount
-                                            .conflictCount
-                                            .takeIf { it > 0 }
-                                            ?.let {
-                                                if (isNotEmpty()) {
-                                                    append(", ")
-                                                }
-                                                append(
-                                                    stringResource(
-                                                        Res.string.conflicts_format,
-                                                        it,
-                                                    ),
-                                                )
-                                            }
-                                    }
-                                if (text.isNotEmpty()) {
-                                    Text(
-                                        text = text,
-                                        style = MaterialTheme.typography.labelSmall,
-                                    )
-                                }
-                            }
-                            HorizontalDivider()
-                        }
+                        ShowAllDaysDialogItem(
+                            dateWithCount = dateWithCount,
+                            onDismiss = onDismiss,
+                            onDayGroupSelected = onDayGroupSelected,
+                        )
                     }
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -709,6 +666,74 @@ private fun ShowAllDaysDialog(
             onReconcileAll(it)
         },
     )
+}
+
+@Composable
+private fun ShowAllDaysDialogItem(
+    onDismiss: () -> Unit,
+    onDayGroupSelected: (LocalDate) -> Unit,
+    dateWithCount: DateWithCount,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth(),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClick = {
+                            onDismiss()
+                            onDayGroupSelected(dateWithCount.date)
+                        },
+                    )
+                    .padding(8.dp),
+        ) {
+            Text(dayMonthDate(toFormat = dateWithCount.date))
+            val text =
+                buildString {
+                    if (dateWithCount.untaggedCount > 0) {
+                        append(
+                            stringResource(
+                                Res.string.untagged_format,
+                                dateWithCount.untaggedCount,
+                            ),
+                        )
+                    }
+                    dateWithCount
+                        .conflictCount
+                        .takeIf { it > 0 }
+                        ?.let {
+                            if (isNotEmpty()) {
+                                append(", ")
+                            }
+                            append(
+                                stringResource(
+                                    Res.string.conflicts_format,
+                                    it,
+                                ),
+                            )
+                        }
+                    dateWithCount
+                        .verifiedWith?.let {
+                            if (isNotEmpty()) {
+                                append(", ")
+                            }
+                            append("✅ ")
+                            append(it)
+                        }
+                }
+            if (text.isNotEmpty()) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+        }
+        HorizontalDivider()
+    }
 }
 
 @Composable

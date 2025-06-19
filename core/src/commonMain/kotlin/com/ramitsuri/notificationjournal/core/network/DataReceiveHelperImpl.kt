@@ -1,13 +1,14 @@
 package com.ramitsuri.notificationjournal.core.network
 
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 
 internal class DataReceiveHelperImpl(
+    coroutineScope: CoroutineScope,
     ioDispatcher: CoroutineDispatcher,
     getDataHostProperties: suspend () -> DataHostProperties,
     rabbitMqHelper: RabbitMqHelper,
@@ -17,7 +18,7 @@ internal class DataReceiveHelperImpl(
             .receive(getDataHostProperties)
             .flowOn(ioDispatcher)
             .shareIn(
-                scope = ServiceLocator.coroutineScope,
-                started = WhileSubscribed(),
+                scope = coroutineScope,
+                started = WhileSubscribed(5_000),
             )
 }
