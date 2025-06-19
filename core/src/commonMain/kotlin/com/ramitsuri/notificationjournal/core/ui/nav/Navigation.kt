@@ -20,6 +20,7 @@ import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryScr
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.import.ImportScreen
 import com.ramitsuri.notificationjournal.core.ui.import.ImportViewModel
+import com.ramitsuri.notificationjournal.core.ui.importexport.ImportExportScreen
 import com.ramitsuri.notificationjournal.core.ui.journalentry.EntryScreenAction
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryViewModel
@@ -374,8 +375,8 @@ fun NavGraph(
                         Destination.LOGS.routeWithArgValues(),
                     )
                 },
-                onJournalImportClicked = {
-                    navController.navigate(Destination.IMPORT.routeWithArgValues())
+                onImportExportClicked = {
+                    navController.navigate(Destination.IMPORT_EXPORT.routeWithArgValues())
                 },
                 onDeleteAll = viewModel::deleteAll,
                 onShowStatsToggled = viewModel::onStatsRequestToggled,
@@ -455,6 +456,20 @@ fun NavGraph(
                             ),
                         ),
                     )
+                },
+            )
+        }
+
+        composable(Destination.IMPORT_EXPORT.route()) {
+            ImportExportScreen(
+                onBackClick = {
+                    navController.navigateUp()
+                },
+                onImportClick = {
+                    navController.navigate(Destination.IMPORT.route())
+                },
+                onExportClick = {
+                    navController.navigate(Destination.EXPORT.route())
                 },
             )
         }
