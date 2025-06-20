@@ -3,7 +3,6 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 import androidx.room.util.TableInfo
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
@@ -14,7 +13,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom6To7Test : BaseMigrationTest() {
-
     //region JournalEntry
 
     @Test
@@ -101,62 +99,64 @@ class MigrationFrom6To7Test : BaseMigrationTest() {
     }
 
     private fun createAndGetEntriesFromV6(): List<JournalEntryV6> {
-        val data = listOf(
-            JournalEntryV6(
-                id = 1,
-                timeZone = "TZ1",
-                entryTime = 1706208791347,
-                text = "Text 1",
-                tag = null,
-                entryTimeOverride = null,
-                uploaded = true,
-                autoTagged = false,
-            ),
-            JournalEntryV6(
-                id = 2,
-                entryTime = 1706208791347,
-                timeZone = "TZ2",
-                text = "Text 2",
-                tag = "Tag1",
-                entryTimeOverride = null,
-                uploaded = true,
-                autoTagged = true,
-            ),
-            JournalEntryV6(
-                id = 3,
-                entryTime = 1706208791347,
-                timeZone = "TZ3",
-                text = "Text 3",
-                tag = null,
-                entryTimeOverride = 1706208791348,
-                uploaded = false,
-                autoTagged = true,
-            ),
-            JournalEntryV6(
-                id = 4,
-                entryTime = 1706208791347,
-                timeZone = "TZ4",
-                text = "Text 4",
-                tag = "Tag4",
-                entryTimeOverride = 1706208791348,
-                uploaded = false,
-                autoTagged = false,
+        val data =
+            listOf(
+                JournalEntryV6(
+                    id = 1,
+                    timeZone = "TZ1",
+                    entryTime = 1706208791347,
+                    text = "Text 1",
+                    tag = null,
+                    entryTimeOverride = null,
+                    uploaded = true,
+                    autoTagged = false,
+                ),
+                JournalEntryV6(
+                    id = 2,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ2",
+                    text = "Text 2",
+                    tag = "Tag1",
+                    entryTimeOverride = null,
+                    uploaded = true,
+                    autoTagged = true,
+                ),
+                JournalEntryV6(
+                    id = 3,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ3",
+                    text = "Text 3",
+                    tag = null,
+                    entryTimeOverride = 1706208791348,
+                    uploaded = false,
+                    autoTagged = true,
+                ),
+                JournalEntryV6(
+                    id = 4,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ4",
+                    text = "Text 4",
+                    tag = "Tag4",
+                    entryTimeOverride = 1706208791348,
+                    uploaded = false,
+                    autoTagged = false,
+                ),
             )
-        )
         createDatabase(6).apply {
             data.forEach {
-                val tag = if (it.tag == null) {
-                    null
-                } else {
-                    "'${it.tag}'"
-                }
+                val tag =
+                    if (it.tag == null) {
+                        null
+                    } else {
+                        "'${it.tag}'"
+                    }
                 execSQL(
                     "INSERT INTO JournalEntry " +
-                            "(id,entry_time,time_zone,text,tag,entry_time_override,uploaded,auto_tagged) " +
-                            "VALUES(" +
-                            "${it.id},${it.entryTime},'${it.timeZone}','${it.text}'," +
-                            "$tag,${it.entryTimeOverride},${it.uploaded},${it.autoTagged}" +
-                            ")"
+                        "(id,entry_time,time_zone,text,tag,entry_time_override,uploaded,auto_tagged) " +
+                        "VALUES(" +
+                        "${it.id},${it.entryTime},'${it.timeZone}','${it.text}'," +
+                        "$tag,${it.entryTimeOverride},${it.uploaded},${it.autoTagged}" +
+                        ")",
                 )
             }
             close()

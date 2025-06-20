@@ -1,7 +1,9 @@
 package com.ramitsuri.notificationjournal.core
 
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
+import com.ramitsuri.notificationjournal.core.utils.asImportFileName
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
@@ -9,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.atTime
@@ -19,7 +22,6 @@ import kotlin.time.Duration.Companion.seconds
 class ImportRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher,
 ) : ImportRepository {
-
     private val channel = Channel<List<JournalEntry>>()
 
     override val importedEntriesFlow: Flow<List<JournalEntry>> = channel.consumeAsFlow()
@@ -59,21 +61,26 @@ class ImportRepositoryImpl(
      * NOTE: startDate and endDate are inclusive
      *
      */
-    override suspend fun import(fromDir: String, startDate: LocalDate, endDate: LocalDate) {
+    override suspend fun import(
+        fromDir: String,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        lastImportDate: Instant,
+    ) {
         withContext(ioDispatcher) {
             var date = startDate
             do {
-                val filePath = buildString {
-                    append(fromDir)
-                    append("/")
-                    append(date.year)
-                    append("/")
-                    append(String.format("%02d", date.month.value))
-                    append("/")
-                    append(String.format("%02d", date.dayOfMonth))
-                    append(".md")
-                }
-                val contentLines = readFileContents(filePath)
+                val filePath =
+                    buildString {
+                        append(fromDir)
+                        append("/")
+                        append(date.asImportFileName())
+                    }
+                val contentLines =
+                    readFileContents(
+                        filePath = filePath,
+                        lastImportDate = lastImportDate,
+                    )
 
                 parseFileContent(date = date, contentLines = contentLines)
                     .let { entries ->
@@ -86,14 +93,25 @@ class ImportRepositoryImpl(
         }
     }
 
-    private fun readFileContents(filePath: String): List<String> {
+    private fun readFileContents(
+        filePath: String,
+        lastImportDate: Instant,
+    ): List<String> {
         val file = File(filePath)
         if (!file.exists()) {
             return emptyList()
         }
         return file
-            .readLines()
-            .let { lines ->
+            .takeIf {
+                val fileLastModifiedAt = Instant.fromEpochMilliseconds(it.lastModified())
+                val fileModifiedSinceLastImport = fileLastModifiedAt >= lastImportDate
+                if (!fileModifiedSinceLastImport) {
+                    Logger.i(TAG) { "File not changed since last import, ignoring: $filePath" }
+                }
+                fileModifiedSinceLastImport
+            }
+            ?.readLines()
+            ?.let { lines ->
                 // Add an empty line at the end if not present
                 if (lines.lastOrNull()?.isBlank() == true) {
                     lines
@@ -101,6 +119,7 @@ class ImportRepositoryImpl(
                     lines.plus("")
                 }
             }
+            ?: emptyList()
     }
 
     private fun parseFileContent(
@@ -122,7 +141,7 @@ class ImportRepositoryImpl(
                         text = entryText,
                         tag = entryTag,
                         reconciled = true,
-                    )
+                    ),
                 )
                 time = time.plus(1.seconds)
                 text = null
@@ -154,5 +173,9 @@ class ImportRepositoryImpl(
                 }
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "ImportRepository"
     }
 }

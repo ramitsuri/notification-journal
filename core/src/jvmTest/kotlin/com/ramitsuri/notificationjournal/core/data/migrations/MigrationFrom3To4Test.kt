@@ -28,7 +28,7 @@ class MigrationFrom3To4Test : BaseMigrationTest() {
     }
 
     private fun migrateAndDbVersionFour(): SQLiteConnection {
-        return runMigrationAndValidate( 4, MigrationFrom3To4())
+        return runMigrationAndValidate(4, MigrationFrom3To4())
     }
 
     private fun createDbVersionThree() {

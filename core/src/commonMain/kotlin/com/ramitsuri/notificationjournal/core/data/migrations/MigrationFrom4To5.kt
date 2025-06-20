@@ -3,13 +3,11 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 
 class MigrationFrom4To5 : Migration(4, 5) {
-
     override fun migrate(connection: SQLiteConnection) {
         val entries = getExisting(connection)
 
@@ -17,24 +15,24 @@ class MigrationFrom4To5 : Migration(4, 5) {
 
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `JournalEntry` " +
-                    "(" +
-                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                    "`entry_time` INTEGER NOT NULL, " +
-                    "`time_zone` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT, " +
-                    "`entry_time_override` INTEGER, " +
-                    "`uploaded` INTEGER NOT NULL DEFAULT 0," +
-                    "`auto_tagged` INTEGER NOT NULL DEFAULT 0" +
-                    ")"
+                "(" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`entry_time` INTEGER NOT NULL, " +
+                "`time_zone` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT, " +
+                "`entry_time_override` INTEGER, " +
+                "`uploaded` INTEGER NOT NULL DEFAULT 0," +
+                "`auto_tagged` INTEGER NOT NULL DEFAULT 0" +
+                ")",
         )
 
         entries.forEach { entry ->
             connection.prepare(
                 "INSERT INTO JournalEntry " +
-                        "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
-                        "VALUES " +
-                        " (?, ?, ?, ?, ?, ?, ?, ?)"
+                    "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
+                    "VALUES " +
+                    " (?, ?, ?, ?, ?, ?, ?, ?)",
             ).use { statement ->
                 statement.bindInt(index = 1, value = entry.id)
                 statement.bindLong(index = 2, value = entry.entryTimeMillis)
@@ -88,7 +86,7 @@ class MigrationFrom4To5 : Migration(4, 5) {
                             text = text,
                             tag = tag,
                             entryTimeOverride = entryTimeOverride,
-                        )
+                        ),
                     )
                 } catch (e: Exception) {
                     // Do nothing. Continue reading the ones we can

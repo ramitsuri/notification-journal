@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.ui.components
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -19,22 +20,25 @@ import org.jetbrains.compose.resources.stringResource
 fun Toolbar(
     onBackClick: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior? = null,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     CenterAlignedTopAppBar(
-        colors = TopAppBarDefaults
-            .centerAlignedTopAppBarColors()
-            .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
+        colors =
+            TopAppBarDefaults
+                .centerAlignedTopAppBarColors()
+                .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         navigationIcon = {
             IconButton(
-                onClick = onBackClick
+                onClick = onBackClick,
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back)
+                    contentDescription = stringResource(Res.string.back),
                 )
             }
         },
+        actions = actions,
         scrollBehavior = scrollBehavior,
     )
 }

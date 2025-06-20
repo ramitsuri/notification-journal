@@ -7,13 +7,17 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
+import com.ramitsuri.notificationjournal.core.model.Peer
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
+import com.ramitsuri.notificationjournal.core.network.PeerDiscoveryHelper
+import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
+import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
@@ -24,10 +28,14 @@ import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -36,84 +44,101 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.daysUntil
+import kotlin.math.absoluteValue
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalEntryViewModel(
     receivedText: String?,
     private val repository: JournalRepository,
+    private val exportRepository: ExportRepository?,
     private val tagsDao: TagsDao,
     private val prefManager: PrefManager,
     private val clock: Clock = Clock.System,
+    private val allowNotify: Boolean,
+    private val peerDiscoveryHelper: PeerDiscoveryHelper,
+    private val verifyEntriesHelper: VerifyEntriesHelper,
 ) : ViewModel() {
-
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
 
-    private val _selectedIndex: MutableStateFlow<Int?> = MutableStateFlow(null)
+    private val selectedDate = MutableStateFlow<LocalDate?>(null)
 
-    private val _contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
+    private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
-    private val _snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
+    private val snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
 
-    private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val requestExportDirectory = MutableStateFlow(false)
+
+    private val verifyEntries = MutableStateFlow(false)
 
     private var reconcileDayGroupJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ViewState> =
-        prefManager.showReconciled().flatMapLatest { showReconciled ->
+        combine(
+            selectedDate,
+            repository.getNotReconciledEntryDatesFlow(),
+        ) { selectedDate, countAndDates ->
+            val today = clock.nowLocal().date
+            if (selectedDate == null) {
+                val closestDateToToday =
+                    countAndDates.minByOrNull { countAndDate ->
+                        countAndDate.date.daysUntil(today).absoluteValue
+                    }?.date
+                this.selectedDate.update {
+                    closestDateToToday ?: countAndDates.lastOrNull()?.date
+                }
+            }
+            countAndDates to (selectedDate ?: today)
+        }.flatMapLatest { (countAndDates, selectedDate) ->
             combine(
-                _selectedIndex,
-                _contentForCopy,
-                _snackBarType,
-                repository.getFlow(showReconciled = showReconciled),
+                contentForCopy,
+                snackBarType,
+                repository.getForDateFlow(selectedDate),
                 repository.getForUploadCountFlow(),
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
-                prefManager.showLogsButton(),
-                statsRequested,
-            ) { selectedIndex, contentForCopy, snackBarType, entries, forUploadCount, entryConflicts,
-                showEmptyTags, showConflictDiffInline, showLogsButton, statsRequested ->
+                requestExportDirectory,
+                peerDiscoveryHelper.connectedPeers,
+                verifyEntries,
+            ) {
+                    contentForCopy,
+                    snackBarType,
+                    entries,
+                    forUploadCount,
+                    entryConflicts,
+                    showEmptyTags,
+                    showConflictDiffInline,
+                    requestExportDirectory,
+                    connectedPeers,
+                    verifyEntries,
+                ->
                 val tags = tagsDao.getAll()
-                val dayGroups = try {
-                    entries.toDayGroups(
-                        tagsForSort = tags.map { it.value },
-                    )
-                } catch (e: Exception) {
-                    listOf()
-                }
-                val sorted = dayGroups.sortedBy { it.date }
-                // Show either today or the biggest date as initially selected
-                if (selectedIndex == null) {
-                    if (sorted.isNotEmpty()) {
-                        _selectedIndex.update {
-                            sorted
-                                .indexOfFirst {
-                                    it.date == clock.nowLocal().date
-                                }
-                                .takeIf { it >= 0 }
-                                ?: sorted.lastIndex
-                        }
-                    }
-                    ViewState()
-                } else {
-                    ViewState(
-                        dayGroups = sorted,
-                        tags = tags,
-                        notUploadedCount = forUploadCount,
-                        entryConflicts = entryConflicts,
-                        showConflictDiffInline = showConflictDiffInline,
-                        selectedIndex = selectedIndex,
-                        contentForCopy = contentForCopy,
-                        showEmptyTags = showEmptyTags,
-                        snackBarType = snackBarType,
-                        showLogsButton = showLogsButton,
-                        stats = if (statsRequested) repository.getStats() else null,
-                    )
-                }
+                val entryIds = entries.map { it.id }
+                ViewState(
+                    dateWithCountList = if (verifyEntries) afterVerify(countAndDates) else countAndDates,
+                    dayGroup =
+                        if (countAndDates.isEmpty()) {
+                            ViewState.defaultDayGroup
+                        } else {
+                            entries.toDayGroups(tags.map { it.value }).firstOrNull() ?: ViewState.defaultDayGroup
+                        },
+                    tags = tags,
+                    notUploadedCount = forUploadCount,
+                    entryConflicts = entryConflicts.filter { entryIds.contains(it.entryId) },
+                    showConflictDiffInline = showConflictDiffInline,
+                    contentForCopy = contentForCopy,
+                    showEmptyTags = showEmptyTags,
+                    snackBarType = snackBarType,
+                    allowNotify = allowNotify,
+                    requestExportDirectory = requestExportDirectory,
+                    peers = connectedPeers,
+                )
             }
         }.stateIn(
             scope = viewModelScope,
@@ -147,7 +172,10 @@ class JournalEntryViewModel(
         }
     }
 
-    fun editTag(journalEntry: JournalEntry, tag: String) {
+    fun editTag(
+        journalEntry: JournalEntry,
+        tag: String,
+    ) {
         if (journalEntry.tag == tag) {
             return
         }
@@ -169,7 +197,10 @@ class JournalEntryViewModel(
     }
 
     // Move it down in the list of entries that are ordered by ascending of display time
-    fun moveDown(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveDown(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == tagGroup.entries.lastIndex) {
             return
@@ -180,7 +211,10 @@ class JournalEntryViewModel(
     }
 
     // Move it to bottom of the list of entries that are ordered by ascending of display time
-    fun moveToBottom(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveToBottom(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == tagGroup.entries.lastIndex) {
             return
@@ -191,7 +225,10 @@ class JournalEntryViewModel(
     }
 
     // Move it up in the list of entries that are ordered by ascending of display time
-    fun moveUp(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveUp(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == 0) {
             return
@@ -202,7 +239,10 @@ class JournalEntryViewModel(
     }
 
     // Move it to top of the list of entries that are ordered by ascending of display time
-    fun moveToTop(journalEntry: JournalEntry, tagGroup: TagGroup) {
+    fun moveToTop(
+        journalEntry: JournalEntry,
+        tagGroup: TagGroup,
+    ) {
         val indexOfEntry = tagGroup.entries.indexOf(journalEntry)
         if (indexOfEntry == -1 || indexOfEntry == 0) {
             return
@@ -232,67 +272,92 @@ class JournalEntryViewModel(
         }
     }
 
-    fun forceUpload(tagGroup: TagGroup) {
-        repository.upload(tagGroup.entries)
+    fun upload() {
+        val dayGroup = state.value.dayGroup
+        if (dayGroup == ViewState.defaultDayGroup) {
+            return
+        }
+        viewModelScope.launch {
+            repository.upload(dayGroup.tagGroups.flatMap { it.entries })
+        }
     }
 
-    fun forceUpload(entry: JournalEntry) {
-        repository.upload(listOf(entry))
+    fun upload(tagGroup: TagGroup) {
+        viewModelScope.launch {
+            repository.upload(tagGroup.entries)
+        }
+    }
+
+    fun upload(entry: JournalEntry) {
+        viewModelScope.launch {
+            repository.upload(listOf(entry))
+        }
     }
 
     fun sync() {
         Logger.i("JournalEntryViewModel") { "Attempting to sync" }
         viewModelScope.launch {
-            repository.sync()
+            repository.uploadAll()
         }
     }
 
-    fun resolveConflict(entry: JournalEntry, selectedConflict: EntryConflict?) {
+    fun resolveConflict(
+        entry: JournalEntry,
+        selectedConflict: EntryConflict?,
+    ) {
         viewModelScope.launch {
             repository.resolveConflict(entry, selectedConflict)
         }
     }
 
     fun goToNextDay() {
-        _selectedIndex.update { existing ->
+        selectedDate.update { existing ->
+            val dateWithCountList = state.value.dateWithCountList
+            if (dateWithCountList.isEmpty()) {
+                return
+            }
             if (existing == null) {
                 return
             }
-            val new = existing + 1
-            if (new > state.value.dayGroups.lastIndex) {
-                0
+            val existingIndex = state.value.dateWithCountList.indexOfFirst { it.date == existing }
+            val newIndex = existingIndex + 1
+            if (newIndex > dateWithCountList.lastIndex) {
+                dateWithCountList.first().date
             } else {
-                new
+                dateWithCountList[newIndex].date
             }
         }
     }
 
     fun goToPreviousDay() {
-        _selectedIndex.update { existing ->
+        selectedDate.update { existing ->
+            val dateWithCountList = state.value.dateWithCountList
+            if (dateWithCountList.isEmpty()) {
+                return
+            }
             if (existing == null) {
                 return
             }
-            val new = existing - 1
-            if (new < 0) {
-                state.value.dayGroups.lastIndex
+            val existingIndex = state.value.dateWithCountList.indexOfFirst { it.date == existing }
+            val newIndex = existingIndex - 1
+            if (newIndex < 0) {
+                dateWithCountList.last().date
             } else {
-                new
+                dateWithCountList[newIndex].date
             }
         }
     }
 
-    fun showDayGroupClicked(dayGroup: DayGroup) {
-        val existing = state.value
-        val index = existing.dayGroups.indexOf(dayGroup)
-        _selectedIndex.update { index }
+    fun showDayGroupClicked(date: LocalDate) {
+        selectedDate.update { date }
     }
 
     fun onCopy(entry: JournalEntry) {
-        _contentForCopy.update { entry.text }
+        contentForCopy.update { entry.text }
     }
 
     fun onCopy(tagGroup: TagGroup) {
-        _contentForCopy.update {
+        contentForCopy.update {
             tagGroup
                 .entries
                 .joinToString(separator = "\n") { it.text }
@@ -300,72 +365,147 @@ class JournalEntryViewModel(
     }
 
     fun onCopy() {
-        val dayGroup = state.value.selectedDayGroup
-        if (dayGroup.untaggedCount > 0) {
-            return
-        }
-        if ((state.value.dayGroupConflictCountMap[dayGroup] ?: 0) > 0) {
-            return
-        }
         viewModelScope.launch(Dispatchers.Default) {
-            val copyEmptyTags = prefManager.copyWithEmptyTags().first()
-            val content = buildString {
-                append("# ")
-                append(dayMonthDateWithYearSuspend(dayGroup.date))
-                append("\n")
-                dayGroup.tagGroups.forEach { tagGroup ->
-                    if (tagGroup.entries.isEmpty() && !copyEmptyTags) {
-                        return@forEach
-                    }
-                    append("## ")
-                    append(tagGroup.tag)
-                    append("\n")
-                    tagGroup.entries.forEach { entry ->
-                        append("- ")
-                        append(entry.text)
-                        append("\n")
-                    }
-                }
+            val exportDirectory = prefManager.getExportDirectory().first()
+            if (exportRepository != null && exportDirectory.isBlank()) {
+                // Export directory is not set but we need to export
+                requestExportDirectory.update { true }
+                return@launch
             }
-            _contentForCopy.update { content }
+            val dayGroup = state.value.dayGroup
+            if (dayGroup == ViewState.defaultDayGroup) {
+                Logger.i { "Cannot export default day group" }
+                return@launch
+            }
+            if (dayGroup.untaggedCount > 0) {
+                Logger.i { "Cannot export day group with untagged entries" }
+                return@launch
+            }
+            val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }
+            if (dayGroupEntryIds.isEmpty()) {
+                Logger.i { "Cannot export empty day group" }
+                return@launch
+            }
+            if (state.value.entryConflicts.any { dayGroupEntryIds.contains(it.id) }) {
+                Logger.i { "Cannot export day group with conflicting entries" }
+                return@launch
+            }
+            // Copy to clipboard if not being exported
+            if (exportRepository == null) {
+                contentForCopy.update { dayGroup.content() }
+            }
             reconcileWithDelay(dayGroup)
         }
     }
 
     fun onContentCopied() {
-        _contentForCopy.update { "" }
+        contentForCopy.update { "" }
     }
 
     fun resetReceiveHelper() {
         ServiceLocator.resetReceiveHelper()
     }
 
-    fun onStatsRequestToggled() {
-        statsRequested.update { !it }
+    fun notify(
+        entry: JournalEntry,
+        inTime: Duration,
+    ) {
+        ServiceLocator.showNotification(entry, inTime)
     }
 
-    private fun setDate(journalEntry: JournalEntry, entryTime: LocalDateTime) {
+    fun onReconcileAll(upload: Boolean) {
+        val anyConflictsOrUntagged = state.value.dateWithCountList.any { it.untaggedCount > 0 || it.conflictCount > 0 }
+        if (anyConflictsOrUntagged) {
+            Logger.i { "Entries have conflicts or untagged entries, cannot reconcile" }
+            return
+        }
+        viewModelScope.launch {
+            repository.markAllReconciled()
+            selectedDate.value = null
+            if (upload) {
+                repository.uploadAll()
+            }
+        }
+    }
+
+    fun onVerifyEntriesRequested(verify: Boolean) {
+        verifyEntries.update { verify }
+    }
+
+    private suspend fun afterVerify(dateWithCounts: List<DateWithCount>): List<DateWithCount> =
+        coroutineScope {
+            dateWithCounts
+                .map { dateWithCount ->
+                    async {
+                        dateWithCount to verifyEntriesHelper.requestVerifyEntries(dateWithCount.date)
+                    }
+                }.awaitAll()
+                .map { (dateWithCount, matchesWith) ->
+                    dateWithCount.copy(verifiedWith = matchesWith)
+                }
+        }
+
+    private fun setDate(
+        journalEntry: JournalEntry,
+        entryTime: LocalDateTime,
+    ) {
         viewModelScope.launch {
             repository.update(journalEntry.copy(entryTime = entryTime))
         }
     }
 
     private fun reconcileWithDelay(dayGroup: DayGroup) {
-        _snackBarType.update {
+        snackBarType.update {
             SnackBarType.Reconcile
         }
-        reconcileDayGroupJob = viewModelScope.launch {
-            delay(1_000)
-            _snackBarType.update {
-                SnackBarType.None
+        reconcileDayGroupJob =
+            viewModelScope.launch {
+                delay(1_000)
+                snackBarType.update {
+                    SnackBarType.None
+                }
+                delay(5_000)
+                goToNextDay()
+                export(listOf(dayGroup))
+                dayGroup
+                    .tagGroups
+                    .map { it.entries }
+                    .flatten()
+                    .map { it.copy(reconciled = true) }
+                    .let { repository.update(it) }
             }
-            delay(5_000)
-            dayGroup
-                .tagGroups
-                .map { it.entries }
-                .flatten()
-                .map { it.copy(reconciled = true) }
-                .let { repository.update(it) }
+    }
+
+    private suspend fun export(dayGroups: List<DayGroup>) {
+        val exportRepository = exportRepository ?: return
+        val exportDirectory = prefManager.getExportDirectory().first()
+        if (exportDirectory.isBlank()) {
+            // Export directory is not set but we need to export
+            requestExportDirectory.update { true }
+            return
+        }
+        dayGroups.forEach { dayGroup ->
+            exportRepository.export(
+                baseDir = exportDirectory,
+                forDate = dayGroup.date,
+                content = dayGroup.content(),
+            )
+        }
+    }
+
+    private suspend fun DayGroup.content() =
+        contentForExport(
+            dayMonthDateWithYear = dayMonthDateWithYearSuspend(date),
+            copyEmptyTags = prefManager.copyWithEmptyTags().first(),
+        )
+
+    fun onExportDirectorySet(directory: String) {
+        viewModelScope.launch {
+            prefManager.setExportDirectory(directory)
+            requestExportDirectory.update { false }
+            if (directory.isNotBlank()) {
+                onCopy()
+            }
         }
     }
 
@@ -375,51 +515,49 @@ class JournalEntryViewModel(
     }
 
     companion object {
-        fun factory(receivedText: String?) = object : ViewModelProvider.Factory {
-
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: KClass<T>,
-                extras: CreationExtras
-            ): T {
-                return JournalEntryViewModel(
-                    receivedText,
-                    ServiceLocator.repository,
-                    ServiceLocator.tagsDao,
-                    prefManager = ServiceLocator.prefManager,
-                ) as T
+        fun factory(receivedText: String?) =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T {
+                    return JournalEntryViewModel(
+                        receivedText = receivedText,
+                        repository = ServiceLocator.repository,
+                        exportRepository = ServiceLocator.exportRepository,
+                        tagsDao = ServiceLocator.tagsDao,
+                        prefManager = ServiceLocator.prefManager,
+                        allowNotify = ServiceLocator.allowJournalEntryNotify(),
+                        peerDiscoveryHelper = ServiceLocator.peerDiscoveryHelper,
+                        verifyEntriesHelper = ServiceLocator.verifyEntriesHelper,
+                    ) as T
+                }
             }
-        }
     }
 }
 
 data class ViewState(
-    val dayGroups: List<DayGroup> = listOf(),
+    val dateWithCountList: List<DateWithCount> = listOf(),
+    val dayGroup: DayGroup = defaultDayGroup,
     val tags: List<Tag> = listOf(),
     val notUploadedCount: Int = 0,
     val entryConflicts: List<EntryConflict> = listOf(),
     val showConflictDiffInline: Boolean = false,
-    val selectedIndex: Int = 0,
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
-    val showLogsButton: Boolean = false,
     val snackBarType: SnackBarType = SnackBarType.None,
-    val stats: EntryStats? = null,
+    val allowNotify: Boolean = false,
+    val requestExportDirectory: Boolean = false,
+    val peers: List<Peer> = listOf(),
 ) {
-    val selectedDayGroup: DayGroup
-        get() {
-            return dayGroups.getOrNull(selectedIndex) ?: DayGroup(
-                LocalDate(1970, 1, 1),
-                listOf(),
-            )
-        }
-
-    val dayGroupConflictCountMap
-        get() = dayGroups
-            .associateWith { it.getConflictsCount(entryConflicts) }
+    companion object {
+        val defaultDayGroup = DayGroup(LocalDate(1970, 1, 1), listOf())
+    }
 }
 
 sealed interface SnackBarType {
     data object None : SnackBarType
+
     data object Reconcile : SnackBarType
 }

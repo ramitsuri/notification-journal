@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -67,25 +66,26 @@ fun WearApp(
             },
             positionIndicator = {
                 PositionIndicator(
-                    scalingLazyListState = listState
+                    scalingLazyListState = listState,
                 )
-            }
+            },
         ) {
             ScalingLazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 autoCentering = AutoCenteringParams(itemIndex = 0),
-                state = listState
+                state = listState,
             ) {
                 val showOnDeviceEntries = viewState.journalEntries.isNotEmpty()
                 if (showOnDeviceEntries) {
                     val count = viewState.journalEntries.size
                     item {
                         Text(
-                            text = pluralStringResource(
-                                id = R.plurals.journal_entries_count,
-                                count = count,
-                                count
-                            )
+                            text =
+                                pluralStringResource(
+                                    id = R.plurals.journal_entries_count,
+                                    count = count,
+                                    count,
+                                ),
                         )
                     }
                 }
@@ -93,7 +93,10 @@ fun WearApp(
                     templates = viewState.journalEntryTemplates,
                     onTemplateAddRequested = onTemplateAddRequested,
                 )
-                addButton(onAddRequested)
+                addAndUploadButtons(
+                    onAddRequested = onAddRequested,
+                    onUploadRequested = onUploadRequested,
+                )
                 // Hiding because upload is not a thing anymore
                 // RequestUploadFromPhoneButton(onUploadRequested)
                 if (showOnDeviceEntries) {
@@ -115,7 +118,8 @@ private fun ScalingLazyListScope.templateItems(
         .map {
             TemplateButton(
                 text = it.shortDisplayText,
-                onClick = { onTemplateAddRequested(it.id) })
+                onClick = { onTemplateAddRequested(it.id) },
+            )
         }
         .chunked(2)
         .forEach { templateButtons ->
@@ -125,7 +129,10 @@ private fun ScalingLazyListScope.templateItems(
         }
 }
 
-private fun ScalingLazyListScope.addButton(onAddRequested: (String) -> Unit) {
+private fun ScalingLazyListScope.addAndUploadButtons(
+    onAddRequested: (String) -> Unit,
+    onUploadRequested: () -> Unit,
+) {
     item {
         val launcher =
             rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -140,23 +147,9 @@ private fun ScalingLazyListScope.addButton(onAddRequested: (String) -> Unit) {
                     launcher.launchInputActivity()
                 },
                 contentDescriptionRes = R.string.add_new,
-                icon = Icons.Rounded.Add
+                icon = Icons.Rounded.Add,
             )
-        }
-    }
-}
-
-private fun ScalingLazyListScope.loadButton(onLoadRequested: () -> Unit) {
-    item {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-        ) {
-            SmallButton(
-                onClick = onLoadRequested,
-                contentDescriptionRes = R.string.load_things,
-                icon = Icons.Rounded.Sync
-            )
+            RequestUploadFromPhoneButton(onUploadRequested = onUploadRequested)
         }
     }
 }
@@ -171,7 +164,7 @@ private fun TemplateButtonRow(templateButtons: List<TemplateButton>) {
             LargeButton(
                 modifier = Modifier.weight(1f),
                 onClick = it.onClick,
-                text = it.text
+                text = it.text,
             )
         }
     }
@@ -180,9 +173,10 @@ private fun TemplateButtonRow(templateButtons: List<TemplateButton>) {
 @Composable
 private fun TransferToPhoneButton(onTransferRequested: () -> Unit) {
     Button(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
         onClick = { onTransferRequested() },
     ) {
         Text(text = stringResource(id = R.string.transfer_to_phone))
@@ -194,7 +188,7 @@ private fun RequestUploadFromPhoneButton(onUploadRequested: () -> Unit) {
     SmallButton(
         onClick = onUploadRequested,
         contentDescriptionRes = R.string.upload,
-        icon = Icons.Rounded.Upload
+        icon = Icons.Rounded.Upload,
     )
 }
 
@@ -202,21 +196,23 @@ private fun RequestUploadFromPhoneButton(onUploadRequested: () -> Unit) {
 private fun SmallButton(
     onClick: () -> Unit,
     @StringRes contentDescriptionRes: Int,
-    icon: ImageVector
+    icon: ImageVector,
 ) {
     Button(
-        modifier = Modifier
-            .size(ButtonDefaults.LargeButtonSize),
+        modifier =
+            Modifier
+                .size(ButtonDefaults.LargeButtonSize),
         colors = ButtonDefaults.secondaryButtonColors(),
         onClick = onClick,
     ) {
-        val iconModifier = Modifier
-            .size(16.dp)
-            .wrapContentSize(align = Alignment.Center)
+        val iconModifier =
+            Modifier
+                .size(16.dp)
+                .wrapContentSize(align = Alignment.Center)
         Icon(
             imageVector = icon,
             contentDescription = stringResource(id = contentDescriptionRes),
-            modifier = iconModifier
+            modifier = iconModifier,
         )
     }
 }
@@ -228,8 +224,9 @@ private fun LargeButton(
     text: String,
 ) {
     Button(
-        modifier = modifier
-            .padding(bottom = 8.dp),
+        modifier =
+            modifier
+                .padding(bottom = 8.dp),
         colors = ButtonDefaults.secondaryButtonColors(),
         onClick = onClick,
     ) {
@@ -249,22 +246,27 @@ private fun DefaultPreview() {
 @Composable
 private fun JournalEntriesPresentPreview() {
     WearApp(
-        viewState = ViewState(
-            journalEntries = listOf(
-                JournalEntry(
-                    entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-                    text = "Text1"
-                ),
-                JournalEntry(
-                    entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-                    text = "Text2"
-                ),
-                JournalEntry(
-                    entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-                    text = "Text3"
-                )
-            )
-        ),
-        { }, { }, { }, { },
+        viewState =
+            ViewState(
+                journalEntries =
+                    listOf(
+                        JournalEntry(
+                            entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+                            text = "Text1",
+                        ),
+                        JournalEntry(
+                            entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+                            text = "Text2",
+                        ),
+                        JournalEntry(
+                            entryTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+                            text = "Text3",
+                        ),
+                    ),
+            ),
+        { },
+        { },
+        { },
+        { },
     )
 }

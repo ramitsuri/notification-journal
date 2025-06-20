@@ -1,8 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlin)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.ktlint)
 }
 
 android {
@@ -28,10 +30,10 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // Enable if testing
-            //signingConfig signingConfigs.debug
+            // signingConfig signingConfigs.debug
         }
         debug {
             isMinifyEnabled = false
@@ -51,9 +53,6 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
-    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -66,6 +65,7 @@ dependencies {
 
     implementation(libs.androidx.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.work.runtime.ktx)
 
     val composeBom = platform(libs.composeBom)
     implementation(composeBom)
@@ -105,4 +105,15 @@ dependencies {
     androidTestImplementation(libs.compose.test.junit4)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
+}
+
+ktlint {
+    verbose.set(true)
+    outputToConsole.set(true)
+    filter {
+        exclude("**/generated/**")
+        exclude("**/build/**")
+        exclude { element -> element.file.toString().contains("generated/") }
+        exclude { element -> element.file.toString().contains("build/") }
+    }
 }

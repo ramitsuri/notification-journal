@@ -26,9 +26,10 @@ class TileRenderer(context: Context) :
     SingleTileLayoutRenderer<TileState, Unit>(context) {
     override fun renderTile(
         state: TileState,
-        deviceParameters: DeviceParametersBuilders.DeviceParameters
+        deviceParameters: DeviceParametersBuilders.DeviceParameters,
     ): LayoutElementBuilders.LayoutElement {
         return PrimaryLayout.Builder(deviceParameters)
+            .setResponsiveContentInsetEnabled(true)
             .setContent(
                 MultiButtonLayout.Builder()
                     .apply {
@@ -39,20 +40,20 @@ class TileRenderer(context: Context) :
                         }
                         addTextButton(
                             "\uD83D\uDCF2",
-                            launchActivityAction(MainActivity.SHOW_ADDITIONAL_TEMPLATES)
+                            launchActivityAction(MainActivity.SHOW_ADDITIONAL_TEMPLATES),
                         )
                     }
-                    .build()
+                    .build(),
             )
             .setPrimaryChipContent(
                 CompactChip.Builder(
                     context,
                     context.getString(R.string.add_new),
                     launchActivityClickable(launchActivityAction()),
-                    deviceParameters
+                    deviceParameters,
                 )
                     .setChipColors(ChipColors.secondaryChipColors(theme))
-                    .build()
+                    .build(),
             )
             .build()
     }
@@ -60,7 +61,7 @@ class TileRenderer(context: Context) :
     override fun ResourceBuilders.Resources.Builder.produceRequestedResources(
         resourceState: Unit,
         deviceParameters: DeviceParametersBuilders.DeviceParameters,
-        resourceIds: MutableList<String>
+        resourceIds: List<String>,
     ) {
         for (icon in Icon.entries) {
             addIdToImageMapping(icon.id, drawableResToImageResource(icon.resId))
@@ -73,7 +74,7 @@ class TileRenderer(context: Context) :
             .setClassName(ACTIVITY)
             .addKeyToExtraMapping(
                 MainActivity.EXTRA_KEY,
-                ActionBuilders.stringExtra(action)
+                ActionBuilders.stringExtra(action),
             )
             .build()
 
@@ -83,17 +84,17 @@ class TileRenderer(context: Context) :
             .setClassName(ACTIVITY)
             .addKeyToExtraMapping(
                 MainActivity.EXTRA_KEY,
-                ActionBuilders.stringExtra(MainActivity.TEMPLATE)
+                ActionBuilders.stringExtra(MainActivity.TEMPLATE),
             )
             .addKeyToExtraMapping(
                 MainActivity.TEMPLATE_ID,
-                ActionBuilders.stringExtra(template.id)
+                ActionBuilders.stringExtra(template.id),
             )
             .build()
 
     private fun MultiButtonLayout.Builder.addTextButton(
         text: String,
-        activity: AndroidActivity
+        activity: AndroidActivity,
     ) {
         val clickable = launchActivityClickable(activity)
         addButtonContent(
@@ -101,7 +102,7 @@ class TileRenderer(context: Context) :
                 .setTextContent(text)
                 .setSize(ButtonDefaults.LARGE_SIZE)
                 .setButtonColors(ButtonColors.secondaryButtonColors(theme))
-                .build()
+                .build(),
         )
     }
 
@@ -110,7 +111,7 @@ class TileRenderer(context: Context) :
             .setOnClick(
                 ActionBuilders.LaunchAction.Builder()
                     .setAndroidActivity(activity)
-                    .build()
+                    .build(),
             )
             .build()
 
@@ -123,14 +124,14 @@ class TileRenderer(context: Context) :
 enum class Icon(val id: String, val resId: Int) {
     APP(
         id = "icon_app",
-        resId = R.drawable.ic_open_app
+        resId = R.drawable.ic_open_app,
     ),
     ADD(
         id = "icon_add",
-        resId = R.drawable.ic_add
+        resId = R.drawable.ic_add,
     ),
     UPLOAD(
         id = "icon_upload",
-        resId = R.drawable.ic_upload
-    )
+        resId = R.drawable.ic_upload,
+    ),
 }

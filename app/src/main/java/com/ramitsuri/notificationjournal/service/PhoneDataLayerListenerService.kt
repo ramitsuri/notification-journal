@@ -8,12 +8,12 @@ import com.google.android.gms.wearable.WearableListenerService
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
+import com.ramitsuri.notificationjournal.work.UploadWorker
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 
 class PhoneDataLayerListenerService : WearableListenerService() {
-
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         val addJournalEntryEvents = mutableListOf<DataEvent>()
@@ -50,9 +50,7 @@ class PhoneDataLayerListenerService : WearableListenerService() {
         }
 
         if (uploadEvents.isNotEmpty()) {
-            ServiceLocator.coroutineScope.launch {
-                ServiceLocator.repository.sync()
-            }
+            UploadWorker.enqueueImmediate(this)
         }
     }
 }

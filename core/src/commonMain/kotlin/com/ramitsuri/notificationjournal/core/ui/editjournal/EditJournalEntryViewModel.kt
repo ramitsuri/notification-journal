@@ -16,6 +16,7 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
@@ -23,6 +24,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -38,6 +40,7 @@ class EditJournalEntryViewModel(
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
     private val spellChecker: SpellChecker,
+    private val prefManager: PrefManager,
 ) : ViewModel() {
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved
@@ -47,6 +50,7 @@ class EditJournalEntryViewModel(
     val state: StateFlow<EditJournalEntryViewState> = _state
 
     private lateinit var entry: JournalEntry
+    private var enableGettingSuggestions = true
 
     init {
         viewModelScope.launch {
@@ -63,11 +67,18 @@ class EditJournalEntryViewModel(
         loadTags()
         loadTemplates()
         loadCorrections()
+        loadSuggestions()
     }
 
     fun tagClicked(tag: String) {
         _state.update {
             it.copy(selectedTag = tag)
+        }
+        viewModelScope.launch {
+            val text = _state.value.textFieldState.text
+            _state.update {
+                it.copy(suggestions = getSuggestions(text = text, tag = tag))
+            }
         }
     }
 
@@ -106,7 +117,7 @@ class EditJournalEntryViewModel(
     fun nextDay() {
         _state.update {
             it.copy(
-                dateTime = it.dateTime.plus(1.days)
+                dateTime = it.dateTime.plus(1.days),
             )
         }
     }
@@ -114,7 +125,7 @@ class EditJournalEntryViewModel(
     fun previousDay() {
         _state.update {
             it.copy(
-                dateTime = it.dateTime.minus(1.days)
+                dateTime = it.dateTime.minus(1.days),
             )
         }
     }
@@ -145,7 +156,10 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(dateTime = resetDateTime) }
     }
 
-    fun correctionAccepted(word: String, correction: String) {
+    fun correctionAccepted(
+        word: String,
+        correction: String,
+    ) {
         _state.value.textFieldState.apply {
             var startIndexForSearch = 0
             var start = text.indexOf(string = word, startIndex = startIndexForSearch)
@@ -162,6 +176,23 @@ class EditJournalEntryViewModel(
     fun addDictionaryWord(word: String) {
         viewModelScope.launch {
             spellChecker.addWord(word)
+        }
+    }
+
+    fun onSuggestionClicked(suggestion: String?) {
+        if (suggestion != null) {
+            enableGettingSuggestions = false
+            _state.value.textFieldState.edit {
+                delete(0, length)
+                insert(0, suggestion)
+            }
+        }
+        _state.update { it.copy(suggestions = listOf()) }
+    }
+
+    fun onSuggestionEnabledChanged() {
+        viewModelScope.launch {
+            prefManager.setShowSuggestions(!state.value.suggestionsEnabled)
         }
     }
 
@@ -182,8 +213,9 @@ class EditJournalEntryViewModel(
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    templates = templatesDao.getAll()
-                        .plus(JournalEntryTemplate.getShortcutTemplates())
+                    templates =
+                        templatesDao.getAll()
+                            .plus(JournalEntryTemplate.getShortcutTemplates()),
                 )
             }
         }
@@ -196,8 +228,12 @@ class EditJournalEntryViewModel(
                 _state.value.textFieldState.text
             }
                 .debounce(300)
+                .map { it.toString() }
                 .collect { text ->
-                    spellChecker.onTextUpdated(text.toString())
+                    spellChecker.onTextUpdated(text)
+                    _state.update { existingState ->
+                        existingState.copy(showWarningOnExit = text != entry.text)
+                    }
                 }
         }
         viewModelScope.launch {
@@ -211,6 +247,50 @@ class EditJournalEntryViewModel(
         }
     }
 
+    @OptIn(FlowPreview::class)
+    private fun loadSuggestions() {
+        viewModelScope.launch {
+            snapshotFlow {
+                _state.value.textFieldState.text
+            }.debounce(300)
+                .collect { text ->
+                    val tag = _state.value.selectedTag
+                    _state.update {
+                        it.copy(suggestions = getSuggestions(text = text, tag = tag))
+                    }
+                }
+        }
+        viewModelScope.launch {
+            prefManager.showSuggestions().collect { showSuggestions ->
+                _state.update {
+                    it.copy(suggestionsEnabled = showSuggestions)
+                }
+            }
+        }
+    }
+
+    private suspend fun getSuggestions(
+        text: CharSequence,
+        tag: String?,
+    ): List<String> {
+        // Disable so that we don't get the same suggestion again from text field changing from selected suggestion
+        if (!enableGettingSuggestions) {
+            enableGettingSuggestions = true
+            return listOf()
+        }
+        if (tag == null || Tag.isNoTag(tag)) {
+            return listOf()
+        }
+        if (text.length < 2) {
+            return listOf()
+        }
+        return repository.search(text.toString(), listOf(tag))
+            .filter { it.text != text }
+            .map { it.text }
+            .distinctBy { it.lowercase() }
+            .take(10)
+    }
+
     companion object {
         const val ENTRY_ID_ARG = "entry_id"
     }
@@ -221,8 +301,10 @@ data class EditJournalEntryViewState(
     val textFieldState: TextFieldState = TextFieldState(),
     val tags: List<Tag> = listOf(),
     val selectedTag: String? = null,
-    val suggestedText: String? = null,
     val templates: List<JournalEntryTemplate> = listOf(),
     val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: LocalDateTime = Clock.System.nowLocal(),
+    val showWarningOnExit: Boolean = false,
+    val suggestions: List<String> = listOf(),
+    val suggestionsEnabled: Boolean = false,
 )

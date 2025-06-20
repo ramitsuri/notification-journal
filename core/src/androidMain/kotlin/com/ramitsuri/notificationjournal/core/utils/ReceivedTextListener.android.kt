@@ -12,13 +12,17 @@ import androidx.core.util.Consumer
 import androidx.navigation.NavController
 
 @Composable
-actual fun ReceivedTextListener(navController: NavController, onTextReceived: (String?) -> Unit) {
+actual fun ReceivedTextListener(
+    navController: NavController,
+    onTextReceived: (String?) -> Unit,
+) {
     val context = LocalContext.current
     val activity = (context.getActivity() as ComponentActivity)
     DisposableEffect(navController) {
-        val listener = Consumer<Intent> { intent ->
-            onTextReceived(intent.receivedText())
-        }
+        val listener =
+            Consumer<Intent> { intent ->
+                onTextReceived(intent.receivedText())
+            }
         activity.addOnNewIntentListener(listener)
         onDispose { activity.removeOnNewIntentListener(listener) }
     }

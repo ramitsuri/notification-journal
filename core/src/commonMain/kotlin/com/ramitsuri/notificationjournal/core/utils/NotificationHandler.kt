@@ -9,7 +9,7 @@ data class NotificationChannelInfo(
     val importance: Importance = Importance.LOW,
     val playSound: Boolean = false,
     val vibrate: Boolean = false,
-    val showBadge: Boolean = false
+    val showBadge: Boolean = false,
 )
 
 /**
@@ -25,17 +25,16 @@ data class NotificationInfo(
     val cancelOnTouch: Boolean = false,
     val isForegroundServiceImmediate: Boolean = false,
     val isOngoing: Boolean = false,
-    val intentClass: Class<*>,
-    val intentExtras: Map<String, Any>? = null,
+    val clickDeepLinkUri: String,
     val actions: List<NotificationActionInfo>? = null,
-    val actionExtras: Map<String, Any>? = null
+    val actionExtras: Map<String, Any>? = null,
 )
 
 data class NotificationActionInfo(
     val action: String,
     val text: String,
     val intentReceiverClass: Class<*>,
-    val remoteInputKey: String?
+    val remoteInputKey: String?,
 )
 
 enum class Importance(val key: Int) {
@@ -44,11 +43,12 @@ enum class Importance(val key: Int) {
     LOW(2),
     DEFAULT(3),
     HIGH(4),
-    MAX(5);
+    MAX(5),
 }
 
 enum class NotificationChannelType(val id: String) {
     MAIN("main"),
+    REMINDERS("reminders"),
 }
 
 interface NotificationHandler {

@@ -18,40 +18,37 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
     private val repository: JournalRepository,
     private val templateDao: JournalEntryTemplateDao,
     private val wearDataSharingClient: WearDataSharingClient,
-    private val longLivingCoroutineScope: CoroutineScope
+    private val longLivingCoroutineScope: CoroutineScope,
 ) : ViewModel() {
-
     class Factory(
         private val repository: JournalRepository,
         private val templateDao: JournalEntryTemplateDao,
         private val wearDataSharingClient: WearDataSharingClient,
-        private val coroutineScope: CoroutineScope
+        private val coroutineScope: CoroutineScope,
     ) : ViewModelProvider.Factory {
-
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return MainViewModel(
                 repository,
                 templateDao,
                 wearDataSharingClient,
-                coroutineScope
+                coroutineScope,
             ) as T
         }
     }
 
-    private val _state = MutableStateFlow(
-        ViewState(
-            journalEntries = listOf()
+    private val _state =
+        MutableStateFlow(
+            ViewState(
+                journalEntries = listOf(),
+            ),
         )
-    )
     val state: StateFlow<ViewState> = _state
 
     fun loadTemplatesAndEntries() {
@@ -66,17 +63,19 @@ class MainViewModel(
             templateDao.getAllFlow().collect { templates ->
                 _state.update {
                     // First 4 templates are shown in the tile, so show other templates first
-                    val templatesWithLaterOnesFirst = if (templates.size > 4) {
-                        templates.subList(
-                            fromIndex = 4,
-                            toIndex = templates.size,
-                        ) + templates.subList(
-                            fromIndex = 0,
-                            toIndex = 4,
-                        )
-                    } else {
-                        templates
-                    }
+                    val templatesWithLaterOnesFirst =
+                        if (templates.size > 4) {
+                            templates.subList(
+                                fromIndex = 4,
+                                toIndex = templates.size,
+                            ) +
+                                templates.subList(
+                                    fromIndex = 0,
+                                    toIndex = 4,
+                                )
+                        } else {
+                            templates
+                        }
                     it.copy(journalEntryTemplates = templatesWithLaterOnesFirst)
                 }
             }
@@ -85,8 +84,8 @@ class MainViewModel(
 
     fun addFromTemplate(templateId: String) {
         viewModelScope.launch {
-            val entry = templateDao.getAll().firstOrNull { it.id == templateId } ?: return@launch
-            add(entry.text, entry.tag, exitOnDone = true)
+            val template = templateDao.getAll().firstOrNull { it.id == templateId } ?: return@launch
+            add(template.text, template.tag, exitOnDone = true, exitText = template.shortDisplayText)
         }
     }
 
@@ -94,6 +93,7 @@ class MainViewModel(
         value: String,
         tag: String? = null,
         exitOnDone: Boolean = false,
+        exitText: String? = null,
         time: LocalDateTime = Clock.System.nowLocal(),
     ) {
         longLivingCoroutineScope.launch {
@@ -112,7 +112,7 @@ class MainViewModel(
                 .joinAll()
 
             _state.update {
-                it.copy(addStatus = if (exitOnDone) AddStatus.SUCCESS_EXIT else AddStatus.SUCCESS)
+                it.copy(status = if (exitOnDone) Status.SuccessExit(exitText) else Status.Success)
             }
         }
     }
@@ -121,11 +121,12 @@ class MainViewModel(
         longLivingCoroutineScope.launch {
             val onDeviceEntries = repository.getAll()
             onDeviceEntries.forEach { journalEntry ->
-                val posted = wearDataSharingClient.postJournalEntry(
-                    journalEntry.text,
-                    journalEntry.entryTime,
-                    journalEntry.tag
-                )
+                val posted =
+                    wearDataSharingClient.postJournalEntry(
+                        journalEntry.text,
+                        journalEntry.entryTime,
+                        journalEntry.tag,
+                    )
                 if (posted) {
                     repository.delete(journalEntry)
                 }
@@ -136,12 +137,15 @@ class MainViewModel(
     fun triggerUpload() {
         longLivingCoroutineScope.launch {
             wearDataSharingClient.requestUpload()
+            _state.update {
+                it.copy(status = Status.SuccessExit("Upload"))
+            }
         }
     }
 
     fun addStatusAcknowledged() {
         _state.update {
-            it.copy(addStatus = AddStatus.NONE)
+            it.copy(status = Status.None)
         }
     }
 
@@ -161,11 +165,16 @@ class MainViewModel(
 data class ViewState(
     val journalEntries: List<JournalEntry> = listOf(),
     val journalEntryTemplates: List<JournalEntryTemplate> = listOf(),
-    val addStatus: AddStatus = AddStatus.NONE,
+    val status: Status = Status.None,
 )
 
-enum class AddStatus {
-    NONE,
-    SUCCESS_EXIT,
-    SUCCESS,
+sealed interface Status {
+    data object None : Status
+
+    data class SuccessExit(val text: String?) : Status
+
+    data object Success : Status
+
+    val exitText
+        get() = (this as? SuccessExit)?.text
 }

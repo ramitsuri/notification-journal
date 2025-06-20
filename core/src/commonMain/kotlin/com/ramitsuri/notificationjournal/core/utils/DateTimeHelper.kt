@@ -37,15 +37,30 @@ fun hourMinute(
     pmString: String,
 ): String {
     val minute = toFormat.minute
-    val format = LocalDateTime.Format {
-        amPmHour(padding = Padding.NONE)
-        if (minute != 0) {
-            char(':')
-            minute()
+    val format =
+        LocalDateTime.Format {
+            amPmHour(padding = Padding.NONE)
+            if (minute != 0) {
+                char(':')
+                minute()
+            }
+            amPmMarker(am = amString, pm = pmString)
         }
-        amPmMarker(am = amString, pm = pmString)
-    }
     return toFormat.format(format)
+}
+
+@Composable
+fun hourMinute(
+    toFormat: Instant,
+    timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    amString: String = stringResource(Res.string.am),
+    pmString: String = stringResource(Res.string.pm),
+): String {
+    return hourMinute(
+        toFormat = toFormat.toLocalDateTime(timeZone),
+        amString = amString,
+        pmString = pmString,
+    )
 }
 
 fun formatTimeForLogs(
@@ -55,17 +70,18 @@ fun formatTimeForLogs(
     pmString: String,
 ): String {
     val localDateTime = toFormat.toLocalDateTime(timeZone)
-    val format = LocalDateTime.Format {
-        amPmHour(padding = Padding.NONE)
-        char(':')
-        minute()
-        char(':')
-        second()
-        char('.')
-        secondFraction(maxLength = 3)
-        char(' ')
-        amPmMarker(am = amString, pm = pmString)
-    }
+    val format =
+        LocalDateTime.Format {
+            amPmHour(padding = Padding.NONE)
+            char(':')
+            minute()
+            char(':')
+            second()
+            char('.')
+            secondFraction(maxLength = 3)
+            char(' ')
+            amPmMarker(am = amString, pm = pmString)
+        }
     return localDateTime.format(format)
 }
 
@@ -77,19 +93,20 @@ fun monthDayHourMinute(
     pmString: String = stringResource(Res.string.pm),
 ): String {
     val minute = toFormat.minute
-    val format = LocalDateTime.Format {
-        monthName(MonthNames(monthNames))
-        char(' ')
-        dayOfMonth()
-        char(',')
-        char(' ')
-        amPmHour(padding = Padding.NONE)
-        if (minute != 0) {
-            char(':')
-            minute()
+    val format =
+        LocalDateTime.Format {
+            monthName(MonthNames(monthNames))
+            char(' ')
+            dayOfMonth()
+            char(',')
+            char(' ')
+            amPmHour(padding = Padding.NONE)
+            if (minute != 0) {
+                char(':')
+                minute()
+            }
+            amPmMarker(am = amString, pm = pmString)
         }
-        amPmMarker(am = amString, pm = pmString)
-    }
     return toFormat.format(format)
 }
 
@@ -118,14 +135,19 @@ fun dayMonthDate(
         }
 
         else -> {
-            val format = LocalDateTime.Format {
-                dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-                char(',')
-                char(' ')
-                monthName(MonthNames(monthNames))
-                char(' ')
-                dayOfMonth()
-            }
+            val format =
+                LocalDateTime.Format {
+                    dayOfWeek(DayOfWeekNames(dayOfWeekNames))
+                    char(',')
+                    char(' ')
+                    monthName(MonthNames(monthNames))
+                    char(' ')
+                    dayOfMonth()
+                    if (nowLocalDate.year != toFormat.year) {
+                        char(' ')
+                        year()
+                    }
+                }
             return toFormat
                 .atTime(hour = 0, minute = 0)
                 .format(format)
@@ -140,31 +162,25 @@ fun hourMinute(
     amString: String = stringResource(Res.string.am),
     pmString: String = stringResource(Res.string.pm),
 ): String {
-    val format = LocalTime.Format {
-        amPmHour(padding = Padding.NONE)
-        char(':')
-        minute()
-        amPmMarker(am = amString, pm = pmString)
-    }
+    val format =
+        LocalTime.Format {
+            amPmHour(padding = Padding.NONE)
+            char(':')
+            minute()
+            amPmMarker(am = amString, pm = pmString)
+        }
     return toFormat.format(format)
 }
 
 // Saturday, November 16 2024
-suspend fun dayMonthDateWithYearSuspend(
-    toFormat: LocalDate,
-): String {
+suspend fun dayMonthDateWithYearSuspend(toFormat: LocalDate): String {
     val monthNames = getStringArray(Res.array.month_names)
     val dayOfWeekNames = getStringArray(Res.array.day_of_week_names)
-    return LocalDate.Format {
-        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-        char(',')
-        char(' ')
-        monthName(MonthNames(monthNames))
-        char(' ')
-        dayOfMonth()
-        char(' ')
-        year()
-    }.format(toFormat)
+    return dayMonthDateWithYearInternal(
+        toFormat = toFormat,
+        monthNames = monthNames,
+        dayOfWeekNames = dayOfWeekNames,
+    )
 }
 
 // Saturday, November 16 2024
@@ -174,16 +190,11 @@ fun dayMonthDateWithYear(
     monthNames: List<String> = stringArrayResource(Res.array.month_names),
     dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
 ): String {
-    return LocalDate.Format {
-        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-        char(',')
-        char(' ')
-        monthName(MonthNames(monthNames))
-        char(' ')
-        dayOfMonth()
-        char(' ')
-        year()
-    }.format(toFormat)
+    return dayMonthDateWithYearInternal(
+        toFormat = toFormat,
+        monthNames = monthNames,
+        dayOfWeekNames = dayOfWeekNames,
+    )
 }
 
 fun LocalDateTime.plus(duration: Duration) =
@@ -197,3 +208,32 @@ fun LocalDateTime.minus(duration: Duration) =
         .toLocalDateTime(TimeZone.UTC)
 
 fun Clock.nowLocal(): LocalDateTime = now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+// Formats the date in the following format:
+// 2024/12/31.md
+fun LocalDate.asImportFileName() =
+    buildString {
+        append(year)
+        append("/")
+        append(String.format("%02d", month.value))
+        append("/")
+        append(String.format("%02d", dayOfMonth))
+        append(".md")
+    }
+
+private fun dayMonthDateWithYearInternal(
+    toFormat: LocalDate,
+    monthNames: List<String>,
+    dayOfWeekNames: List<String>,
+): String {
+    return LocalDate.Format {
+        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
+        char(',')
+        char(' ')
+        monthName(MonthNames(monthNames))
+        char(' ')
+        dayOfMonth()
+        char(' ')
+        year()
+    }.format(toFormat)
+}

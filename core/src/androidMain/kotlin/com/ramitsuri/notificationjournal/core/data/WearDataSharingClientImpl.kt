@@ -16,7 +16,6 @@ import kotlin.coroutines.cancellation.CancellationException
 class WearDataSharingClientImpl(
     application: Application,
 ) : WearDataSharingClient {
-
     private val dataClient: DataClient = Wearable.getDataClient(application)
 
     @SuppressLint("VisibleForTests")
@@ -28,19 +27,20 @@ class WearDataSharingClientImpl(
         return try {
             val id = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.JOURNAL_ENTRY_ROUTE}/$id"
-            val request = PutDataMapRequest.create(path)
-                .apply {
-                    dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_VALUE, value)
-                    dataMap.putString(
-                        Constants.WearDataSharing.JOURNAL_ENTRY_TIME,
-                        time.toString()
-                    )
-                    if (tag != null) {
-                        dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG, tag)
+            val request =
+                PutDataMapRequest.create(path)
+                    .apply {
+                        dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_VALUE, value)
+                        dataMap.putString(
+                            Constants.WearDataSharing.JOURNAL_ENTRY_TIME,
+                            time.toString(),
+                        )
+                        if (tag != null) {
+                            dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG, tag)
+                        }
                     }
-                }
-                .asPutDataRequest()
-                .setUrgent()
+                    .asPutDataRequest()
+                    .setUrgent()
 
             dataClient.putDataItem(request).await()
             true
@@ -61,9 +61,10 @@ class WearDataSharingClientImpl(
             // id every time, makes it work only the first time.
             // Receiving client should resolve receiving multiple upload events.
             val path = "${Constants.WearDataSharing.REQUEST_UPLOAD_ROUTE}/$id"
-            val request = PutDataMapRequest.create(path)
-                .asPutDataRequest()
-                .setUrgent()
+            val request =
+                PutDataMapRequest.create(path)
+                    .asPutDataRequest()
+                    .setUrgent()
 
             dataClient.putDataItem(request).await()
         } catch (exception: Exception) {
@@ -76,24 +77,25 @@ class WearDataSharingClientImpl(
         return try {
             val requestId = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.TEMPLATE_ROUTE}/$requestId"
-            val request = PutDataMapRequest.create(path)
-                .apply {
-                    dataMap.apply {
-                        putString(Constants.WearDataSharing.TEMPLATE_ID, template.id)
-                        putString(Constants.WearDataSharing.TEMPLATE_VALUE, template.text)
-                        putString(Constants.WearDataSharing.TEMPLATE_TAG, template.tag)
-                        putString(
-                            Constants.WearDataSharing.TEMPLATE_DISPLAY_TEXT,
-                            template.displayText
-                        )
-                        putString(
-                            Constants.WearDataSharing.TEMPLATE_SHORT_DISPLAY_TEXT,
-                            template.shortDisplayText
-                        )
+            val request =
+                PutDataMapRequest.create(path)
+                    .apply {
+                        dataMap.apply {
+                            putString(Constants.WearDataSharing.TEMPLATE_ID, template.id)
+                            putString(Constants.WearDataSharing.TEMPLATE_VALUE, template.text)
+                            putString(Constants.WearDataSharing.TEMPLATE_TAG, template.tag)
+                            putString(
+                                Constants.WearDataSharing.TEMPLATE_DISPLAY_TEXT,
+                                template.displayText,
+                            )
+                            putString(
+                                Constants.WearDataSharing.TEMPLATE_SHORT_DISPLAY_TEXT,
+                                template.shortDisplayText,
+                            )
+                        }
                     }
-                }
-                .asPutDataRequest()
-                .setUrgent()
+                    .asPutDataRequest()
+                    .setUrgent()
 
             dataClient.putDataItem(request).await()
             true
@@ -107,9 +109,10 @@ class WearDataSharingClientImpl(
         return try {
             val requestId = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.CLEAR_TEMPLATES_ROUTE}/$requestId"
-            val request = PutDataMapRequest.create(path)
-                .asPutDataRequest()
-                .setUrgent()
+            val request =
+                PutDataMapRequest.create(path)
+                    .asPutDataRequest()
+                    .setUrgent()
 
             dataClient.putDataItem(request).await()
             true
@@ -123,9 +126,10 @@ class WearDataSharingClientImpl(
         return try {
             val requestId = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.UPDATE_TILE_ROUTE}/$requestId"
-            val request = PutDataMapRequest.create(path)
-                .asPutDataRequest()
-                .setUrgent()
+            val request =
+                PutDataMapRequest.create(path)
+                    .asPutDataRequest()
+                    .setUrgent()
 
             dataClient.putDataItem(request).await()
             true

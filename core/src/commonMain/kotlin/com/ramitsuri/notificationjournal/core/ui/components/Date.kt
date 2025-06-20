@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -41,8 +42,14 @@ fun Date(
     onResetDateToToday: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+            ),
+    ) {
+        Card(modifier = Modifier.padding(16.dp)) {
             fun Long.toLocalDate(): LocalDate {
                 return Instant
                     .fromEpochMilliseconds(this)
@@ -56,37 +63,40 @@ fun Date(
                     .toEpochMilliseconds()
             }
 
-            val yearRange = if (allowedSelections == null) {
-                DatePickerDefaults.YearRange
-            } else {
-                allowedSelections.start.year..allowedSelections.endInclusive.year
-            }
+            val yearRange =
+                if (allowedSelections == null) {
+                    DatePickerDefaults.YearRange
+                } else {
+                    allowedSelections.start.year..allowedSelections.endInclusive.year
+                }
             val selectedDateMillis = remember(selectedDate) { selectedDate?.toMillisSinceEpoch() }
             val initialDisplayedMonthMillis =
                 selectedDateMillis ?: allowedSelections?.endInclusive?.toMillisSinceEpoch()
-            val state = rememberDatePickerState(
-                initialSelectedDateMillis = selectedDateMillis,
-                initialDisplayedMonthMillis = initialDisplayedMonthMillis,
-                yearRange = yearRange,
-                selectableDates = object : SelectableDates {
-                    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                        if (allowedSelections == null) {
-                            return true
-                        }
-                        val pickedDate = utcTimeMillis.toLocalDate()
-                        return allowedSelections.contains(pickedDate)
-                    }
+            val state =
+                rememberDatePickerState(
+                    initialSelectedDateMillis = selectedDateMillis,
+                    initialDisplayedMonthMillis = initialDisplayedMonthMillis,
+                    yearRange = yearRange,
+                    selectableDates =
+                        object : SelectableDates {
+                            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                                if (allowedSelections == null) {
+                                    return true
+                                }
+                                val pickedDate = utcTimeMillis.toLocalDate()
+                                return allowedSelections.contains(pickedDate)
+                            }
 
-                    override fun isSelectableYear(year: Int): Boolean {
-                        if (allowedSelections == null) {
-                            return true
-                        }
-                        return (allowedSelections.start.year..allowedSelections.endInclusive.year).contains(
-                            year
-                        )
-                    }
-                },
-            )
+                            override fun isSelectableYear(year: Int): Boolean {
+                                if (allowedSelections == null) {
+                                    return true
+                                }
+                                return (allowedSelections.start.year..allowedSelections.endInclusive.year).contains(
+                                    year,
+                                )
+                            }
+                        },
+                )
 
             LaunchedEffect(Unit) {
                 snapshotFlow { state.selectedDateMillis }.collect { selectedDateMillis ->
@@ -99,8 +109,9 @@ fun Date(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 DatePicker(

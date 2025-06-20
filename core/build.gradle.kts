@@ -6,12 +6,14 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.buildKonfig)
+    alias(libs.plugins.ktlint)
 }
 
 kotlin {
@@ -67,11 +69,12 @@ kotlin {
             implementation(libs.playservices.wearable)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.playservices.coroutines)
+            implementation(libs.androidx.work.runtime.ktx)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation (libs.jsystemthemedetector)
+            implementation(libs.jsystemthemedetector)
         }
         jvmTest.dependencies {
             implementation(libs.androidx.room.testing)
@@ -169,5 +172,16 @@ fun getProperty(
         properties.getProperty(key, defaultValue)
     } else {
         defaultValue
+    }
+}
+
+ktlint {
+    verbose.set(true)
+    outputToConsole.set(true)
+    filter {
+        exclude("**/generated/**")
+        exclude("**/build/**")
+        exclude { element -> element.file.toString().contains("generated/") }
+        exclude { element -> element.file.toString().contains("build/") }
     }
 }

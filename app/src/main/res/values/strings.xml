@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Notification Journal</string>
     <string name="add_new_journal_content">Add</string>
+    <string name="upload">Upload</string>
+    <string name="upload_worker_notification_title">Uploading</string>
+    <string name="add_entry_qs_tile_label">Add Entry</string>
 </resources>

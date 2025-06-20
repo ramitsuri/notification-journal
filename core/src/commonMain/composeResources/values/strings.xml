@@ -16,9 +16,21 @@
     <string name="now">Now</string>
     <string name="pick">Pick</string>
     <string name="stats">Stats</string>
+    <string name="default_tag">Default tag</string>
+    <string name="not_default_tag">Not default tag</string>
+    <string name="view_journal_entry_day">View by date</string>
+    <string name="notify">Notify</string>
+    <string name="notify_now">Now</string>
+    <string name="notify_fifteen_minutes">15 minutes</string>
+    <string name="notify_one_hour">1 hour</string>
+    <string name="notify_two_hours">2 hours</string>
+    <string name="notify_six_hours">6 hours</string>
+    <string name="notify_twelve_hours">12 hours</string>
+    <string name="notify_twenty_four_hours">24 hours</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>
+    <string name="unsaved_warning_message">Discard changes?</string>
 
     <string name="yesterday">Yesterday</string>
     <string name="today">Today</string>
@@ -30,12 +42,16 @@
     <string name="next_day">Next day</string>
     <string name="previous_day">Previous day</string>
     <string name="reconcile">Reconcile</string>
+    <string name="reconcile_all">Reconcile all</string>
+    <string name="reconcile_all_body">All entries will be marked as reconciled. If there are conflicts or untagged items, no items will be reconciled.</string>
+    <string name="reconcile_all_upload_on_success">Upload all entries on success</string>
     <string name="copy_reconcile">Copy &amp; reconcile</string>
     <string name="more">More</string>
-    <string name="force_upload">Force upload</string>
+    <string name="upload">Upload</string>
     <string name="duplicate">Duplicate</string>
     <string name="conflicts">Conflicts</string>
     <string name="search">Search</string>
+    <string name="proceed">Continue</string>
 
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>
@@ -53,18 +69,22 @@
     <string name="settings_templates_title">Templates</string>
     <string name="settings_templates_subtitle">Add or edit templates</string>
 
+    <string name= "settings_logs">Logs</string>
+
     <string name="settings_app_version">App version</string>
 
-    <string name="settings_showReconciled">Show reconciled</string>
     <string name="settings_show_empty_tags">Show empty tags</string>
     <string name="settings_copy_with_empty_tags">Copy empty tags</string>
 
     <string name="settings_showConflictDiffInline">Show conflict diff inline</string>
 
-    <string name="settings_showLogsButton">Show logs button</string>
+    <string name="settings_journal_import_export_title">Import/Export</string>
+    <string name="settings_journal_import_export_subtitle">Import/Export journal entries</string>
 
-    <string name="settings_journal_import_title">Import</string>
-    <string name="settings_journal_import_subtitle">Import journal entries</string>
+    <string name="settings_delete_all_title">Delete all</string>
+    <string name="settings_delete_all_subtitle">Delete all entries and conflicts</string>
+
+    <string name="settings_show_stats_title">Show stats</string>"
 
     <string name="tag_delete_fail_message">Tag is being used</string>
     <string name="tag_insert_fail_message">Tag being used or new tag exists</string>
@@ -134,10 +154,13 @@
     <string name="will_reconcile">Will reconcile</string>
 
     <string name="import_from_dir">From directory</string>
-    <string name="import_from_dir_hint">Without trailing slash</string>
-    <string name="import_start_date">Start date</string>
-    <string name="import_end_date">End date</string>
+    <string name="import_from_dir_hint">Note: From directory should be without trailing slash</string>
+    <string name="import_start_date">Starting file</string>
+    <string name="import_end_date">Ending file</string>
     <string name="import">Import</string>
+    <string name="export">Export</string>
+    <string name="import_use_last_import_time">Only import files changed since</string>
+    <string name="import_last_import_time">Date</string>
     <string name="import_status_in_progress">%1$s entries imported so far</string>
     <string name="import_status_completed">Imported %1$s entries spanning %2$s days</string>
 
@@ -152,4 +175,7 @@
     <string name="search_tip_empty_text">Tip: to get all results even for empty text, select only a single tag</string>
     <string name="search_select_all">Select all tags</string>
     <string name="search_unselect_all">Unselect all tags</string>
+
+    <string name="export_directory_dialog_title">Set Export Directory</string>
+    <string name="export_directory_input_label">Export Path</string>
 </resources>

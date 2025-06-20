@@ -10,14 +10,16 @@ import java.util.UUID
 class EntriesToDayGroupsMapperKtTest {
     @Test
     fun testWithDifferentTags() {
-        val tags = listOf(
-            Tag(id = "id", value = "tag1", order = 1),
-            Tag(id = "id", value = "tag2", order = 2),
-        )
-        val entries = listOf(
-            entry(tag = tags[0].value),
-            entry(tag = tags[1].value),
-        )
+        val tags =
+            listOf(
+                Tag(id = "id", value = "tag1", order = 1),
+                Tag(id = "id", value = "tag2", order = 2),
+            )
+        val entries =
+            listOf(
+                entry(tag = tags[0].value),
+                entry(tag = tags[1].value),
+            )
 
         val dayGroup = entries.toDayGroups().first()
 
@@ -32,16 +34,18 @@ class EntriesToDayGroupsMapperKtTest {
 
     @Test
     fun testWithDifferentTagsShouldMatchSortOrder() {
-        val tags = listOf(
-            Tag(id = "id", value = "tag1", order = 1),
-            Tag(id = "id", value = "tag2", order = 2),
-        )
-        val entries = listOf(
-            entry(tag = tags[0].value),
-            entry(tag = Tag.NO_TAG.value),
-            entry(tag = "tag3"),
-            entry(tag = tags[1].value),
-        )
+        val tags =
+            listOf(
+                Tag(id = "id", value = "tag1", order = 1),
+                Tag(id = "id", value = "tag2", order = 2),
+            )
+        val entries =
+            listOf(
+                entry(tag = tags[0].value),
+                entry(tag = Tag.NO_TAG.value),
+                entry(tag = "tag3"),
+                entry(tag = tags[1].value),
+            )
 
         val dayGroup = entries.toDayGroups(tags.map { it.value }).first()
 
@@ -53,10 +57,11 @@ class EntriesToDayGroupsMapperKtTest {
 
     @Test
     fun testWithNoTagVariationTags() {
-        val entries = listOf(
-            entry(tag = Tag.NO_TAG.value),
-            entry(tag = Tag.NO_TAG.value),
-        )
+        val entries =
+            listOf(
+                entry(tag = Tag.NO_TAG.value),
+                entry(tag = Tag.NO_TAG.value),
+            )
 
         val dayGroup = entries.toDayGroups().first()
 
@@ -66,10 +71,11 @@ class EntriesToDayGroupsMapperKtTest {
 
     @Test
     fun testWithNoTagsShouldHaveSingleNoTagGroup() {
-        val entries = listOf(
-            entry(tag = Tag.NO_TAG.value),
-            entry(tag = Tag.NO_TAG.value),
-        )
+        val entries =
+            listOf(
+                entry(tag = Tag.NO_TAG.value),
+                entry(tag = Tag.NO_TAG.value),
+            )
 
         val dayGroup = entries.toDayGroups().first()
 
@@ -78,11 +84,12 @@ class EntriesToDayGroupsMapperKtTest {
 
     @Test
     fun testWithNoTagAndTag() {
-        val entries = listOf(
-            entry(tag = "tag1"),
-            entry(tag = Tag.NO_TAG.value),
-            entry(tag = Tag.NO_TAG.value),
-        )
+        val entries =
+            listOf(
+                entry(tag = "tag1"),
+                entry(tag = Tag.NO_TAG.value),
+                entry(tag = Tag.NO_TAG.value),
+            )
 
         val dayGroup = entries.toDayGroups().first()
 
@@ -97,11 +104,12 @@ class EntriesToDayGroupsMapperKtTest {
 
     @Test
     fun testSortOrderWithNoTagAndTag() {
-        val entries = listOf(
-            entry(tag = "tag1"),
-            entry(tag = Tag.NO_TAG.value),
-            entry(tag = Tag.NO_TAG.value),
-        )
+        val entries =
+            listOf(
+                entry(tag = "tag1"),
+                entry(tag = Tag.NO_TAG.value),
+                entry(tag = Tag.NO_TAG.value),
+            )
 
         val dayGroup = entries.toDayGroups().first()
 
@@ -112,16 +120,34 @@ class EntriesToDayGroupsMapperKtTest {
         assertEquals("tag1", tagGroup2.tag)
     }
 
+    @Test
+    fun testSortOrderWithMultipleNoTag() {
+        val entries =
+            listOf(
+                entry(id = "no-tag-id3", tag = Tag.NO_TAG.value, LocalDateTime.parse("2024-11-30T15:00:01")),
+                entry(id = "no-tag-id4", tag = Tag.NO_TAG.value, LocalDateTime.parse("2024-11-30T15:00:00")),
+            )
+
+        val dayGroup = entries.toDayGroups().first()
+
+        val tagGroup1 = dayGroup.tagGroups[0]
+        assertEquals(Tag.NO_TAG.value, tagGroup1.tag)
+        assertEquals(2, tagGroup1.entries.size)
+        assertEquals("no-tag-id4", tagGroup1.entries[0].id)
+        assertEquals("no-tag-id3", tagGroup1.entries[1].id)
+    }
+
     private fun entry(
         id: String = UUID.randomUUID().toString(),
         tag: String = Tag.NO_TAG.value,
+        entryTime: LocalDateTime = LocalDateTime.parse("2024-11-30T15:00:00"),
     ) = JournalEntry(
         id = id,
-        entryTime = LocalDateTime.parse("2024-11-30T15:00:00"),
+        entryTime = entryTime,
         text = "text",
         tag = tag,
         uploaded = false,
-        autoTagged = false,
+        replacesLocal = false,
         deleted = false,
         reconciled = false,
     )

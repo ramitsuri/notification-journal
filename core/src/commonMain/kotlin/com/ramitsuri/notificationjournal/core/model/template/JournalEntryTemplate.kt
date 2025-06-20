@@ -17,32 +17,27 @@ data class JournalEntryTemplate(
     @ColumnInfo(name = "id")
     @SerialName("id")
     val id: String = UUID.randomUUID().toString(),
-
     @ColumnInfo(name = "text")
     @SerialName("text")
     val text: String,
-
     @ColumnInfo(name = "display_text")
     @SerialName("display_text")
     val displayText: String,
-
     @ColumnInfo(name = "short_display_text")
     @SerialName("short_display_text")
     val shortDisplayText: String,
-
     @ColumnInfo(name = "tag")
     @SerialName("tag")
     val tag: String,
-
     @Ignore
-    val replacesExistingValues: Boolean = true
+    val replacesExistingValues: Boolean = true,
 ) {
     constructor(
         id: String,
         text: String,
         displayText: String,
         shortDisplayText: String,
-        tag: String
+        tag: String,
     ) : this(
         id = id,
         text = text,
@@ -53,19 +48,20 @@ data class JournalEntryTemplate(
     )
 }
 
-fun JournalEntryTemplate.Companion.getShortcutTemplates() = listOf(
-    JournalEntryTemplate(
-        text = " ${Constants.TEMPLATED_TIME}",
-        displayText = "Time",
-        shortDisplayText = "\uD83D\uDD5B",
-        tag = Tag.NO_TAG.value,
-        replacesExistingValues = false,
-    ),
-    JournalEntryTemplate(
-        text = "${Constants.TEMPLATED_TASK} ",
-        displayText = "Task",
-        shortDisplayText = "\uD83D\uDCDD",
-        tag = Tag.NO_TAG.value,
-        replacesExistingValues = false,
-    ),
-)
+fun JournalEntryTemplate.Companion.getShortcutTemplates() =
+    listOf(
+        JournalEntryTemplate(
+            text = " ${Constants.TEMPLATED_TIME}",
+            displayText = "Time",
+            shortDisplayText = "\uD83D\uDD5B",
+            tag = Tag.NO_TAG.value,
+            replacesExistingValues = false,
+        ),
+        JournalEntryTemplate(
+            text = "${Constants.TEMPLATED_TASK} ",
+            displayText = "Task",
+            shortDisplayText = "\uD83D\uDCDD",
+            tag = Tag.NO_TAG.value,
+            replacesExistingValues = false,
+        ),
+    )

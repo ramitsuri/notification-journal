@@ -6,12 +6,14 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -35,13 +36,18 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -74,15 +80,15 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
-import kotlinx.coroutines.delay
+import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -90,13 +96,15 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_save
 import notificationjournal.core.generated.resources.add_entry_save_and_add_another
 import notificationjournal.core.generated.resources.add_from_template
+import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.am
+import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.now
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.pm
 import notificationjournal.core.generated.resources.reset
 import notificationjournal.core.generated.resources.tags
-import notificationjournal.core.generated.resources.use
+import notificationjournal.core.generated.resources.unsaved_warning_message
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -106,14 +114,17 @@ fun AddEditEntryDialog(
     textState: TextFieldState,
     tags: List<Tag>,
     selectedTag: String?,
-    suggestedText: String?,
     showAddAnother: Boolean,
     dateTime: LocalDateTime,
     templates: List<JournalEntryTemplate>,
     textCorrections: Map<String, List<String>>,
+    showWarningOnExit: Boolean,
+    suggestions: List<String>,
+    showSuggestions: Boolean,
+    onSuggestionClicked: (String?) -> Unit,
+    onSuggestionsEnabledChanged: () -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
-    onUseSuggestedText: () -> Unit,
     onSave: () -> Unit,
     onAddAnother: () -> Unit,
     onCancel: () -> Unit,
@@ -131,383 +142,394 @@ fun AddEditEntryDialog(
     var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showDateKeyboardShortcutHints by remember { mutableStateOf(false) }
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        rememberTopAppBarState()
-    )
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(focusRequester) {
-        delay(500)
-        focusRequester.requestFocus()
+    var showCancelWarningDialog by remember { mutableStateOf(false) }
+    val scrollBehavior =
+        TopAppBarDefaults.enterAlwaysScrollBehavior(
+            rememberTopAppBarState(),
+        )
+    val onCancelWithWarning = {
+        if (showWarningOnExit) {
+            showCancelWarningDialog = true
+        } else {
+            onCancel()
+        }
     }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .focusRequester(focusRequester)
-            .imePadding()
-            .navigationBarsPadding()
-            .focusable().onKeyEvent {
-                showTemplatesKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed
-                showTagsKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed.not()
-                showDateKeyboardShortcutHints = it.isMetaPressed
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .imePadding()
+                .navigationBarsPadding()
+                .focusable().onKeyEvent {
+                    showTemplatesKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed
+                    showTagsKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed.not()
+                    showDateKeyboardShortcutHints = it.isMetaPressed
 
-                when {
-                    // Meta + Shift + S -> AddAnother
-                    it.isMetaPressed &&
+                    when {
+                        // Meta + Shift + S -> AddAnother
+                        it.isMetaPressed &&
                             it.isShiftPressed &&
                             it.key == Key.S &&
                             it.type == KeyEventType.KeyUp -> {
-                        onAddAnother()
-                        true
-                    }
+                            onAddAnother()
+                            true
+                        }
 
-                    // Meta + S -> Save
-                    it.isMetaPressed &&
+                        // Meta + F -> Toggle show suggestions
+                        it.isMetaPressed &&
+                            it.key == Key.F &&
+                            it.type == KeyEventType.KeyUp -> {
+                            onSuggestionsEnabledChanged()
+                            true
+                        }
+
+                        // Meta + S -> Save
+                        it.isMetaPressed &&
                             it.key == Key.S &&
                             it.type == KeyEventType.KeyUp -> {
-                        onSave()
-                        true
-                    }
+                            onSave()
+                            true
+                        }
 
-                    // Meta + (Left or J) -> Previous day
-                    it.isMetaPressed &&
+                        // Meta + (Left or J) -> Previous day
+                        it.isMetaPressed &&
                             (it.key == Key.DirectionLeft || it.key == Key.J) &&
                             it.type == KeyEventType.KeyDown -> {
-                        onPreviousDateRequested()
-                        true
-                    }
+                            onPreviousDateRequested()
+                            true
+                        }
 
-                    // Meta + (Right or K) -> Next day
-                    it.isMetaPressed &&
+                        // Meta + (Right or K) -> Next day
+                        it.isMetaPressed &&
                             (it.key == Key.DirectionRight || it.key == Key.K) &&
                             it.type == KeyEventType.KeyDown -> {
-                        onNextDateRequested()
-                        true
-                    }
+                            onNextDateRequested()
+                            true
+                        }
 
-                    // Escape -> Cancel
-                    it.key == Key.Escape &&
+                        // Escape -> Cancel
+                        it.key == Key.Escape &&
                             it.type == KeyEventType.KeyUp -> {
-                        if (textState.text.isEmpty()) {
-                            // To prevent accidental cancel
-                            onCancel()
+                            onCancelWithWarning()
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.One &&
+                        it.key == Key.One &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 0
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 0
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Two &&
+                        it.key == Key.Two &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 1
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 1
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Three &&
+                        it.key == Key.Three &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 2
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 2
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Four &&
+                        it.key == Key.Four &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 3
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 3
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Five &&
+                        it.key == Key.Five &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 4
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 4
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Six &&
+                        it.key == Key.Six &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 5
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 5
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Seven &&
+                        it.key == Key.Seven &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 6
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 6
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Eight &&
+                        it.key == Key.Eight &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 7
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 7
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Nine &&
+                        it.key == Key.Nine &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 8
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 8
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Zero &&
+                        it.key == Key.Zero &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 9
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 9
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Y &&
+                        it.key == Key.Y &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 10
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 10
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.U &&
+                        it.key == Key.U &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 11
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 11
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.I &&
+                        it.key == Key.I &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 12
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 12
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.O &&
+                        it.key == Key.O &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 13
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 13
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.P &&
+                        it.key == Key.P &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                        val index = 14
-                        val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                        if (tag != null) {
-                            onTagClicked(tag.value)
+                            val index = 14
+                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
+                            if (tag != null) {
+                                onTagClicked(tag.value)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.One &&
+                        it.key == Key.One &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 0
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 0
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Two &&
+                        it.key == Key.Two &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 1
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 1
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Three &&
+                        it.key == Key.Three &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 2
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 2
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Four &&
+                        it.key == Key.Four &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 3
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 3
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Five &&
+                        it.key == Key.Five &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 4
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 4
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Six &&
+                        it.key == Key.Six &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 5
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 5
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Seven &&
+                        it.key == Key.Seven &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 6
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 6
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Eight &&
+                        it.key == Key.Eight &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 7
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 7
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Nine &&
+                        it.key == Key.Nine &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 8
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 8
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    it.key == Key.Zero &&
+                        it.key == Key.Zero &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed &&
                             it.isMetaPressed -> {
-                        val index = 9
-                        val template = templates.getOrNull(index) ?: templates.lastOrNull()
-                        if (template != null) {
-                            onTemplateClicked(template)
+                            val index = 9
+                            val template = templates.getOrNull(index) ?: templates.lastOrNull()
+                            if (template != null) {
+                                onTemplateClicked(template)
+                            }
+                            true
                         }
-                        true
-                    }
 
-                    else -> {
-                        false
+                        else -> {
+                            false
+                        }
                     }
-                }
-            }) {
+                },
+    ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Toolbar(onBackClick = onCancel, scrollBehavior = scrollBehavior)
+            Toolbar(onBackClick = onCancelWithWarning, scrollBehavior = scrollBehavior)
             if (isLoading) {
                 LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                 )
             } else {
                 DateTimeEntry(
@@ -520,29 +542,33 @@ fun AddEditEntryDialog(
                     onResetTimeToNow = onResetTimeToNow,
                 )
                 Content(
-                    modifier = Modifier
-                        .nestedScroll(scrollBehavior.nestedScrollConnection)
-                        .weight(1f),
+                    modifier =
+                        Modifier
+                            .nestedScroll(scrollBehavior.nestedScrollConnection)
+                            .weight(1f),
                     textState = textState,
                     tags = tags,
                     selectedTag = selectedTag,
-                    suggestedText = suggestedText,
                     templates = templates,
                     textCorrections = textCorrections,
                     showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
                     showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
+                    suggestions = suggestions,
+                    showSuggestions = showSuggestions,
+                    onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
+                    onSuggestionClicked = onSuggestionClicked,
                     onTagClicked = onTagClicked,
                     onTemplateClicked = onTemplateClicked,
-                    onUseSuggestedText = onUseSuggestedText,
                     onCorrectionAccepted = onCorrectionAccepted,
                     onAddDictionaryWord = onAddDictionaryWord,
                 )
                 Row(
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     if (showAddAnother) {
                         OutlinedButton(onClick = onAddAnother, modifier = Modifier.weight(1f)) {
@@ -556,6 +582,37 @@ fun AddEditEntryDialog(
                 }
             }
         }
+
+        if (showCancelWarningDialog) {
+            AlertDialog(
+                onDismissRequest = { showCancelWarningDialog = false },
+                title = {
+                    Text(text = stringResource(Res.string.alert))
+                },
+                text = {
+                    Text(stringResource(Res.string.unsaved_warning_message))
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showCancelWarningDialog = false
+                            onCancel()
+                        },
+                    ) {
+                        Text(stringResource(Res.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showCancelWarningDialog = false
+                        },
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -565,84 +622,49 @@ private fun Content(
     textState: TextFieldState,
     tags: List<Tag>,
     selectedTag: String?,
-    suggestedText: String?,
     textCorrections: Map<String, List<String>>,
     templates: List<JournalEntryTemplate>,
     showTagsKeyboardShortcutHint: Boolean,
     showTemplatesKeyboardShortcutHint: Boolean,
+    suggestions: List<String>,
+    showSuggestions: Boolean,
+    onSuggestionsEnabledChanged: () -> Unit,
+    onSuggestionClicked: (String?) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
-    onUseSuggestedText: () -> Unit,
     onCorrectionAccepted: (String, String) -> Unit,
     onAddDictionaryWord: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     val textFieldFocusRequester = remember { FocusRequester() }
-    val showKeyboard by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
 
-    var showTextCorrectionsDialog by remember { mutableStateOf(false) }
-
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState())
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
     ) {
-        LaunchedEffect(textFieldFocusRequester) {
-            if (showKeyboard && keyboard != null) {
-                delay(500)
+        LaunchedEffect(Unit) {
+            if (keyboard != null) {
                 textFieldFocusRequester.requestFocus()
                 keyboard.show()
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicTextField(
-                state = textState,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences
-                ),
-                textStyle = MaterialTheme.typography.bodyMedium
-                    .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
-                lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester = textFieldFocusRequester),
-                decorator = { innerTextField ->
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(5.dp))
-                            .border(
-                                BorderStroke(
-                                    1.dp,
-                                    SolidColor(MaterialTheme.colorScheme.outline)
-                                ),
-                                RoundedCornerShape(5.dp)
-                            )
-                            .padding(8.dp)
-                    ) {
-                        innerTextField()
-                    }
-                }
-            )
-            Spacer(Modifier.width(4.dp))
-            OutlinedButton(
-                onClick = { showTextCorrectionsDialog = true },
-                enabled = textCorrections.isNotEmpty(),
-            ) {
-                Text(text = textCorrections.size.toString())
-            }
-        }
+        TextField(
+            textState = textState,
+            textFieldFocusRequester = textFieldFocusRequester,
+            textCorrections = textCorrections,
+            suggestions = suggestions,
+            showSuggestions = showSuggestions,
+            onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
+            onSuggestionClicked = onSuggestionClicked,
+            onCorrectionAccepted = onCorrectionAccepted,
+            onAddDictionaryWord = onAddDictionaryWord,
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        if (!suggestedText.isNullOrEmpty()) {
-            SuggestedText(suggestedText, onUseSuggestedText = onUseSuggestedText)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
         if (templates.isNotEmpty()) {
             Templates(
                 templates = templates,
@@ -651,42 +673,43 @@ private fun Content(
                     onTemplateClicked(it)
                     textFieldFocusRequester.requestFocus()
                 },
-                modifier = Modifier.onKeyEvent {
-                    when {
-                        // Shift + Tab -> Focus up
-                        it.key == Key.Tab &&
+                modifier =
+                    Modifier.onKeyEvent {
+                        when {
+                            // Shift + Tab -> Focus up
+                            it.key == Key.Tab &&
                                 it.type == KeyEventType.KeyDown &&
                                 it.isShiftPressed -> {
-                            focusManager.moveFocus(FocusDirection.Up)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Up)
+                                true
+                            }
 
-                        // Tab -> Focus down
-                        it.key == Key.Tab &&
+                            // Tab -> Focus down
+                            it.key == Key.Tab &&
                                 it.type == KeyEventType.KeyDown -> {
-                            focusManager.moveFocus(FocusDirection.Down)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Down)
+                                true
+                            }
 
-                        // Left -> Focus previous
-                        it.key == Key.DirectionLeft &&
+                            // Left -> Focus previous
+                            it.key == Key.DirectionLeft &&
                                 it.type == KeyEventType.KeyDown -> {
-                            focusManager.moveFocus(FocusDirection.Previous)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Previous)
+                                true
+                            }
 
-                        // Right -> Focus next
-                        it.key == Key.DirectionRight &&
+                            // Right -> Focus next
+                            it.key == Key.DirectionRight &&
                                 it.type == KeyEventType.KeyDown -> {
-                            focusManager.moveFocus(FocusDirection.Next)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Next)
+                                true
+                            }
 
-                        else -> {
-                            false
+                            else -> {
+                                false
+                            }
                         }
-                    }
-                }
+                    },
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -696,44 +719,145 @@ private fun Content(
                 selectedTag = selectedTag,
                 onTagClicked = onTagClicked,
                 showKeyboardShortcutHint = showTagsKeyboardShortcutHint,
-                modifier = Modifier.onKeyEvent {
-                    when {
-                        // Shift + Tab -> Focus up
-                        it.key == Key.Tab &&
+                modifier =
+                    Modifier.onKeyEvent {
+                        when {
+                            // Shift + Tab -> Focus up
+                            it.key == Key.Tab &&
                                 it.type == KeyEventType.KeyDown &&
                                 it.isShiftPressed -> {
-                            focusManager.moveFocus(FocusDirection.Up)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Up)
+                                true
+                            }
 
-                        // Tab -> Focus down
-                        it.key == Key.Tab &&
+                            // Tab -> Focus down
+                            it.key == Key.Tab &&
                                 it.type == KeyEventType.KeyDown -> {
-                            focusManager.moveFocus(FocusDirection.Down)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Down)
+                                true
+                            }
 
-                        // Left -> Focus previous
-                        it.key == Key.DirectionLeft &&
+                            // Left -> Focus previous
+                            it.key == Key.DirectionLeft &&
                                 it.type == KeyEventType.KeyDown -> {
-                            focusManager.moveFocus(FocusDirection.Previous)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Previous)
+                                true
+                            }
 
-                        // Right -> Focus next
-                        it.key == Key.DirectionRight &&
+                            // Right -> Focus next
+                            it.key == Key.DirectionRight &&
                                 it.type == KeyEventType.KeyDown -> {
-                            focusManager.moveFocus(FocusDirection.Next)
-                            true
-                        }
+                                focusManager.moveFocus(FocusDirection.Next)
+                                true
+                            }
 
-                        else -> {
-                            false
+                            else -> {
+                                false
+                            }
                         }
-                    }
-                }
+                    },
             )
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TextField(
+    textState: TextFieldState,
+    textFieldFocusRequester: FocusRequester,
+    textCorrections: Map<String, List<String>>,
+    suggestions: List<String>,
+    showSuggestions: Boolean,
+    onSuggestionsEnabledChanged: () -> Unit,
+    onSuggestionClicked: (String?) -> Unit,
+    onCorrectionAccepted: (String, String) -> Unit,
+    onAddDictionaryWord: (String) -> Unit,
+) {
+    var showTextCorrectionsDialog by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = showSuggestions && suggestions.isNotEmpty(),
+        onExpandedChange = { },
+        modifier = Modifier.focusable(false),
+    ) {
+        Column(
+            modifier =
+                Modifier.fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryEditable, true),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BasicTextField(
+                    state = textState,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                        ),
+                    textStyle =
+                        MaterialTheme.typography.bodyMedium
+                            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
+                    lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester = textFieldFocusRequester),
+                    decorator = { innerTextField ->
+                        Box(
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .border(
+                                        BorderStroke(
+                                            1.dp,
+                                            SolidColor(MaterialTheme.colorScheme.outline),
+                                        ),
+                                        RoundedCornerShape(5.dp),
+                                    )
+                                    .padding(8.dp),
+                        ) {
+                            innerTextField()
+                        }
+                    },
+                )
+                Spacer(Modifier.width(4.dp))
+                OutlinedButton(
+                    onClick = { showTextCorrectionsDialog = true },
+                    enabled = textCorrections.isNotEmpty(),
+                ) {
+                    Text(text = textCorrections.size.toString())
+                }
+            }
+            Row(
+                modifier =
+                    Modifier
+                        .clickable(role = Role.Checkbox, onClick = { onSuggestionsEnabledChanged() })
+                        .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Show suggestions",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Checkbox(checked = showSuggestions, onCheckedChange = null)
+            }
+        }
+        ExposedDropdownMenu(
+            expanded = showSuggestions && suggestions.isNotEmpty(),
+            onDismissRequest = { onSuggestionClicked(null) },
+            modifier = Modifier.focusable(false),
+        ) {
+            suggestions.forEach { suggestion ->
+                DropdownMenuItem(
+                    text = { Text(suggestion) },
+                    onClick = { onSuggestionClicked(suggestion) },
+                    contentPadding = PaddingValues(8.dp),
+                )
+            }
         }
     }
 
@@ -767,9 +891,10 @@ private fun TextCorrectionsDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 textCorrections.forEach { (word, corrections) ->
@@ -811,7 +936,7 @@ private fun WordCorrectionItem(
                 FilterChip(
                     selected = false,
                     onClick = { onCorrectionAccepted(word, it) },
-                    label = { Text(text = it) }
+                    label = { Text(text = it) },
                 )
             }
             item {
@@ -820,7 +945,7 @@ private fun WordCorrectionItem(
                     onClick = { onAddDictionaryWord(word) },
                     label = {
                         Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                    }
+                    },
                 )
             }
         }
@@ -841,15 +966,16 @@ private fun DateTimeEntry(
     var showDate by remember { mutableStateOf(false) }
     var showTime by remember { mutableStateOf(false) }
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TextButton(
             modifier = Modifier.weight(2f),
-            onClick = { showDate = true }
+            onClick = { showDate = true },
         ) {
             Text(
                 dayMonthDate(toFormat = dateTime.date),
@@ -859,14 +985,15 @@ private fun DateTimeEntry(
         Spacer(modifier = Modifier.height(16.dp))
         TextButton(
             modifier = Modifier.weight(1f),
-            onClick = { showTime = true }
+            onClick = { showTime = true },
         ) {
             Text(
-                text = hourMinute(
-                    dateTime,
-                    amString = stringResource(Res.string.am),
-                    pmString = stringResource(Res.string.pm),
-                ),
+                text =
+                    hourMinute(
+                        dateTime,
+                        amString = stringResource(Res.string.am),
+                        pmString = stringResource(Res.string.pm),
+                    ),
                 textAlign = TextAlign.Center,
             )
         }
@@ -906,15 +1033,17 @@ private fun Time(
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card {
-            val state = rememberTimePickerState(
-                initialHour = selectedTime.hour,
-                initialMinute = selectedTime.minute,
-                is24Hour = false,
-            )
+            val state =
+                rememberTimePickerState(
+                    initialHour = selectedTime.hour,
+                    initialMinute = selectedTime.minute,
+                    is24Hour = false,
+                )
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 TimePicker(state)
@@ -923,23 +1052,29 @@ private fun Time(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     onResetTimeToNow?.let {
-                        TextButton(onClick = {
-                            onResetTimeToNow()
-                            onDismiss()
-                        }) {
+                        TextButton(
+                            onClick = {
+                                onResetTimeToNow()
+                                onDismiss()
+                            },
+                        ) {
                             Text(stringResource(Res.string.now))
                         }
                     }
-                    TextButton(onClick = {
-                        onResetTime()
-                        onDismiss()
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onResetTime()
+                            onDismiss()
+                        },
+                    ) {
                         Text(stringResource(Res.string.reset))
                     }
-                    TextButton(onClick = {
-                        onTimeSelected(LocalTime(state.hour, state.minute))
-                        onDismiss()
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onTimeSelected(LocalTime(state.hour, state.minute))
+                            onDismiss()
+                        },
+                    ) {
                         Text(stringResource(Res.string.ok))
                     }
                 }
@@ -969,17 +1104,19 @@ private fun Tags(
                     FilterChip(
                         selected = tag.value == selectedTag,
                         onClick = { onTagClicked(tag.value) },
-                        label = { Text(text = tag.value) })
+                        label = { Text(text = tag.value) },
+                    )
 
-                    val hint = if (index == 9) {
-                        "0"
-                    } else if (index < 9) {
-                        (index + 1).toString()
-                    } else if (index <= 14) {
-                        additionalKeys[index - 10]
-                    } else {
-                        null
-                    }
+                    val hint =
+                        if (index == 9) {
+                            "0"
+                        } else if (index < 9) {
+                            (index + 1).toString()
+                        } else if (index <= 14) {
+                            additionalKeys[index - 10]
+                        } else {
+                            null
+                        }
                     if (showKeyboardShortcutHint && hint != null) {
                         Badge(modifier = Modifier.align(Alignment.TopEnd)) {
                             Text(hint)
@@ -1011,16 +1148,18 @@ private fun Templates(
                         selected = false,
                         onClick = { onTemplateClicked(template) },
                         label = {
-                            Text(text = template.displayText)
-                        })
+                            Text(text = "${template.shortDisplayText} ${template.displayText}")
+                        },
+                    )
 
-                    val hint = if (index == 9) {
-                        "0"
-                    } else if (index < 9) {
-                        (index + 1).toString()
-                    } else {
-                        null
-                    }
+                    val hint =
+                        if (index == 9) {
+                            "0"
+                        } else if (index < 9) {
+                            (index + 1).toString()
+                        } else {
+                            null
+                        }
                     if (showKeyboardShortcutHint && hint != null) {
                         Badge(modifier = Modifier.align(Alignment.TopEnd)) {
                             Text(hint)
@@ -1028,30 +1167,6 @@ private fun Templates(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun SuggestedText(
-    suggestedText: String,
-    onUseSuggestedText: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .sizeIn(minHeight = 64.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = suggestedText,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        TextButton(onClick = { onUseSuggestedText() }) {
-            Text(text = stringResource(Res.string.use))
         }
     }
 }

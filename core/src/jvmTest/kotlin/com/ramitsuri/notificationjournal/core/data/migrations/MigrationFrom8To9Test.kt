@@ -3,7 +3,6 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 import androidx.room.util.TableInfo
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 import org.junit.Assert.assertEquals
@@ -12,7 +11,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom8To9Test : BaseMigrationTest() {
-
     @Test
     fun testMigrateFrom8To9_shouldNotHaveEntryTimeOverrideColumn() {
         try {
@@ -93,72 +91,76 @@ class MigrationFrom8To9Test : BaseMigrationTest() {
     }
 
     private fun createAndGetEntriesFromV8(): List<JournalEntryV8> {
-        val data = listOf(
-            JournalEntryV8(
-                id = "1",
-                timeZone = "TZ1",
-                entryTime = 1706208791347,
-                text = "Text 1",
-                tag = null,
-                entryTimeOverride = null,
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-            JournalEntryV8(
-                id = "2",
-                entryTime = 1706208791347,
-                timeZone = "TZ2",
-                text = "Text 2",
-                tag = "Tag1",
-                entryTimeOverride = null,
-                uploaded = true,
-                autoTagged = false,
-                deleted = false,
-                reconciled = false,
-            ),
-            JournalEntryV8(
-                id = "3",
-                entryTime = 1706208791347,
-                timeZone = "TZ3",
-                text = "Text 3",
-                tag = null,
-                entryTimeOverride = 1706208791348,
-                uploaded = false,
-                autoTagged = true,
-                deleted = false,
-                reconciled = false,
-            ),
-            JournalEntryV8(
-                id = "4",
-                entryTime = 1706208791347,
-                timeZone = "TZ4",
-                text = "Text 4",
-                tag = "Tag4",
-                entryTimeOverride = 1706208791348,
-                uploaded = true,
-                autoTagged = true,
-                deleted = false,
-                reconciled = true,
+        val data =
+            listOf(
+                JournalEntryV8(
+                    id = "1",
+                    timeZone = "TZ1",
+                    entryTime = 1706208791347,
+                    text = "Text 1",
+                    tag = null,
+                    entryTimeOverride = null,
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+                JournalEntryV8(
+                    id = "2",
+                    entryTime = 1706208791347,
+                    timeZone = "TZ2",
+                    text = "Text 2",
+                    tag = "Tag1",
+                    entryTimeOverride = null,
+                    uploaded = true,
+                    autoTagged = false,
+                    deleted = false,
+                    reconciled = false,
+                ),
+                JournalEntryV8(
+                    id = "3",
+                    entryTime = 1706208791347,
+                    timeZone = "TZ3",
+                    text = "Text 3",
+                    tag = null,
+                    entryTimeOverride = 1706208791348,
+                    uploaded = false,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = false,
+                ),
+                JournalEntryV8(
+                    id = "4",
+                    entryTime = 1706208791347,
+                    timeZone = "TZ4",
+                    text = "Text 4",
+                    tag = "Tag4",
+                    entryTimeOverride = 1706208791348,
+                    uploaded = true,
+                    autoTagged = true,
+                    deleted = false,
+                    reconciled = true,
+                ),
             )
-        )
         createDatabase(8).apply {
             data.forEach {
-                val tag = if (it.tag == null) {
-                    null
-                } else {
-                    "'${it.tag}'"
-                }
-                val statement = "INSERT INTO JournalEntry " +
-                        "(id,entry_time,time_zone,text,tag,entry_time_override,uploaded,auto_tagged,deleted,reconciled) " +
+                val tag =
+                    if (it.tag == null) {
+                        null
+                    } else {
+                        "'${it.tag}'"
+                    }
+                val statement =
+                    "INSERT INTO JournalEntry " +
+                        "(id,entry_time,time_zone,text,tag,entry_time_override,uploaded,auto_tagged,deleted," +
+                        "reconciled) " +
                         "VALUES(" +
                         "'${it.id}',${it.entryTime},'${it.timeZone}','${it.text}'," +
                         "$tag,${it.entryTimeOverride},${it.uploaded},${it.autoTagged}," +
                         "${it.deleted},${it.reconciled}" +
                         ")"
                 execSQL(
-                    statement
+                    statement,
                 )
             }
             close()

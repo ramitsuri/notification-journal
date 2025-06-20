@@ -14,12 +14,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.app.TaskStackBuilder
+import androidx.core.net.toUri
 
 class SystemNotificationHandler(
-    context: Context
+    context: Context,
 ) : NotificationHandler {
     private val appContext = context.applicationContext
     private val notificationManager = NotificationManagerCompat.from(appContext)
+    private var remindersNotificationId = 2
 
     override fun init(channels: List<NotificationChannelInfo>) {
         createChannels(channels)
@@ -30,7 +32,7 @@ class SystemNotificationHandler(
         val notificationId = getNotificationId(notificationInfo)
         if (ActivityCompat.checkSelfPermission(
                 appContext,
-                Manifest.permission.POST_NOTIFICATIONS
+                Manifest.permission.POST_NOTIFICATIONS,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
@@ -41,10 +43,20 @@ class SystemNotificationHandler(
     override fun getNotificationId(notificationInfo: NotificationInfo): Int {
         return when (notificationInfo.channel) {
             NotificationChannelType.MAIN -> 1
+            NotificationChannelType.REMINDERS -> {
+                remindersNotificationId++
+                if (remindersNotificationId > REMINDERS_NOTIFICATION_ID_MAX) {
+                    remindersNotificationId = 2
+                }
+                remindersNotificationId
+            }
         }
     }
 
-    private fun toSystemNotification(notificationInfo: NotificationInfo): Notification {
+    private fun toSystemNotification(
+        notificationInfo: NotificationInfo,
+        notificationId: Int? = null,
+    ): Notification {
         val builder = NotificationCompat.Builder(appContext, notificationInfo.channel.id)
         builder.apply {
             setSmallIcon(notificationInfo.iconResId)
@@ -64,8 +76,8 @@ class SystemNotificationHandler(
                             getNotificationId(notificationInfo),
                             index,
                             action,
-                            notificationInfo.actionExtras
-                        )
+                            notificationInfo.actionExtras,
+                        ),
                     )
                 }
             }
@@ -77,13 +89,19 @@ class SystemNotificationHandler(
                 setOngoing(false)
             }
             setAutoCancel(notificationInfo.cancelOnTouch)
-            val contentIntent = TaskStackBuilder.create(appContext).run {
-                val mainIntent = Intent(appContext, notificationInfo.intentClass)
-                addNextIntentWithParentStack(mainIntent)
-                val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                getPendingIntent(1001, flags)
-            }
+            val contentIntent =
+                TaskStackBuilder.create(appContext).run {
+                    val mainIntent =
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            notificationInfo.clickDeepLinkUri.toUri(),
+                        )
+                    addNextIntentWithParentStack(mainIntent)
+                    val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                    getPendingIntent(notificationId ?: 1001, flags)
+                }
             setContentIntent(contentIntent)
+            setGroup(notificationInfo.channel.id)
 
             if (notificationInfo.isForegroundServiceImmediate) {
                 foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
@@ -105,22 +123,24 @@ class SystemNotificationHandler(
         return NotificationChannel(
             notificationChannelInfo.channelType.id,
             notificationChannelInfo.name,
-            importance
+            importance,
         ).apply {
             description = notificationChannelInfo.description
             if (notificationChannelInfo.playSound) {
-                val attributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
+                val attributes =
+                    AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .build()
                 val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 setSound(soundUri, attributes)
             }
-            vibrationPattern = if (notificationChannelInfo.vibrate) {
-                longArrayOf(200)
-            } else {
-                null
-            }
+            vibrationPattern =
+                if (notificationChannelInfo.vibrate) {
+                    longArrayOf(200)
+                } else {
+                    null
+                }
             setShowBadge(notificationChannelInfo.showBadge)
         }
     }
@@ -129,7 +149,7 @@ class SystemNotificationHandler(
         notificationId: Int,
         actionIndex: Int,
         actionInfo: NotificationActionInfo,
-        actionExtras: Map<String, Any>?
+        actionExtras: Map<String, Any>?,
     ): NotificationCompat.Action {
         val actionRequestCode = notificationId * 10 + actionIndex
         val intent = Intent(appContext, actionInfo.intentReceiverClass)
@@ -153,25 +173,30 @@ class SystemNotificationHandler(
                 }
             }
         }
-        val pendingIntent = PendingIntent.getBroadcast(
-            appContext,
-            actionRequestCode,
-            intent,
-            PendingIntent.FLAG_MUTABLE
-        )
+        val pendingIntent =
+            PendingIntent.getBroadcast(
+                appContext,
+                actionRequestCode,
+                intent,
+                PendingIntent.FLAG_MUTABLE,
+            )
         val resultKey = actionInfo.remoteInputKey
-        val remoteInput: RemoteInput? = if (resultKey != null) {
-            RemoteInput.Builder(resultKey).build()
-        } else {
-            null
-        }
+        val remoteInput: RemoteInput? =
+            if (resultKey != null) {
+                RemoteInput.Builder(resultKey).build()
+            } else {
+                null
+            }
         return NotificationCompat.Action.Builder(
             0,
             actionInfo.text,
-            pendingIntent
+            pendingIntent,
         ).addRemoteInput(remoteInput).build()
     }
 
-
     private fun toImportance(importance: Importance) = importance.key
+
+    companion object {
+        private const val REMINDERS_NOTIFICATION_ID_MAX = 1000
+    }
 }

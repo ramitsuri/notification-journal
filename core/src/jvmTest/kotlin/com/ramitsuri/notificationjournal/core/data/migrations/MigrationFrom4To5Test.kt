@@ -3,7 +3,6 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 import androidx.room.util.TableInfo
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
@@ -13,7 +12,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom4To5Test : BaseMigrationTest() {
-
     @Test
     fun testMigrateFrom4To5_shouldContainNewColumn() {
         try {
@@ -93,54 +91,56 @@ class MigrationFrom4To5Test : BaseMigrationTest() {
     }
 
     private fun createAndGetDataFromV4(): List<JournalEntryV4> {
-        val entries = listOf(
-            JournalEntryV4(
-                id = 1,
-                entryTime = 1706208791347,
-                timeZone = "TZ1",
-                text = "Text 1",
-                tag = null,
-                entryTimeOverride = null
-            ),
-            JournalEntryV4(
-                id = 2,
-                entryTime = 1706208791347,
-                timeZone = "TZ2",
-                text = "Text 2",
-                tag = "Tag1",
-                entryTimeOverride = null
-            ),
-            JournalEntryV4(
-                id = 3,
-                entryTime = 1706208791347,
-                timeZone = "TZ3",
-                text = "Text 3",
-                tag = null,
-                entryTimeOverride = 1706208791348
-            ),
-            JournalEntryV4(
-                id = 4,
-                entryTime = 1706208791347,
-                timeZone = "TZ4",
-                text = "Text 4",
-                tag = "Tag4",
-                entryTimeOverride = 1706208791348
+        val entries =
+            listOf(
+                JournalEntryV4(
+                    id = 1,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ1",
+                    text = "Text 1",
+                    tag = null,
+                    entryTimeOverride = null,
+                ),
+                JournalEntryV4(
+                    id = 2,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ2",
+                    text = "Text 2",
+                    tag = "Tag1",
+                    entryTimeOverride = null,
+                ),
+                JournalEntryV4(
+                    id = 3,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ3",
+                    text = "Text 3",
+                    tag = null,
+                    entryTimeOverride = 1706208791348,
+                ),
+                JournalEntryV4(
+                    id = 4,
+                    entryTime = 1706208791347,
+                    timeZone = "TZ4",
+                    text = "Text 4",
+                    tag = "Tag4",
+                    entryTimeOverride = 1706208791348,
+                ),
             )
-        )
         createDatabase(4).apply {
             entries.forEach {
-                val tag = if (it.tag == null) {
-                    null
-                } else {
-                    "'${it.tag}'"
-                }
+                val tag =
+                    if (it.tag == null) {
+                        null
+                    } else {
+                        "'${it.tag}'"
+                    }
                 execSQL(
                     "INSERT INTO JournalEntry " +
-                            "(id,entry_time,time_zone,text,tag,entry_time_override) " +
-                            "VALUES(" +
-                            "${it.id},${it.entryTime},'${it.timeZone}','${it.text}'," +
-                            "$tag,${it.entryTimeOverride}" +
-                            ")"
+                        "(id,entry_time,time_zone,text,tag,entry_time_override) " +
+                        "VALUES(" +
+                        "${it.id},${it.entryTime},'${it.timeZone}','${it.text}'," +
+                        "$tag,${it.entryTimeOverride}" +
+                        ")",
                 )
             }
             close()

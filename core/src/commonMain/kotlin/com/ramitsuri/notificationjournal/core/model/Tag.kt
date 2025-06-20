@@ -15,21 +15,20 @@ data class Tag(
     @ColumnInfo(name = "id")
     @SerialName("id")
     val id: String = UUID.randomUUID().toString(),
-
     @ColumnInfo(name = "order")
     @SerialName("order")
     val order: Int,
-
     @ColumnInfo(name = "value")
     @SerialName("value")
     val value: String,
 ) {
     companion object {
-        val NO_TAG = Tag(
-            id = "internal_no_tag",
-            order = Int.MIN_VALUE,
-            value = "internal_no_tag_value"
-        )
+        val NO_TAG =
+            Tag(
+                id = "internal_no_tag",
+                order = Int.MIN_VALUE,
+                value = "internal_no_tag_value",
+            )
 
         fun isNoTag(tag: String) = tag == NO_TAG.value
     }

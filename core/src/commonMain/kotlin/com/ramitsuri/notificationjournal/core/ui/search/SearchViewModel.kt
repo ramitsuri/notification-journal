@@ -30,38 +30,41 @@ class SearchViewModel(
     private var initialSelectionForTags = true
 
     @OptIn(FlowPreview::class)
-    val state = combine(
-        repository.getEntryTags().map { tags -> tags.filter { !Tag.isNoTag(it) } },
-        tagSelections,
-        snapshotFlow { searchTextState.text.toString() }.debounce(300)
-    ) { entryTags, selections, searchText ->
-        if (initialSelectionForTags && selections.isEmpty()) {
-            tagSelections.update { entryTags }
-        }
+    val state =
+        combine(
+            repository.getEntryTags().map { tags -> tags.filter { !Tag.isNoTag(it) } },
+            tagSelections,
+            snapshotFlow { searchTextState.text.toString() }.debounce(300),
+        ) { entryTags, selections, searchText ->
+            if (initialSelectionForTags && selections.isEmpty()) {
+                tagSelections.update { entryTags }
+            }
 
-        // Allow search with empty text if only single tag selected so that there's still a limited
-        // amount of results
-        val text = if (searchText.isEmpty() && selections.size == 1) {
-            searchText
-        } else {
-            searchText.takeIf { it.isNotEmpty() }
-        }
+            // Allow search with empty text if only single tag selected so that there's still a limited
+            // amount of results
+            val text =
+                if (searchText.isEmpty() && selections.size == 1) {
+                    searchText
+                } else {
+                    searchText.takeIf { it.isNotEmpty() }
+                }
 
-        // When entryTags are empty, then don't pass any tags so that search can ignore tags
-        val tags = selections.takeIf { entryTags.isNotEmpty() }
+            // When entryTags are empty, then don't pass any tags so that search can ignore tags
+            val tags = selections.takeIf { entryTags.isNotEmpty() }
 
-        ViewState(
-            searchTextState = searchTextState,
-            tags = entryTags.map { ViewState.Tag(it, it in selections) },
-            results = text
-                ?.let { repository.search(it, tags) }
-                ?: listOf()
+            ViewState(
+                searchTextState = searchTextState,
+                tags = entryTags.map { ViewState.Tag(it, it in selections) },
+                results =
+                    text
+                        ?.let { repository.search(it, tags) }
+                        ?: listOf(),
+            )
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            ViewState(),
         )
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
-        ViewState(),
-    )
 
     fun tagClicked(tag: String) {
         initialSelectionForTags = false
@@ -91,17 +94,18 @@ class SearchViewModel(
     }
 
     companion object {
-        fun factory() = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: KClass<T>,
-                extras: CreationExtras
-            ): T {
-                return SearchViewModel(
-                    ServiceLocator.repository,
-                ) as T
+        fun factory() =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T {
+                    return SearchViewModel(
+                        ServiceLocator.repository,
+                    ) as T
+                }
             }
-        }
     }
 }
 

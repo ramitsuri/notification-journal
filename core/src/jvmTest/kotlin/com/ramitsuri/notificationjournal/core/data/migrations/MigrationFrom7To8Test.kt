@@ -3,7 +3,6 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 import androidx.room.util.TableInfo
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -11,7 +10,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MigrationFrom7To8Test : BaseMigrationTest() {
-
     //region JournalEntry
 
     @Test
@@ -83,36 +81,37 @@ class MigrationFrom7To8Test : BaseMigrationTest() {
     }
 
     private fun createAndGetTemplatesFromV7(): List<TemplateV7> {
-        val data = listOf(
-            TemplateV7(
-                id = "1",
-                text = "Text 1",
-                tag = "Tag1",
-            ),
-            TemplateV7(
-                id = "2",
-                text = "Text 2",
-                tag = "Tag1",
-            ),
-            TemplateV7(
-                id = "3",
-                text = "Text 3",
-                tag = "Tag3",
-            ),
-            TemplateV7(
-                id = "4",
-                text = "Text 4",
-                tag = "Tag4",
+        val data =
+            listOf(
+                TemplateV7(
+                    id = "1",
+                    text = "Text 1",
+                    tag = "Tag1",
+                ),
+                TemplateV7(
+                    id = "2",
+                    text = "Text 2",
+                    tag = "Tag1",
+                ),
+                TemplateV7(
+                    id = "3",
+                    text = "Text 3",
+                    tag = "Tag3",
+                ),
+                TemplateV7(
+                    id = "4",
+                    text = "Text 4",
+                    tag = "Tag4",
+                ),
             )
-        )
         createDatabase(7).apply {
             data.forEach {
                 execSQL(
                     "INSERT INTO JournalEntryTemplate " +
-                            "(id,text,tag) " +
-                            "VALUES(" +
-                            "'${it.id}','${it.text}','${it.tag}'" +
-                            ")"
+                        "(id,text,tag) " +
+                        "VALUES(" +
+                        "'${it.id}','${it.text}','${it.tag}'" +
+                        ")",
                 )
             }
             close()

@@ -6,8 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Sender(
     @SerialName("name")
-    val name: String,
-
+    val name: String = "",
     @SerialName("id")
-    val id: String,
+    val id: String = "",
 )

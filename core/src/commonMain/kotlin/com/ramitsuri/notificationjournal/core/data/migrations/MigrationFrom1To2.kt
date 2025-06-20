@@ -3,11 +3,9 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 
 class MigrationFrom1To2 : Migration(1, 2) {
-
     override fun migrate(connection: SQLiteConnection) {
         val journalEntriesV1 = getExisting(connection)
 
@@ -15,21 +13,21 @@ class MigrationFrom1To2 : Migration(1, 2) {
 
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `JournalEntry` " +
-                    "(" +
-                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                    "`entry_time` INTEGER NOT NULL, " +
-                    "`time_zone` TEXT NOT NULL, " +
-                    "`text` TEXT NOT NULL, " +
-                    "`tag` TEXT, " +
-                    "`entry_time_override` INTEGER" +
-                    ")"
+                "(" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`entry_time` INTEGER NOT NULL, " +
+                "`time_zone` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`tag` TEXT, " +
+                "`entry_time_override` INTEGER" +
+                ")",
         )
         journalEntriesV1.forEach { journalEntryV1 ->
             connection.prepare(
                 "INSERT INTO JournalEntry " +
-                        "(id, entry_time, time_zone, text, tag, entry_time_override) " +
-                        "VALUES " +
-                        "(?, ?, ?, ?, ?, ?)"
+                    "(id, entry_time, time_zone, text, tag, entry_time_override) " +
+                    "VALUES " +
+                    "(?, ?, ?, ?, ?, ?)",
             ).use { statement ->
                 statement.bindInt(index = 1, value = journalEntryV1.id)
                 statement.bindLong(index = 2, value = journalEntryV1.entryTimeMillis)
@@ -64,8 +62,8 @@ class MigrationFrom1To2 : Migration(1, 2) {
                             id = id,
                             entryTimeMillis = entryTimeMillis,
                             timeZone = zoneId,
-                            text = text
-                        )
+                            text = text,
+                        ),
                     )
                 } catch (e: Exception) {
                     // Do nothing. Continue reading the ones we can

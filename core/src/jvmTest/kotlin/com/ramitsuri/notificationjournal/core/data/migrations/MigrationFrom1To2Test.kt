@@ -3,7 +3,6 @@ package com.ramitsuri.notificationjournal.core.data.migrations
 import androidx.room.util.TableInfo
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import androidx.sqlite.use
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
@@ -17,7 +16,6 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
     private val baseEntryTime = Instant.parse("2023-10-10T12:00:00Z").toEpochMilliseconds()
     private val zoneId = "America/New_York"
     private val baseText = "Text"
-
 
     @Test
     fun testMigrateFrom1to2_shouldContainNewColumns() {
@@ -98,7 +96,7 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
             repeat(10) {
                 execSQL(
                     "INSERT INTO JournalEntry (id,entry_time,time_zone,text) " +
-                            "VALUES($it,${baseEntryTime + it},'$zoneId','${baseText + it}')",
+                        "VALUES($it,${baseEntryTime + it},'$zoneId','${baseText + it}')",
                 )
             }
         }
@@ -110,6 +108,6 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
         val timeZone: String,
         val text: String,
         val tag: String?,
-        val entryTimeOverride: Long?
+        val entryTimeOverride: Long?,
     )
 }

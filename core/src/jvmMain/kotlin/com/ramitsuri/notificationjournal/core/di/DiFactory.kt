@@ -4,16 +4,20 @@ import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDeepLink
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.BuildKonfig
+import com.ramitsuri.notificationjournal.core.ExportRepositoryImpl
 import com.ramitsuri.notificationjournal.core.ImportRepositoryImpl
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
+import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
@@ -22,15 +26,13 @@ import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.datetime.LocalDateTime
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.prefs.Preferences
 import kotlin.reflect.KClass
 
-actual class Factory {
-
+actual class DiFactory {
     actual val allowJournalImport: Boolean = true
 
     actual fun getSettings(): Settings {
@@ -52,7 +54,7 @@ actual class Factory {
             override suspend fun postJournalEntry(
                 value: String,
                 time: LocalDateTime,
-                tag: String?
+                tag: String?,
             ): Boolean {
                 // Not supported
                 return true
@@ -108,7 +110,7 @@ actual class Factory {
             override fun <T : ViewModel> create(
                 key: String,
                 modelClass: KClass<T>,
-                handle: SavedStateHandle
+                handle: SavedStateHandle,
             ): T {
                 return getVMInstance(handle) as T
             }
@@ -127,7 +129,26 @@ actual class Factory {
             override fun <T : ViewModel> create(
                 key: String,
                 modelClass: KClass<T>,
-                handle: SavedStateHandle
+                handle: SavedStateHandle,
+            ): T {
+                return getVMInstance(handle) as T
+            }
+        }
+    }
+
+    actual fun viewJournalEntryDayVMFactory(
+        navBackStackEntry: NavBackStackEntry,
+        getVMInstance: (SavedStateHandle) -> ViewJournalEntryDayViewModel,
+    ): AbstractSavedStateViewModelFactory {
+        return object : AbstractSavedStateViewModelFactory(
+            owner = navBackStackEntry,
+            defaultArgs = navBackStackEntry.arguments,
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                key: String,
+                modelClass: KClass<T>,
+                handle: SavedStateHandle,
             ): T {
                 return getVMInstance(handle) as T
             }
@@ -142,31 +163,47 @@ actual class Factory {
         return ImportRepositoryImpl(ioDispatcher)
     }
 
+    actual fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository? {
+        return ExportRepositoryImpl(ioDispatcher)
+    }
+
+    actual fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> {
+        return emptyList()
+    }
+
+    actual fun getAddEntryScreenDeepLinks(): List<NavDeepLink> {
+        return emptyList()
+    }
+
     companion object {
-        private val packageName = if (BuildKonfig.IS_DEBUG) {
-            "com.ramitsuri.notificationjournal.debug"
-        } else {
-            "com.ramitsuri.notificationjournal.release"
-        }
+        private val packageName =
+            if (BuildKonfig.IS_DEBUG) {
+                "com.ramitsuri.notificationjournal.debug"
+            } else {
+                "com.ramitsuri.notificationjournal.release"
+            }
 
         // TODO make compatible with other desktop OSs
-        private val appDir = System.getProperty("user.home")
-            .let { userHomePath ->
-                val osPath = System
-                    .getProperty("os.name", "generic")
-                    .lowercase()
-                    .let { os ->
-                        if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
-                            "Library"
-                        } else if (os.indexOf("win") >= 0) {
-                            "Documents"
-                        } else {
-                            error("OS not supported")
-                        }
-                    }
-                val appPath ="com.ramitsuri.notificationjournal"
-                val buildPath = if (BuildKonfig.IS_DEBUG) "debug" else "release"
-                Paths.get(userHomePath, osPath, appPath, buildPath)
-            }
+        private val appDir =
+            System.getProperty("user.home")
+                .let { userHomePath ->
+                    val osPath =
+                        System
+                            .getProperty("os.name", "generic")
+                            .lowercase()
+                            .let { os ->
+                                if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
+                                    "Library"
+                                } else if (os.indexOf("win") >= 0) {
+                                    "Documents"
+                                } else {
+                                    // Setting this for tests, not fully tested
+                                    "Journal"
+                                }
+                            }
+                    val appPath = "com.ramitsuri.notificationjournal"
+                    val buildPath = if (BuildKonfig.IS_DEBUG) "debug" else "release"
+                    Paths.get(userHomePath, osPath, appPath, buildPath)
+                }
     }
 }

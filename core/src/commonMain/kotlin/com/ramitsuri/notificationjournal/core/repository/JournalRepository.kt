@@ -3,45 +3,66 @@ package com.ramitsuri.notificationjournal.core.repository
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
+import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
-import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.pm
 import org.jetbrains.compose.resources.getString
+import java.security.MessageDigest
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalRepository(
-    private val coroutineScope: CoroutineScope,
     private val dao: JournalEntryDao,
     private val conflictDao: EntryConflictDao,
     private val clock: Clock = Clock.System,
-    private val dataSendHelper: DataSendHelper?,
+    private val dataSendHelper: DataSendHelper,
+    private val prefManager: PrefManager,
 ) {
-    fun getFlow(
-        showReconciled: Boolean = false,
-    ): Flow<List<JournalEntry>> {
-        return if (showReconciled) {
-            dao.getAllFlow()
-        } else {
-            dao.getAllFlowNotReconciled()
+    fun getFlow(): Flow<List<JournalEntry>> {
+        return dao.getAllFlowNotReconciled()
+    }
+
+    fun getNotReconciledEntryDatesFlow(): Flow<List<DateWithCount>> {
+        return combine(
+            // Used so that it refreshes the data
+            conflictDao.getFlow(),
+            dao.getNotReconciledEntryTimesFlow(),
+        ) { _, entryTimes ->
+            entryTimes.map { it.date }.distinct()
+        }.map { entryDates ->
+            entryDates.map { date ->
+                val entriesForDate = getForDateFlow(date).first()
+                val conflictCount = entriesForDate.map { it.id }.let { conflictDao.getCount(it) }
+                val untaggedCount = entriesForDate.count { Tag.isNoTag(it.tag) }
+                DateWithCount(date = date, conflictCount = conflictCount, untaggedCount = untaggedCount)
+            }
         }
+    }
+
+    fun getForDateFlow(date: LocalDate): Flow<List<JournalEntry>> {
+        return dao.getForDateFlow(date.toString())
     }
 
     fun getForUploadCountFlow() = dao.getForUploadCountFlow()
@@ -61,12 +82,13 @@ class JournalRepository(
         update(
             listOf(
                 journalEntry.copy(
-                    text = replaceWithTimeTemplateIfNecessary(
-                        originalText = journalEntry.text,
-                        time = journalEntry.entryTime,
-                    )
-                )
-            )
+                    text =
+                        replaceWithTimeTemplateIfNecessary(
+                            originalText = journalEntry.text,
+                            time = journalEntry.entryTime,
+                        ),
+                ),
+            ),
         )
     }
 
@@ -74,8 +96,22 @@ class JournalRepository(
         dao.update(journalEntries.map { it.copy(uploaded = false) })
     }
 
-    suspend fun insert(entries: List<JournalEntry>) {
-        dao.insert(entries)
+    suspend fun clearDaysAndInsert(
+        days: List<LocalDate>,
+        entries: List<JournalEntry>,
+        uploadEntries: Boolean,
+    ) {
+        val uploaded =
+            if (uploadEntries) {
+                // If not able to send it right away, these entries would need to be reimported for them to show up
+                // on other devices. Otherwise, need to add support for tracking which days have been imported.
+                dataSendHelper.sendClearDaysAndInsertEntries(days, entries) == true
+            } else {
+                // If uploaded is false, then we're receiving these entries from another device, consider them uploaded
+                // because other device already has them.
+                true
+            }
+        dao.clearDaysAndInsert(days.map { it.toString() }, entries.map { it.copy(uploaded = uploaded) })
     }
 
     suspend fun insert(
@@ -83,19 +119,21 @@ class JournalRepository(
         tag: String? = null,
         time: LocalDateTime = clock.nowLocal(),
     ) {
+        val defaultTag = prefManager.getDefaultTag()
         text
             .split("\n")
             .filter { it.isNotBlank() }
             .mapIndexed { index, entry ->
                 val entryTime = time.plus(index.times(10).milliseconds)
-                val entryText = replaceWithTimeTemplateIfNecessary(
-                    originalText = entry,
-                    time = entryTime,
-                ).trim()
-                JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: Tag.NO_TAG.value)
+                val entryText =
+                    replaceWithTimeTemplateIfNecessary(
+                        originalText = entry,
+                        time = entryTime,
+                    ).trim()
+                JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: defaultTag)
             }
             .let {
-                insert(it)
+                dao.insert(it)
             }
     }
 
@@ -107,32 +145,35 @@ class JournalRepository(
         update(entries.map { it.copy(deleted = true) })
     }
 
-    suspend fun sync() {
-        Logger.i(TAG) { "Attempting to sync" }
+    suspend fun uploadAll() {
+        Logger.i(TAG) { "Attempting to upload all" }
         val entries = dao.getForUpload()
         if (entries.isEmpty()) {
-            Logger.i(TAG) { "Nothing to sync" }
+            Logger.i(TAG) { "Nothing to upload all" }
             return
         }
         upload(entries)
+        dao.deleteDeleted()
     }
 
-    fun upload(entries: List<JournalEntry>) {
+    suspend fun upload(entries: List<JournalEntry>) {
         Logger.i(TAG) { "Syncing ${entries.size} entries" }
         entries.chunked(10).forEach {
             sendAndMarkUploaded(it)
         }
     }
 
-    suspend fun handlePayload(payload: Payload.Entries) {
+    suspend fun handlePayload(payload: Entity.Entries) {
         payload.data.forEach { payloadEntry ->
             // Since they're coming from a different client, they should be considered
             // uploaded for this client so that we don't upload them again.
 
             // Doesn't exist locally or sender asked to replace local entry
             val existing = dao.get(payloadEntry.id)
-            if (existing == null || payload.replacesLocal) {
-                dao.upsert(payloadEntry.copy(uploaded = true))
+            if (existing == null || payloadEntry.replacesLocal) {
+                // Save with replacesLocal false because that was a one time thing, we don't want this entry to be sent
+                // with replacesLocal anymore
+                dao.upsert(payloadEntry.copy(uploaded = true, replacesLocal = false))
                 return@forEach
             }
 
@@ -149,29 +190,36 @@ class JournalRepository(
     }
 
     fun getConflicts(): Flow<List<EntryConflict>> {
-        return conflictDao.getAllFlow()
+        return conflictDao.getFlow()
     }
 
-    suspend fun resolveConflict(entry: JournalEntry, selectedConflict: EntryConflict?) {
-        val newEntry = if (selectedConflict == null) { // No conflict selected, retain local entry
-            entry
-        } else {
-            entry.copy(
-                text = selectedConflict.text,
-                entryTime = selectedConflict.entryTime,
-                tag = selectedConflict.tag
-            )
-        }
+    suspend fun resolveConflict(
+        entry: JournalEntry,
+        selectedConflict: EntryConflict?,
+    ) {
+        val newEntry =
+            if (selectedConflict == null) { // No conflict selected, retain local entry
+                entry
+            } else {
+                entry.copy(
+                    text = selectedConflict.text,
+                    entryTime = selectedConflict.entryTime,
+                    tag = selectedConflict.tag,
+                )
+            }
 
         if (selectedConflict != null) {
             update(newEntry)
         }
 
         conflictDao.deleteForEntryId(newEntry.id)
-        sendAndMarkUploaded(listOf(newEntry), replacesLocal = true)
+        sendAndMarkUploaded(listOf(newEntry.copy(replacesLocal = true)))
     }
 
-    suspend fun search(query: String, tags: List<String>?): List<JournalEntry> {
+    suspend fun search(
+        query: String,
+        tags: List<String>?,
+    ): List<JournalEntry> {
         return if (tags == null) {
             dao.search(query)
         } else {
@@ -183,64 +231,86 @@ class JournalRepository(
         return dao.getEntryTags()
     }
 
-    suspend fun getStats(): EntryStats = coroutineScope {
-        fun List<LocalDateTime>.dates() = map { it.date }
-            .distinct()
-            .size
-            .toString()
+    suspend fun markAllReconciled() {
+        dao.markAllReconciled()
+    }
 
-        val notUploadedNotReconciled = let {
-            val uploaded = false
-            val reconciled = false
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        val uploadedNotReconciled = let {
-            val uploaded = true
-            val reconciled = false
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        val notUploadedReconciled = let {
-            val uploaded = false
-            val reconciled = true
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        val uploadedReconciled = let {
-            val uploaded = true
-            val reconciled = true
-            async { dao.getEntryTimes(uploaded, reconciled).dates() } to
-                    async { dao.getEntryCount(uploaded, reconciled).toString() }
-        }
-        // All dates won't necessarily add up to individual dates because same date could have
-        // uploaded as well as not uploaded entries for example
-        val all = let {
-            async { dao.getEntryTimes().dates() } to
-                    async { dao.getEntryCount().toString() }
-        }
-        EntryStats(
-            uploadedAndReconciled = EntryStats.Count(
-                days = uploadedReconciled.first.await(),
-                entries = uploadedReconciled.second.await(),
-            ),
-            uploadedAndNotReconciled = EntryStats.Count(
-                days = uploadedNotReconciled.first.await(),
-                entries = uploadedNotReconciled.second.await(),
-            ),
-            notUploadedAndReconciled = EntryStats.Count(
-                days = notUploadedReconciled.first.await(),
-                entries = notUploadedReconciled.second.await(),
-            ),
-            notUploadedAndNotReconciled = EntryStats.Count(
-                days = notUploadedNotReconciled.first.await(),
-                entries = notUploadedNotReconciled.second.await(),
-            ),
-            all = EntryStats.Count(
-                days = all.first.await(),
-                entries = all.second.await(),
+    suspend fun getStats(): EntryStats =
+        coroutineScope {
+            fun List<LocalDateTime>.dates() =
+                map { it.date }
+                    .distinct()
+                    .size
+                    .toString()
+
+            val notUploadedNotReconciled =
+                let {
+                    val uploaded = false
+                    val reconciled = false
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            val uploadedNotReconciled =
+                let {
+                    val uploaded = true
+                    val reconciled = false
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            val notUploadedReconciled =
+                let {
+                    val uploaded = false
+                    val reconciled = true
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            val uploadedReconciled =
+                let {
+                    val uploaded = true
+                    val reconciled = true
+                    async { dao.getEntryTimes(uploaded, reconciled).dates() } to
+                        async { dao.getEntryCount(uploaded, reconciled).toString() }
+                }
+            // All dates won't necessarily add up to individual dates because same date could have
+            // uploaded as well as not uploaded entries for example
+            val all =
+                let {
+                    async { dao.getEntryTimes().dates() } to
+                        async { dao.getEntryCount().toString() }
+                }
+            EntryStats(
+                uploadedAndReconciled =
+                    EntryStats.Count(
+                        days = uploadedReconciled.first.await(),
+                        entries = uploadedReconciled.second.await(),
+                    ),
+                uploadedAndNotReconciled =
+                    EntryStats.Count(
+                        days = uploadedNotReconciled.first.await(),
+                        entries = uploadedNotReconciled.second.await(),
+                    ),
+                notUploadedAndReconciled =
+                    EntryStats.Count(
+                        days = notUploadedReconciled.first.await(),
+                        entries = notUploadedReconciled.second.await(),
+                    ),
+                notUploadedAndNotReconciled =
+                    EntryStats.Count(
+                        days = notUploadedNotReconciled.first.await(),
+                        entries = notUploadedNotReconciled.second.await(),
+                    ),
+                all =
+                    EntryStats.Count(
+                        days = all.first.await(),
+                        entries = all.second.await(),
+                    ),
             )
-        )
+        }
+
+    suspend fun getHashForDate(date: LocalDate): String? {
+        return getForDateFlow(date).firstOrNull()?.let {
+            MessageDigest.getInstance("SHA-1").digest(it.toString().toByteArray()).joinToString("")
+        }
     }
 
     private suspend fun replaceWithTimeTemplateIfNecessary(
@@ -254,24 +324,27 @@ class JournalRepository(
                     toFormat = time,
                     amString = getString(Res.string.am),
                     pmString = getString(Res.string.pm),
-                )
+                ),
             )
         } else {
             originalText
         }
     }
 
-    private fun sendAndMarkUploaded(entries: List<JournalEntry>, replacesLocal: Boolean = false) {
-        coroutineScope.launch {
-            val sent = dataSendHelper?.sendEntry(entries, replacesLocal) == true
-            dao.updateUploaded(entries = entries, uploaded = sent)
+    private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>) {
+        val sent = dataSendHelper.sendEntries(entries) == true
+        if (sent) {
+            // Once sent, mark as not "replaces_local" because that was just for this upload, further
+            // changes should go through the conflict resolution flow
+            dao.updateUploaded(entries = entries.map { it.copy(replacesLocal = false) }, uploaded = true)
+        } else {
+            dao.updateUploaded(entries = entries, uploaded = false)
         }
     }
 
-
     private fun JournalEntry.getEntryConflict(
         incomingEntry: JournalEntry,
-        incomingEntrySender: Sender
+        incomingEntrySender: Sender,
     ): EntryConflict? {
         if (entryTime == incomingEntry.entryTime &&
             text == incomingEntry.text &&
@@ -281,8 +354,8 @@ class JournalRepository(
         }
 
         // Assume that local entry is older because the other entry now has a tag
-        if ((tag == null || tag == Tag.NO_TAG.value) &&
-            !(incomingEntry.tag == null || incomingEntry.tag == Tag.NO_TAG.value)
+        if (tag == Tag.NO_TAG.value &&
+            incomingEntry.tag != Tag.NO_TAG.value
         ) {
             return null
         }
