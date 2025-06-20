@@ -28,28 +28,3 @@ jobs:
 
       - name: 'Tests'
         run: ./scripts/unit-tests.sh
-
-  build_windows_app:
-    name: "Build windows app"
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Generate package
-        run: ./gradlew packageDistributionForCurrentOS
-
-      - name: Create github release
-        uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: false
-          automatic_release_tag: "windows-test"
-          files: |
-            core/build/compose/binaries/main/msi/Journal-1.0.0.msi
