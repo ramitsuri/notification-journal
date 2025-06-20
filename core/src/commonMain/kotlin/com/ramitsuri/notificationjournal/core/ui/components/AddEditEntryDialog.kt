@@ -336,7 +336,7 @@ fun AddEditEntryDialog(
                             true
                         }
 
-                        it.key == Key.Y &&
+                        it.key == Key.U &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
@@ -348,7 +348,7 @@ fun AddEditEntryDialog(
                             true
                         }
 
-                        it.key == Key.U &&
+                        it.key == Key.I &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
@@ -360,7 +360,7 @@ fun AddEditEntryDialog(
                             true
                         }
 
-                        it.key == Key.I &&
+                        it.key == Key.O &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
@@ -372,23 +372,11 @@ fun AddEditEntryDialog(
                             true
                         }
 
-                        it.key == Key.O &&
-                            it.type == KeyEventType.KeyUp &&
-                            it.isAltPressed.not() &&
-                            it.isMetaPressed -> {
-                            val index = 13
-                            val tag = tags.getOrNull(index) ?: tags.lastOrNull()
-                            if (tag != null) {
-                                onTagClicked(tag.value)
-                            }
-                            true
-                        }
-
                         it.key == Key.P &&
                             it.type == KeyEventType.KeyUp &&
                             it.isAltPressed.not() &&
                             it.isMetaPressed -> {
-                            val index = 14
+                            val index = 13
                             val tag = tags.getOrNull(index) ?: tags.lastOrNull()
                             if (tag != null) {
                                 onTagClicked(tag.value)
