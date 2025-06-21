@@ -429,12 +429,15 @@ fun NavGraph(
             val viewModel: LogScreenViewModel =
                 viewModel(factory = LogScreenViewModel.factory())
 
-            val logs by viewModel.logs.collectAsStateWithLifecycle()
+            val viewState by viewModel.viewState.collectAsStateWithLifecycle()
 
             LogScreen(
-                logs = logs,
+                viewState = viewState,
                 onBackClick = { navController.navigateUp() },
                 onClearLogsClick = viewModel::clearLogsClicked,
+                onTagClick = viewModel::tagClicked,
+                onSelectAllTags = viewModel::selectAllTagsClicked,
+                onUnselectAllTags = viewModel::unselectAllTagsClicked,
             )
         }
 

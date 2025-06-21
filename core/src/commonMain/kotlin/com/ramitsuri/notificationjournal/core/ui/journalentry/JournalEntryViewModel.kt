@@ -295,7 +295,7 @@ class JournalEntryViewModel(
     }
 
     fun sync() {
-        Logger.i("JournalEntryViewModel") { "Attempting to sync" }
+        Logger.i(TAG) { "Attempting to sync" }
         viewModelScope.launch {
             repository.uploadAll()
         }
@@ -374,20 +374,20 @@ class JournalEntryViewModel(
             }
             val dayGroup = state.value.dayGroup
             if (dayGroup == ViewState.defaultDayGroup) {
-                Logger.i { "Cannot export default day group" }
+                Logger.i(TAG) { "Cannot export default day group" }
                 return@launch
             }
             if (dayGroup.untaggedCount > 0) {
-                Logger.i { "Cannot export day group with untagged entries" }
+                Logger.i(TAG) { "Cannot export day group with untagged entries" }
                 return@launch
             }
             val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }
             if (dayGroupEntryIds.isEmpty()) {
-                Logger.i { "Cannot export empty day group" }
+                Logger.i(TAG) { "Cannot export empty day group" }
                 return@launch
             }
             if (state.value.entryConflicts.any { dayGroupEntryIds.contains(it.id) }) {
-                Logger.i { "Cannot export day group with conflicting entries" }
+                Logger.i(TAG) { "Cannot export day group with conflicting entries" }
                 return@launch
             }
             // Copy to clipboard if not being exported
@@ -416,7 +416,7 @@ class JournalEntryViewModel(
     fun onReconcileAll(upload: Boolean) {
         val anyConflictsOrUntagged = state.value.dateWithCountList.any { it.untaggedCount > 0 || it.conflictCount > 0 }
         if (anyConflictsOrUntagged) {
-            Logger.i { "Entries have conflicts or untagged entries, cannot reconcile" }
+            Logger.i(TAG) { "Entries have conflicts or untagged entries, cannot reconcile" }
             return
         }
         viewModelScope.launch {
@@ -534,6 +534,8 @@ class JournalEntryViewModel(
                     ) as T
                 }
             }
+
+        private const val TAG = "JournalEntryViewModel"
     }
 }
 
