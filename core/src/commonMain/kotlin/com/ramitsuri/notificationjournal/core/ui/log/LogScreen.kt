@@ -58,7 +58,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun LogScreen(
     viewState: LogsViewState,
-    timeZone: TimeZone = TimeZone.currentSystemDefault(),
     onBackClick: () -> Unit,
     onClearLogsClick: () -> Unit,
     onTagClick: (String) -> Unit,
@@ -139,7 +138,7 @@ fun LogScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(viewState.logs) { logData ->
-                    LogItem(logData, timeZone)
+                    LogItem(logData, viewState.timeZone)
                 }
             }
         }
