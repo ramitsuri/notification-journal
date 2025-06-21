@@ -27,6 +27,8 @@
     <string name="notify_six_hours">6 hours</string>
     <string name="notify_twelve_hours">12 hours</string>
     <string name="notify_twenty_four_hours">24 hours</string>
+    <string name="select_all">Select all</string>
+    <string name="unselect_all">Unselect all</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>

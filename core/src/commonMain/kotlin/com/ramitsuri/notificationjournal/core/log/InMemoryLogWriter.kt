@@ -4,6 +4,7 @@ import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Severity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 class InMemoryLogWriter : LogWriter() {
@@ -36,6 +37,11 @@ class InMemoryLogWriter : LogWriter() {
     fun clear() {
         _logs.update { emptyList() }
     }
+
+    fun getTags() =
+        logs.map {
+            it.map { log -> log.tag }.distinct().sorted()
+        }
 
     private companion object {
         const val MAX_LOGS = 200

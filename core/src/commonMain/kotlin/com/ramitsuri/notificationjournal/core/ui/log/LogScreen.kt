@@ -2,26 +2,31 @@ package com.ramitsuri.notificationjournal.core.ui.log
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.ramitsuri.notificationjournal.core.log.LogData
+import com.ramitsuri.notificationjournal.core.model.logs.LogsViewState
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import com.ramitsuri.notificationjournal.core.ui.fullBorder
 import com.ramitsuri.notificationjournal.core.utils.formatTimeForLogs
@@ -44,15 +50,20 @@ import kotlinx.datetime.TimeZone
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.pm
+import notificationjournal.core.generated.resources.select_all
+import notificationjournal.core.generated.resources.unselect_all
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogScreen(
-    logs: List<LogData>,
+    viewState: LogsViewState,
     timeZone: TimeZone = TimeZone.currentSystemDefault(),
     onBackClick: () -> Unit,
     onClearLogsClick: () -> Unit,
+    onTagClick: (String) -> Unit,
+    onSelectAllTags: () -> Unit,
+    onUnselectAllTags: () -> Unit,
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -88,7 +99,38 @@ fun LogScreen(
                     }
                 },
             )
-
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                        .horizontalScroll(rememberScrollState()),
+            ) {
+                if (viewState.tags.all { it.selected }) {
+                    FilterChip(
+                        selected = true,
+                        onClick = onUnselectAllTags,
+                        label = { Text(text = stringResource(Res.string.unselect_all)) },
+                    )
+                } else {
+                    FilterChip(
+                        selected = true,
+                        onClick = onSelectAllTags,
+                        label = { Text(text = stringResource(Res.string.select_all)) },
+                    )
+                }
+                viewState.tags.forEach {
+                    FilterChip(
+                        selected = it.selected,
+                        onClick = {
+                            onTagClick(it.value)
+                        },
+                        label = { Text(text = it.value) },
+                    )
+                }
+            }
             LazyColumn(
                 modifier =
                     Modifier
@@ -96,7 +138,7 @@ fun LogScreen(
                         .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(logs) { logData ->
+                items(viewState.logs) { logData ->
                     LogItem(logData, timeZone)
                 }
             }
