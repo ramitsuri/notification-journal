@@ -55,16 +55,18 @@ class RabbitMqHelper(
             val dataHostProperties = getDataHostProperties()
             if (!dataHostProperties.isValid()) {
                 log("Cannot start receiving, invalid data host properties")
+                close()
                 return@callbackFlow
             }
-            val channel = createReceiveChannel(dataHostProperties)
-            if (channel == null) {
+            val rmqChannel = createReceiveChannel(dataHostProperties)
+            if (rmqChannel == null) {
                 log("Failed to create channel")
+                close()
                 return@callbackFlow
             }
             val token =
                 try {
-                    channel.basicConsume(
+                    rmqChannel.basicConsume(
                         // queue =
                         dataHostProperties.deviceName,
                         // autoAck =
@@ -73,15 +75,13 @@ class RabbitMqHelper(
                         { _, delivery ->
                             val message = String(delivery.body, Charsets.UTF_8)
                             val payload = json.decodeFromString<Payload>(message)
-                            if (payload.sender.id == dataHostProperties.deviceId) {
-                                log("Ignoring own message")
-                            } else {
+                            if (payload.sender.id != dataHostProperties.deviceId) {
                                 trySendBlocking(payload)
                             }
                         },
                         // cancelCallback =
                         {
-                            channel.close()
+                            rmqChannel.close()
                             close()
                         },
                     )
@@ -89,13 +89,15 @@ class RabbitMqHelper(
                     log("Connection already closed, reset connection")
                     this@RabbitMqHelper.close()
                     getConnection(dataHostProperties)
+                    close()
                     null
                 } catch (e: Exception) {
                     log("Failed to setup receiver", e)
+                    close()
                     null
                 }
             awaitClose {
-                token?.let { runCatching { channel.basicCancel(it) } }
+                token?.let { runCatching { rmqChannel.basicCancel(it) } }
             }
         }
 
@@ -103,28 +105,10 @@ class RabbitMqHelper(
         return withContext(ioDispatcher) {
             getConnection(dataHostProperties)
                 ?.safelyCreateChannel()
-                ?.apply {
-                    queueDeclare(
-                        // queue =
-                        dataHostProperties.deviceName,
-                        // durable =
-                        true,
-                        // exclusive =
-                        false,
-                        // autoDelete =
-                        false,
-                        // arguments =
-                        null,
-                    )
-                    queueBind(
-                        // queue =
-                        dataHostProperties.deviceName,
-                        // exchange =
-                        dataHostProperties.exchangeName,
-                        // routingKey =
-                        "",
-                    )
-                }
+                ?.setupForReceiving(
+                    queue = dataHostProperties.deviceName,
+                    exchange = dataHostProperties.exchangeName,
+                )
         }
     }
 
@@ -237,6 +221,36 @@ class RabbitMqHelper(
             log("Failed to create channel", e)
             null
         }
+
+    private fun Channel.setupForReceiving(
+        queue: String,
+        exchange: String,
+    ) = try {
+        queueDeclare(
+            // queue =
+            queue,
+            // durable =
+            true,
+            // exclusive =
+            false,
+            // autoDelete =
+            false,
+            // arguments =
+            null,
+        )
+        queueBind(
+            // queue =
+            queue,
+            // exchange =
+            exchange,
+            // routingKey =
+            "",
+        )
+        this
+    } catch (e: Exception) {
+        log("Failed to setup for receiving", e)
+        null
+    }
 
     private fun log(
         message: String,

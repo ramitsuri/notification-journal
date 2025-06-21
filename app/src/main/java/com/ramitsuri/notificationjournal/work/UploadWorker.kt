@@ -16,6 +16,7 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         ServiceLocator.repository.uploadAll()
+        ServiceLocator.onAppStop()
         return Result.success()
     }
 

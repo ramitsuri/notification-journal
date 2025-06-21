@@ -110,9 +110,9 @@ object ServiceLocator {
     fun onAppStop() {
         appStopJob =
             coroutineScope.launch {
-                Logger.i { "Will wait for 2 minutes before stopping jobs" }
+                Logger.i(TAG) { "Will wait for 2 minutes before stopping jobs" }
                 delay(2.minutes)
-                Logger.i { "Stopping jobs" }
+                Logger.i(TAG) { "Stopping jobs" }
                 launch {
                     receiveJob?.cancel()
                     rabbitMqHelper.close()
@@ -324,9 +324,11 @@ object ServiceLocator {
     }
 
     private fun startReceiving() {
+        Logger.i(TAG) { "Start receiving" }
         receiveJob?.cancel()
         receiveJob =
             coroutineScope.launch {
+                dataReceiveHelper.reset()
                 dataReceiveHelper.payloadFlow.filterIsInstance<Entity>().collect {
                     when (it) {
                         is Entity.Entries -> {
@@ -389,4 +391,5 @@ object ServiceLocator {
     }
 
     private lateinit var factory: DiFactory
+    private const val TAG = "ServiceLocator"
 }

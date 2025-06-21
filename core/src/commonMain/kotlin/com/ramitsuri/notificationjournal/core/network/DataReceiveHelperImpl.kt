@@ -8,12 +8,19 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 
 internal class DataReceiveHelperImpl(
-    coroutineScope: CoroutineScope,
-    ioDispatcher: CoroutineDispatcher,
-    getDataHostProperties: suspend () -> DataHostProperties,
-    rabbitMqHelper: RabbitMqHelper,
+    private val coroutineScope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher,
+    private val getDataHostProperties: suspend () -> DataHostProperties,
+    private val rabbitMqHelper: RabbitMqHelper,
 ) : DataReceiveHelper {
-    override val payloadFlow =
+    override var payloadFlow = getFlow()
+        private set
+
+    override fun reset() {
+        payloadFlow = getFlow()
+    }
+
+    private fun getFlow() =
         rabbitMqHelper
             .receive(getDataHostProperties)
             .flowOn(ioDispatcher)

@@ -38,6 +38,7 @@ class ShowNotificationWorker(
                 return failure()
             }
         showNotification(journalEntry)
+        ServiceLocator.onAppStop()
         return Result.success()
     }
 
