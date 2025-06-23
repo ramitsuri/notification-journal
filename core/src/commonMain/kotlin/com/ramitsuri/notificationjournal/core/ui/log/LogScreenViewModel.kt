@@ -33,7 +33,10 @@ class LogScreenViewModel(
             LogsViewState(
                 timeZone = timeZone,
                 tags = tags.map { LogsViewState.Tag(it, it in selections) },
-                logs = logs.filter { it.tag in selections },
+                logs =
+                    logs
+                        .filter { it.tag in selections }
+                        .sortedByDescending { it.time },
             )
         }.stateIn(
             scope = viewModelScope,
