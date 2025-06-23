@@ -1080,7 +1080,7 @@ private fun Tags(
     onTagClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val additionalKeys = listOf("Y", "U", "I", "O", "P")
+    val additionalKeys = listOf("U", "I", "O", "P")
     Column(modifier = modifier) {
         Text(
             text = stringResource(Res.string.tags),
