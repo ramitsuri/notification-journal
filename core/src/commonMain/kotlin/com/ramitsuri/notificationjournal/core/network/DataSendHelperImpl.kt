@@ -4,7 +4,6 @@ import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.model.sync.Diagnostic
 import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
@@ -42,14 +41,6 @@ internal class DataSendHelperImpl(
             days = days,
             entries = entries,
         ).send()
-    }
-
-    override suspend fun sendPing(time: Instant): Boolean {
-        return Diagnostic.PingRequest(time).send()
-    }
-
-    override suspend fun sendPingResponse(time: Instant): Boolean {
-        return Diagnostic.PingResponse(time).send()
     }
 
     override suspend fun sendVerifyEntriesRequest(

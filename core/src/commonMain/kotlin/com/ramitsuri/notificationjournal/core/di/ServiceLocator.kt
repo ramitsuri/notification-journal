@@ -22,7 +22,6 @@ import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
-import com.ramitsuri.notificationjournal.core.network.PeerDiscoveryHelper
 import com.ramitsuri.notificationjournal.core.network.RabbitMqHelper
 import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
@@ -103,7 +102,6 @@ object ServiceLocator {
     fun onAppStart() {
         appStopJob?.cancel()
         startReceiving()
-        peerDiscoveryHelper.start()
         verifyEntriesHelper.start()
     }
 
@@ -117,7 +115,6 @@ object ServiceLocator {
                     receiveJob?.cancel()
                     rabbitMqHelper.close()
                 }
-                peerDiscoveryHelper.stop()
                 verifyEntriesHelper.stop()
             }
     }
@@ -127,15 +124,6 @@ object ServiceLocator {
             rabbitMqHelper.close()
             startReceiving()
         }
-    }
-
-    val peerDiscoveryHelper: PeerDiscoveryHelper by lazy {
-        PeerDiscoveryHelper(
-            coroutineScope = coroutineScope,
-            ioDispatcher = ioDispatcher,
-            dataSendHelper = dataSendHelper,
-            dataReceiveHelper = dataReceiveHelper,
-        )
     }
 
     val verifyEntriesHelper: VerifyEntriesHelper by lazy {

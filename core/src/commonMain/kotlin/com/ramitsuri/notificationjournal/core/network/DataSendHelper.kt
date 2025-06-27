@@ -18,10 +18,6 @@ interface DataSendHelper {
         entries: List<JournalEntry>,
     ): Boolean
 
-    suspend fun sendPing(time: Instant): Boolean
-
-    suspend fun sendPingResponse(time: Instant): Boolean
-
     suspend fun sendVerifyEntriesRequest(
         date: LocalDate,
         hash: String,
