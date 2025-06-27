@@ -19,9 +19,6 @@ sealed interface Payload {
             is Entity.ClearDaysAndInsertEntries -> copy(sender = sender)
             is Entity.Templates -> copy(sender = sender)
 
-            is Diagnostic.PingRequest -> copy(sender = sender)
-            is Diagnostic.PingResponse -> copy(sender = sender)
-
             is VerifyEntries.Request -> copy(sender = sender)
             is VerifyEntries.Response -> copy(sender = sender)
         }
@@ -31,18 +28,6 @@ sealed interface Payload {
 @Serializable
 sealed interface Diagnostic : Payload {
     val time: Instant
-
-    @Serializable
-    data class PingRequest(
-        override val time: Instant,
-        override val sender: Sender = Sender(),
-    ) : Diagnostic
-
-    @Serializable
-    data class PingResponse(
-        override val time: Instant,
-        override val sender: Sender = Sender(),
-    ) : Diagnostic
 }
 
 sealed interface VerifyEntries : Diagnostic {

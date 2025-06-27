@@ -10,12 +10,10 @@ import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
-import com.ramitsuri.notificationjournal.core.model.Peer
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
-import com.ramitsuri.notificationjournal.core.network.PeerDiscoveryHelper
 import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -59,7 +57,6 @@ class JournalEntryViewModel(
     private val prefManager: PrefManager,
     private val clock: Clock = Clock.System,
     private val allowNotify: Boolean,
-    private val peerDiscoveryHelper: PeerDiscoveryHelper,
     private val verifyEntriesHelper: VerifyEntriesHelper,
 ) : ViewModel() {
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
@@ -104,7 +101,6 @@ class JournalEntryViewModel(
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
                 requestExportDirectory,
-                peerDiscoveryHelper.connectedPeers,
                 verifyEntries,
             ) {
                     contentForCopy,
@@ -115,7 +111,6 @@ class JournalEntryViewModel(
                     showEmptyTags,
                     showConflictDiffInline,
                     requestExportDirectory,
-                    connectedPeers,
                     verifyEntries,
                 ->
                 val tags = tagsDao.getAll()
@@ -137,7 +132,6 @@ class JournalEntryViewModel(
                     snackBarType = snackBarType,
                     allowNotify = allowNotify,
                     requestExportDirectory = requestExportDirectory,
-                    peers = connectedPeers,
                 )
             }
         }.stateIn(
@@ -529,7 +523,6 @@ class JournalEntryViewModel(
                         tagsDao = ServiceLocator.tagsDao,
                         prefManager = ServiceLocator.prefManager,
                         allowNotify = ServiceLocator.allowJournalEntryNotify(),
-                        peerDiscoveryHelper = ServiceLocator.peerDiscoveryHelper,
                         verifyEntriesHelper = ServiceLocator.verifyEntriesHelper,
                     ) as T
                 }
@@ -551,7 +544,6 @@ data class ViewState(
     val snackBarType: SnackBarType = SnackBarType.None,
     val allowNotify: Boolean = false,
     val requestExportDirectory: Boolean = false,
-    val peers: List<Peer> = listOf(),
 ) {
     companion object {
         val defaultDayGroup = DayGroup(LocalDate(1970, 1, 1), listOf())
