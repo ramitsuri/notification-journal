@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Sender
+import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
@@ -30,7 +31,6 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.pm
 import org.jetbrains.compose.resources.getString
-import java.security.MessageDigest
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalRepository(
@@ -307,10 +307,12 @@ class JournalRepository(
             )
         }
 
-    suspend fun getHashForDate(date: LocalDate): String? {
-        return getForDateFlow(date).firstOrNull()?.let {
-            MessageDigest.getInstance("SHA-1").digest(it.toString().toByteArray()).joinToString("")
-        }
+    suspend fun getVerificationForDate(date: LocalDate): VerifyEntries.Verification? {
+        return getForDateFlow(date)
+            .firstOrNull()
+            ?.let {
+                VerifyEntries.Verification(entries = it)
+            }
     }
 
     private suspend fun replaceWithTimeTemplateIfNecessary(

@@ -45,30 +45,30 @@ internal class DataSendHelperImpl(
 
     override suspend fun sendVerifyEntriesRequest(
         date: LocalDate,
-        hash: String,
+        verification: VerifyEntries.Verification,
         time: Instant,
     ): Boolean {
         return VerifyEntries.Request(
             date = date,
-            hash = hash,
+            verification = verification,
             time = time,
         ).send()
     }
 
     override suspend fun sendVerifyEntriesResponse(
         date: LocalDate,
-        hash: String,
+        verification: VerifyEntries.Verification,
         time: Instant,
     ): Boolean {
         return VerifyEntries.Response(
             date = date,
-            hash = hash,
+            verification = verification,
             time = time,
         ).send()
     }
 
     private suspend fun Payload.send(): Boolean {
-        log("Sending payload")
+        log("Sending payload: ${this::class.qualifiedName?.split(".")?.takeLast(2)?.joinToString(".")}")
         return rabbitMqHelper.send(
             getDataHostProperties = getDataHostProperties,
             payload = this,

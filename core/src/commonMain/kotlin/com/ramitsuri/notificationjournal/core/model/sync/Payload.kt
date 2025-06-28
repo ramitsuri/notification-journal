@@ -32,12 +32,12 @@ sealed interface Diagnostic : Payload {
 
 sealed interface VerifyEntries : Diagnostic {
     val date: LocalDate
-    val hash: String
+    val verification: Verification
 
     @Serializable
     data class Request(
         override val date: LocalDate,
-        override val hash: String,
+        override val verification: Verification,
         override val time: Instant,
         override val sender: Sender = Sender(),
     ) : VerifyEntries
@@ -45,10 +45,31 @@ sealed interface VerifyEntries : Diagnostic {
     @Serializable
     data class Response(
         override val date: LocalDate,
-        override val hash: String,
+        override val verification: Verification,
         override val time: Instant,
         override val sender: Sender = Sender(),
     ) : VerifyEntries
+
+    @Serializable
+    data class Verification(
+        val entries: List<JournalEntry>,
+    ) {
+        fun unmatchedEntries(other: Verification): List<JournalEntry> {
+            return entries.mapNotNull { entry ->
+                val otherEntry = other.entries.find { it.id == entry.id }
+                if (otherEntry == null) {
+                    otherEntry
+                } else if (otherEntry.tag != entry.tag ||
+                    otherEntry.text != entry.text ||
+                    otherEntry.entryTime != entry.entryTime
+                ) {
+                    otherEntry
+                } else {
+                    null
+                }
+            }
+        }
+    }
 }
 
 @Serializable
