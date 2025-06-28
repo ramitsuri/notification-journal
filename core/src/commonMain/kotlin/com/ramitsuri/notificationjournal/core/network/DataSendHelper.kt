@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.network
 
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
+import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -20,13 +21,13 @@ interface DataSendHelper {
 
     suspend fun sendVerifyEntriesRequest(
         date: LocalDate,
-        hash: String,
+        verification: VerifyEntries.Verification,
         time: Instant,
     ): Boolean
 
     suspend fun sendVerifyEntriesResponse(
         date: LocalDate,
-        hash: String,
+        verification: VerifyEntries.Verification,
         time: Instant,
     ): Boolean
 }

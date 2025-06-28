@@ -40,13 +40,13 @@ class VerifyEntriesHelper(
                                 return@collect
                             }
                             log { "Request for ${request.date} from ${request.sender.name}" }
-                            val hash = repository.getHashForDate(request.date)
-                            if (hash == null) {
-                                log { "Unable to compute hash for ${request.date}" }
+                            val verification = repository.getVerificationForDate(request.date)
+                            if (verification == null) {
+                                log { "Unable to compute verification for ${request.date}" }
                                 return@collect
                             }
                             dataSendHelper.sendVerifyEntriesResponse(
-                                hash = hash,
+                                verification = verification,
                                 time = clock.now(),
                                 date = request.date,
                             )
@@ -62,14 +62,14 @@ class VerifyEntriesHelper(
     // Returns name of the peer with which entries hash matches otherwise null
     suspend fun requestVerifyEntries(date: LocalDate): String? {
         log { "Verifying for date $date" }
-        val hash = repository.getHashForDate(date)
-        if (hash == null) {
-            log { "Unable to compute hash for date $date" }
+        val verification = repository.getVerificationForDate(date)
+        if (verification == null) {
+            log { "Unable to compute verification for date $date" }
             return null
         }
         val sent =
             dataSendHelper.sendVerifyEntriesRequest(
-                hash = hash,
+                verification = verification,
                 time = clock.now(),
                 date = date,
             )
@@ -97,8 +97,17 @@ class VerifyEntriesHelper(
             log { "Verify entries response is too old for date $date" }
             return null
         }
-        if (response.hash != hash) {
-            log { "Verify entries response hash doesn't match for date $date" }
+        val unmatchedEntries = verification.unmatchedEntries(response.verification)
+        if (unmatchedEntries.isNotEmpty()) {
+            log {
+                "Verify entries response doesn't match for date $date\n" +
+                    "Unmatched entries: ${
+                        unmatchedEntries.joinToString(
+                            prefix = "\n  ",
+                            separator = "\n  ",
+                        ) { it.tag + ": " + it.text.take(25) }
+                    }"
+            }
             return null
         }
         log { "Matches with ${response.sender.name} for date $date" }
