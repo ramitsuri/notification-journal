@@ -11,6 +11,8 @@ import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.toSender
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.channels.onSuccess
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -70,13 +72,19 @@ class RabbitMqHelper(
                         // queue =
                         dataHostProperties.deviceName,
                         // autoAck =
-                        true,
+                        false,
                         // deliverCallback =
                         { _, delivery ->
                             val message = String(delivery.body, Charsets.UTF_8)
                             val payload = json.decodeFromString<Payload>(message)
                             if (payload.sender.id != dataHostProperties.deviceId) {
                                 trySendBlocking(payload)
+                                    .onSuccess {
+                                        rmqChannel.basicAck(delivery.envelope.deliveryTag, false)
+                                    }
+                                    .onFailure {
+                                        log("Failed to send to channel", it)
+                                    }
                             }
                         },
                         // cancelCallback =
