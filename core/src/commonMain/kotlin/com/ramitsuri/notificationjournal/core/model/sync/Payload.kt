@@ -55,10 +55,16 @@ sealed interface VerifyEntries : Diagnostic {
         val entries: List<JournalEntry>,
     ) {
         fun unmatchedEntries(other: Verification): List<JournalEntry> {
+            if (other.entries.size > entries.size) {
+                return other.entries.filter { otherEntry ->
+                    entries.none { it.id == otherEntry.id }
+                }
+            }
             return entries.mapNotNull { entry ->
                 val otherEntry = other.entries.find { it.id == entry.id }
                 if (otherEntry == null) {
-                    otherEntry
+                    // Entry not found in other, so exists only locally, consider it as unmatched
+                    entry
                 } else if (otherEntry.tag != entry.tag ||
                     otherEntry.text != entry.text ||
                     otherEntry.entryTime != entry.entryTime
