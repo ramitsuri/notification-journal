@@ -153,11 +153,6 @@ jobs:
         with:
           name: server-app
 
-      - name: Extract server
-        run: |
-          unzip server-app.zip
-          mv ./server/build/libs/app.jar app.jar
-
       - name: show
         run: |
           ls
