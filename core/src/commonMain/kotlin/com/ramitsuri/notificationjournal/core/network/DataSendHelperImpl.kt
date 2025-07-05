@@ -13,7 +13,6 @@ import kotlinx.datetime.LocalDate
 
 internal class DataSendHelperImpl(
     private val getDataHostProperties: suspend () -> DataHostProperties,
-    private val rabbitMqHelper: RabbitMqHelper,
 ) : DataSendHelper {
     override suspend fun sendEntries(entries: List<JournalEntry>): Boolean {
         return Entity.Entries(
@@ -69,10 +68,7 @@ internal class DataSendHelperImpl(
 
     private suspend fun Payload.send(): Boolean {
         log("Sending payload: ${this::class.qualifiedName?.split(".")?.takeLast(2)?.joinToString(".")}")
-        return rabbitMqHelper.send(
-            getDataHostProperties = getDataHostProperties,
-            payload = this,
-        )
+        return false
     }
 
     private fun log(

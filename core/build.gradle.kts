@@ -56,8 +56,6 @@ kotlin {
 
             implementation(libs.multiplatform.settings)
 
-            implementation(libs.amqp.client)
-
             implementation(libs.datastore)
             implementation(libs.symspellkt)
             implementation(libs.symspellkt.fdic)

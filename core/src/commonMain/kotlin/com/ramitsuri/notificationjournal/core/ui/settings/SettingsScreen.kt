@@ -57,7 +57,6 @@ import notificationjournal.core.generated.resources.device_name
 import notificationjournal.core.generated.resources.exchange_name
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.ok
-import notificationjournal.core.generated.resources.password
 import notificationjournal.core.generated.resources.settings_app_version
 import notificationjournal.core.generated.resources.settings_copy_with_empty_tags
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
@@ -83,7 +82,6 @@ import notificationjournal.core.generated.resources.stats_row_not_uploaded_not_r
 import notificationjournal.core.generated.resources.stats_row_not_uploaded_reconciled
 import notificationjournal.core.generated.resources.stats_row_uploaded_not_reconciled
 import notificationjournal.core.generated.resources.stats_row_uploaded_reconciled
-import notificationjournal.core.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,7 +91,7 @@ fun SettingsScreen(
     state: SettingsViewState,
     onBack: () -> Unit,
     onUploadClicked: () -> Unit,
-    onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName, Username, Password) -> Unit,
+    onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName) -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
     onToggleShowConflictDiffInline: () -> Unit,
@@ -109,9 +107,9 @@ fun SettingsScreen(
     if (showDialog) {
         DataSharingPropertiesDialog(
             dataHostProperties = state.dataHostProperties,
-            onPositiveClick = { dataHost, exchangeName, deviceName, username, password ->
+            onPositiveClick = { dataHost, exchangeName, deviceName ->
                 showDialog = !showDialog
-                onDataSharingPropertiesSet(dataHost, exchangeName, deviceName, username, password)
+                onDataSharingPropertiesSet(dataHost, exchangeName, deviceName)
             },
             onNegativeClick = { showDialog = !showDialog },
         )
@@ -320,15 +318,13 @@ private fun SettingsItemWithToggle(
 @Composable
 private fun DataSharingPropertiesDialog(
     dataHostProperties: DataHostProperties,
-    onPositiveClick: (DataHost, ExchangeName, DeviceName, Username, Password) -> Unit,
+    onPositiveClick: (DataHost, ExchangeName, DeviceName) -> Unit,
     onNegativeClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var dataHostText by rememberSaveable { mutableStateOf(dataHostProperties.dataHost) }
     var exchangeNameText by rememberSaveable { mutableStateOf(dataHostProperties.exchangeName) }
     var deviceNameText by rememberSaveable { mutableStateOf(dataHostProperties.deviceName) }
-    var usernameText by rememberSaveable { mutableStateOf(dataHostProperties.username) }
-    var passwordText by rememberSaveable { mutableStateOf(dataHostProperties.password) }
 
     Dialog(onDismissRequest = { }) {
         Card {
@@ -378,26 +374,6 @@ private fun DataSharingPropertiesDialog(
                     modifier = modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = modifier.height(16.dp))
-                OutlinedTextField(
-                    value = usernameText,
-                    singleLine = true,
-                    label = {
-                        Text(stringResource(Res.string.username))
-                    },
-                    onValueChange = { usernameText = it },
-                    modifier = modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = modifier.height(16.dp))
-                OutlinedTextField(
-                    value = passwordText,
-                    singleLine = true,
-                    label = {
-                        Text(stringResource(Res.string.password))
-                    },
-                    onValueChange = { passwordText = it },
-                    modifier = modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = modifier.height(16.dp))
                 Row(
                     horizontalArrangement = Arrangement.End,
                     modifier = modifier.fillMaxWidth(),
@@ -416,8 +392,6 @@ private fun DataSharingPropertiesDialog(
                                 DataHost(dataHostText),
                                 ExchangeName(exchangeNameText),
                                 DeviceName(deviceNameText),
-                                Username(usernameText),
-                                Password(passwordText),
                             )
                         },
                     ) {
