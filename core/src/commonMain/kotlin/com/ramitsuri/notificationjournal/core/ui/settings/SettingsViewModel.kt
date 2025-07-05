@@ -79,8 +79,6 @@ class SettingsViewModel(
         dataHost: DataHost,
         exchangeName: ExchangeName,
         deviceName: DeviceName,
-        username: Username,
-        password: Password,
     ) {
         viewModelScope.launch {
             val newDataHostProperties =
@@ -96,8 +94,6 @@ class SettingsViewModel(
                         deviceName = deviceName.name,
                         exchangeName = exchangeName.name,
                         dataHost = dataHost.host,
-                        username = username.username,
-                        password = password.password,
                         otherHosts = newOtherHosts,
                     )
                 }

@@ -25,8 +25,6 @@ class SettingsViewModelTest : BaseTest() {
                     dataHost = DataHost("host-2"),
                     exchangeName = ExchangeName(""),
                     deviceName = DeviceName(""),
-                    username = Username(""),
-                    password = Password(""),
                 )
 
                 val afterChange = awaitItem()
@@ -49,8 +47,6 @@ class SettingsViewModelTest : BaseTest() {
                     dataHost = DataHost("host-1"),
                     exchangeName = ExchangeName(""),
                     deviceName = DeviceName(""),
-                    username = Username(""),
-                    password = Password(""),
                 )
 
                 val afterChange = awaitItem()
@@ -69,8 +65,6 @@ class SettingsViewModelTest : BaseTest() {
                     dataHost = DataHost("host-1"),
                     exchangeName = ExchangeName(""),
                     deviceName = DeviceName(""),
-                    username = Username(""),
-                    password = Password(""),
                 )
 
                 val afterChange = awaitItem()

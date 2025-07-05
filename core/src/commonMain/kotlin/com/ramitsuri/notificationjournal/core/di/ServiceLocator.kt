@@ -22,7 +22,6 @@ import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
-import com.ramitsuri.notificationjournal.core.network.RabbitMqHelper
 import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
@@ -113,7 +112,6 @@ object ServiceLocator {
                 Logger.i(TAG) { "Stopping jobs" }
                 launch {
                     receiveJob?.cancel()
-                    rabbitMqHelper.close()
                 }
                 verifyEntriesHelper.stop()
             }
@@ -121,7 +119,6 @@ object ServiceLocator {
 
     fun resetReceiveHelper() {
         coroutineScope.launch {
-            rabbitMqHelper.close()
             startReceiving()
         }
     }
@@ -260,14 +257,6 @@ object ServiceLocator {
     val dataSendHelper: DataSendHelper by lazy {
         DataSendHelperImpl(
             getDataHostProperties = prefManager.getDataHostProperties()::first,
-            rabbitMqHelper = rabbitMqHelper,
-        )
-    }
-
-    private val rabbitMqHelper by lazy {
-        RabbitMqHelper(
-            json = json,
-            ioDispatcher = ioDispatcher,
         )
     }
 
@@ -285,7 +274,6 @@ object ServiceLocator {
             coroutineScope = coroutineScope,
             ioDispatcher = ioDispatcher,
             getDataHostProperties = prefManager.getDataHostProperties()::first,
-            rabbitMqHelper = rabbitMqHelper,
         )
     }
 

@@ -23,7 +23,7 @@ data class DataHostProperties(
 ) {
     fun isValid(): Boolean {
         return deviceName.isNotBlank() && deviceId.isNotBlank() && exchangeName.isNotBlank() &&
-            dataHost.isNotBlank() && username.isNotBlank() && password.isNotBlank()
+            dataHost.isNotBlank()
     }
 }
 
