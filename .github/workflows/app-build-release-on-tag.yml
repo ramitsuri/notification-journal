@@ -156,6 +156,8 @@ jobs:
       - name: show
         run: |
           ls
+          echo "---"
+          ls server/build/libs/
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -163,5 +165,5 @@ jobs:
           files: |
             Journal-1.0.0.msi
             Journal-1.0.0.dmg
-            app.jar
+            server/build/libs/app.jar
             app_version.txt
