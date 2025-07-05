@@ -21,13 +21,16 @@ kotlin-serialization = "1.8.0"
 kotlinxCoroutines = "1.10.1"
 ktx = "1.16.0"
 ktlint = "12.1.0"
+ktor = "3.2.0"
 lifecycle = "2.8.3"
+logback = "1.5.18"
 material = "1.12.0"
 multiplatformSettings = "1.1.1"
 navigationCompose = "2.8.0-alpha12"
 playservices-wearable = "19.0.0"
 playservices-coroutines = "1.10.1"
 room = "2.7.1"
+shadowJar = "8.3.6"
 sqliteBundled = "2.5.1"
 symspellkt = "3.1.0"
 symspellktFdic = "3.0.7"
@@ -78,8 +81,12 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+ktor-server = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-ws = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 playservices-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "playservices-coroutines" }
@@ -119,3 +126,5 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 buildKonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildKonfig" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+shadowJar = { id = "com.gradleup.shadow", version.ref = "shadowJar" }
