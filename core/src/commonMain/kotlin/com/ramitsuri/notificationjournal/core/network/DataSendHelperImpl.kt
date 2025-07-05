@@ -8,11 +8,13 @@ import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
 import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.model.toSender
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
 internal class DataSendHelperImpl(
     private val getDataHostProperties: suspend () -> DataHostProperties,
+    private val webSocketHelper: WebSocketHelper,
 ) : DataSendHelper {
     override suspend fun sendEntries(entries: List<JournalEntry>): Boolean {
         return Entity.Entries(
@@ -67,8 +69,12 @@ internal class DataSendHelperImpl(
     }
 
     private suspend fun Payload.send(): Boolean {
+        val dataHostProperties = getDataHostProperties()
+        val actualPayload = this.attachSender(dataHostProperties.toSender())
         log("Sending payload: ${this::class.qualifiedName?.split(".")?.takeLast(2)?.joinToString(".")}")
-        return false
+        return webSocketHelper.send(
+            payload = actualPayload,
+        )
     }
 
     private fun log(

@@ -14,6 +14,8 @@ data class DataHostProperties(
     val exchangeName: String = "",
     @SerialName("dataHost")
     val dataHost: String = "http://",
+    @SerialName("port")
+    val port: Int = 8080,
     @SerialName("username")
     val username: String = "",
     @SerialName("password")

@@ -23,6 +23,7 @@ import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
 import com.ramitsuri.notificationjournal.core.network.DataSendHelperImpl
 import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
+import com.ramitsuri.notificationjournal.core.network.WebSocketHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -38,6 +39,7 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -112,6 +114,7 @@ object ServiceLocator {
                 Logger.i(TAG) { "Stopping jobs" }
                 launch {
                     receiveJob?.cancel()
+                    webSocketHelper.stop()
                 }
                 verifyEntriesHelper.stop()
             }
@@ -119,6 +122,7 @@ object ServiceLocator {
 
     fun resetReceiveHelper() {
         coroutineScope.launch {
+            webSocketHelper.stop()
             startReceiving()
         }
     }
@@ -257,6 +261,17 @@ object ServiceLocator {
     val dataSendHelper: DataSendHelper by lazy {
         DataSendHelperImpl(
             getDataHostProperties = prefManager.getDataHostProperties()::first,
+            webSocketHelper = webSocketHelper,
+        )
+    }
+
+    private val webSocketHelper by lazy {
+        WebSocketHelper(
+            json = json,
+            httpClient =
+                HttpClient {
+                    install(io.ktor.client.plugins.websocket.WebSockets)
+                },
         )
     }
 
@@ -271,9 +286,7 @@ object ServiceLocator {
 
     private val dataReceiveHelper by lazy {
         DataReceiveHelperImpl(
-            coroutineScope = coroutineScope,
-            ioDispatcher = ioDispatcher,
-            getDataHostProperties = prefManager.getDataHostProperties()::first,
+            webSocketHelper = webSocketHelper,
         )
     }
 
@@ -304,7 +317,9 @@ object ServiceLocator {
         receiveJob?.cancel()
         receiveJob =
             coroutineScope.launch {
-                dataReceiveHelper.reset()
+                launch {
+                    webSocketHelper.start(prefManager.getDataHostProperties()::first)
+                }
                 dataReceiveHelper.payloadFlow.filterIsInstance<Entity>().collect {
                     when (it) {
                         is Entity.Entries -> {

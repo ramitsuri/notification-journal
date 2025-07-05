@@ -61,6 +61,9 @@ kotlin {
             implementation(libs.symspellkt.fdic)
 
             implementation(libs.kermit)
+
+            implementation(libs.ktor.client)
+            implementation(libs.ktor.ws.client)
         }
         androidMain.dependencies {
             implementation(libs.androidx.ktx)
