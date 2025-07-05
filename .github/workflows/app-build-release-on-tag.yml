@@ -135,7 +135,7 @@ jobs:
 
   create_release:
     name: "Create release"
-    needs: [build_windows_app, build_macos_app]
+    needs: [build_windows_app, build_macos_app, build_server]
     runs-on: ubuntu-latest
     steps:
       - name: Download macos-app
@@ -152,6 +152,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: server-app
+
+      - name: Extract server
+        run: |
+          unzip server-app.zip
+          mv ./server/build/libs/app.jar app.jar
+
+      - name: show
+        run: |
+          ls
 
       - name: Create release
         uses: softprops/action-gh-release@v2
