@@ -5,6 +5,4 @@ import kotlinx.coroutines.flow.SharedFlow
 
 interface DataReceiveHelper {
     val payloadFlow: SharedFlow<Payload>
-
-    fun reset()
 }
