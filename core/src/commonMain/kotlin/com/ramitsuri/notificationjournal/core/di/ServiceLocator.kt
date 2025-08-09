@@ -123,11 +123,14 @@ object ServiceLocator {
             }
     }
 
-    fun resetReceiveHelper() {
+    fun resetReceiveHelper(resetWebsocket: Boolean = false) {
         coroutineScope.launch {
-            webSocketHelper.stop()
-            launch {
-                webSocketHelper.start(prefManager.getDataHostProperties()::first)
+            if (resetWebsocket || !webSocketHelper.isConnected.value) {
+                Logger.i(TAG) { "Resetting websocket" }
+                webSocketHelper.stop()
+                launch {
+                    webSocketHelper.start(prefManager.getDataHostProperties()::first)
+                }
             }
             startReceiving()
         }

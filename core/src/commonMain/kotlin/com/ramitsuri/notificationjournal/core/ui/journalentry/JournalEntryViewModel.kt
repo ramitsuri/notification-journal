@@ -402,7 +402,7 @@ class JournalEntryViewModel(
     }
 
     fun resetReceiveHelper() {
-        ServiceLocator.resetReceiveHelper()
+        ServiceLocator.resetReceiveHelper(resetWebsocket = true)
     }
 
     fun notify(
