@@ -5,6 +5,7 @@ import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
+import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
@@ -219,11 +220,31 @@ class JournalRepository(
     suspend fun search(
         query: String,
         tags: List<String>?,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null,
+        exactMatch: Boolean = false,
+        sortOrder: SortOrder = SortOrder.DESC,
     ): List<JournalEntry> {
+        val startDateString = startDate?.toString()
+        val endDateString = endDate?.toString()
+        val sortAscending = sortOrder == SortOrder.DESC
         return if (tags == null) {
-            dao.search(query)
+            dao.search(
+                query = query,
+                startDate = startDateString,
+                endDate = endDateString,
+                exactMatch = exactMatch,
+                sortAscending = sortAscending,
+            )
         } else {
-            dao.search(query, tags)
+            dao.search(
+                query = query,
+                tags = tags,
+                startDate = startDateString,
+                endDate = endDateString,
+                exactMatch = exactMatch,
+                sortAscending = sortAscending,
+            )
         }
     }
 

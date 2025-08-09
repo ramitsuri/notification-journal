@@ -34,16 +34,41 @@ abstract class JournalEntryDao {
     abstract suspend fun get(id: String): JournalEntry?
 
     @Query(
-        "SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND tag IN (:tags) AND deleted = 0 " +
-            "ORDER BY entry_time DESC",
+        "SELECT * FROM journalentry WHERE " +
+            "(CASE WHEN :exactMatch THEN text = :query ELSE text LIKE '%' || :query || '%' END) " +
+            "AND tag IN (:tags) AND deleted = 0 " +
+            "AND (:startDate IS NULL OR entry_time >= :startDate) " +
+            "AND (:endDate IS NULL OR entry_time <= :endDate) " +
+            "ORDER BY " +
+            "CASE WHEN :sortAscending THEN entry_time END ASC, " +
+            "CASE WHEN NOT :sortAscending THEN entry_time END DESC",
     )
     abstract suspend fun search(
         query: String,
         tags: List<String>,
+        startDate: String?,
+        endDate: String?,
+        exactMatch: Boolean,
+        sortAscending: Boolean,
     ): List<JournalEntry>
 
-    @Query("SELECT * FROM journalentry WHERE text LIKE '%' || :query || '%' AND deleted = 0 ORDER BY entry_time DESC")
-    abstract suspend fun search(query: String): List<JournalEntry>
+    @Query(
+        "SELECT * FROM journalentry WHERE " +
+            "(CASE WHEN :exactMatch THEN text = :query ELSE text LIKE '%' || :query || '%' END) " +
+            "AND deleted = 0 " +
+            "AND (:startDate IS NULL OR entry_time >= :startDate) " +
+            "AND (:endDate IS NULL OR entry_time <= :endDate) " +
+            "ORDER BY " +
+            "CASE WHEN :sortAscending THEN entry_time END ASC, " +
+            "CASE WHEN NOT :sortAscending THEN entry_time END DESC",
+    )
+    abstract suspend fun search(
+        query: String,
+        startDate: String?,
+        endDate: String?,
+        exactMatch: Boolean,
+        sortAscending: Boolean,
+    ): List<JournalEntry>
 
     @Query("SELECT DISTINCT tag FROM journalentry")
     abstract fun getEntryTags(): Flow<List<String>>
