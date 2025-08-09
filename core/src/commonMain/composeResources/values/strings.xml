@@ -181,7 +181,7 @@
     <string name="search_end_date">End date</string>
     <string name="search_exact_match">Exact match</string>
     <plurals name="search_results_count">
-        <item quantity="1">1 result</item>
+        <item quantity="one">1 result</item>
         <item quantity="other">%1$d results</item>
     </plurals>
 
