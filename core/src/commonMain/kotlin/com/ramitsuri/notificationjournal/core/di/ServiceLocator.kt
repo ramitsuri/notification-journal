@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.json.Json
 import okio.Path.Companion.toOkioPath
 import java.util.UUID
@@ -101,12 +102,14 @@ object ServiceLocator {
         get() = factory.allowJournalImport
 
     fun onAppStart() {
+        Logger.i(TAG) { "app start" }
         appStopJob?.cancel()
-        startReceiving()
+        resetReceiveHelper()
         verifyEntriesHelper.start()
     }
 
     fun onAppStop() {
+        Logger.i(TAG) { "app stop" }
         appStopJob =
             coroutineScope.launch {
                 Logger.i(TAG) { "Will wait for 2 minutes before stopping jobs" }
@@ -123,6 +126,9 @@ object ServiceLocator {
     fun resetReceiveHelper() {
         coroutineScope.launch {
             webSocketHelper.stop()
+            launch {
+                webSocketHelper.start(prefManager.getDataHostProperties()::first)
+            }
             startReceiving()
         }
     }
@@ -265,7 +271,7 @@ object ServiceLocator {
         )
     }
 
-    private val webSocketHelper by lazy {
+    val webSocketHelper by lazy {
         WebSocketHelper(
             json = json,
             httpClient =
@@ -312,42 +318,40 @@ object ServiceLocator {
         Dispatchers.Default
     }
 
-    private fun startReceiving() {
-        Logger.i(TAG) { "Start receiving" }
-        receiveJob?.cancel()
-        receiveJob =
-            coroutineScope.launch {
+    private suspend fun startReceiving() =
+        supervisorScope {
+            Logger.i(TAG) { "Start receiving" }
+            receiveJob?.cancel()
+            receiveJob =
                 launch {
-                    webSocketHelper.start(prefManager.getDataHostProperties()::first)
-                }
-                dataReceiveHelper.payloadFlow.filterIsInstance<Entity>().collect {
-                    when (it) {
-                        is Entity.Entries -> {
-                            coroutineScope.launch { repository.handlePayload(it) }
-                        }
+                    dataReceiveHelper.payloadFlow.filterIsInstance<Entity>().collect {
+                        when (it) {
+                            is Entity.Entries -> {
+                                coroutineScope.launch { repository.handlePayload(it) }
+                            }
 
-                        is Entity.Tags -> {
-                            coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
-                        }
+                            is Entity.Tags -> {
+                                coroutineScope.launch { tagsDao.clearAndInsert(it.data) }
+                            }
 
-                        is Entity.Templates -> {
-                            coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
-                        }
+                            is Entity.Templates -> {
+                                coroutineScope.launch { templatesDao.clearAndInsert(it.data) }
+                            }
 
-                        is Entity.ClearDaysAndInsertEntries -> {
-                            coroutineScope.launch {
-                                repository.clearDaysAndInsert(
-                                    days = it.days,
-                                    entries = it.entries,
-                                    // We're receiving entries here, we don't want to send them back
-                                    uploadEntries = false,
-                                )
+                            is Entity.ClearDaysAndInsertEntries -> {
+                                coroutineScope.launch {
+                                    repository.clearDaysAndInsert(
+                                        days = it.days,
+                                        entries = it.entries,
+                                        // We're receiving entries here, we don't want to send them back
+                                        uploadEntries = false,
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-    }
+        }
 
     private suspend fun migrateFromKeyValueStore() {
         val oldKVStore = PrefsKeyValueStore(factory)
