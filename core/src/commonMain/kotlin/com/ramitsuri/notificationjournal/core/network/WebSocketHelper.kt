@@ -12,7 +12,9 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
 
 class WebSocketHelper(
@@ -22,10 +24,21 @@ class WebSocketHelper(
     private val _messages = MutableSharedFlow<Payload>()
     val messages = _messages.asSharedFlow()
 
+    private val _isConnected: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isConnected = _isConnected.asStateFlow()
+
     private var session: DefaultClientWebSocketSession? = null
+        set(value) {
+            field = value
+            _isConnected.value = value != null
+        }
 
     suspend fun start(getDataHostProperties: suspend () -> DataHostProperties) {
-        stop()
+        if (session != null) {
+            log("Already connected")
+            return
+        }
+        log("Starting")
         val dataHostProperties = getDataHostProperties()
         if (!dataHostProperties.isValid()) {
             log("Cannot send, invalid data host properties")
@@ -42,14 +55,18 @@ class WebSocketHelper(
                 log("Connected to websocket: $session")
                 startReceiver()
             }
+            session = null
         } catch (e: Exception) {
             log("Error while starting websocket", e)
+            session = null
         }
     }
 
     suspend fun stop() {
+        log("Stopping")
         session?.close()
         session = null
+        _isConnected.value = false
     }
 
     suspend fun send(payload: Payload): Boolean {
@@ -80,6 +97,13 @@ class WebSocketHelper(
         message: String,
         throwable: Throwable? = null,
     ) {
-        Logger.i("WebSocketHelper") { "$message, ${throwable?.localizedMessage}" }
+        Logger.i("WebSocketHelper") {
+            val exceptionMessage = throwable?.localizedMessage
+            if (exceptionMessage.isNullOrEmpty()) {
+                message
+            } else {
+                "$message , $exceptionMessage"
+            }
+        }
     }
 }

@@ -26,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -105,7 +107,6 @@ import notificationjournal.core.generated.resources.reconcile_all_body
 import notificationjournal.core.generated.resources.reconcile_all_upload_on_success
 import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
-import notificationjournal.core.generated.resources.sync_down
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged_format
 import notificationjournal.core.generated.resources.view_journal_entry_day
@@ -281,6 +282,7 @@ fun JournalEntryScreen(
                 )
 
             Toolbar(
+                isConnected = state.isConnected,
                 notUploadedCount = state.notUploadedCount,
                 onSyncClicked = { onEntryScreenAction(EntryScreenAction.Sync) },
                 onSettingsClicked = { onEntryScreenAction(EntryScreenAction.NavToSettings) },
@@ -418,6 +420,7 @@ private fun DeleteDialog(
 @Composable
 private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
+    isConnected: Boolean,
     notUploadedCount: Int,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
@@ -460,7 +463,7 @@ private fun Toolbar(
                         .padding(4.dp),
             ) {
                 Icon(
-                    imageVector = vectorResource(Res.drawable.sync_down),
+                    imageVector = if (isConnected) Icons.Outlined.Link else Icons.Outlined.LinkOff,
                     contentDescription = null,
                 )
             }

@@ -33,6 +33,8 @@ fun main() =
     application {
         val factory = DiFactory()
         ServiceLocator.init(factory)
+        // This is not called automatically when the app first starts
+        ServiceLocator.onAppStart()
         var sizeIncreasedLastTime by remember { mutableStateOf(false) }
 
         val windowState =

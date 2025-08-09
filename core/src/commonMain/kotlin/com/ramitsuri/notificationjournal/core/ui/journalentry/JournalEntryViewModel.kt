@@ -15,6 +15,7 @@ import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
+import com.ramitsuri.notificationjournal.core.network.WebSocketHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
@@ -58,6 +59,7 @@ class JournalEntryViewModel(
     private val clock: Clock = Clock.System,
     private val allowNotify: Boolean,
     private val verifyEntriesHelper: VerifyEntriesHelper,
+    private val webSocketHelper: WebSocketHelper,
 ) : ViewModel() {
     private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
     val receivedText: StateFlow<String?> = _receivedText
@@ -102,6 +104,7 @@ class JournalEntryViewModel(
                 prefManager.showConflictDiffInline(),
                 requestExportDirectory,
                 verifyEntries,
+                webSocketHelper.isConnected,
             ) {
                     contentForCopy,
                     snackBarType,
@@ -112,6 +115,7 @@ class JournalEntryViewModel(
                     showConflictDiffInline,
                     requestExportDirectory,
                     verifyEntries,
+                    isConnected,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
@@ -132,6 +136,7 @@ class JournalEntryViewModel(
                     snackBarType = snackBarType,
                     allowNotify = allowNotify,
                     requestExportDirectory = requestExportDirectory,
+                    isConnected = isConnected,
                 )
             }
         }.stateIn(
@@ -524,6 +529,7 @@ class JournalEntryViewModel(
                         prefManager = ServiceLocator.prefManager,
                         allowNotify = ServiceLocator.allowJournalEntryNotify(),
                         verifyEntriesHelper = ServiceLocator.verifyEntriesHelper,
+                        webSocketHelper = ServiceLocator.webSocketHelper,
                     ) as T
                 }
             }
@@ -544,6 +550,7 @@ data class ViewState(
     val snackBarType: SnackBarType = SnackBarType.None,
     val allowNotify: Boolean = false,
     val requestExportDirectory: Boolean = false,
+    val isConnected: Boolean = false,
 ) {
     companion object {
         val defaultDayGroup = DayGroup(LocalDate(1970, 1, 1), listOf())
