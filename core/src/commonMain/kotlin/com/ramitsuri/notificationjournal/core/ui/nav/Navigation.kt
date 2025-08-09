@@ -454,6 +454,10 @@ fun NavGraph(
                 onTagClicked = viewModel::tagClicked,
                 onSelectAllTagsClicked = viewModel::selectAllTagsClicked,
                 onUnselectAllTagsClicked = viewModel::unselectAllTagsClicked,
+                onEndDateSelected = viewModel::onEndDateSelected,
+                onStartDateSelected = viewModel::onStartDateSelected,
+                onSortOrderChanged = viewModel::onSortOrderChanged,
+                onExactMatchToggled = viewModel::onExactMatchToggled,
                 onNavToViewJournalEntryDay = { entry ->
                     navController.navigate(
                         Destination.VIEW_JOURNAL_ENTRY_DAY.routeWithArgValues(
