@@ -66,7 +66,6 @@ class WebSocketHelper(
         log("Stopping")
         session?.close()
         session = null
-        _isConnected.value = false
     }
 
     suspend fun send(payload: Payload): Boolean {
