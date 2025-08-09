@@ -227,7 +227,7 @@ class JournalRepository(
     ): List<JournalEntry> {
         val startDateString = startDate?.toString()
         val endDateString = endDate?.toString()
-        val sortAscending = sortOrder == SortOrder.DESC
+        val sortAscending = sortOrder == SortOrder.ASC
         return if (tags == null) {
             dao.search(
                 query = query,
