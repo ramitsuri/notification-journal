@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # Check if new version needs to be downloaded
-cd "$HOME"/usbdrv/notification-journal || exit
-
 current_version=$(cat current_app_version.txt)
 current_version_code="${current_version//.}"
 current_version_code="$((current_version_code))"
@@ -28,8 +26,8 @@ if [[ $new_version_code -gt $current_version_code ]]
 then
   rm app.jar
   wget https://github.com/ramitsuri/notification-journal/releases/latest/download/app.jar
-  rm current_version.txt
-  mv app_version.txt current_version.txt
+  rm current_app_version.txt
+  mv app_version.txt current_app_version.txt
 else
   rm app_version.txt
 fi
