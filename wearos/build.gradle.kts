@@ -74,7 +74,7 @@ dependencies {
     implementation(libs.wear.input)
 
     implementation(libs.wear.tiles)
-    implementation(libs.wear.tiles.material)
+    implementation(libs.wear.protolayout.material3)
 
     implementation(libs.horologist.compose.tools)
     implementation(libs.horologist.tiles)
