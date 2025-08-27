@@ -49,7 +49,6 @@ class MainActivity : ComponentActivity() {
                 onAddRequested = viewModel::add,
                 onTemplateAddRequested = viewModel::addFromTemplate,
                 onTransferRequested = viewModel::transferLocallySaved,
-                onUploadRequested = viewModel::triggerUpload,
             )
         }
         // From tile
@@ -58,10 +57,6 @@ class MainActivity : ComponentActivity() {
                 launchForInput { entry ->
                     viewModel.add(entry, exitOnDone = true)
                 }
-            }
-
-            UPLOAD -> {
-                viewModel.triggerUpload()
             }
 
             TEMPLATE -> {
@@ -97,7 +92,6 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_KEY = "EXTRA_KEY"
         const val ADD = "ADD_JOURNAL_ENTRY"
-        const val UPLOAD = "UPLOAD"
         const val TEMPLATE = "TEMPLATE"
         const val TEMPLATE_ID = "TEMPLATE_ID"
         const val SHOW_ADDITIONAL_TEMPLATES = "SHOW_ADDITIONAL_TEMPLATES"

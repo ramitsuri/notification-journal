@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.tile
 
 import android.content.Context
 import androidx.wear.protolayout.ResourceBuilders.Resources
+import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.TileBuilders.Tile
@@ -12,21 +13,21 @@ import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 
 @OptIn(ExperimentalHorologistApi::class)
 class JournalTileService : SuspendingTileService() {
-    private lateinit var renderer: TileRenderer
     private val templateDao: JournalEntryTemplateDao by lazy { ServiceLocator.templatesDao }
-
-    override fun onCreate() {
-        super.onCreate()
-        renderer = TileRenderer(this)
-    }
 
     override suspend fun tileRequest(requestParams: RequestBuilders.TileRequest): Tile {
         val tileState = TileState(templateDao.getAll())
-        return renderer.renderTimeline(tileState, requestParams)
+        val layoutElement = tileLayout(this, requestParams.deviceConfiguration, tileState)
+        return Tile.Builder()
+            .setResourcesVersion("")
+            .setTileTimeline(TimelineBuilders.Timeline.fromLayoutElement(layoutElement))
+            .build()
     }
 
     override suspend fun resourcesRequest(requestParams: ResourcesRequest): Resources {
-        return renderer.produceRequestedResources(Unit, requestParams)
+        return Resources.Builder()
+            .setVersion(requestParams.version)
+            .build()
     }
 
     companion object {

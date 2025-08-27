@@ -2,43 +2,31 @@ package com.ramitsuri.notificationjournal.presentation
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.AutoCenteringParams
-import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
-import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
-import androidx.wear.compose.material.Vignette
-import androidx.wear.compose.material.VignettePosition
-import androidx.wear.compose.material.scrollAway
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope
+import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.material3.AppScaffold
+import androidx.wear.compose.material3.EdgeButton
+import androidx.wear.compose.material3.EdgeButtonSize
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.TextButton
+import androidx.wear.compose.material3.TextButtonDefaults
+import androidx.wear.compose.material3.TimeText
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
@@ -52,57 +40,60 @@ fun WearApp(
     viewState: ViewState,
     onAddRequested: (String) -> Unit,
     onTemplateAddRequested: (String) -> Unit,
-    onUploadRequested: () -> Unit,
     onTransferRequested: () -> Unit,
 ) {
     NotificationJournalTheme {
-        val listState = rememberScalingLazyListState()
-        Scaffold(
+        AppScaffold(
             timeText = {
-                TimeText(modifier = Modifier.scrollAway(listState))
-            },
-            vignette = {
-                Vignette(vignettePosition = VignettePosition.TopAndBottom)
-            },
-            positionIndicator = {
-                PositionIndicator(
-                    scalingLazyListState = listState,
-                )
+                TimeText()
             },
         ) {
-            ScalingLazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                autoCentering = AutoCenteringParams(itemIndex = 0),
-                state = listState,
-            ) {
-                val showOnDeviceEntries = viewState.journalEntries.isNotEmpty()
-                if (showOnDeviceEntries) {
-                    val count = viewState.journalEntries.size
-                    item {
-                        Text(
-                            text =
-                                pluralStringResource(
-                                    id = R.plurals.journal_entries_count,
-                                    count = count,
-                                    count,
-                                ),
-                        )
-                    }
+            val listState = rememberTransformingLazyColumnState()
+            val launcher =
+                rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                    it.processResult(onAddRequested)
                 }
-                templateItems(
-                    templates = viewState.journalEntryTemplates,
-                    onTemplateAddRequested = onTemplateAddRequested,
-                )
-                addAndUploadButtons(
-                    onAddRequested = onAddRequested,
-                    onUploadRequested = onUploadRequested,
-                )
-                // Hiding because upload is not a thing anymore
-                // RequestUploadFromPhoneButton(onUploadRequested)
-                if (showOnDeviceEntries) {
+            ScreenScaffold(
+                scrollState = listState,
+                edgeButton = {
+                    EdgeButton(
+                        onClick = { launcher.launchInputActivity() },
+                        buttonSize = EdgeButtonSize.Medium,
+                    ) {
+                        Text(stringResource(R.string.add_new))
+                    }
+                },
+            ) { contentPadding ->
+                TransformingLazyColumn(
+                    contentPadding = contentPadding,
+                    state = listState,
+                ) {
+                    val showOnDeviceEntries = viewState.journalEntries.isNotEmpty()
+                    if (showOnDeviceEntries) {
+                        val count = viewState.journalEntries.size
+                        item {
+                            Text(
+                                text =
+                                    pluralStringResource(
+                                        id = R.plurals.journal_entries_count,
+                                        count = count,
+                                        count,
+                                    ),
+                            )
+                        }
+                    }
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TransferToPhoneButton(onTransferRequested)
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                    templateItems(
+                        templates = viewState.journalEntryTemplates,
+                        onTemplateAddRequested = onTemplateAddRequested,
+                    )
+                    if (showOnDeviceEntries) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TransferToPhoneButton(onTransferRequested)
+                        }
                     }
                 }
             }
@@ -110,7 +101,7 @@ fun WearApp(
     }
 }
 
-private fun ScalingLazyListScope.templateItems(
+private fun TransformingLazyColumnScope.templateItems(
     templates: List<JournalEntryTemplate>,
     onTemplateAddRequested: (String) -> Unit,
 ) {
@@ -127,31 +118,6 @@ private fun ScalingLazyListScope.templateItems(
                 TemplateButtonRow(templateButtons)
             }
         }
-}
-
-private fun ScalingLazyListScope.addAndUploadButtons(
-    onAddRequested: (String) -> Unit,
-    onUploadRequested: () -> Unit,
-) {
-    item {
-        val launcher =
-            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                it.processResult(onAddRequested)
-            }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-        ) {
-            SmallButton(
-                onClick = {
-                    launcher.launchInputActivity()
-                },
-                contentDescriptionRes = R.string.add_new,
-                icon = Icons.Rounded.Add,
-            )
-            RequestUploadFromPhoneButton(onUploadRequested = onUploadRequested)
-        }
-    }
 }
 
 @Composable
@@ -172,7 +138,7 @@ private fun TemplateButtonRow(templateButtons: List<TemplateButton>) {
 
 @Composable
 private fun TransferToPhoneButton(onTransferRequested: () -> Unit) {
-    Button(
+    TextButton(
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -184,53 +150,19 @@ private fun TransferToPhoneButton(onTransferRequested: () -> Unit) {
 }
 
 @Composable
-private fun RequestUploadFromPhoneButton(onUploadRequested: () -> Unit) {
-    SmallButton(
-        onClick = onUploadRequested,
-        contentDescriptionRes = R.string.upload,
-        icon = Icons.Rounded.Upload,
-    )
-}
-
-@Composable
-private fun SmallButton(
-    onClick: () -> Unit,
-    @StringRes contentDescriptionRes: Int,
-    icon: ImageVector,
-) {
-    Button(
-        modifier =
-            Modifier
-                .size(ButtonDefaults.LargeButtonSize),
-        colors = ButtonDefaults.secondaryButtonColors(),
-        onClick = onClick,
-    ) {
-        val iconModifier =
-            Modifier
-                .size(16.dp)
-                .wrapContentSize(align = Alignment.Center)
-        Icon(
-            imageVector = icon,
-            contentDescription = stringResource(id = contentDescriptionRes),
-            modifier = iconModifier,
-        )
-    }
-}
-
-@Composable
 private fun LargeButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     text: String,
 ) {
-    Button(
+    TextButton(
         modifier =
             modifier
                 .padding(bottom = 8.dp),
-        colors = ButtonDefaults.secondaryButtonColors(),
+        colors = TextButtonDefaults.filledTonalTextButtonColors(),
         onClick = onClick,
     ) {
-        Text(text = text, maxLines = 1, style = MaterialTheme.typography.display3)
+        Text(text = text, maxLines = 1, style = MaterialTheme.typography.displayMedium)
     }
 }
 
@@ -239,7 +171,7 @@ private data class TemplateButton(val text: String, val onClick: () -> Unit)
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
-    WearApp(viewState = ViewState(), { }, { }, { }, { })
+    WearApp(viewState = ViewState(), { }, { }, { })
 }
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
@@ -264,7 +196,6 @@ private fun JournalEntriesPresentPreview() {
                         ),
                     ),
             ),
-        { },
         { },
         { },
         { },
