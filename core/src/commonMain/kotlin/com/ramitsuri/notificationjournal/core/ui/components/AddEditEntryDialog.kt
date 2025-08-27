@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -95,7 +96,6 @@ import kotlinx.datetime.LocalTime
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_save
 import notificationjournal.core.generated.resources.add_entry_save_and_add_another
-import notificationjournal.core.generated.resources.add_from_template
 import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.am
 import notificationjournal.core.generated.resources.cancel
@@ -107,6 +107,7 @@ import notificationjournal.core.generated.resources.tags
 import notificationjournal.core.generated.resources.unsaved_warning_message
 import org.jetbrains.compose.resources.stringResource
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditEntryDialog(
@@ -141,7 +142,6 @@ fun AddEditEntryDialog(
 ) {
     var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
-    var showDateKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showCancelWarningDialog by remember { mutableStateOf(false) }
     val scrollBehavior =
         TopAppBarDefaults.enterAlwaysScrollBehavior(
@@ -165,7 +165,6 @@ fun AddEditEntryDialog(
                 .focusable().onKeyEvent {
                     showTemplatesKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed
                     showTagsKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed.not()
-                    showDateKeyboardShortcutHints = it.isMetaPressed
 
                     when {
                         // Meta + Shift + S -> AddAnother
@@ -1124,34 +1123,34 @@ private fun Templates(
     showKeyboardShortcutHint: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(Res.string.add_from_template),
-            style = MaterialTheme.typography.bodySmall,
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            templates.forEachIndexed { index, template ->
-                Box {
-                    FilterChip(
-                        selected = false,
-                        onClick = { onTemplateClicked(template) },
-                        label = {
-                            Text(text = "${template.shortDisplayText} ${template.displayText}")
-                        },
-                    )
-
-                    val hint =
-                        if (index == 9) {
-                            "0"
-                        } else if (index < 9) {
-                            (index + 1).toString()
-                        } else {
-                            null
-                        }
-                    if (showKeyboardShortcutHint && hint != null) {
-                        Badge(modifier = Modifier.align(Alignment.TopEnd)) {
-                            Text(hint)
-                        }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+    ) {
+        templates.forEachIndexed { index, template ->
+            Box {
+                OutlinedButton(
+                    onClick = { onTemplateClicked(template) },
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(text = template.shortDisplayText, style = MaterialTheme.typography.headlineMedium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = template.displayText, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                val hint =
+                    if (index == 9) {
+                        "0"
+                    } else if (index < 9) {
+                        (index + 1).toString()
+                    } else {
+                        null
+                    }
+                if (showKeyboardShortcutHint && hint != null) {
+                    Badge(modifier = Modifier.align(Alignment.TopEnd)) {
+                        Text(hint)
                     }
                 }
             }
