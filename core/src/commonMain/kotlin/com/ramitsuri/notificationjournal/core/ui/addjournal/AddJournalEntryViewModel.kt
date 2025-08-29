@@ -22,6 +22,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -30,6 +31,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.atTime
 import java.net.URLDecoder
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.days
 
 class AddJournalEntryViewModel(
@@ -75,7 +77,7 @@ class AddJournalEntryViewModel(
             ),
         )
     val state: StateFlow<AddJournalEntryViewState> = _state
-    private var enableGettingSuggestions = true
+    private val enableGettingSuggestions = AtomicBoolean(true)
 
     init {
         loadTags()
@@ -210,7 +212,7 @@ class AddJournalEntryViewModel(
 
     fun onSuggestionClicked(suggestion: String?) {
         if (suggestion != null) {
-            enableGettingSuggestions = false
+            enableGettingSuggestions.set(false)
             _state.value.textFieldState.edit {
                 // Since new lines in the text block get broken up into separate entries later on, look at the last
                 // line in the whole text block to replace with selected suggestion
@@ -218,6 +220,8 @@ class AddJournalEntryViewModel(
                 delete(startIndexOfTextBeingReplaced, length)
                 insert(startIndexOfTextBeingReplaced, suggestion)
             }
+        } else {
+            enableGettingSuggestions.set(false)
         }
         _state.update { it.copy(suggestions = listOf()) }
     }
@@ -348,15 +352,22 @@ class AddJournalEntryViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            snapshotFlow { _state.value.textFieldState.text.isEmpty() }
+                .distinctUntilChanged()
+                .collect { isEmpty ->
+                    if (isEmpty) {
+                        enableGettingSuggestions.compareAndSet(false, true)
+                    }
+                }
+        }
     }
 
     private suspend fun getSuggestions(
         text: CharSequence,
         tag: String?,
     ): List<String> {
-        // Disable so that we don't get the same suggestion again from text field changing from selected suggestion
-        if (!enableGettingSuggestions) {
-            enableGettingSuggestions = true
+        if (!enableGettingSuggestions.get()) {
             return listOf()
         }
         if (tag == null || Tag.isNoTag(tag)) {
