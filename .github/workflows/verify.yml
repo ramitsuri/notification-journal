@@ -46,6 +46,11 @@ jobs:
       - name: Generate package
         run: ./gradlew packageDistributionForCurrentOS
 
+      - name: Fix name
+        run: |
+          ls core/build/compose/binaries/main/deb/
+          mv core/build/compose/binaries/main/deb/*.deb core/build/compose/binaries/main/deb/Journal-1.0.0.deb
+
       - name: Upload linux app
         uses: actions/upload-artifact@v4
         with:
