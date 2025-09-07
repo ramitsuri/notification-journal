@@ -183,7 +183,6 @@ actual class DiFactory {
                 "com.ramitsuri.notificationjournal.release"
             }
 
-        // TODO make compatible with other desktop OSs
         private val appDir =
             System.getProperty("user.home")
                 .let { userHomePath ->
@@ -195,6 +194,8 @@ actual class DiFactory {
                                 if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
                                     "Library"
                                 } else if (os.indexOf("win") >= 0) {
+                                    "Documents"
+                                } else if (os.indexOf("linux") >= 0) {
                                     "Documents"
                                 } else {
                                     // Setting this for tests, not fully tested

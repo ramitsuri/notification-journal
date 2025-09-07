@@ -108,6 +108,28 @@ jobs:
           name: windows-app
           path: core/build/compose/binaries/main/msi/Journal-1.0.0.msi
 
+  build_linux_app:
+    name: "Build linux app"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Generate package
+        run: ./gradlew packageDistributionForCurrentOS
+
+      - name: Upload linux app
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-app
+          path: core/build/compose/binaries/main/deb/Journal-1.0.0.deb
+
   build_server:
     name: "Build server"
     runs-on: ubuntu-latest

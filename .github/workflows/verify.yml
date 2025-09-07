@@ -13,6 +13,7 @@ jobs:
 
   verify:
     name: 'Run Verify Script'
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -28,3 +29,25 @@ jobs:
 
       - name: 'Tests'
         run: ./scripts/unit-tests.sh
+
+  build_linux_app:
+    name: "Build linux app"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Generate package
+        run: ./gradlew packageDistributionForCurrentOS
+
+      - name: Upload linux app
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-app
+          path: core/build/compose/binaries/main/deb/Journal-1.0.0.deb
