@@ -363,7 +363,7 @@ fun NavGraph(
             SettingsScreen(
                 state = viewState,
                 onBack = { navController.navigateUp() },
-                onUploadClicked = viewModel::upload,
+                onForceUploadAllClicked = viewModel::forceUploadAll,
                 onDataSharingPropertiesSet = viewModel::setDataSharingProperties,
                 onTagsClicked = {
                     navController.navigate(Destination.TAGS.routeWithArgValues())

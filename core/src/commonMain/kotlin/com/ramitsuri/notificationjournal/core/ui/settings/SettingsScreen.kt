@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
+import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
 import notificationjournal.core.generated.resources.Res
@@ -63,6 +64,12 @@ import notificationjournal.core.generated.resources.settings_data_sharing_not_se
 import notificationjournal.core.generated.resources.settings_data_sharing_title
 import notificationjournal.core.generated.resources.settings_delete_all_subtitle
 import notificationjournal.core.generated.resources.settings_delete_all_title
+import notificationjournal.core.generated.resources.settings_force_upload_all_done
+import notificationjournal.core.generated.resources.settings_force_upload_all_initial
+import notificationjournal.core.generated.resources.settings_force_upload_all_nothing
+import notificationjournal.core.generated.resources.settings_force_upload_all_subtitle
+import notificationjournal.core.generated.resources.settings_force_upload_all_title
+import notificationjournal.core.generated.resources.settings_force_upload_all_uploading
 import notificationjournal.core.generated.resources.settings_journal_import_export_subtitle
 import notificationjournal.core.generated.resources.settings_journal_import_export_title
 import notificationjournal.core.generated.resources.settings_logs
@@ -73,8 +80,6 @@ import notificationjournal.core.generated.resources.settings_tags_subtitle
 import notificationjournal.core.generated.resources.settings_tags_title
 import notificationjournal.core.generated.resources.settings_templates_subtitle
 import notificationjournal.core.generated.resources.settings_templates_title
-import notificationjournal.core.generated.resources.settings_upload_subtitle
-import notificationjournal.core.generated.resources.settings_upload_title
 import notificationjournal.core.generated.resources.stats_column_days
 import notificationjournal.core.generated.resources.stats_column_entries
 import notificationjournal.core.generated.resources.stats_row_all
@@ -90,7 +95,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     state: SettingsViewState,
     onBack: () -> Unit,
-    onUploadClicked: () -> Unit,
+    onForceUploadAllClicked: () -> Unit,
     onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName) -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
@@ -102,16 +107,28 @@ fun SettingsScreen(
     onDeleteAll: () -> Unit,
     onShowStatsToggled: () -> Unit,
 ) {
-    var showDialog by rememberSaveable { mutableStateOf(false) }
+    var showDataSharingPropertiesDialog by rememberSaveable { mutableStateOf(false) }
+    var showForceUploadAllDialog by rememberSaveable { mutableStateOf(false) }
 
-    if (showDialog) {
+    if (showDataSharingPropertiesDialog) {
         DataSharingPropertiesDialog(
             dataHostProperties = state.dataHostProperties,
             onPositiveClick = { dataHost, exchangeName, deviceName ->
-                showDialog = !showDialog
+                showDataSharingPropertiesDialog = !showDataSharingPropertiesDialog
                 onDataSharingPropertiesSet(dataHost, exchangeName, deviceName)
             },
-            onNegativeClick = { showDialog = !showDialog },
+            onNegativeClick = { showDataSharingPropertiesDialog = !showDataSharingPropertiesDialog },
+        )
+    }
+    if (showForceUploadAllDialog) {
+        ForceUploadAllStatusDialog(
+            forceUploadAllStatus = state.forceUploadStatus,
+            onStart = {
+                showForceUploadAllDialog = !showForceUploadAllDialog
+                onForceUploadAllClicked()
+            },
+            onCancel = { showForceUploadAllDialog = !showForceUploadAllDialog },
+            onDone = { showForceUploadAllDialog = !showForceUploadAllDialog },
         )
     }
     if (state.stats != null) {
@@ -153,7 +170,7 @@ fun SettingsScreen(
                         title = stringResource(Res.string.settings_data_sharing_title),
                         subtitle = subtitle.ifEmpty { stringResource(Res.string.settings_data_sharing_not_set) },
                         onClick = {
-                            showDialog = true
+                            showDataSharingPropertiesDialog = true
                         },
                         showProgress = false,
                     )
@@ -212,10 +229,10 @@ fun SettingsScreen(
                 }
                 item {
                     SettingsItem(
-                        title = stringResource(Res.string.settings_upload_title),
-                        subtitle = stringResource(Res.string.settings_upload_subtitle),
-                        onClick = onUploadClicked,
-                        showProgress = state.uploadLoading,
+                        title = stringResource(Res.string.settings_force_upload_all_title),
+                        subtitle = stringResource(Res.string.settings_force_upload_all_subtitle),
+                        onClick = { showForceUploadAllDialog = true },
+                        showProgress = false,
                     )
                 }
                 if (state.showJournalImportButton) {
@@ -253,11 +270,11 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsItem(
+    modifier: Modifier = Modifier,
     title: String,
     subtitle: String = "",
     onClick: () -> Unit,
     showProgress: Boolean,
-    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
@@ -316,11 +333,71 @@ private fun SettingsItemWithToggle(
 }
 
 @Composable
+private fun ForceUploadAllStatusDialog(
+    forceUploadAllStatus: ForceUploadAllStatus,
+    onStart: () -> Unit,
+    onCancel: () -> Unit,
+    onDone: () -> Unit,
+) {
+    Dialog(onDismissRequest = { }) {
+        Card {
+            Column(modifier = Modifier.padding(16.dp)) {
+                when (forceUploadAllStatus) {
+                    is ForceUploadAllStatus.Initial -> {
+                        Text(stringResource(Res.string.settings_force_upload_all_initial))
+                        DialogButtonRow(
+                            showCancel = true,
+                            onPositiveClick = onStart,
+                            onNegativeClick = onCancel,
+                        )
+                    }
+
+                    is ForceUploadAllStatus.NothingToUpload -> {
+                        Text(stringResource(Res.string.settings_force_upload_all_nothing))
+                        DialogButtonRow(
+                            showCancel = false,
+                            onPositiveClick = onDone,
+                            onNegativeClick = { },
+                        )
+                    }
+
+                    is ForceUploadAllStatus.Uploading -> {
+                        Text(
+                            stringResource(
+                                Res.string.settings_force_upload_all_uploading,
+                                forceUploadAllStatus.totalToUploadDaysCount,
+                                forceUploadAllStatus.uploadedDaysCount,
+                                forceUploadAllStatus.failedDaysCount,
+                            ),
+                        )
+                    }
+
+                    is ForceUploadAllStatus.Done -> {
+                        Text(
+                            stringResource(
+                                Res.string.settings_force_upload_all_done,
+                                forceUploadAllStatus.totalToUploadDaysCount,
+                                forceUploadAllStatus.uploadedDaysCount,
+                                forceUploadAllStatus.failedDaysCount,
+                            ),
+                        )
+                        DialogButtonRow(
+                            showCancel = false,
+                            onPositiveClick = onDone,
+                            onNegativeClick = { },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun DataSharingPropertiesDialog(
     dataHostProperties: DataHostProperties,
     onPositiveClick: (DataHost, ExchangeName, DeviceName) -> Unit,
     onNegativeClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     var dataHostText by rememberSaveable { mutableStateOf(dataHostProperties.dataHost) }
     var exchangeNameText by rememberSaveable { mutableStateOf(dataHostProperties.exchangeName) }
@@ -328,7 +405,7 @@ private fun DataSharingPropertiesDialog(
 
     Dialog(onDismissRequest = { }) {
         Card {
-            Column(modifier = modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -340,7 +417,7 @@ private fun DataSharingPropertiesDialog(
                             Text(stringResource(Res.string.data_host))
                         },
                         onValueChange = { dataHostText = it },
-                        modifier = modifier.weight(1f),
+                        modifier = Modifier.weight(1f),
                     )
                     OtherHostsButton(
                         otherHosts = dataHostProperties.otherHosts,
@@ -349,7 +426,7 @@ private fun DataSharingPropertiesDialog(
                         },
                     )
                 }
-                Spacer(modifier = modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = exchangeNameText,
                     singleLine = true,
@@ -357,9 +434,9 @@ private fun DataSharingPropertiesDialog(
                         Text(stringResource(Res.string.exchange_name))
                     },
                     onValueChange = { exchangeNameText = it },
-                    modifier = modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(modifier = modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = deviceNameText,
                     singleLine = true,
@@ -371,40 +448,55 @@ private fun DataSharingPropertiesDialog(
                             capitalization = KeyboardCapitalization.Sentences,
                         ),
                     onValueChange = { deviceNameText = it },
-                    modifier = modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(modifier = modifier.height(16.dp))
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = modifier.fillMaxWidth(),
-                ) {
-                    TextButton(
-                        onClick = {
-                            onNegativeClick()
-                        },
-                    ) {
-                        Text(text = stringResource(Res.string.cancel))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(
-                        onClick = {
-                            onPositiveClick(
-                                DataHost(dataHostText),
-                                ExchangeName(exchangeNameText),
-                                DeviceName(deviceNameText),
-                            )
-                        },
-                    ) {
-                        Text(text = stringResource(Res.string.ok))
-                    }
-                }
+                DialogButtonRow(
+                    showCancel = true,
+                    onPositiveClick = {
+                        onPositiveClick(
+                            DataHost(dataHostText),
+                            ExchangeName(exchangeNameText),
+                            DeviceName(deviceNameText),
+                        )
+                    },
+                    onNegativeClick = onNegativeClick,
+                )
             }
         }
     }
 }
 
 @Composable
-fun OtherHostsButton(
+private fun DialogButtonRow(
+    showCancel: Boolean,
+    onPositiveClick: () -> Unit,
+    onNegativeClick: () -> Unit,
+) {
+    Spacer(modifier = Modifier.height(16.dp))
+    Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        if (showCancel) {
+            TextButton(
+                onClick = {
+                    onNegativeClick()
+                },
+            ) {
+                Text(text = stringResource(Res.string.cancel))
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        TextButton(
+            onClick = onPositiveClick,
+        ) {
+            Text(text = stringResource(Res.string.ok))
+        }
+    }
+}
+
+@Composable
+private fun OtherHostsButton(
     otherHosts: Set<String>,
     otherHostPicked: (String) -> Unit,
 ) {

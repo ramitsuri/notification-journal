@@ -15,6 +15,9 @@ abstract class JournalEntryDao {
     @Query("SELECT * FROM journalentry WHERE deleted = 0 AND entry_time LIKE :date||'%'")
     abstract fun getForDateFlow(date: String): Flow<List<JournalEntry>>
 
+    @Query("SELECT * FROM journalentry WHERE deleted = 0 AND entry_time LIKE :date||'%'")
+    abstract suspend fun getForDate(date: String): List<JournalEntry>
+
     @Query("SELECT * FROM journalentry WHERE reconciled = 0 AND deleted = 0")
     abstract fun getAllFlowNotReconciled(): Flow<List<JournalEntry>>
 

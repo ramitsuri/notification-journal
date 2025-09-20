@@ -58,6 +58,14 @@
     <string name="settings_upload_title">Upload</string>
     <string name="settings_upload_subtitle">Upload entries to server</string>
 
+    <string name="settings_force_upload_all_title">Force upload all</string>
+    <string name="settings_force_upload_all_subtitle">Force upload all entries</string>
+    <string name="settings_force_upload_all_initial">This will upload all entries from this device to your other devices. Some things to keep in mind\n\n1. Make sure to keep screen on while the upload is happening\n2. Make sure all entries from other devices are available here, because they'll be replaced\n\nDo you want to continue?
+    </string>
+    <string name="settings_force_upload_all_nothing">Nothing to upload</string>
+    <string name="settings_force_upload_all_uploading">Uploading entries for %1$s days\n\nUploaded: %2$s\nFailed: %3$s</string>
+    <string name="settings_force_upload_all_done">Upload requested for %1$s days\n\nUploaded: %2$s\nFailed: %3$s</string>
+
     <string name="settings_data_sharing_title">Data sharing between devices</string>
     <string name="settings_data_sharing_not_set">Currently not sharing</string>
 
