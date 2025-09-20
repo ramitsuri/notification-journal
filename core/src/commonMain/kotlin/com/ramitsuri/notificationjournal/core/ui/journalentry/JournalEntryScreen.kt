@@ -38,7 +38,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -90,8 +89,6 @@ import notificationjournal.core.generated.resources.alert
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.conflicts_format
 import notificationjournal.core.generated.resources.delete_warning_message
-import notificationjournal.core.generated.resources.export_directory_dialog_title
-import notificationjournal.core.generated.resources.export_directory_input_label
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.proceed
@@ -137,12 +134,6 @@ fun JournalEntryScreen(
             journalEntryForDelete = journalEntryForDelete,
             onDismiss = { journalEntryForDelete = null },
             onDayGroupAction = onDayGroupAction,
-        )
-    }
-
-    if (state.requestExportDirectory) {
-        ExportDirectoryDialog(
-            onDirectorySet = { onEntryScreenAction(EntryScreenAction.ExportDirectorySet(it)) },
         )
     }
 
@@ -303,40 +294,6 @@ fun JournalEntryScreen(
             }
         }
     }
-}
-
-@Composable
-private fun ExportDirectoryDialog(onDirectorySet: (String) -> Unit) {
-    var text by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = { onDirectorySet("") },
-        title = { Text(stringResource(Res.string.export_directory_dialog_title)) },
-        text = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                label = { Text(stringResource(Res.string.export_directory_input_label)) },
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onDirectorySet(text)
-                },
-            ) {
-                Text(stringResource(Res.string.ok))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onDirectorySet("")
-                },
-            ) {
-                Text(stringResource(Res.string.cancel))
-            }
-        },
-    )
 }
 
 @Composable

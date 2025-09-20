@@ -81,6 +81,7 @@ class SettingsViewModelTest : BaseTest() {
                 getAppVersion = { "1.0" },
                 journalEntryDao = db.journalEntryDao(),
                 conflictDao = db.entryConflictDao(),
+                enableExport = true,
             )
     }
 }
