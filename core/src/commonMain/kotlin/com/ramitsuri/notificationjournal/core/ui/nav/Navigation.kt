@@ -114,10 +114,6 @@ fun NavGraph(
                             )
                         }
 
-                        is EntryScreenAction.CancelReconcile -> {
-                            viewModel.cancelReconcile()
-                        }
-
                         is EntryScreenAction.Copy -> {
                             viewModel.onContentCopied()
                         }
@@ -169,8 +165,8 @@ fun NavGraph(
                             )
                         }
 
-                        is DayGroupAction.CopyDayGroup -> {
-                            viewModel.onCopy()
+                        is DayGroupAction.ReconcileDayGroup -> {
+                            viewModel.onReconcile()
                         }
 
                         is DayGroupAction.CopyEntry -> {

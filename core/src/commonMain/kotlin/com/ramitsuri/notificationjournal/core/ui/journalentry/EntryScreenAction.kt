@@ -15,8 +15,6 @@ sealed interface EntryScreenAction {
 
     data object ResetReceiveHelper : EntryScreenAction
 
-    data object CancelReconcile : EntryScreenAction
-
     data object NavToSearch : EntryScreenAction
 
     data object NavToViewJournalEntryDay : EntryScreenAction
