@@ -77,6 +77,8 @@ class EditJournalEntryViewModel(
             it.copy(selectedTag = tag)
         }
         viewModelScope.launch {
+            // If tag clicked, enable suggestions
+            enableGettingSuggestions.set(true)
             val text = _state.value.textFieldState.text
             _state.update {
                 it.copy(suggestions = getSuggestions(text = text, tag = tag))
@@ -188,10 +190,9 @@ class EditJournalEntryViewModel(
                 delete(0, length)
                 insert(0, suggestion)
             }
-        } else
-            {
-                enableGettingSuggestions.set(false)
-            }
+        } else {
+            enableGettingSuggestions.set(false)
+        }
         _state.update { it.copy(suggestions = listOf()) }
     }
 
@@ -273,8 +274,10 @@ class EditJournalEntryViewModel(
             }
         }
         viewModelScope.launch {
-            snapshotFlow { _state.value.textFieldState.text.isEmpty() }
-                .distinctUntilChanged()
+            snapshotFlow {
+                val lastLine = _state.value.textFieldState.text.split("\n").lastOrNull()
+                lastLine == null || lastLine.isEmpty()
+            }.distinctUntilChanged()
                 .collect { isEmpty ->
                     if (isEmpty) {
                         enableGettingSuggestions.compareAndSet(false, true)
