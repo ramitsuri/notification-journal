@@ -70,12 +70,6 @@ class MainApplication : Application(), DefaultLifecycleObserver {
                             intentReceiverClass = NotificationActionReceiver::class.java,
                             remoteInputKey = Constants.REMOTE_INPUT_JOURNAL_KEY,
                         ),
-                        NotificationActionInfo(
-                            action = Constants.ACTION_UPLOAD,
-                            text = getString(R.string.upload),
-                            intentReceiverClass = NotificationActionReceiver::class.java,
-                            remoteInputKey = null,
-                        ),
                     ),
                 actionExtras = mapOf(),
             )
