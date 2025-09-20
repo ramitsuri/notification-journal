@@ -8,18 +8,17 @@ import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
+import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
 class SettingsViewModel(
@@ -29,19 +28,19 @@ class SettingsViewModel(
     private val journalEntryDao: JournalEntryDao?,
     private val conflictDao: EntryConflictDao?,
 ) : ViewModel() {
-    private val uploadLoading = MutableStateFlow(false)
+    private val forceUploadStatus = MutableStateFlow(ForceUploadAllStatus.Initial)
     private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     val state =
         combine(
-            uploadLoading,
+            forceUploadStatus,
             prefManager.showEmptyTags(),
             prefManager.copyWithEmptyTags(),
             prefManager.showConflictDiffInline(),
             statsRequested,
             prefManager.getDataHostProperties(),
         ) {
-                uploadLoading,
+                forceUploadStatus,
                 showEmptyTags,
                 copyWithEmptyTags,
                 showConflictDiffInline,
@@ -49,7 +48,7 @@ class SettingsViewModel(
                 dataHostProperties,
             ->
             SettingsViewState(
-                uploadLoading = uploadLoading,
+                forceUploadStatus = forceUploadStatus,
                 dataHostProperties = dataHostProperties,
                 appVersion = getAppVersion(),
                 showConflictDiffInline = showConflictDiffInline,
@@ -64,13 +63,10 @@ class SettingsViewModel(
             SettingsViewState(),
         )
 
-    fun upload() {
-        uploadLoading.update { true }
-
+    fun forceUploadAll() {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                repository.uploadAll()
-                uploadLoading.update { false }
+            repository.forceUploadAll().collect {
+                forceUploadStatus.update { it }
             }
         }
     }
@@ -151,7 +147,7 @@ class SettingsViewModel(
 }
 
 data class SettingsViewState(
-    val uploadLoading: Boolean = false,
+    val forceUploadStatus: ForceUploadAllStatus = ForceUploadAllStatus.Initial,
     val dataHostProperties: DataHostProperties = DataHostProperties(),
     val appVersion: String = "",
     val showConflictDiffInline: Boolean = false,

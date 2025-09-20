@@ -5,6 +5,7 @@ import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
+import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
@@ -106,7 +108,7 @@ class JournalRepository(
             if (uploadEntries) {
                 // If not able to send it right away, these entries would need to be reimported for them to show up
                 // on other devices. Otherwise, need to add support for tracking which days have been imported.
-                dataSendHelper.sendClearDaysAndInsertEntries(days, entries) == true
+                dataSendHelper.sendClearDaysAndInsertEntries(days, entries)
             } else {
                 // If uploaded is false, then we're receiving these entries from another device, consider them uploaded
                 // because other device already has them.
@@ -156,6 +158,52 @@ class JournalRepository(
         upload(entries)
         dao.deleteDeleted()
     }
+
+    fun forceUploadAll(): Flow<ForceUploadAllStatus> =
+        flow {
+            Logger.i(TAG) { "Attempting to force upload all" }
+
+            emit(ForceUploadAllStatus.Initial)
+
+            val entryTimes = dao.getEntryTimes()
+            if (entryTimes.isEmpty()) {
+                Logger.i(TAG) { "Nothing to force upload all" }
+                emit(ForceUploadAllStatus.NothingToUpload)
+            }
+
+            val dates = entryTimes.map { it.date }.distinct()
+            var uploading =
+                ForceUploadAllStatus.Uploading(
+                    uploadedDaysCount = 0,
+                    failedDaysCount = 0,
+                    totalToUploadDaysCount = dates.size,
+                )
+            dates.forEach { date ->
+                val entries = dao.getForDate(date.toString())
+                val sent = dataSendHelper.sendClearDaysAndInsertEntries(listOf(date), entries)
+                uploading =
+                    if (sent) {
+                        uploading.copy(
+                            uploadedDaysCount = uploading.uploadedDaysCount + 1,
+                        )
+                    } else {
+                        uploading.copy(
+                            failedDaysCount = uploading.failedDaysCount + 1,
+                        )
+                    }
+                emit(uploading)
+            }
+
+            emit(
+                ForceUploadAllStatus.Done(
+                    uploadedDaysCount = uploading.uploadedDaysCount,
+                    failedDaysCount = uploading.failedDaysCount,
+                    totalToUploadDaysCount = uploading.totalToUploadDaysCount,
+                ),
+            )
+
+            dao.deleteDeleted()
+        }
 
     suspend fun upload(entries: List<JournalEntry>) {
         Logger.i(TAG) { "Syncing ${entries.size} entries" }
@@ -355,7 +403,7 @@ class JournalRepository(
     }
 
     private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>) {
-        val sent = dataSendHelper.sendEntries(entries) == true
+        val sent = dataSendHelper.sendEntries(entries)
         if (sent) {
             // Once sent, mark as not "replaces_local" because that was just for this upload, further
             // changes should go through the conflict resolution flow
