@@ -450,7 +450,6 @@ class JournalEntryViewModel(
     private suspend fun export(dayGroups: List<DayGroup>) {
         val exportRepository = exportRepository ?: return
         val exportDirectory = prefManager.getExportDirectory().first()
-        println("Exporting to $exportDirectory")
         if (exportDirectory.isBlank()) {
             // Export directory is not set but we need to export
             requestExportDirectory.update { true }
