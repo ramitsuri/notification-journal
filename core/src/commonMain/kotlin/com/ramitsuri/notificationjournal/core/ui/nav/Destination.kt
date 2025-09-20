@@ -17,8 +17,6 @@ enum class Destination(private val route: String) {
     LOGS("logs"),
     SEARCH("search"),
     IMPORT("import"),
-    EXPORT("export"),
-    IMPORT_EXPORT("import_export"),
     VIEW_JOURNAL_ENTRY_DAY("view_journal_entry_day"),
     ;
 

@@ -70,8 +70,8 @@ import notificationjournal.core.generated.resources.settings_force_upload_all_no
 import notificationjournal.core.generated.resources.settings_force_upload_all_subtitle
 import notificationjournal.core.generated.resources.settings_force_upload_all_title
 import notificationjournal.core.generated.resources.settings_force_upload_all_uploading
-import notificationjournal.core.generated.resources.settings_journal_import_export_subtitle
-import notificationjournal.core.generated.resources.settings_journal_import_export_title
+import notificationjournal.core.generated.resources.settings_journal_import_subtitle
+import notificationjournal.core.generated.resources.settings_journal_import_title
 import notificationjournal.core.generated.resources.settings_logs
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
 import notificationjournal.core.generated.resources.settings_show_empty_tags
@@ -103,7 +103,7 @@ fun SettingsScreen(
     onToggleShowEmptyTags: () -> Unit,
     onToggleCopyWithEmptyTags: () -> Unit,
     onLogsClicked: () -> Unit,
-    onImportExportClicked: () -> Unit,
+    onJournalImportClicked: () -> Unit,
     onDeleteAll: () -> Unit,
     onShowStatsToggled: () -> Unit,
 ) {
@@ -238,9 +238,9 @@ fun SettingsScreen(
                 if (state.showJournalImportButton) {
                     item {
                         SettingsItem(
-                            title = stringResource(Res.string.settings_journal_import_export_title),
-                            subtitle = stringResource(Res.string.settings_journal_import_export_subtitle),
-                            onClick = onImportExportClicked,
+                            title = stringResource(Res.string.settings_journal_import_title),
+                            subtitle = stringResource(Res.string.settings_journal_import_subtitle),
+                            onClick = onJournalImportClicked,
                             showProgress = false,
                         )
                     }
