@@ -133,6 +133,9 @@ compose.desktop {
                 iconFile.set(iconsRoot.resolve("windows.ico"))
                 includeAllModules = true
             }
+            linux {
+                iconFile.set(iconsRoot.resolve("linux.png"))
+            }
             // https://issuetracker.google.com/issues/342609814
             modules("java.instrument", "java.naming", "java.prefs", "java.security.sasl", "jdk.unsupported")
         }

@@ -188,10 +188,9 @@ class EditJournalEntryViewModel(
                 delete(0, length)
                 insert(0, suggestion)
             }
-        } else
-            {
-                enableGettingSuggestions.set(false)
-            }
+        } else {
+            enableGettingSuggestions.set(false)
+        }
         _state.update { it.copy(suggestions = listOf()) }
     }
 
