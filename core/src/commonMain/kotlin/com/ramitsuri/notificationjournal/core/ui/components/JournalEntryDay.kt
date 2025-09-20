@@ -34,6 +34,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardTab
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
@@ -176,10 +177,10 @@ fun JournalEntryDay(
         headerText = dayMonthDate(toFormat = dayGroup.date),
         untaggedCount = dayGroup.untaggedCount,
         conflictCount = conflictCount,
-        allowCopy = config.allowCopy,
+        allowReconcile = config.allowReconcile,
         allowUpload = config.allowUpload,
         allowDaySelection = config.allowDaySelection,
-        onCopyRequested = { onAction(DayGroupAction.CopyDayGroup) },
+        onReconcileRequested = { onAction(DayGroupAction.ReconcileDayGroup) },
         onShowAllDaysClicked = { onAction(DayGroupAction.ShowAllDays) },
         onUploadRequested = { onAction(DayGroupAction.UploadDayGroup) },
     )
@@ -420,10 +421,10 @@ private fun HeaderItem(
     headerText: String,
     untaggedCount: Int,
     conflictCount: Int,
-    allowCopy: Boolean,
+    allowReconcile: Boolean,
     allowUpload: Boolean,
     allowDaySelection: Boolean,
-    onCopyRequested: () -> Unit,
+    onReconcileRequested: () -> Unit,
     onShowAllDaysClicked: () -> Unit,
     onUploadRequested: () -> Unit,
 ) {
@@ -493,16 +494,16 @@ private fun HeaderItem(
                     )
                 }
             }
-            if (allowCopy) {
+            if (allowReconcile) {
                 IconButton(
-                    onClick = onCopyRequested,
+                    onClick = onReconcileRequested,
                     modifier =
                         Modifier
                             .size(48.dp)
                             .padding(4.dp),
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.ContentCopy,
+                        imageVector = Icons.Filled.Check,
                         contentDescription = null,
                     )
                 }

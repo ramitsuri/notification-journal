@@ -2,7 +2,7 @@ package com.ramitsuri.notificationjournal.core.ui.components
 
 data class JournalEntryDayConfig(
     val allowAdd: Boolean,
-    val allowCopy: Boolean,
+    val allowReconcile: Boolean,
     val allowTagMenu: Boolean,
     val allowEdits: Boolean,
     val allowDaySelection: Boolean,
@@ -12,7 +12,7 @@ data class JournalEntryDayConfig(
         val allEnabled =
             JournalEntryDayConfig(
                 allowAdd = true,
-                allowCopy = true,
+                allowReconcile = true,
                 allowTagMenu = true,
                 allowEdits = true,
                 allowDaySelection = true,
@@ -21,7 +21,7 @@ data class JournalEntryDayConfig(
         val allDisabled =
             JournalEntryDayConfig(
                 allowAdd = false,
-                allowCopy = false,
+                allowReconcile = false,
                 allowTagMenu = false,
                 allowEdits = false,
                 allowDaySelection = false,

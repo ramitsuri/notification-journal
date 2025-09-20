@@ -50,7 +50,7 @@ sealed interface DayGroupAction {
 
     data class Notify(val entry: JournalEntry, val inTime: Duration) : DayGroupAction
 
-    data object CopyDayGroup : DayGroupAction
+    data object ReconcileDayGroup : DayGroupAction
 
     data class ResolveConflict(val entry: JournalEntry, val conflict: EntryConflict?) :
         DayGroupAction

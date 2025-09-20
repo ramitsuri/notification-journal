@@ -40,10 +40,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -54,7 +50,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -84,12 +79,10 @@ import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.ui.components.CountdownSnackbar
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
@@ -110,7 +103,6 @@ import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.untagged_format
 import notificationjournal.core.generated.resources.view_journal_entry_day
-import notificationjournal.core.generated.resources.will_reconcile
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
@@ -126,10 +118,6 @@ fun JournalEntryScreen(
 
     var showAllDays by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
-    val reconcileSnackBarMessage = stringResource(Res.string.will_reconcile)
-    val reconcileSnackBarAction = stringResource(Res.string.cancel)
 
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -141,28 +129,6 @@ fun JournalEntryScreen(
         if (state.contentForCopy.isNotEmpty()) {
             clipboardManager.setText(AnnotatedString(state.contentForCopy))
             onEntryScreenAction(EntryScreenAction.Copy)
-        }
-    }
-
-    LaunchedEffect(state.snackBarType) {
-        if (state.snackBarType is SnackBarType.Reconcile) {
-            coroutineScope.launch {
-                val result =
-                    snackbarHostState.showSnackbar(
-                        message = reconcileSnackBarMessage,
-                        actionLabel = reconcileSnackBarAction,
-                        duration = SnackbarDuration.Indefinite,
-                    )
-                when (result) {
-                    SnackbarResult.Dismissed -> {
-                        // Do nothing
-                    }
-
-                    SnackbarResult.ActionPerformed -> {
-                        onEntryScreenAction(EntryScreenAction.CancelReconcile)
-                    }
-                }
-            }
         }
     }
 
@@ -244,13 +210,6 @@ fun JournalEntryScreen(
                         false
                     }
                 },
-        snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState,
-            ) { data ->
-                CountdownSnackbar(data)
-            }
-        },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 32.dp),

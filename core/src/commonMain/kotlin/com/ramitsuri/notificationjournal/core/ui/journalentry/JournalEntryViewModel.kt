@@ -26,11 +26,9 @@ import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -68,13 +66,9 @@ class JournalEntryViewModel(
 
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
-    private val snackBarType: MutableStateFlow<SnackBarType> = MutableStateFlow(SnackBarType.None)
-
     private val requestExportDirectory = MutableStateFlow(false)
 
     private val verifyEntries = MutableStateFlow(false)
-
-    private var reconcileDayGroupJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ViewState> =
@@ -96,7 +90,6 @@ class JournalEntryViewModel(
         }.flatMapLatest { (countAndDates, selectedDate) ->
             combine(
                 contentForCopy,
-                snackBarType,
                 repository.getForDateFlow(selectedDate),
                 repository.getForUploadCountFlow(),
                 repository.getConflicts(),
@@ -107,7 +100,6 @@ class JournalEntryViewModel(
                 webSocketHelper.isConnected,
             ) {
                     contentForCopy,
-                    snackBarType,
                     entries,
                     forUploadCount,
                     entryConflicts,
@@ -133,7 +125,6 @@ class JournalEntryViewModel(
                     showConflictDiffInline = showConflictDiffInline,
                     contentForCopy = contentForCopy,
                     showEmptyTags = showEmptyTags,
-                    snackBarType = snackBarType,
                     allowNotify = allowNotify,
                     requestExportDirectory = requestExportDirectory,
                     isConnected = isConnected,
@@ -363,14 +354,8 @@ class JournalEntryViewModel(
         }
     }
 
-    fun onCopy() {
+    fun onReconcile() {
         viewModelScope.launch(Dispatchers.Default) {
-            val exportDirectory = prefManager.getExportDirectory().first()
-            if (exportRepository != null && exportDirectory.isBlank()) {
-                // Export directory is not set but we need to export
-                requestExportDirectory.update { true }
-                return@launch
-            }
             val dayGroup = state.value.dayGroup
             if (dayGroup == ViewState.defaultDayGroup) {
                 Logger.i(TAG) { "Cannot export default day group" }
@@ -389,11 +374,7 @@ class JournalEntryViewModel(
                 Logger.i(TAG) { "Cannot export day group with conflicting entries" }
                 return@launch
             }
-            // Copy to clipboard if not being exported
-            if (exportRepository == null) {
-                contentForCopy.update { dayGroup.content() }
-            }
-            reconcileWithDelay(dayGroup)
+            reconcile(dayGroup)
         }
     }
 
@@ -453,31 +434,23 @@ class JournalEntryViewModel(
         }
     }
 
-    private fun reconcileWithDelay(dayGroup: DayGroup) {
-        snackBarType.update {
-            SnackBarType.Reconcile
+    private fun reconcile(dayGroup: DayGroup) {
+        viewModelScope.launch {
+            goToNextDay()
+            export(listOf(dayGroup))
+            dayGroup
+                .tagGroups
+                .map { it.entries }
+                .flatten()
+                .map { it.copy(reconciled = true) }
+                .let { repository.update(it) }
         }
-        reconcileDayGroupJob =
-            viewModelScope.launch {
-                delay(1_000)
-                snackBarType.update {
-                    SnackBarType.None
-                }
-                delay(5_000)
-                goToNextDay()
-                export(listOf(dayGroup))
-                dayGroup
-                    .tagGroups
-                    .map { it.entries }
-                    .flatten()
-                    .map { it.copy(reconciled = true) }
-                    .let { repository.update(it) }
-            }
     }
 
     private suspend fun export(dayGroups: List<DayGroup>) {
         val exportRepository = exportRepository ?: return
         val exportDirectory = prefManager.getExportDirectory().first()
+        println("Exporting to $exportDirectory")
         if (exportDirectory.isBlank()) {
             // Export directory is not set but we need to export
             requestExportDirectory.update { true }
@@ -503,14 +476,9 @@ class JournalEntryViewModel(
             prefManager.setExportDirectory(directory)
             requestExportDirectory.update { false }
             if (directory.isNotBlank()) {
-                onCopy()
+                onReconcile()
             }
         }
-    }
-
-    fun cancelReconcile() {
-        reconcileDayGroupJob?.cancel()
-        reconcileDayGroupJob = null
     }
 
     companion object {
@@ -547,7 +515,6 @@ data class ViewState(
     val showConflictDiffInline: Boolean = false,
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
-    val snackBarType: SnackBarType = SnackBarType.None,
     val allowNotify: Boolean = false,
     val requestExportDirectory: Boolean = false,
     val isConnected: Boolean = false,
@@ -555,10 +522,4 @@ data class ViewState(
     companion object {
         val defaultDayGroup = DayGroup(LocalDate(1970, 1, 1), listOf())
     }
-}
-
-sealed interface SnackBarType {
-    data object None : SnackBarType
-
-    data object Reconcile : SnackBarType
 }
