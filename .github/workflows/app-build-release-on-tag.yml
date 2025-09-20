@@ -161,7 +161,7 @@ jobs:
 
   create_release:
     name: "Create release"
-    needs: [build_windows_app, build_macos_app, build_server]
+    needs: [build_windows_app, build_macos_app, build_linux_app, build_server]
     runs-on: ubuntu-latest
     steps:
       - name: Download macos-app
@@ -174,6 +174,11 @@ jobs:
         with:
           name: windows-app
 
+      - name: Download linus-app
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-app
+
       - name: Download server-app
         uses: actions/download-artifact@v4
         with:
@@ -185,5 +190,6 @@ jobs:
           files: |
             Journal-1.0.0.msi
             Journal-1.0.0.dmg
+            Journal-1.0.0.deb
             server/build/libs/app.jar
             app_version.txt
