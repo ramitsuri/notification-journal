@@ -66,8 +66,6 @@ class JournalEntryViewModel(
 
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
-    private val requestExportDirectory = MutableStateFlow(false)
-
     private val verifyEntries = MutableStateFlow(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -95,7 +93,6 @@ class JournalEntryViewModel(
                 repository.getConflicts(),
                 prefManager.showEmptyTags(),
                 prefManager.showConflictDiffInline(),
-                requestExportDirectory,
                 verifyEntries,
                 webSocketHelper.isConnected,
             ) {
@@ -105,7 +102,6 @@ class JournalEntryViewModel(
                     entryConflicts,
                     showEmptyTags,
                     showConflictDiffInline,
-                    requestExportDirectory,
                     verifyEntries,
                     isConnected,
                 ->
@@ -126,7 +122,6 @@ class JournalEntryViewModel(
                     contentForCopy = contentForCopy,
                     showEmptyTags = showEmptyTags,
                     allowNotify = allowNotify,
-                    requestExportDirectory = requestExportDirectory,
                     isConnected = isConnected,
                 )
             }
@@ -451,8 +446,6 @@ class JournalEntryViewModel(
         val exportRepository = exportRepository ?: return
         val exportDirectory = prefManager.getExportDirectory().first()
         if (exportDirectory.isBlank()) {
-            // Export directory is not set but we need to export
-            requestExportDirectory.update { true }
             return
         }
         dayGroups.forEach { dayGroup ->
@@ -469,16 +462,6 @@ class JournalEntryViewModel(
             dayMonthDateWithYear = dayMonthDateWithYearSuspend(date),
             copyEmptyTags = prefManager.copyWithEmptyTags().first(),
         )
-
-    fun onExportDirectorySet(directory: String) {
-        viewModelScope.launch {
-            prefManager.setExportDirectory(directory)
-            requestExportDirectory.update { false }
-            if (directory.isNotBlank()) {
-                onReconcile()
-            }
-        }
-    }
 
     companion object {
         fun factory(receivedText: String?) =
@@ -515,7 +498,6 @@ data class ViewState(
     val contentForCopy: String = "",
     val showEmptyTags: Boolean = false,
     val allowNotify: Boolean = false,
-    val requestExportDirectory: Boolean = false,
     val isConnected: Boolean = false,
 ) {
     companion object {

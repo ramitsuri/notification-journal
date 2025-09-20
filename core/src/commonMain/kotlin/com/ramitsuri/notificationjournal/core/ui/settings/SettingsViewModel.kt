@@ -27,6 +27,7 @@ class SettingsViewModel(
     private val prefManager: PrefManager,
     private val journalEntryDao: JournalEntryDao?,
     private val conflictDao: EntryConflictDao?,
+    private val enableExport: Boolean,
 ) : ViewModel() {
     private val forceUploadStatus = MutableStateFlow(ForceUploadAllStatus.Initial)
     private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -39,6 +40,7 @@ class SettingsViewModel(
             prefManager.showConflictDiffInline(),
             statsRequested,
             prefManager.getDataHostProperties(),
+            prefManager.getExportDirectory(),
         ) {
                 forceUploadStatus,
                 showEmptyTags,
@@ -46,6 +48,7 @@ class SettingsViewModel(
                 showConflictDiffInline,
                 statsRequested,
                 dataHostProperties,
+                exportDirectory,
             ->
             SettingsViewState(
                 forceUploadStatus = forceUploadStatus,
@@ -56,6 +59,7 @@ class SettingsViewModel(
                 copyWithEmptyTags = copyWithEmptyTags,
                 allowDelete = journalEntryDao != null && conflictDao != null,
                 stats = if (statsRequested) repository.getStats() else null,
+                exportDirectory = if (enableExport) exportDirectory else null,
             )
         }.stateIn(
             viewModelScope,
@@ -126,6 +130,12 @@ class SettingsViewModel(
         statsRequested.update { !it }
     }
 
+    fun setExportDirectory(directory: String) {
+        viewModelScope.launch {
+            prefManager.setExportDirectory(directory)
+        }
+    }
+
     companion object {
         fun factory() =
             object : ViewModelProvider.Factory {
@@ -140,6 +150,7 @@ class SettingsViewModel(
                         prefManager = ServiceLocator.prefManager,
                         journalEntryDao = ServiceLocator.journalEntryDao,
                         conflictDao = ServiceLocator.conflictDao,
+                        enableExport = ServiceLocator.exportRepository != null,
                     ) as T
                 }
             }
@@ -156,4 +167,6 @@ data class SettingsViewState(
     val showJournalImportButton: Boolean = ServiceLocator.allowJournalImport,
     val allowDelete: Boolean = false,
     val stats: EntryStats? = null,
+    // Null means export is not enabled
+    val exportDirectory: String? = null,
 )

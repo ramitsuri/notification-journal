@@ -91,6 +91,9 @@
     <string name="settings_journal_import_title">Import</string>
     <string name="settings_journal_import_subtitle">Import journal entries</string>
 
+    <string name="settings_journal_export_title">Export when reconciling</string>
+    <string name="settings_journal_export_subtitle">Exports day's entries to a file</string>
+
     <string name="settings_delete_all_title">Delete all</string>
     <string name="settings_delete_all_subtitle">Delete all entries and conflicts</string>
 

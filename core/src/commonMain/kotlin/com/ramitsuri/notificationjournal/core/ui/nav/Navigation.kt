@@ -144,10 +144,6 @@ fun NavGraph(
                         is EntryScreenAction.ReconcileAll -> {
                             viewModel.onReconcileAll(action.uploadOnSuccess)
                         }
-
-                        is EntryScreenAction.ExportDirectorySet -> {
-                            viewModel.onExportDirectorySet(action.directory)
-                        }
                     }
                 },
                 onDayGroupAction = { action ->
@@ -379,6 +375,7 @@ fun NavGraph(
                 },
                 onDeleteAll = viewModel::deleteAll,
                 onShowStatsToggled = viewModel::onStatsRequestToggled,
+                onExportDirectorySet = viewModel::setExportDirectory,
             )
         }
 

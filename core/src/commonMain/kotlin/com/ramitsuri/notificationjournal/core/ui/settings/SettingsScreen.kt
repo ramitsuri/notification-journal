@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -38,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +58,8 @@ import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.data_host
 import notificationjournal.core.generated.resources.device_name
 import notificationjournal.core.generated.resources.exchange_name
+import notificationjournal.core.generated.resources.export_directory_dialog_title
+import notificationjournal.core.generated.resources.export_directory_input_label
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.settings_app_version
@@ -70,6 +74,8 @@ import notificationjournal.core.generated.resources.settings_force_upload_all_no
 import notificationjournal.core.generated.resources.settings_force_upload_all_subtitle
 import notificationjournal.core.generated.resources.settings_force_upload_all_title
 import notificationjournal.core.generated.resources.settings_force_upload_all_uploading
+import notificationjournal.core.generated.resources.settings_journal_export_subtitle
+import notificationjournal.core.generated.resources.settings_journal_export_title
 import notificationjournal.core.generated.resources.settings_journal_import_subtitle
 import notificationjournal.core.generated.resources.settings_journal_import_title
 import notificationjournal.core.generated.resources.settings_logs
@@ -106,9 +112,11 @@ fun SettingsScreen(
     onJournalImportClicked: () -> Unit,
     onDeleteAll: () -> Unit,
     onShowStatsToggled: () -> Unit,
+    onExportDirectorySet: (String) -> Unit,
 ) {
     var showDataSharingPropertiesDialog by rememberSaveable { mutableStateOf(false) }
     var showForceUploadAllDialog by rememberSaveable { mutableStateOf(false) }
+    var showExportDirectoryDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showDataSharingPropertiesDialog) {
         DataSharingPropertiesDialog(
@@ -129,6 +137,15 @@ fun SettingsScreen(
             },
             onCancel = { showForceUploadAllDialog = !showForceUploadAllDialog },
             onDone = { showForceUploadAllDialog = !showForceUploadAllDialog },
+        )
+    }
+    if (showExportDirectoryDialog) {
+        ExportDirectoryDialog(
+            currentDirectory = state.exportDirectory ?: "",
+            onDirectorySet = { exportDirectory ->
+                showExportDirectoryDialog = !showExportDirectoryDialog
+                onExportDirectorySet(exportDirectory)
+            },
         )
     }
     if (state.stats != null) {
@@ -241,6 +258,20 @@ fun SettingsScreen(
                             title = stringResource(Res.string.settings_journal_import_title),
                             subtitle = stringResource(Res.string.settings_journal_import_subtitle),
                             onClick = onJournalImportClicked,
+                            showProgress = false,
+                        )
+                    }
+                }
+                val exportDirectory = state.exportDirectory
+                if (exportDirectory != null) {
+                    item {
+                        SettingsItem(
+                            title = stringResource(Res.string.settings_journal_export_title),
+                            subtitle =
+                                exportDirectory.ifBlank {
+                                    stringResource(Res.string.settings_journal_export_subtitle)
+                                },
+                            onClick = { showExportDirectoryDialog = true },
                             showProgress = false,
                         )
                     }
@@ -580,7 +611,7 @@ private fun StatsDialog(
 }
 
 @Composable
-fun StatRow(
+private fun StatRow(
     rowTitle: String? = null,
     statCount: EntryStats.Count? = null,
     applyBackground: Boolean = false,
@@ -632,4 +663,41 @@ fun StatRow(
             )
         }
     }
+}
+
+@Composable
+private fun ExportDirectoryDialog(
+    currentDirectory: String,
+    onDirectorySet: (String) -> Unit,
+) {
+    var text by remember { mutableStateOf(currentDirectory) }
+    AlertDialog(
+        onDismissRequest = { onDirectorySet(text) },
+        title = { Text(stringResource(Res.string.export_directory_dialog_title)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text(stringResource(Res.string.export_directory_input_label)) },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDirectorySet(text)
+                },
+            ) {
+                Text(stringResource(Res.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onDirectorySet(text)
+                },
+            ) {
+                Text(stringResource(Res.string.cancel))
+            }
+        },
+    )
 }
