@@ -29,7 +29,8 @@ class SettingsViewModel(
     private val conflictDao: EntryConflictDao?,
     private val enableExport: Boolean,
 ) : ViewModel() {
-    private val forceUploadStatus = MutableStateFlow(ForceUploadAllStatus.Initial)
+    private val forceUploadStatus: MutableStateFlow<ForceUploadAllStatus> =
+        MutableStateFlow(ForceUploadAllStatus.Initial)
     private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     val state =
@@ -69,8 +70,10 @@ class SettingsViewModel(
 
     fun forceUploadAll() {
         viewModelScope.launch {
-            repository.forceUploadAll().collect {
-                forceUploadStatus.update { it }
+            repository.forceUploadAll().collect { status ->
+                forceUploadStatus.update {
+                    status
+                }
             }
         }
     }

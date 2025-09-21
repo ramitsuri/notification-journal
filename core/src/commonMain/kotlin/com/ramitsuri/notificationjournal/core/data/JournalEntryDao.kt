@@ -147,7 +147,7 @@ abstract class JournalEntryDao {
     @Update
     protected abstract suspend fun updateInternal(journalEntries: List<JournalEntry>)
 
-    @Query("UPDATE journalentry SET deleted = 1 WHERE entry_time LIKE :date||'%'")
+    @Query("DELETE FROM journalentry WHERE entry_time LIKE :date||'%'")
     protected abstract suspend fun clearForDateInternal(date: String)
 
     @Query("DELETE FROM journalentry")

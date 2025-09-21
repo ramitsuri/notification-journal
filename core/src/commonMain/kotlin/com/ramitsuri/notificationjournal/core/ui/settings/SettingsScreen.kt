@@ -132,11 +132,10 @@ fun SettingsScreen(
         ForceUploadAllStatusDialog(
             forceUploadAllStatus = state.forceUploadStatus,
             onStart = {
-                showForceUploadAllDialog = !showForceUploadAllDialog
                 onForceUploadAllClicked()
             },
-            onCancel = { showForceUploadAllDialog = !showForceUploadAllDialog },
-            onDone = { showForceUploadAllDialog = !showForceUploadAllDialog },
+            onCancel = { showForceUploadAllDialog = false },
+            onDone = { showForceUploadAllDialog = false },
         )
     }
     if (showExportDirectoryDialog) {
