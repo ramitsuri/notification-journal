@@ -36,13 +36,15 @@ import com.ramitsuri.notificationjournal.core.ui.tags.TagsViewModel
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesScreen
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
 import com.ramitsuri.notificationjournal.core.utils.ReceivedTextListener
+import com.ramitsuri.notificationjournal.core.utils.ReceivedTextProperties
+import com.ramitsuri.notificationjournal.core.utils.hasValues
 import java.net.URLEncoder
 
 @Composable
 fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    receivedText: String? = null,
+    receivedText: ReceivedTextProperties? = null,
 ) {
     NavHost(
         navController = navController,
@@ -86,13 +88,15 @@ fun NavGraph(
             }
 
             val receivedTextState by viewModel.receivedText.collectAsStateWithLifecycle()
-            LaunchedEffect(key1 = receivedTextState) {
-                if (!receivedTextState.isNullOrEmpty()) {
+            val receivedTextProperties = receivedTextState
+            LaunchedEffect(key1 = receivedTextProperties) {
+                if (receivedTextProperties.hasValues()) {
                     navController.navigate(
                         Destination.ADD_ENTRY.routeWithArgValues(
                             mapOf(
                                 AddJournalEntryViewModel.RECEIVED_TEXT_ARG to
-                                    URLEncoder.encode(receivedTextState, "UTF-8"),
+                                    URLEncoder.encode(receivedTextProperties.text, "UTF-8"),
+                                AddJournalEntryViewModel.TAG_ARG to receivedTextProperties.tag,
                             ),
                         ),
                     )

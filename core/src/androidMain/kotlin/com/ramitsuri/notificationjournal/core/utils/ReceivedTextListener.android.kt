@@ -14,7 +14,7 @@ import androidx.navigation.NavController
 @Composable
 actual fun ReceivedTextListener(
     navController: NavController,
-    onTextReceived: (String?) -> Unit,
+    onTextReceived: (ReceivedTextProperties?) -> Unit,
 ) {
     val context = LocalContext.current
     val activity = (context.getActivity() as ComponentActivity)
@@ -33,12 +33,19 @@ fun Context.getActivity(): Activity {
     return if (this is ContextWrapper) baseContext.getActivity() else getActivity()
 }
 
-fun Intent?.receivedText(): String? {
+fun Intent?.receivedText(): ReceivedTextProperties? {
     if (this == null) {
         return null
     }
     return if (action == Intent.ACTION_SEND && type == "text/plain") {
-        getStringExtra(Intent.EXTRA_TEXT)
+        ReceivedTextProperties(
+            text = getStringExtra(Intent.EXTRA_TEXT),
+        )
+    } else if (action == "com.ramitsuri.notificationjournal.intent.SHARE" && type == "text/plain") {
+        ReceivedTextProperties(
+            text = getStringExtra("com.ramitsuri.notificationjournal.intent.TEXT"),
+            tag = getStringExtra("com.ramitsuri.notificationjournal.intent.TAG"),
+        )
     } else {
         null
     }

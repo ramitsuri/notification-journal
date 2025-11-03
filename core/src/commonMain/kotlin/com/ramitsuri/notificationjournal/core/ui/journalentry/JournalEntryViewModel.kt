@@ -19,8 +19,10 @@ import com.ramitsuri.notificationjournal.core.network.WebSocketHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.ReceivedTextProperties
 import com.ramitsuri.notificationjournal.core.utils.combine
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYearSuspend
+import com.ramitsuri.notificationjournal.core.utils.hasValues
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
@@ -49,7 +51,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
 class JournalEntryViewModel(
-    receivedText: String?,
+    receivedText: ReceivedTextProperties?,
     private val repository: JournalRepository,
     private val exportRepository: ExportRepository?,
     private val tagsDao: TagsDao,
@@ -59,8 +61,8 @@ class JournalEntryViewModel(
     private val verifyEntriesHelper: VerifyEntriesHelper,
     private val webSocketHelper: WebSocketHelper,
 ) : ViewModel() {
-    private val _receivedText: MutableStateFlow<String?> = MutableStateFlow(receivedText)
-    val receivedText: StateFlow<String?> = _receivedText
+    private val _receivedText: MutableStateFlow<ReceivedTextProperties?> = MutableStateFlow(receivedText)
+    val receivedText: StateFlow<ReceivedTextProperties?> = _receivedText
 
     private val selectedDate = MutableStateFlow<LocalDate?>(null)
 
@@ -131,8 +133,8 @@ class JournalEntryViewModel(
             initialValue = ViewState(),
         )
 
-    fun setReceivedText(text: String?) {
-        if (!text.isNullOrEmpty()) {
+    fun setReceivedText(text: ReceivedTextProperties?) {
+        if (text.hasValues()) {
             _receivedText.update {
                 text
             }
@@ -464,7 +466,7 @@ class JournalEntryViewModel(
         )
 
     companion object {
-        fun factory(receivedText: String?) =
+        fun factory(receivedText: ReceivedTextProperties?) =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(
