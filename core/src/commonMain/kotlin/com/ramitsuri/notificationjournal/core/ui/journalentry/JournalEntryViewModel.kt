@@ -17,10 +17,8 @@ import com.ramitsuri.notificationjournal.core.network.WebSocketHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
-import com.ramitsuri.notificationjournal.core.utils.ReceivedTextProperties
 import com.ramitsuri.notificationjournal.core.utils.combine
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYearSuspend
-import com.ramitsuri.notificationjournal.core.utils.hasValues
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
@@ -28,12 +26,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KClass
@@ -47,13 +43,9 @@ class JournalEntryViewModel(
     private val exportRepository: ExportRepository?,
     private val tagsDao: TagsDao,
     private val prefManager: PrefManager,
-    private val clock: Clock = Clock.System,
     private val allowNotify: Boolean,
     webSocketHelper: WebSocketHelper,
 ) : ViewModel() {
-    private val _receivedText: MutableStateFlow<ReceivedTextProperties?> = MutableStateFlow(null)
-    val receivedText: StateFlow<ReceivedTextProperties?> = _receivedText
-
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -93,21 +85,6 @@ class JournalEntryViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ViewState(dayGroup = null),
         )
-
-    // TODO maybe move to list screen
-    fun setReceivedText(text: ReceivedTextProperties?) {
-        if (text.hasValues()) {
-            _receivedText.update {
-                text
-            }
-        }
-    }
-
-    fun onReceivedTextConsumed() {
-        _receivedText.update {
-            null
-        }
-    }
 
     fun delete(journalEntry: JournalEntry) {
         viewModelScope.launch {

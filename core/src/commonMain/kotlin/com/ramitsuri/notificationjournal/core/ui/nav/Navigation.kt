@@ -43,8 +43,6 @@ import com.ramitsuri.notificationjournal.core.ui.tags.TagsViewModel
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesScreen
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
 import com.ramitsuri.notificationjournal.core.utils.ReceivedTextListener
-import com.ramitsuri.notificationjournal.core.utils.hasValues
-import java.net.URLEncoder
 
 @Composable
 fun NavGraph(
@@ -63,6 +61,7 @@ fun NavGraph(
             navigator.navigate(Route.JournalEntry(date))
         }
     }
+    ReceivedTextListener(navigator = navigator)
     val entryProvider: (Route) -> NavEntry<Route> =
         entryProvider {
             entry<Route.JournalEntryDays> {
@@ -106,10 +105,6 @@ fun NavGraph(
                 }
                 val viewModel: JournalEntryViewModel =
                     viewModel(factory = JournalEntryViewModel.factory(selectedDate = arg.selectedDate))
-
-                ReceivedTextListener(navigator = navigator) {
-                    viewModel.setReceivedText(it)
-                }
                 val state =
                     rememberNavigationEventState(
                         currentInfo = NavigationEventInfo.None,
@@ -121,20 +116,6 @@ fun NavGraph(
                         dateSelector.selectDate(null)
                     },
                 )
-
-                val receivedTextState by viewModel.receivedText.collectAsStateWithLifecycle()
-                val receivedTextProperties = receivedTextState
-                LaunchedEffect(key1 = receivedTextProperties) {
-                    if (receivedTextProperties.hasValues()) {
-                        navigator.navigate(
-                            Route.AddEntry.fromReceivedText(
-                                text = URLEncoder.encode(receivedTextProperties.text, "UTF-8"),
-                                tag = receivedTextProperties.tag,
-                            ),
-                        )
-                        viewModel.onReceivedTextConsumed()
-                    }
-                }
 
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 JournalEntryScreen(
