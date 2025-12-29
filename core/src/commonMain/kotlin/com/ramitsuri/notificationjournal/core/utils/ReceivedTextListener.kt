@@ -6,10 +6,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 @Composable
-expect fun ReceivedTextListener(
-    navigator: Navigator,
-    onTextReceived: (ReceivedTextProperties?) -> Unit,
-)
+expect fun ReceivedTextListener(navigator: Navigator)
 
 data class ReceivedTextProperties(
     val text: String?,

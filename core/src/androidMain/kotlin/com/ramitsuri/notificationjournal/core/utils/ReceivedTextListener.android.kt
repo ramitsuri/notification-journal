@@ -10,18 +10,25 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.util.Consumer
 import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
+import com.ramitsuri.notificationjournal.core.ui.nav.Route
+import java.net.URLEncoder
 
 @Composable
-actual fun ReceivedTextListener(
-    navigator: Navigator,
-    onTextReceived: (ReceivedTextProperties?) -> Unit,
-) {
+actual fun ReceivedTextListener(navigator: Navigator) {
     val context = LocalContext.current
     val activity = (context.getActivity() as ComponentActivity)
     DisposableEffect(navigator) {
         val listener =
             Consumer<Intent> { intent ->
-                onTextReceived(intent.receivedText())
+                val receivedTextProperties = intent.receivedText()
+                if (receivedTextProperties.hasValues()) {
+                    navigator.navigate(
+                        Route.AddEntry.fromReceivedText(
+                            text = URLEncoder.encode(receivedTextProperties.text, "UTF-8"),
+                            tag = receivedTextProperties.tag,
+                        ),
+                    )
+                }
                 activity.intent = null
             }
         activity.addOnNewIntentListener(listener)
@@ -29,12 +36,12 @@ actual fun ReceivedTextListener(
     }
 }
 
-fun Context.getActivity(): Activity {
+private fun Context.getActivity(): Activity {
     if (this is Activity) return this
     return if (this is ContextWrapper) baseContext.getActivity() else getActivity()
 }
 
-fun Intent?.receivedText(): ReceivedTextProperties? {
+private fun Intent?.receivedText(): ReceivedTextProperties? {
     if (this == null) {
         return null
     }
