@@ -5,7 +5,6 @@ import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.insert
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
@@ -16,6 +15,7 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.days
 
 class EditJournalEntryViewModel(
-    savedStateHandle: SavedStateHandle,
+    arg: Route.EditEntry,
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
@@ -56,7 +56,7 @@ class EditJournalEntryViewModel(
 
     init {
         viewModelScope.launch {
-            entry = repository.get(checkNotNull(savedStateHandle[ENTRY_ID_ARG])) ?: return@launch
+            entry = repository.get(arg.entryId) ?: return@launch
             _state.update {
                 it.textFieldState.setTextAndPlaceCursorAtEnd(entry.text)
                 it.copy(
@@ -304,10 +304,6 @@ class EditJournalEntryViewModel(
             .map { it.text }
             .distinctBy { it.lowercase() }
             .take(10)
-    }
-
-    companion object {
-        const val ENTRY_ID_ARG = "entry_id"
     }
 }
 

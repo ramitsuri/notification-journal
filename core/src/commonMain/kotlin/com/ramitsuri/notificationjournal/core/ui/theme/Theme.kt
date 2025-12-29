@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import com.ramitsuri.notificationjournal.core.utils.isDarkMode
 
 private val darkColorScheme =
@@ -40,3 +41,17 @@ fun NotificationJournalTheme(
         content = content,
     )
 }
+
+private val greenDark = Color(0xFF64a880)
+private val redDark = Color(0xFFFD9891)
+
+private val greenLight = Color(0xFF578a4f)
+private val redLight = Color(0xFFC9372C)
+
+val greenColor: Color
+    @Composable
+    get() = if (isDarkMode()) greenDark else greenLight
+
+val redColor: Color
+    @Composable
+    get() = if (isDarkMode()) redDark else redLight

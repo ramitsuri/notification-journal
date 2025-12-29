@@ -9,12 +9,12 @@ import android.service.quicksettings.TileService
 import androidx.core.app.TaskStackBuilder
 import androidx.core.net.toUri
 import com.ramitsuri.notificationjournal.R
-import com.ramitsuri.notificationjournal.core.ui.nav.DeepLink
+import com.ramitsuri.notificationjournal.core.deeplink.addEntryDeepLink
 
 class AddEntryTileService : TileService() {
     override fun onClick() {
         super.onClick()
-        val mainIntent = Intent(Intent.ACTION_VIEW, DeepLink.ADD_ENTRY.uri.toUri())
+        val mainIntent = Intent(Intent.ACTION_VIEW, addEntryDeepLink.toUri())
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val contentIntent =
                 TaskStackBuilder.create(this).run {

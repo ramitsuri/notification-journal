@@ -55,10 +55,6 @@ sealed interface DayGroupAction {
     data class ResolveConflict(val entry: JournalEntry, val conflict: EntryConflict?) :
         DayGroupAction
 
-    data object ShowAllDays : DayGroupAction
-
-    data class ToggleVerifyEntries(val verify: Boolean) : DayGroupAction
-
     data object ShowNextDay : DayGroupAction
 
     data object ShowPreviousDay : DayGroupAction

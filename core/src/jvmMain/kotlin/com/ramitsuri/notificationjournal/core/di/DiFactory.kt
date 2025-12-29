@@ -1,10 +1,5 @@
 package com.ramitsuri.notificationjournal.core.di
 
-import androidx.lifecycle.AbstractSavedStateViewModelFactory
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavDeepLink
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ramitsuri.notificationjournal.core.BuildKonfig
@@ -15,9 +10,6 @@ import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
-import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
-import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
-import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
@@ -30,7 +22,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.prefs.Preferences
-import kotlin.reflect.KClass
 
 actual class DiFactory {
     actual val allowJournalImport: Boolean = true
@@ -98,63 +89,6 @@ actual class DiFactory {
         }
     }
 
-    actual fun addJournalEntryVMFactory(
-        navBackStackEntry: NavBackStackEntry,
-        getVMInstance: (SavedStateHandle) -> AddJournalEntryViewModel,
-    ): AbstractSavedStateViewModelFactory {
-        return object : AbstractSavedStateViewModelFactory(
-            owner = navBackStackEntry,
-            defaultArgs = navBackStackEntry.arguments,
-        ) {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                key: String,
-                modelClass: KClass<T>,
-                handle: SavedStateHandle,
-            ): T {
-                return getVMInstance(handle) as T
-            }
-        }
-    }
-
-    actual fun editJournalEntryVMFactory(
-        navBackStackEntry: NavBackStackEntry,
-        getVMInstance: (SavedStateHandle) -> EditJournalEntryViewModel,
-    ): AbstractSavedStateViewModelFactory {
-        return object : AbstractSavedStateViewModelFactory(
-            owner = navBackStackEntry,
-            defaultArgs = navBackStackEntry.arguments,
-        ) {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                key: String,
-                modelClass: KClass<T>,
-                handle: SavedStateHandle,
-            ): T {
-                return getVMInstance(handle) as T
-            }
-        }
-    }
-
-    actual fun viewJournalEntryDayVMFactory(
-        navBackStackEntry: NavBackStackEntry,
-        getVMInstance: (SavedStateHandle) -> ViewJournalEntryDayViewModel,
-    ): AbstractSavedStateViewModelFactory {
-        return object : AbstractSavedStateViewModelFactory(
-            owner = navBackStackEntry,
-            defaultArgs = navBackStackEntry.arguments,
-        ) {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                key: String,
-                modelClass: KClass<T>,
-                handle: SavedStateHandle,
-            ): T {
-                return getVMInstance(handle) as T
-            }
-        }
-    }
-
     actual fun getDataStorePath(): Path {
         return appDir.resolve(DataStoreKeyValueStore.FILE)
     }
@@ -165,14 +99,6 @@ actual class DiFactory {
 
     actual fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository? {
         return ExportRepositoryImpl(ioDispatcher)
-    }
-
-    actual fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> {
-        return emptyList()
-    }
-
-    actual fun getAddEntryScreenDeepLinks(): List<NavDeepLink> {
-        return emptyList()
     }
 
     companion object {

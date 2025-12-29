@@ -4,7 +4,6 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.insert
 import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
@@ -14,6 +13,7 @@ import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplat
 import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplates
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
+import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.days
 
 class AddJournalEntryViewModel(
-    savedStateHandle: SavedStateHandle,
+    arg: Route.AddEntry,
     private val repository: JournalRepository,
     private val tagsDao: TagsDao,
     private val templatesDao: JournalEntryTemplateDao,
@@ -44,25 +44,19 @@ class AddJournalEntryViewModel(
     private val prefManager: PrefManager,
 ) : ViewModel() {
     private val receivedText: String? =
-        if (savedStateHandle.get<String?>(RECEIVED_TEXT_ARG).isNullOrEmpty()) {
+        if (arg.receivedText.isNullOrEmpty()) {
             null
         } else {
-            URLDecoder.decode(savedStateHandle[RECEIVED_TEXT_ARG], "UTF-8")
+            URLDecoder.decode(arg.receivedText, "UTF-8")
         }
-    private val duplicateFromEntryId: String? = savedStateHandle[DUPLICATE_FROM_ENTRY_ID_ARG]
+    private val duplicateFromEntryId: String? = arg.duplicateFromEntryId
 
     private val dateTime =
-        savedStateHandle.get<String?>(DATE_ARG)
-            ?.let { dateString ->
+        arg.date
+            ?.let { date ->
                 val currentDateTime = clock.nowLocal()
-                val timeString = savedStateHandle.get<String?>(TIME_ARG)
-                val time =
-                    if (timeString == null) {
-                        currentDateTime.time
-                    } else {
-                        LocalTime.parse(timeString)
-                    }
-                LocalDate.parse(dateString).atTime(time)
+                val time = arg.time ?: currentDateTime.time
+                date.atTime(time)
             } ?: clock.nowLocal()
 
     private val _saved = MutableStateFlow(false)
@@ -73,7 +67,7 @@ class AddJournalEntryViewModel(
             AddJournalEntryViewState(
                 textFieldState = TextFieldState(receivedText ?: ""),
                 dateTime = dateTime,
-                selectedTag = savedStateHandle[TAG_ARG],
+                selectedTag = arg.tag,
             ),
         )
     val state: StateFlow<AddJournalEntryViewState> = _state
@@ -384,19 +378,11 @@ class AddJournalEntryViewModel(
         if (actualLineOfText == null || actualLineOfText.length < 2) {
             return listOf()
         }
-        return repository.search(actualLineOfText.toString(), listOf(tag))
+        return repository.search(actualLineOfText, listOf(tag))
             .filter { it.text != actualLineOfText }
             .map { it.text }
             .distinctBy { it.lowercase() }
             .take(10)
-    }
-
-    companion object {
-        const val RECEIVED_TEXT_ARG = "received_text"
-        const val DUPLICATE_FROM_ENTRY_ID_ARG = "duplicate_from_entry_id"
-        const val DATE_ARG = "date_arg"
-        const val TAG_ARG = "tag_arg"
-        const val TIME_ARG = "time_arg"
     }
 }
 

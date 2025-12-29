@@ -1,6 +1,7 @@
 package com.ramitsuri.notificationjournal
 
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -12,11 +13,18 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkMatcher
+import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkPattern
+import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkRequest
+import com.ramitsuri.notificationjournal.core.deeplink.KeyDecoder
+import com.ramitsuri.notificationjournal.core.deeplink.deepLinksWithArgNames
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
+import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
-import com.ramitsuri.notificationjournal.core.utils.receivedText
 
 class MainActivity : ComponentActivity() {
+    private val deepLinkPatterns: List<DeepLinkPattern<out Route>> = Route.deepLinksWithArgNames
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -24,6 +32,9 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         showNotification()
+
+        val deepLinkRoute = routeFromDeepLink()
+
         setContent {
             val darkTheme = isSystemInDarkTheme()
             DisposableEffect(darkTheme) {
@@ -47,8 +58,25 @@ class MainActivity : ComponentActivity() {
                 dynamicLightColorScheme = dynamicLightColorScheme(this),
             ) {
                 NavGraph(
-                    receivedText = this@MainActivity.intent?.receivedText(),
+                    startRoute = deepLinkRoute,
                 )
+            }
+        }
+    }
+
+    private fun routeFromDeepLink(): Route? {
+        val uri: Uri? = intent.data
+        intent.data = null
+        return uri?.let {
+            val request = DeepLinkRequest(uri)
+            val match =
+                deepLinkPatterns.firstNotNullOfOrNull { pattern ->
+                    DeepLinkMatcher(request, pattern).match()
+                }
+
+            match?.let {
+                KeyDecoder(match.args)
+                    .decodeSerializableValue(match.serializer)
             }
         }
     }
