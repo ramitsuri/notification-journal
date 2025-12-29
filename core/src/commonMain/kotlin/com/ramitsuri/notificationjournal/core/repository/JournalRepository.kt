@@ -47,7 +47,7 @@ class JournalRepository(
         return dao.getAllFlowNotReconciled()
     }
 
-    fun getNotReconciledEntryDatesFlow(): Flow<List<DateWithCount>> {
+    fun getNotReconciledDateWithCountsFlow(): Flow<List<DateWithCount>> {
         return combine(
             // Used so that it refreshes the data
             conflictDao.getFlow(),
@@ -62,6 +62,16 @@ class JournalRepository(
                 DateWithCount(date = date, conflictCount = conflictCount, untaggedCount = untaggedCount)
             }
         }
+    }
+
+    fun getNotReconciledDatesFlow(): Flow<List<LocalDate>> {
+        return dao
+            .getNotReconciledEntryTimesFlow()
+            .map { dateTimes ->
+                dateTimes
+                    .map { it.date }
+                    .distinct()
+            }
     }
 
     fun getForDateFlow(date: LocalDate): Flow<List<JournalEntry>> {

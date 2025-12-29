@@ -9,19 +9,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.util.Consumer
-import androidx.navigation.NavController
+import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 
 @Composable
 actual fun ReceivedTextListener(
-    navController: NavController,
+    navigator: Navigator,
     onTextReceived: (ReceivedTextProperties?) -> Unit,
 ) {
     val context = LocalContext.current
     val activity = (context.getActivity() as ComponentActivity)
-    DisposableEffect(navController) {
+    DisposableEffect(navigator) {
         val listener =
             Consumer<Intent> { intent ->
                 onTextReceived(intent.receivedText())
+                activity.intent = null
             }
         activity.addOnNewIntentListener(listener)
         onDispose { activity.removeOnNewIntentListener(listener) }

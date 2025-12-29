@@ -1,8 +1,8 @@
 package com.ramitsuri.notificationjournal.core.di
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavDeepLink
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.platformLogWriter
 import com.ramitsuri.notificationjournal.core.BuildKonfig
@@ -31,6 +31,7 @@ import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
+import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
 import com.ramitsuri.notificationjournal.core.utils.Importance
 import com.ramitsuri.notificationjournal.core.utils.JournalEntryNotificationHelper
@@ -186,43 +187,43 @@ object ServiceLocator {
         }
     }
 
-    fun getAddJournalEntryVMFactory(navBackStackEntry: NavBackStackEntry) =
-        factory.addJournalEntryVMFactory(
-            navBackStackEntry,
-        ) { savedStateHandle ->
-            AddJournalEntryViewModel(
-                savedStateHandle = savedStateHandle,
-                repository = repository,
-                tagsDao = tagsDao,
-                templatesDao = templatesDao,
-                spellChecker = spellChecker,
-                prefManager = prefManager,
-            )
+    fun getAddJournalEntryVMFactory(arg: Route.AddEntry) =
+        viewModelFactory {
+            initializer {
+                AddJournalEntryViewModel(
+                    arg = arg,
+                    repository = repository,
+                    tagsDao = tagsDao,
+                    templatesDao = templatesDao,
+                    spellChecker = spellChecker,
+                    prefManager = prefManager,
+                )
+            }
         }
 
-    fun getViewJournalEntryDayVMFactory(navBackStackEntry: NavBackStackEntry) =
-        factory.viewJournalEntryDayVMFactory(
-            navBackStackEntry,
-        ) { savedStateHandle ->
-            ViewJournalEntryDayViewModel(
-                savedStateHandle = savedStateHandle,
-                repository = repository,
-                tagsDao = tagsDao,
-            )
+    fun getViewJournalEntryDayVMFactory(arg: Route.ViewJournalEntryDay) =
+        viewModelFactory {
+            initializer {
+                ViewJournalEntryDayViewModel(
+                    arg = arg,
+                    repository = repository,
+                    tagsDao = tagsDao,
+                )
+            }
         }
 
-    fun getEditJournalEntryVMFactory(navBackStackEntry: NavBackStackEntry) =
-        factory.editJournalEntryVMFactory(
-            navBackStackEntry,
-        ) { savedStateHandle ->
-            EditJournalEntryViewModel(
-                savedStateHandle = savedStateHandle,
-                repository = repository,
-                tagsDao = tagsDao,
-                templatesDao = templatesDao,
-                spellChecker = spellChecker,
-                prefManager = prefManager,
-            )
+    fun getEditJournalEntryVMFactory(arg: Route.EditEntry) =
+        viewModelFactory {
+            initializer {
+                EditJournalEntryViewModel(
+                    arg = arg,
+                    repository = repository,
+                    tagsDao = tagsDao,
+                    templatesDao = templatesDao,
+                    spellChecker = spellChecker,
+                    prefManager = prefManager,
+                )
+            }
         }
 
     fun getAppVersion(): String {
@@ -240,10 +241,6 @@ object ServiceLocator {
     fun allowJournalEntryNotify(): Boolean {
         return notificationHelper != null
     }
-
-    fun getJournalEntryScreenDeepLinks(): List<NavDeepLink> = factory.getJournalEntryScreenDeepLinks()
-
-    fun getAddEntryScreenDeepLinks(): List<NavDeepLink> = factory.getAddEntryScreenDeepLinks()
 
     val prefManager by lazy {
         val keyValueStore =

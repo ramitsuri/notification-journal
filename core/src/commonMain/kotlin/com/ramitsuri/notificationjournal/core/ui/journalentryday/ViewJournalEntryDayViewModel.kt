@@ -1,6 +1,5 @@
 package com.ramitsuri.notificationjournal.core.ui.journalentryday
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.core.data.TagsDao
@@ -9,30 +8,24 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.ui.components.EntryDayHighlight
+import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.LocalDate
 
 class ViewJournalEntryDayViewModel(
-    savedStateHandle: SavedStateHandle,
+    arg: Route.ViewJournalEntryDay,
     repository: JournalRepository,
     tagsDao: TagsDao,
 ) : ViewModel() {
-    private val selectedDate = MutableStateFlow<LocalDate?>(null)
+    private val selectedDate = MutableStateFlow(arg.date)
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
-
-    init {
-        savedStateHandle.get<String>(DATE_ARG)?.let {
-            selectedDate.value = LocalDate.parse(it)
-        }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state =
@@ -52,7 +45,7 @@ class ViewJournalEntryDayViewModel(
                         selectedDate = date,
                         contentForCopy = contentForCopy,
                         highlight =
-                            savedStateHandle.get<String>(ENTRY_ID_ARG)?.let { entryId ->
+                            arg.entryId?.let { entryId ->
                                 val index = getEntryIndex(dayGroup, entryId)
                                 if (index != null) {
                                     EntryDayHighlight(index, entryId)
@@ -101,11 +94,6 @@ class ViewJournalEntryDayViewModel(
             }
         }
         return null
-    }
-
-    companion object {
-        const val DATE_ARG = "date"
-        const val ENTRY_ID_ARG = "entry_id"
     }
 }
 

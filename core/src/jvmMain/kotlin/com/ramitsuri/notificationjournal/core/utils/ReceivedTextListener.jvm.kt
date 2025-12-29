@@ -1,11 +1,11 @@
 package com.ramitsuri.notificationjournal.core.utils
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
+import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 
 @Composable
 actual fun ReceivedTextListener(
-    navController: NavController,
+    navigator: Navigator,
     onTextReceived: (ReceivedTextProperties?) -> Unit,
 ) {
     // Not supported

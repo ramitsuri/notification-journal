@@ -33,7 +33,10 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(libs.diffUtils)
-            implementation(libs.androidx.navigation.compose)
+
+            implementation(libs.compose.navigation3.ui)
+            implementation(libs.compose.navigation3.runtime)
+            implementation(libs.compose.lifecycle.viewmodel.navigation3)
             implementation(libs.androidx.lifecycle.runtime)
             implementation(libs.androidx.lifecycle.viewmodel.ktx)
             implementation(libs.androidx.lifecycle.viewmodel.savedstate)
@@ -88,7 +91,7 @@ kotlin {
 
 android {
     namespace = "com.ramitsuri.notificationjournal.core"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 30

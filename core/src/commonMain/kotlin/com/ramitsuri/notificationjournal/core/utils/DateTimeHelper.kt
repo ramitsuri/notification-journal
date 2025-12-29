@@ -49,20 +49,6 @@ fun hourMinute(
     return toFormat.format(format)
 }
 
-@Composable
-fun hourMinute(
-    toFormat: Instant,
-    timeZone: TimeZone = TimeZone.currentSystemDefault(),
-    amString: String = stringResource(Res.string.am),
-    pmString: String = stringResource(Res.string.pm),
-): String {
-    return hourMinute(
-        toFormat = toFormat.toLocalDateTime(timeZone),
-        amString = amString,
-        pmString = pmString,
-    )
-}
-
 fun formatTimeForLogs(
     toFormat: Instant,
     timeZone: TimeZone,
@@ -135,24 +121,58 @@ fun dayMonthDate(
         }
 
         else -> {
-            val format =
-                LocalDateTime.Format {
-                    dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-                    char(',')
-                    char(' ')
-                    monthName(MonthNames(monthNames))
-                    char(' ')
-                    dayOfMonth()
-                    if (nowLocalDate.year != toFormat.year) {
-                        char(' ')
-                        year()
-                    }
-                }
-            return toFormat
-                .atTime(hour = 0, minute = 0)
-                .format(format)
+            dayOfWeek(
+                toFormat = toFormat,
+                dayOfWeekNames = dayOfWeekNames,
+            )
+                .plus(", ")
+                .plus(
+                    monthDateYear(
+                        toFormat = toFormat,
+                        now = now,
+                        timeZone = timeZone,
+                        monthNames = monthNames,
+                    ),
+                )
         }
     }
+}
+
+@Composable
+fun monthDateYear(
+    toFormat: LocalDate,
+    now: Instant = Clock.System.now(),
+    timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    monthNames: List<String> = stringArrayResource(Res.array.month_names),
+): String {
+    val nowLocalDate = now.toLocalDateTime(timeZone).date
+    val format =
+        LocalDateTime.Format {
+            monthName(MonthNames(monthNames))
+            char(' ')
+            dayOfMonth()
+            if (nowLocalDate.year != toFormat.year) {
+                char(' ')
+                year()
+            }
+        }
+    return toFormat
+        .atTime(hour = 0, minute = 0)
+        .format(format)
+}
+
+@Composable
+fun dayOfWeek(
+    toFormat: LocalDate,
+    dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
+): String {
+    val format =
+        LocalDateTime.Format {
+            dayOfWeek(DayOfWeekNames(dayOfWeekNames))
+        }
+    return toFormat
+        .atTime(hour = 0, minute = 0)
+        .format(format)
 }
 
 // 4:45pm

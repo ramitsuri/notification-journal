@@ -179,9 +179,7 @@ fun JournalEntryDay(
         conflictCount = conflictCount,
         allowReconcile = config.allowReconcile,
         allowUpload = config.allowUpload,
-        allowDaySelection = config.allowDaySelection,
         onReconcileRequested = { onAction(DayGroupAction.ReconcileDayGroup) },
-        onShowAllDaysClicked = { onAction(DayGroupAction.ShowAllDays) },
         onUploadRequested = { onAction(DayGroupAction.UploadDayGroup) },
     )
     var swipeAmount by remember { mutableStateOf(0f) }
@@ -423,9 +421,7 @@ private fun HeaderItem(
     conflictCount: Int,
     allowReconcile: Boolean,
     allowUpload: Boolean,
-    allowDaySelection: Boolean,
     onReconcileRequested: () -> Unit,
-    onShowAllDaysClicked: () -> Unit,
     onUploadRequested: () -> Unit,
 ) {
     Box(
@@ -439,7 +435,6 @@ private fun HeaderItem(
         Column(
             modifier =
                 Modifier
-                    .clickable(enabled = allowDaySelection, onClick = onShowAllDaysClicked)
                     .padding(8.dp)
                     .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,

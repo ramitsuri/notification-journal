@@ -9,13 +9,13 @@ plugins {
 
 android {
     namespace = "com.ramitsuri.notificationjournal"
-    compileSdk = 35
+    compileSdk = 36
 
     val appVersion = libs.versions.appVersion.get()
     defaultConfig {
         applicationId = "com.ramitsuri.notificationjournal"
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersion.toDouble().times(100).toInt()
         versionName = appVersion
 
@@ -84,8 +84,7 @@ dependencies {
     implementation(firebaseBom)
     implementation(libs.firebaseCrashlytics)
 
-    implementation(libs.androidx.navigation.compose)
-
+    implementation(libs.compose.navigation3.runtime)
     implementation(libs.material)
 
     implementation(libs.androidx.core.splashscreen)

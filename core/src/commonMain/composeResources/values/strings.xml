@@ -29,6 +29,7 @@
     <string name="notify_twenty_four_hours">24 hours</string>
     <string name="select_all">Select all</string>
     <string name="unselect_all">Unselect all</string>
+    <string name="entry_days_empty">No Entry Days</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>
@@ -156,12 +157,14 @@
     <string name="exchange_name">Exchange</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
-    <string name="untagged_format">Untagged: %1$s</string>
-    <string name="conflicts_format">Conflicts: %1$s</string>
+    <string name="untagged_format">%1$s untagged</string>
+    <string name="conflicts_format">%1$s conflicts</string>
     <string name="reset">Reset</string>
     <string name="text">Text</string>
     <string name="display_text">Display text</string>
     <string name="short_display_text">Short display text</string>
+    <string name="not_verified">Not verified</string>
+    <string name="verifying">Verifying</string>
 
     <string name="conflict_this_device">This device</string>
     <string name="will_reconcile">Will reconcile</string>

@@ -12,10 +12,10 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.ramitsuri.notificationjournal.R
+import com.ramitsuri.notificationjournal.core.deeplink.reminderDeepLink
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.ui.nav.DeepLink
-import com.ramitsuri.notificationjournal.core.ui.nav.uriWithArgsValues
+import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYearSuspend
@@ -52,7 +52,11 @@ class ShowNotificationWorker(
             cancelOnTouch = true,
             isForegroundServiceImmediate = false,
             isOngoing = false,
-            clickDeepLinkUri = DeepLink.REMINDER.uriWithArgsValues(listOf(journalEntry.id)),
+            clickDeepLinkUri =
+                Route.JournalEntry(
+                    selectedDate = journalEntry.entryTime.date,
+                    highlightEntryId = journalEntry.id,
+                ).reminderDeepLink,
         ).let { notificationInfo ->
             ServiceLocator.notificationHandler.showNotification(notificationInfo)
         }

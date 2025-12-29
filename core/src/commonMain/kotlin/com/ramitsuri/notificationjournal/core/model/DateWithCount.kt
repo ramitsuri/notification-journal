@@ -6,5 +6,13 @@ data class DateWithCount(
     val date: LocalDate,
     val conflictCount: Int,
     val untaggedCount: Int,
-    val verifiedWith: String? = null,
-)
+    val verification: Verification = Verification.NotVerified,
+) {
+    sealed interface Verification {
+        data object InProgress : Verification
+
+        data class Verified(val with: String) : Verification
+
+        data object NotVerified : Verification
+    }
+}

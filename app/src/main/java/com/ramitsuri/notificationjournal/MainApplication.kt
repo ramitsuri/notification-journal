@@ -6,11 +6,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
+import com.ramitsuri.notificationjournal.core.deeplink.homeDeepLink
 import com.ramitsuri.notificationjournal.core.di.DiFactory
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.ui.nav.DeepLink
-import com.ramitsuri.notificationjournal.core.ui.nav.uriWithArgsValues
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.JournalEntryNotificationHelper
 import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
@@ -61,7 +60,7 @@ class MainApplication : Application(), DefaultLifecycleObserver {
                 cancelOnTouch = false,
                 isForegroundServiceImmediate = false,
                 isOngoing = true,
-                clickDeepLinkUri = DeepLink.HOME_SCREEN.uriWithArgsValues(),
+                clickDeepLinkUri = homeDeepLink,
                 actions =
                     listOf(
                         NotificationActionInfo(
