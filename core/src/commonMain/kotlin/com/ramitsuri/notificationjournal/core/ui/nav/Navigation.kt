@@ -50,13 +50,20 @@ fun NavGraph(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val dateSelector = remember { DateSelector(lifecycleOwner, ServiceLocator.repository) }
-    val selectedDate by dateSelector.selectedDate.collectAsStateWithLifecycle()
-    LaunchedEffect(selectedDate) {
-        val date = selectedDate
-        if (date == null) {
-            navigator.goBack()
-        } else {
-            navigator.navigate(Route.JournalEntry(date))
+    val dateSelectorState by dateSelector.state.collectAsStateWithLifecycle()
+    LaunchedEffect(dateSelectorState) {
+        when (val state = dateSelectorState) {
+            is DateSelector.DateSelectorState.Date -> {
+                navigator.navigate(Route.JournalEntry(state.date))
+            }
+
+            is DateSelector.DateSelectorState.Initial -> {
+                // Do nothing
+            }
+
+            is DateSelector.DateSelectorState.None -> {
+                navigator.goBack()
+            }
         }
     }
     val entryProvider: (Route) -> NavEntry<Route> =
@@ -65,8 +72,9 @@ fun NavGraph(
                 val viewModel: JournalEntryDaysViewModel =
                     viewModel(factory = JournalEntryDaysViewModel.factory())
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
-                LaunchedEffect(selectedDate) {
-                    viewModel.onDateSelected(selectedDate)
+                LaunchedEffect(dateSelectorState) {
+                    val date = (dateSelectorState as? DateSelector.DateSelectorState.Date)?.date
+                    viewModel.onDateSelected(date)
                 }
                 LaunchedEffect(Unit) {
                     viewModel.onVerifyEntriesRequested()
@@ -74,7 +82,7 @@ fun NavGraph(
                 JournalEntryDaysScreen(
                     state = viewState,
                     onDateSelected = {
-                        dateSelector.selectDate(it)
+                        dateSelector.select(it)
                     },
                     onResetReceiveHelper = viewModel::resetReceiveHelper,
                     onViewByDate = {
@@ -98,7 +106,7 @@ fun NavGraph(
                 LaunchedEffect(arg) {
                     // If coming from a deep link, this screen will be opened automatically, so let date selector know
                     // what date is selected
-                    dateSelector.selectDate(arg.selectedDate)
+                    dateSelector.select(arg.selectedDate)
                 }
                 val viewModel: JournalEntryViewModel =
                     viewModel(factory = JournalEntryViewModel.factory(selectedDate = arg.selectedDate))
@@ -110,7 +118,7 @@ fun NavGraph(
                     state = state,
                     onBackCompleted = {
                         navigator.goBack()
-                        dateSelector.selectDate(null)
+                        dateSelector.select(null)
                     },
                 )
 
@@ -152,7 +160,7 @@ fun NavGraph(
                             }
 
                             is EntryScreenAction.NavBack -> {
-                                dateSelector.selectDate(null)
+                                dateSelector.select(null)
                                 navigator.goBack()
                             }
                         }
@@ -258,11 +266,11 @@ fun NavGraph(
                             }
 
                             is DayGroupAction.ShowPreviousDay -> {
-                                dateSelector.selectPreviousDate()
+                                dateSelector.selectPrevious()
                             }
 
                             is DayGroupAction.ShowNextDay -> {
-                                dateSelector.selectNextDate()
+                                dateSelector.selectNext()
                             }
 
                             is DayGroupAction.Notify -> {

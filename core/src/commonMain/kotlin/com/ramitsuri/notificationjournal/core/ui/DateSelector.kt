@@ -17,8 +17,8 @@ class DateSelector(
     private val lifecycleOwner: LifecycleOwner,
     repository: JournalRepository,
 ) : DefaultLifecycleObserver {
-    private val _selectedDate = MutableStateFlow<LocalDate?>(null)
-    val selectedDate = _selectedDate.asStateFlow()
+    private val _state = MutableStateFlow<DateSelectorState>(DateSelectorState.Initial)
+    val state = _state.asStateFlow()
 
     private val dates =
         repository
@@ -35,11 +35,9 @@ class DateSelector(
         lifecycleOwner.lifecycle.addObserver(this)
     }
 
-    fun selectNextDate() {
-        _selectedDate.update { currentDate ->
-            if (currentDate == null) {
-                return
-            }
+    fun selectNext() {
+        _state.update { existingState ->
+            val currentDate = (existingState as? DateSelectorState.Date)?.date ?: return
             val currentDateIndex = dates.value.indexOf(currentDate)
             val newDate =
                 if (currentDateIndex == -1) {
@@ -52,15 +50,13 @@ class DateSelector(
                         dates.value.getOrNull(newIndex)
                     }
                 } ?: return
-            newDate
+            DateSelectorState.Date(newDate)
         }
     }
 
-    fun selectPreviousDate() {
-        _selectedDate.update { currentDate ->
-            if (currentDate == null) {
-                return
-            }
+    fun selectPrevious() {
+        _state.update { existingState ->
+            val currentDate = (existingState as? DateSelectorState.Date)?.date ?: return
             val currentDateIndex = dates.value.indexOf(currentDate)
             val newDate =
                 if (currentDateIndex == -1) {
@@ -73,21 +69,21 @@ class DateSelector(
                         dates.value.getOrNull(newIndex)
                     }
                 } ?: return
-            newDate
+            DateSelectorState.Date(newDate)
         }
     }
 
-    fun selectDate(localDate: LocalDate?) {
+    fun select(localDate: LocalDate?) {
         if (localDate == null) {
-            _selectedDate.update { null }
+            _state.update { DateSelectorState.None }
             return
         }
         val indexOfDate = dates.value.indexOf(localDate)
         if (indexOfDate == -1) {
             return
         }
-        _selectedDate.update {
-            localDate
+        _state.update {
+            DateSelectorState.Date(localDate)
         }
     }
 
@@ -97,10 +93,15 @@ class DateSelector(
             lifecycleOwner.lifecycleScope.launch {
                 dates.collect { dates ->
                     if (dates.isEmpty()) {
-                        selectDate(null)
-                    } else if (selectedDate.value !in dates) {
-                        // Useful when a date is reconciled and is no longer going to be visible, then select the next one
-                        selectNextDate()
+                        if (_state.value !is DateSelectorState.Initial) {
+                            _state.update { DateSelectorState.None }
+                        }
+                    } else {
+                        val selectedDate = (state.value as? DateSelectorState.Date)?.date
+                        if (selectedDate !in dates) {
+                            // Useful when a date is reconciled and is no longer going to be visible, then select the next one
+                            selectNext()
+                        }
                     }
                 }
             }
@@ -109,5 +110,13 @@ class DateSelector(
     override fun onPause(owner: LifecycleOwner) {
         collectJob?.cancel()
         collectJob = null
+    }
+
+    sealed interface DateSelectorState {
+        data class Date(val date: LocalDate) : DateSelectorState
+
+        data object Initial : DateSelectorState
+
+        data object None : DateSelectorState
     }
 }
