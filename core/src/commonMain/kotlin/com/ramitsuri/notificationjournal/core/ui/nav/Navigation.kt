@@ -42,15 +42,13 @@ import com.ramitsuri.notificationjournal.core.ui.tags.TagsScreen
 import com.ramitsuri.notificationjournal.core.ui.tags.TagsViewModel
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesScreen
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
-import com.ramitsuri.notificationjournal.core.utils.ReceivedTextListener
 
 @Composable
 fun NavGraph(
     modifier: Modifier = Modifier,
-    startRoute: Route? = null,
+    navigator: Navigator = remember { Navigator() },
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val navigator: Navigator = remember { Navigator(topOfBackStack = startRoute) }
     val dateSelector = remember { DateSelector(lifecycleOwner, ServiceLocator.repository) }
     val selectedDate by dateSelector.selectedDate.collectAsStateWithLifecycle()
     LaunchedEffect(selectedDate) {
@@ -61,7 +59,6 @@ fun NavGraph(
             navigator.navigate(Route.JournalEntry(date))
         }
     }
-    ReceivedTextListener(navigator = navigator)
     val entryProvider: (Route) -> NavEntry<Route> =
         entryProvider {
             entry<Route.JournalEntryDays> {
