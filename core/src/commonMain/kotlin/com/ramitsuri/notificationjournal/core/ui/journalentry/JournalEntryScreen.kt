@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material3.AlertDialog
@@ -91,6 +92,7 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun JournalEntryScreen(
     state: ViewState,
+    showBackButton: Boolean,
     onEntryScreenAction: (EntryScreenAction) -> Unit,
     onDayGroupAction: (DayGroupAction) -> Unit,
 ) {
@@ -214,8 +216,10 @@ fun JournalEntryScreen(
                 )
 
             Toolbar(
+                showBackButton = showBackButton,
                 isConnected = state.isConnected,
                 notUploadedCount = state.notUploadedCount,
+                onViewByDate = { onEntryScreenAction(EntryScreenAction.NavToViewJournalEntryDay) },
                 onBackClick = { onEntryScreenAction(EntryScreenAction.NavBack) },
                 onSyncClicked = { onEntryScreenAction(EntryScreenAction.Sync) },
                 onSettingsClicked = { onEntryScreenAction(EntryScreenAction.NavToSettings) },
@@ -317,8 +321,10 @@ private fun DeleteDialog(
 @Composable
 private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
+    showBackButton: Boolean,
     isConnected: Boolean,
     notUploadedCount: Int,
+    onViewByDate: () -> Unit,
     onBackClick: () -> Unit,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
@@ -332,16 +338,30 @@ private fun Toolbar(
                 .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         navigationIcon = {
-            IconButton(
-                onClick = onBackClick,
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back),
-                )
+            if (showBackButton) {
+                IconButton(
+                    onClick = onBackClick,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(Res.string.back),
+                    )
+                }
             }
         },
         actions = {
+            IconButton(
+                onClick = onViewByDate,
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.CalendarToday,
+                    contentDescription = null,
+                )
+            }
             if (notUploadedCount > 0) {
                 Box(
                     modifier =

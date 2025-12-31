@@ -51,6 +51,8 @@ fun NavGraph(
     val lifecycleOwner = LocalLifecycleOwner.current
     val dateSelector = remember { DateSelector(lifecycleOwner, ServiceLocator.repository) }
     val dateSelectorState by dateSelector.state.collectAsStateWithLifecycle()
+    val listDetailStrategy = rememberListDetailSceneStrategy<Route>()
+
     LaunchedEffect(dateSelectorState) {
         when (val state = dateSelectorState) {
             is DateSelector.DateSelectorState.Date -> {
@@ -68,7 +70,10 @@ fun NavGraph(
     }
     val entryProvider: (Route) -> NavEntry<Route> =
         entryProvider {
-            entry<Route.JournalEntryDays> {
+            entry<Route.JournalEntryDays>(
+                metadata = ListDetailScene.listPane(),
+            ) {
+                val isListDetail = LocalIsListDetailScene.current
                 val viewModel: JournalEntryDaysViewModel =
                     viewModel(factory = JournalEntryDaysViewModel.factory())
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
@@ -77,10 +82,19 @@ fun NavGraph(
                     viewModel.onDateSelected(date)
                 }
                 LaunchedEffect(Unit) {
+                    // See the LaunchedEffect below if changing
                     viewModel.onVerifyEntriesRequested()
+                }
+                LaunchedEffect(isListDetail, dateSelectorState) {
+                    // When in list detail scene, list detail screen is only started once, so the above request to
+                    // verify entries is only triggered once. This is a workaround to trigger it more frequently.
+                    if (isListDetail && dateSelectorState is DateSelector.DateSelectorState.Date) {
+                        viewModel.onVerifyEntriesRequested()
+                    }
                 }
                 JournalEntryDaysScreen(
                     state = viewState,
+                    showToolbarActions = !isListDetail,
                     onDateSelected = {
                         dateSelector.select(it)
                     },
@@ -102,12 +116,15 @@ fun NavGraph(
                 )
             }
 
-            entry<Route.JournalEntry> { arg ->
+            entry<Route.JournalEntry>(
+                metadata = ListDetailScene.detailPane(),
+            ) { arg ->
                 LaunchedEffect(arg) {
                     // If coming from a deep link, this screen will be opened automatically, so let date selector know
                     // what date is selected
                     dateSelector.select(arg.selectedDate)
                 }
+                val isListDetail = LocalIsListDetailScene.current
                 val viewModel: JournalEntryViewModel =
                     viewModel(factory = JournalEntryViewModel.factory(selectedDate = arg.selectedDate))
                 val state =
@@ -125,6 +142,7 @@ fun NavGraph(
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 JournalEntryScreen(
                     state = viewState,
+                    showBackButton = !isListDetail,
                     onEntryScreenAction = { action ->
                         when (action) {
                             is EntryScreenAction.AddWithDate -> {
@@ -506,6 +524,7 @@ fun NavGraph(
     NavDisplay(
         backStack = navigator.backstack,
         entryProvider = entryProvider,
+        sceneStrategy = listDetailStrategy,
         onBack = { navigator.goBack() },
         entryDecorators =
             listOf(

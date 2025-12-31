@@ -96,6 +96,7 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun JournalEntryDaysScreen(
     state: ViewState,
+    showToolbarActions: Boolean,
     onAddClicked: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
     onSettingsClicked: () -> Unit,
@@ -170,6 +171,7 @@ fun JournalEntryDaysScreen(
                 scrollBehavior = scrollBehavior,
                 isConnected = state.isConnected,
                 notUploadedCount = state.notUploadedCount,
+                showToolbarActions = showToolbarActions,
                 onResetReceiveHelper = onResetReceiveHelper,
                 onViewByDate = onViewByDate,
                 onSearchClicked = onSearchClicked,
@@ -360,6 +362,7 @@ private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     isConnected: Boolean,
     notUploadedCount: Int,
+    showToolbarActions: Boolean,
     onSyncClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
@@ -373,74 +376,76 @@ private fun Toolbar(
                 .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         actions = {
-            IconButton(
-                onClick = onViewByDate,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .padding(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.CalendarToday,
-                    contentDescription = null,
-                )
-            }
-            if (notUploadedCount > 0) {
-                Box(
+            if (showToolbarActions) {
+                IconButton(
+                    onClick = onViewByDate,
                     modifier =
                         Modifier
-                            .height(48.dp)
-                            .padding(4.dp)
-                            .clip(CircleShape)
-                            .clickable(onClick = onSyncClicked),
+                            .size(48.dp)
+                            .padding(4.dp),
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.align(Alignment.Center),
+                    Icon(
+                        imageVector = Icons.Outlined.CalendarToday,
+                        contentDescription = null,
+                    )
+                }
+                if (notUploadedCount > 0) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .height(48.dp)
+                                .padding(4.dp)
+                                .clip(CircleShape)
+                                .clickable(onClick = onSyncClicked),
                     ) {
-                        Text("$notUploadedCount", style = MaterialTheme.typography.labelMedium)
-                        Icon(
-                            imageVector = vectorResource(Res.drawable.sync_up),
-                            contentDescription = null,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.align(Alignment.Center),
+                        ) {
+                            Text("$notUploadedCount", style = MaterialTheme.typography.labelMedium)
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.sync_up),
+                                contentDescription = null,
+                            )
+                        }
                     }
                 }
-            }
-            IconButton(
-                onClick = onResetReceiveHelper,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .padding(4.dp),
-            ) {
-                Icon(
-                    imageVector = if (isConnected) Icons.Outlined.Link else Icons.Outlined.LinkOff,
-                    contentDescription = null,
-                )
-            }
-            IconButton(
-                onClick = onSearchClicked,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .padding(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = stringResource(Res.string.search),
-                )
-            }
-            IconButton(
-                onClick = onSettingsClicked,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .padding(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = stringResource(Res.string.settings),
-                )
+                IconButton(
+                    onClick = onResetReceiveHelper,
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .padding(4.dp),
+                ) {
+                    Icon(
+                        imageVector = if (isConnected) Icons.Outlined.Link else Icons.Outlined.LinkOff,
+                        contentDescription = null,
+                    )
+                }
+                IconButton(
+                    onClick = onSearchClicked,
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .padding(4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = stringResource(Res.string.search),
+                    )
+                }
+                IconButton(
+                    onClick = onSettingsClicked,
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .padding(4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = stringResource(Res.string.settings),
+                    )
+                }
             }
         },
         scrollBehavior = scrollBehavior,
