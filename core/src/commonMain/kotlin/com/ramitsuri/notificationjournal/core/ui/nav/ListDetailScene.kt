@@ -1,9 +1,5 @@
 package com.ramitsuri.notificationjournal.core.ui.nav
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,18 +34,7 @@ class ListDetailScene<T : Any>(
                     listEntry.Content()
                 }
                 Column(modifier = Modifier.weight(0.75f)) {
-                    AnimatedContent(
-                        targetState = detailEntry,
-                        contentKey = { entry -> entry.contentKey },
-                        transitionSpec = {
-                            slideInHorizontally(
-                                initialOffsetX = { it },
-                            ) togetherWith
-                                slideOutHorizontally(targetOffsetX = { -it })
-                        },
-                    ) { entry ->
-                        entry.Content()
-                    }
+                    detailEntry.Content()
                 }
             }
         }

@@ -95,6 +95,7 @@ fun NavGraph(
                 JournalEntryDaysScreen(
                     state = viewState,
                     showToolbarActions = !isListDetail,
+                    showFloatingActionButton = !isListDetail,
                     onDateSelected = {
                         dateSelector.select(it)
                     },
@@ -303,10 +304,11 @@ fun NavGraph(
                 val viewModel: AddJournalEntryViewModel =
                     viewModel(factory = ServiceLocator.getAddJournalEntryVMFactory(arg))
 
-                val saved by viewModel.saved.collectAsStateWithLifecycle()
-                LaunchedEffect(saved) {
-                    if (saved) {
+                val savedDate by viewModel.savedDate.collectAsStateWithLifecycle()
+                LaunchedEffect(savedDate) {
+                    if (savedDate != null) {
                         navigator.goBack()
+                        dateSelector.select(savedDate)
                     }
                 }
 
