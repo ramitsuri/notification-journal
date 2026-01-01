@@ -11,11 +11,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
 class DateSelector(
     private val lifecycleOwner: LifecycleOwner,
     repository: JournalRepository,
+    private val clock: Clock = Clock.System,
+    private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : DefaultLifecycleObserver {
     private val _state = MutableStateFlow<DateSelectorState>(DateSelectorState.Initial)
     val state = _state.asStateFlow()
@@ -97,10 +102,15 @@ class DateSelector(
                             _state.update { DateSelectorState.None }
                         }
                     } else {
-                        val selectedDate = (state.value as? DateSelectorState.Date)?.date
-                        if (selectedDate !in dates) {
-                            // Useful when a date is reconciled and is no longer going to be visible, then select the next one
-                            selectNext()
+                        val state = state.value
+                        if (state is DateSelectorState.Date) {
+                            if (state.date !in dates) {
+                                // Useful when a date is reconciled and is no longer going to be visible,
+                                // then select the next one
+                                selectNext()
+                            }
+                        } else if (state is DateSelectorState.Initial) {
+                            select(dates.todayIfExistsOrLast())
                         }
                     }
                 }
@@ -110,6 +120,15 @@ class DateSelector(
     override fun onPause(owner: LifecycleOwner) {
         collectJob?.cancel()
         collectJob = null
+    }
+
+    private fun List<LocalDate>.todayIfExistsOrLast(): LocalDate? {
+        val today = clock.todayIn(timeZone)
+        return if (today in this) {
+            today
+        } else {
+            lastOrNull()
+        }
     }
 
     sealed interface DateSelectorState {
