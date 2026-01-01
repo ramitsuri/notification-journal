@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -45,11 +46,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -97,6 +102,7 @@ import org.jetbrains.compose.resources.vectorResource
 fun JournalEntryDaysScreen(
     state: ViewState,
     showToolbarActions: Boolean,
+    showFloatingActionButton: Boolean,
     onAddClicked: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
     onSettingsClicked: () -> Unit,
@@ -139,14 +145,16 @@ fun JournalEntryDaysScreen(
                     }
                 },
         floatingActionButton = {
-            FloatingActionButton(
-                modifier = Modifier.padding(bottom = 32.dp),
-                onClick = onAddClicked,
-            ) {
-                Icon(
-                    Icons.Filled.Add,
-                    stringResource(Res.string.add_entry_content_description),
-                )
+            if (showFloatingActionButton) {
+                FloatingActionButton(
+                    modifier = Modifier.padding(bottom = 32.dp),
+                    onClick = onAddClicked,
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        stringResource(Res.string.add_entry_content_description),
+                    )
+                }
             }
         },
     ) { paddingValues ->
@@ -246,6 +254,7 @@ private fun List(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DateWithCountItem(
     dateWithCount: DateWithCount,
@@ -267,8 +276,9 @@ private fun DateWithCountItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column {
+            // Date
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(dayOfWeek(toFormat = dateWithCount.date))
+                Text(monthDateYear(toFormat = dateWithCount.date))
                 Spacer(modifier = Modifier.width(4.dp))
                 if (isToday) {
                     Icon(
@@ -279,57 +289,70 @@ private fun DateWithCountItem(
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Text(monthDateYear(toFormat = dateWithCount.date))
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text =
-                    stringResource(
-                        Res.string.untagged_format,
-                        dateWithCount.untaggedCount.toString(),
-                    ),
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text =
-                    stringResource(
-                        Res.string.conflicts_format,
-                        dateWithCount.conflictCount.toString(),
-                    ),
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                dateWithCount.verification.Icon()
+                // Verification
+                TooltipContainer(label = dateWithCount.verification.label()) {
+                    dateWithCount.verification.Icon()
+                }
                 Spacer(modifier = Modifier.width(4.dp))
-                dateWithCount.verification.Label()
+                // Day of week
+                Text(
+                    dayOfWeek(toFormat = dateWithCount.date),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+        }
+        if (dateWithCount.untaggedCount > 0 || dateWithCount.conflictCount > 0) {
+            TooltipContainer(
+                label =
+                    stringResource(Res.string.untagged_format, dateWithCount.untaggedCount) + "\n" +
+                        stringResource(Res.string.conflicts_format, dateWithCount.conflictCount),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateWithCount.Verification.Label() {
-    val text =
-        when (this) {
-            is DateWithCount.Verification.InProgress -> {
-                stringResource(Res.string.verifying)
+private fun TooltipContainer(
+    label: String,
+    content: @Composable () -> Unit,
+) {
+    val state = rememberTooltipState()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = {
+            PlainTooltip {
+                Text(label)
             }
+        },
+        state = state,
+    ) {
+        content()
+    }
+}
 
-            is DateWithCount.Verification.NotVerified -> {
-                stringResource(Res.string.not_verified)
-            }
-
-            is DateWithCount.Verification.Verified -> {
-                with
-            }
+@Composable
+private fun DateWithCount.Verification.label(): String {
+    return when (this) {
+        is DateWithCount.Verification.InProgress -> {
+            stringResource(Res.string.verifying)
         }
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-    )
+
+        is DateWithCount.Verification.NotVerified -> {
+            stringResource(Res.string.not_verified)
+        }
+
+        is DateWithCount.Verification.Verified -> {
+            with
+        }
+    }
 }
 
 @Composable

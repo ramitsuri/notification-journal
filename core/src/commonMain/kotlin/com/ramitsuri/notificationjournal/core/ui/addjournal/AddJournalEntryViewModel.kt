@@ -59,8 +59,8 @@ class AddJournalEntryViewModel(
                 date.atTime(time)
             } ?: clock.nowLocal()
 
-    private val _saved = MutableStateFlow(false)
-    val saved: StateFlow<Boolean> = _saved
+    private val _savedDate = MutableStateFlow<LocalDate?>(null)
+    val savedDate: StateFlow<LocalDate?> = _savedDate
 
     private val _state: MutableStateFlow<AddJournalEntryViewState> =
         MutableStateFlow(
@@ -249,8 +249,8 @@ class AddJournalEntryViewModel(
                 time = currentState.dateTime,
             )
             if (exitOnSave) {
-                _saved.update {
-                    true
+                _savedDate.update {
+                    currentState.dateTime.date
                 }
             } else {
                 _state.update {
