@@ -56,7 +56,13 @@ fun NavGraph(
     LaunchedEffect(dateSelectorState) {
         when (val state = dateSelectorState) {
             is DateSelector.DateSelectorState.Date -> {
-                navigator.navigate(Route.JournalEntry(state.date))
+                // Navigate only if currently viewing days or entry screen otherwise this messes up launching add screen
+                // from deeplink as first we nav for deeplink and then nav to entry screen here.
+                if (navigator.backstack.lastOrNull() is Route.JournalEntryDays ||
+                    navigator.backstack.lastOrNull() is Route.JournalEntry
+                ) {
+                    navigator.navigate(Route.JournalEntry(state.date))
+                }
             }
 
             is DateSelector.DateSelectorState.Initial -> {
