@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LabelOff
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
@@ -82,7 +83,6 @@ import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.cancel
-import notificationjournal.core.generated.resources.conflicts_format
 import notificationjournal.core.generated.resources.entry_days_empty
 import notificationjournal.core.generated.resources.not_verified
 import notificationjournal.core.generated.resources.proceed
@@ -92,7 +92,6 @@ import notificationjournal.core.generated.resources.reconcile_all_upload_on_succ
 import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_up
-import notificationjournal.core.generated.resources.untagged_format
 import notificationjournal.core.generated.resources.verifying
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -302,17 +301,37 @@ private fun DateWithCountItem(
                 )
             }
         }
-        if (dateWithCount.untaggedCount > 0 || dateWithCount.conflictCount > 0) {
-            TooltipContainer(
-                label =
-                    stringResource(Res.string.untagged_format, dateWithCount.untaggedCount) + "\n" +
-                        stringResource(Res.string.conflicts_format, dateWithCount.conflictCount),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Error,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (dateWithCount.untaggedCount > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.LabelOff,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = dateWithCount.untaggedCount.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+            if (dateWithCount.conflictCount > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = dateWithCount.conflictCount.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
             }
         }
     }
