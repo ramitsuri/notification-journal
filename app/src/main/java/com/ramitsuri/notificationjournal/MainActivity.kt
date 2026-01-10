@@ -15,11 +15,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.coroutineScope
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkMatcher
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkPattern
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkRequest
 import com.ramitsuri.notificationjournal.core.deeplink.KeyDecoder
 import com.ramitsuri.notificationjournal.core.deeplink.deepLinksWithArgNames
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
@@ -36,7 +38,11 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        navigator = Navigator()
+        navigator =
+            Navigator(
+                repository = ServiceLocator.repository,
+                scope = lifecycle.coroutineScope,
+            )
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
