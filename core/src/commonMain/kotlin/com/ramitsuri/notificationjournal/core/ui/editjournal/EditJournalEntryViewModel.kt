@@ -238,7 +238,7 @@ class EditJournalEntryViewModel(
                 .collect { text ->
                     spellChecker.onTextUpdated(text)
                     _state.update { existingState ->
-                        existingState.copy(showWarningOnExit = text != entry.text)
+                        existingState.copy(textChangeNeedsWarning = text != entry.text)
                     }
                 }
         }
@@ -315,7 +315,7 @@ data class EditJournalEntryViewState(
     val templates: List<JournalEntryTemplate> = listOf(),
     val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: LocalDateTime = Clock.System.nowLocal(),
-    val showWarningOnExit: Boolean = false,
+    val textChangeNeedsWarning: Boolean = false,
     val suggestions: List<String> = listOf(),
     val suggestionsEnabled: Boolean = false,
 )

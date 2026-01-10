@@ -86,6 +86,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
@@ -119,7 +122,7 @@ fun AddEditEntryDialog(
     dateTime: LocalDateTime,
     templates: List<JournalEntryTemplate>,
     textCorrections: Map<String, List<String>>,
-    showWarningOnExit: Boolean,
+    textChangeNeedsWarning: Boolean,
     suggestions: List<String>,
     showSuggestions: Boolean,
     onSuggestionClicked: (String?) -> Unit,
@@ -143,17 +146,33 @@ fun AddEditEntryDialog(
     var showTemplatesKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showTagsKeyboardShortcutHints by remember { mutableStateOf(false) }
     var showCancelWarningDialog by remember { mutableStateOf(false) }
+    // Similar to show cancel warning but need to remember which template was clicked so that if template overwrite is
+    // confirmed, we can pass that template upstream.
+    var templateClickedForWarning: JournalEntryTemplate? by remember { mutableStateOf(null) }
     val scrollBehavior =
         TopAppBarDefaults.enterAlwaysScrollBehavior(
             rememberTopAppBarState(),
         )
     val onCancelWithWarning = {
-        if (showWarningOnExit) {
+        if (textChangeNeedsWarning) {
             showCancelWarningDialog = true
         } else {
             onCancel()
         }
     }
+    val onTemplateClickedWithWarning: (JournalEntryTemplate) -> Unit = {
+        if (textChangeNeedsWarning && it.replacesExistingValues) {
+            templateClickedForWarning = it
+        } else {
+            onTemplateClicked(it)
+        }
+    }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(currentInfo = NavigationEventInfo.None),
+        onBackCompleted = {
+            onCancelWithWarning()
+        },
+    )
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier =
@@ -390,7 +409,7 @@ fun AddEditEntryDialog(
                             val index = 0
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -402,7 +421,7 @@ fun AddEditEntryDialog(
                             val index = 1
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -414,7 +433,7 @@ fun AddEditEntryDialog(
                             val index = 2
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -426,7 +445,7 @@ fun AddEditEntryDialog(
                             val index = 3
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -438,7 +457,7 @@ fun AddEditEntryDialog(
                             val index = 4
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -450,7 +469,7 @@ fun AddEditEntryDialog(
                             val index = 5
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -462,7 +481,7 @@ fun AddEditEntryDialog(
                             val index = 6
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -474,7 +493,7 @@ fun AddEditEntryDialog(
                             val index = 7
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -486,7 +505,7 @@ fun AddEditEntryDialog(
                             val index = 8
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -498,7 +517,7 @@ fun AddEditEntryDialog(
                             val index = 9
                             val template = templates.getOrNull(index) ?: templates.lastOrNull()
                             if (template != null) {
-                                onTemplateClicked(template)
+                                onTemplateClickedWithWarning(template)
                             }
                             true
                         }
@@ -545,7 +564,7 @@ fun AddEditEntryDialog(
                     onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
                     onSuggestionClicked = onSuggestionClicked,
                     onTagClicked = onTagClicked,
-                    onTemplateClicked = onTemplateClicked,
+                    onTemplateClicked = onTemplateClickedWithWarning,
                     onCorrectionAccepted = onCorrectionAccepted,
                     onAddDictionaryWord = onAddDictionaryWord,
                 )
@@ -571,36 +590,57 @@ fun AddEditEntryDialog(
         }
 
         if (showCancelWarningDialog) {
-            AlertDialog(
-                onDismissRequest = { showCancelWarningDialog = false },
-                title = {
-                    Text(text = stringResource(Res.string.alert))
+            DiscardTextWarningDialog(
+                onDismiss = { showCancelWarningDialog = false },
+                onCancel = { showCancelWarningDialog = false },
+                onConfirm = {
+                    showCancelWarningDialog = false
+                    onCancel()
                 },
-                text = {
-                    Text(stringResource(Res.string.unsaved_warning_message))
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showCancelWarningDialog = false
-                            onCancel()
-                        },
-                    ) {
-                        Text(stringResource(Res.string.ok))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            showCancelWarningDialog = false
-                        },
-                    ) {
-                        Text(stringResource(Res.string.cancel))
-                    }
+            )
+        }
+        templateClickedForWarning?.let { template ->
+            DiscardTextWarningDialog(
+                onDismiss = { templateClickedForWarning = null },
+                onCancel = { templateClickedForWarning = null },
+                onConfirm = {
+                    templateClickedForWarning = null
+                    onTemplateClicked(template)
                 },
             )
         }
     }
+}
+
+@Composable
+private fun DiscardTextWarningDialog(
+    onDismiss: () -> Unit,
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = stringResource(Res.string.alert))
+        },
+        text = {
+            Text(stringResource(Res.string.unsaved_warning_message))
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+            ) {
+                Text(stringResource(Res.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onCancel,
+            ) {
+                Text(stringResource(Res.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable
