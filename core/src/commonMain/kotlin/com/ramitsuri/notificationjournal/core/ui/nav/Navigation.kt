@@ -3,9 +3,7 @@ package com.ramitsuri.notificationjournal.core.ui.nav
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -17,7 +15,6 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import com.ramitsuri.notificationjournal.core.ui.DateSelector
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
@@ -46,34 +43,10 @@ import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
 @Composable
 fun NavGraph(
     modifier: Modifier = Modifier,
-    navigator: Navigator = remember { Navigator() },
+    navigator: Navigator,
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val dateSelector = remember { DateSelector(lifecycleOwner, ServiceLocator.repository) }
-    val dateSelectorState by dateSelector.state.collectAsStateWithLifecycle()
     val listDetailStrategy = rememberListDetailSceneStrategy<Route>()
 
-    LaunchedEffect(dateSelectorState) {
-        when (val state = dateSelectorState) {
-            is DateSelector.DateSelectorState.Date -> {
-                // Navigate only if currently viewing days or entry screen otherwise this messes up launching add screen
-                // from deeplink as first we nav for deeplink and then nav to entry screen here.
-                if (navigator.backstack.lastOrNull() is Route.JournalEntryDays ||
-                    navigator.backstack.lastOrNull() is Route.JournalEntry
-                ) {
-                    navigator.navigate(Route.JournalEntry(state.date))
-                }
-            }
-
-            is DateSelector.DateSelectorState.Initial -> {
-                // Do nothing
-            }
-
-            is DateSelector.DateSelectorState.None -> {
-                navigator.goBack()
-            }
-        }
-    }
     val entryProvider: (Route) -> NavEntry<Route> =
         entryProvider {
             entry<Route.JournalEntryDays>(
@@ -83,18 +56,17 @@ fun NavGraph(
                 val viewModel: JournalEntryDaysViewModel =
                     viewModel(factory = JournalEntryDaysViewModel.factory())
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
-                LaunchedEffect(dateSelectorState) {
-                    val date = (dateSelectorState as? DateSelector.DateSelectorState.Date)?.date
-                    viewModel.onDateSelected(date)
+                LaunchedEffect(navigator.currentSelectedDate) {
+                    viewModel.onDateSelected(navigator.currentSelectedDate)
                 }
                 LaunchedEffect(Unit) {
                     // See the LaunchedEffect below if changing
                     viewModel.onVerifyEntriesRequested()
                 }
-                LaunchedEffect(isListDetail, dateSelectorState) {
+                LaunchedEffect(isListDetail, navigator.currentSelectedDate) {
                     // When in list detail scene, list detail screen is only started once, so the above request to
                     // verify entries is only triggered once. This is a workaround to trigger it more frequently.
-                    if (isListDetail && dateSelectorState is DateSelector.DateSelectorState.Date) {
+                    if (isListDetail && navigator.currentSelectedDate != null) {
                         viewModel.onVerifyEntriesRequested()
                     }
                 }
@@ -103,7 +75,7 @@ fun NavGraph(
                     showToolbarActions = !isListDetail,
                     showFloatingActionButton = !isListDetail,
                     onDateSelected = {
-                        dateSelector.select(it)
+                        navigator.selectDate(it)
                     },
                     onResetReceiveHelper = viewModel::resetReceiveHelper,
                     onViewByDate = {
@@ -126,11 +98,6 @@ fun NavGraph(
             entry<Route.JournalEntry>(
                 metadata = ListDetailScene.detailPane(),
             ) { arg ->
-                LaunchedEffect(arg) {
-                    // If coming from a deep link, this screen will be opened automatically, so let date selector know
-                    // what date is selected
-                    dateSelector.select(arg.selectedDate)
-                }
                 val isListDetail = LocalIsListDetailScene.current
                 val viewModel: JournalEntryViewModel =
                     viewModel(factory = JournalEntryViewModel.factory(selectedDate = arg.selectedDate))
@@ -141,8 +108,7 @@ fun NavGraph(
                 NavigationBackHandler(
                     state = state,
                     onBackCompleted = {
-                        navigator.goBack()
-                        dateSelector.select(null)
+                        navigator.selectDate(null)
                     },
                 )
 
@@ -185,8 +151,7 @@ fun NavGraph(
                             }
 
                             is EntryScreenAction.NavBack -> {
-                                dateSelector.select(null)
-                                navigator.goBack()
+                                navigator.selectDate(null)
                             }
                         }
                     },
@@ -291,11 +256,11 @@ fun NavGraph(
                             }
 
                             is DayGroupAction.ShowPreviousDay -> {
-                                dateSelector.selectPrevious()
+                                navigator.selectPrevious()
                             }
 
                             is DayGroupAction.ShowNextDay -> {
-                                dateSelector.selectNext()
+                                navigator.selectNextDate()
                             }
 
                             is DayGroupAction.Notify -> {
@@ -314,7 +279,7 @@ fun NavGraph(
                 LaunchedEffect(savedDate) {
                     if (savedDate != null) {
                         navigator.goBack()
-                        dateSelector.select(savedDate)
+                        navigator.selectDate(savedDate)
                     }
                 }
 

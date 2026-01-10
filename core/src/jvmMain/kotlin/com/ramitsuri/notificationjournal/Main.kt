@@ -13,10 +13,13 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.ramitsuri.notificationjournal.core.di.DiFactory
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
+import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -42,6 +45,14 @@ fun main() =
                 size = getWindowSize(),
                 position = getWindowPosition(),
             )
+        val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
+        val navigator =
+            remember {
+                Navigator(
+                    repository = ServiceLocator.repository,
+                    scope = coroutineScope,
+                )
+            }
 
         LaunchedEffect(Unit) {
             Desktop.getDesktop().addAppEventListener(
@@ -68,7 +79,7 @@ fun main() =
                 }
             }
             NotificationJournalTheme {
-                NavGraph()
+                NavGraph(navigator = navigator)
             }
             LaunchedEffect(windowState) {
                 snapshotFlow { windowState.size }
