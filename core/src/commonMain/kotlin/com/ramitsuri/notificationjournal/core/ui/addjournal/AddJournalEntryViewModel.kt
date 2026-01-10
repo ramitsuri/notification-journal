@@ -397,6 +397,6 @@ data class AddJournalEntryViewState(
     val suggestions: List<String> = listOf(),
     val suggestionsEnabled: Boolean = false,
 ) {
-    val showWarningOnExit
+    val textChangeNeedsWarning
         get() = textFieldState.text.toString().isNotEmpty()
 }
