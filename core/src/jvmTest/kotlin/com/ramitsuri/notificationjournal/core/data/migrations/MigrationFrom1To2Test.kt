@@ -6,11 +6,11 @@ import androidx.sqlite.execSQL
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getLongOrNull
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
-import kotlinx.datetime.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
+import kotlin.time.Instant
 
 class MigrationFrom1To2Test : BaseMigrationTest() {
     private val baseEntryTime = Instant.parse("2023-10-10T12:00:00Z").toEpochMilliseconds()

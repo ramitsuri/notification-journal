@@ -4,8 +4,8 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
 
 interface DataSendHelper {
     suspend fun sendEntries(entries: List<JournalEntry>): Boolean

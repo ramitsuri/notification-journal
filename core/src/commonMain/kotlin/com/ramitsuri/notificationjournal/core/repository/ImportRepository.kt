@@ -2,8 +2,8 @@ package com.ramitsuri.notificationjournal.core.repository
 
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
 
 interface ImportRepository {
     val importedEntriesFlow: Flow<List<JournalEntry>>
