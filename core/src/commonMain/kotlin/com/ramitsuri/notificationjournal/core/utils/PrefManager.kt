@@ -7,8 +7,8 @@ import com.ramitsuri.notificationjournal.core.model.WindowSize
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
+import kotlin.time.Instant
 
 class PrefManager(
     private val json: Json,

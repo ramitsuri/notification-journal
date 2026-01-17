@@ -6,12 +6,12 @@ import com.ramitsuri.notificationjournal.core.di.DiFactory
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
 import org.junit.After
 import org.junit.Before
 import java.nio.file.Paths
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
+import kotlin.time.Clock
 
 abstract class BaseTest {
     lateinit var dataSendHelper: TestDataSendHelper

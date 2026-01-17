@@ -45,6 +45,11 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    kotlin {
+        compilerOptions {
+            optIn.add("kotlin.time.ExperimentalTime")
+        }
+    }
     buildFeatures {
         compose = true
     }

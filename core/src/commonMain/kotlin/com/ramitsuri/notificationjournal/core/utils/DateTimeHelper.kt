@@ -1,8 +1,6 @@
 package com.ramitsuri.notificationjournal.core.utils
 
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -14,6 +12,7 @@ import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
+import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import notificationjournal.core.generated.resources.Res
@@ -28,7 +27,9 @@ import notificationjournal.core.generated.resources.yesterday
 import org.jetbrains.compose.resources.getStringArray
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 // 4:45pm, 4pm
 fun hourMinute(
@@ -235,9 +236,9 @@ fun LocalDate.asImportFileName() =
     buildString {
         append(year)
         append("/")
-        append(String.format("%02d", month.value))
+        append(String.format("%02d", month.number))
         append("/")
-        append(String.format("%02d", dayOfMonth))
+        append(String.format("%02d", day))
         append(".md")
     }
 

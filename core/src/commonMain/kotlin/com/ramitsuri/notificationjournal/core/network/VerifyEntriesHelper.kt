@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 class VerifyEntriesHelper(

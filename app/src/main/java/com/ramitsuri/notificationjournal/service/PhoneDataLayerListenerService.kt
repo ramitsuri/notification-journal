@@ -10,8 +10,8 @@ import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.work.UploadWorker
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
+import kotlin.time.Clock
 
 class PhoneDataLayerListenerService : WearableListenerService() {
     @SuppressLint("VisibleForTests")
