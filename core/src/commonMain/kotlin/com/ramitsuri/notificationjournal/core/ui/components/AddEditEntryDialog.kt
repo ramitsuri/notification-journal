@@ -881,7 +881,10 @@ private fun TextField(
             suggestions.forEach { suggestion ->
                 DropdownMenuItem(
                     text = { Text(suggestion) },
-                    onClick = { onSuggestionClicked(suggestion) },
+                    onClick = {
+                        onSuggestionClicked(suggestion)
+                        textFieldFocusRequester.requestFocus()
+                    },
                     contentPadding = PaddingValues(8.dp),
                 )
             }
