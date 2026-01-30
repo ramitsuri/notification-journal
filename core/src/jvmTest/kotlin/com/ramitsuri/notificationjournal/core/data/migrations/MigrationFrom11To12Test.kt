@@ -5,7 +5,6 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.junit.Assert.assertEquals
@@ -15,6 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
+import kotlin.time.Instant
 
 class MigrationFrom11To12Test : BaseMigrationTest() {
     @Test

@@ -17,6 +17,9 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        optIn.add("kotlin.time.ExperimentalTime")
+    }
     jvm()
 
     androidTarget()
@@ -43,7 +46,6 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.savedstate)
             implementation(libs.lifecycle.runtime.compose)
 
-            implementation(libs.room.ktx)
             implementation(libs.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
 

@@ -1,7 +1,7 @@
 package com.ramitsuri.notificationjournal.core.utils
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 class TestClock : Clock {
     var now: Instant? = null
