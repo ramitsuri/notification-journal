@@ -7,7 +7,6 @@ import com.ramitsuri.notificationjournal.core.data.getColumnIndex
 import com.ramitsuri.notificationjournal.core.data.getTextOrNull
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 // Removes TimeZone column, changes entryTime to LocalDateTime from Instant in JournalEntry and EntryConflict
@@ -221,7 +220,6 @@ class MigrationFrom11To12 : Migration(11, 12) {
         val senderName: String,
     )
 
-    @OptIn(ExperimentalTime::class)
     private fun Long.toLocalDateTimeString(timeZone: String? = null) =
         Instant
             .fromEpochMilliseconds(this)

@@ -1,9 +1,6 @@
-@file:OptIn(ExperimentalFoundationApi::class)
-
 package com.ramitsuri.notificationjournal.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +9,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -42,7 +38,6 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -111,7 +106,6 @@ import notificationjournal.core.generated.resources.unsaved_warning_message
 import org.jetbrains.compose.resources.stringResource
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditEntryDialog(
     isLoading: Boolean,
@@ -789,7 +783,6 @@ private fun Content(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TextField(
     textState: TextFieldState,
@@ -1052,7 +1045,6 @@ private fun DateTimeEntry(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Time(
     selectedTime: LocalTime,
@@ -1113,7 +1105,6 @@ private fun Time(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Tags(
     tags: List<Tag>,
@@ -1158,7 +1149,6 @@ private fun Tags(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Templates(
     templates: List<JournalEntryTemplate>,

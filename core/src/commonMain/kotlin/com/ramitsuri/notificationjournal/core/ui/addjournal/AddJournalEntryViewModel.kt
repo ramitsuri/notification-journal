@@ -18,7 +18,6 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -307,7 +306,6 @@ class AddJournalEntryViewModel(
         }
     }
 
-    @OptIn(FlowPreview::class)
     private fun loadCorrections() {
         viewModelScope.launch {
             snapshotFlow {
@@ -329,7 +327,6 @@ class AddJournalEntryViewModel(
         }
     }
 
-    @OptIn(FlowPreview::class)
     private fun loadSuggestions() {
         viewModelScope.launch {
             snapshotFlow {

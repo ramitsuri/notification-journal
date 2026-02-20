@@ -9,7 +9,6 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.ui.components.EntryDayHighlight
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -27,7 +26,6 @@ class ViewJournalEntryDayViewModel(
     private val selectedDate = MutableStateFlow(arg.date)
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val state =
         selectedDate
             .filterNotNull()

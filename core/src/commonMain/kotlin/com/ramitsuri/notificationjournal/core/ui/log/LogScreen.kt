@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.outlined.DeleteForever
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,7 +53,6 @@ import notificationjournal.core.generated.resources.select_all
 import notificationjournal.core.generated.resources.unselect_all
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogScreen(
     viewState: LogsViewState,

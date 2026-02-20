@@ -40,7 +40,6 @@ import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -96,7 +95,6 @@ import notificationjournal.core.generated.resources.verifying
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalEntryDaysScreen(
     state: ViewState,
@@ -253,7 +251,6 @@ private fun List(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DateWithCountItem(
     dateWithCount: DateWithCount,
@@ -337,7 +334,6 @@ private fun DateWithCountItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TooltipContainer(
     label: String,
@@ -398,7 +394,6 @@ private fun DateWithCount.Verification.Icon() {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,

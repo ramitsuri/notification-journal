@@ -30,7 +30,6 @@ import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -88,7 +87,6 @@ import notificationjournal.core.generated.resources.sync_up
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalEntryScreen(
     state: ViewState,
@@ -317,7 +315,6 @@ private fun DeleteDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Toolbar(
     scrollBehavior: TopAppBarScrollBehavior? = null,

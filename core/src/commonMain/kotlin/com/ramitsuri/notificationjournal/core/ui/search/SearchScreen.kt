@@ -1,7 +1,6 @@
 package com.ramitsuri.notificationjournal.core.ui.search
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,7 +8,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,7 +41,6 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -98,7 +95,6 @@ import notificationjournal.core.generated.resources.search_unselect_all
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(
     state: ViewState,
@@ -197,7 +193,6 @@ fun SearchScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterControlsRow(
     startDate: LocalDate?,
@@ -351,7 +346,6 @@ private fun FilterControlsRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchRow(
     searchFieldState: TextFieldState,
