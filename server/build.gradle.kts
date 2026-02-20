@@ -18,6 +18,11 @@ java {
 }
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        optIn.addAll(
+            "kotlin.uuid.ExperimentalUuidApi",
+        )
+    }
 }
 dependencies {
     implementation(libs.ktor.server)

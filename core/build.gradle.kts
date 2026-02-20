@@ -17,9 +17,6 @@ plugins {
 }
 
 kotlin {
-    compilerOptions {
-        optIn.add("kotlin.time.ExperimentalTime")
-    }
     jvm()
 
     androidTarget()
