@@ -37,11 +37,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
@@ -525,12 +525,16 @@ fun AddEditEntryDialog(
         Column(modifier = Modifier.fillMaxWidth()) {
             Toolbar(onBackClick = onCancelWithWarning, scrollBehavior = scrollBehavior)
             if (isLoading) {
-                LinearProgressIndicator(
+                Column(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                )
+                            .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    CircularWavyProgressIndicator()
+                }
             } else {
                 DateTimeEntry(
                     dateTime = dateTime,
