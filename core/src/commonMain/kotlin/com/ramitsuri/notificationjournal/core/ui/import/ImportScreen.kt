@@ -22,7 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -267,7 +267,7 @@ private fun ImportStatus(
             ) {
                 when (status) {
                     is ImportStatus.InProgress -> {
-                        CircularProgressIndicator()
+                        CircularWavyProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text =

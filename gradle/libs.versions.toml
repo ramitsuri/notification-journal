@@ -108,7 +108,7 @@ wear-compose-material = { module = "androidx.wear.compose:compose-material3", ve
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wearTiles" }
 wear-protolayout-material3 = { module = "androidx.wear.protolayout:protolayout-material3", version.ref = "wear-protolayout" }
-
+jetbrains-material3 = { module = "org.jetbrains.compose.material3:material3", version = "1.11.0-alpha02" }
 androidx-test-espresso = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-ext = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext" }
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
