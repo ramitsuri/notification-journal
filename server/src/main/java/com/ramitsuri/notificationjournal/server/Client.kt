@@ -7,7 +7,6 @@ import kotlin.uuid.Uuid
 
 class Client(
     private val session: DefaultWebSocketSession,
-    @OptIn(ExperimentalUuidApi::class)
     val id: String = Uuid.random().toString()
 ) {
     suspend fun send(message: String) {

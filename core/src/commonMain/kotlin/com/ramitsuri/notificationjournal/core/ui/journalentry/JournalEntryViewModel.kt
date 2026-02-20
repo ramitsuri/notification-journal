@@ -22,7 +22,6 @@ import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYearSuspend
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +47,6 @@ class JournalEntryViewModel(
 ) : ViewModel() {
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ViewState> =
         combine(
             contentForCopy,

@@ -7,7 +7,6 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import org.junit.After
 import org.junit.Rule
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.deleteRecursively
 
@@ -21,7 +20,6 @@ open class BaseMigrationTest {
             databaseClass = AppDatabase::class,
         )
 
-    @OptIn(ExperimentalPathApi::class)
     @After
     fun tearDown() {
         Path("test").deleteRecursively()

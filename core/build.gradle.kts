@@ -90,6 +90,22 @@ kotlin {
     configurations.commonMainApi {
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-android")
     }
+    compilerOptions {
+        optIn.addAll(
+            "androidx.compose.animation.ExperimentalAnimationApi",
+            "androidx.compose.foundation.ExperimentalFoundationApi",
+            "androidx.compose.foundation.layout.ExperimentalLayoutApi",
+            "androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+            "androidx.compose.material3.ExperimentalMaterial3Api",
+            "kotlin.contracts.ExperimentalContracts",
+            "kotlin.io.path.ExperimentalPathApi",
+            "kotlin.time.ExperimentalTime",
+            "kotlin.uuid.ExperimentalUuidApi",
+            "kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "kotlinx.coroutines.FlowPreview",
+            "kotlinx.serialization.ExperimentalSerializationApi",
+        )
+    }
 }
 
 android {

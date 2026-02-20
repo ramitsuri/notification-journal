@@ -12,7 +12,6 @@ import com.ramitsuri.notificationjournal.core.model.SortOrder
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
@@ -34,7 +33,6 @@ class SearchViewModel(
 
     private var initialSelectionForTags = true
 
-    @OptIn(FlowPreview::class)
     val state =
         com.ramitsuri.notificationjournal.core.utils.combine(
             repository.getEntryTags().map { tags -> tags.filter { !Tag.isNoTag(it) } },

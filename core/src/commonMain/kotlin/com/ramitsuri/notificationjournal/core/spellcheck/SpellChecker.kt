@@ -18,7 +18,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import notificationjournal.core.generated.resources.Res
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import java.util.Locale
 
 class SpellChecker(
@@ -46,7 +45,6 @@ class SpellChecker(
         }
     }
 
-    @OptIn(ExperimentalResourceApi::class)
     private suspend fun loadDictionary() {
         checker.dictionary.loadFdicFile(Res.readBytes("files/en-80k.fdic"))
         checker.dictionary.loadFdicFile(Res.readBytes("files/frequency_bigramdictionary_en_243_342.fdic"))

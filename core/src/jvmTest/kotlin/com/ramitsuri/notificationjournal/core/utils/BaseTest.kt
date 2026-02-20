@@ -9,7 +9,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import java.nio.file.Paths
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.time.Clock
 
@@ -43,7 +42,6 @@ abstract class BaseTest {
             ServiceLocator.init(DiFactory())
         }
 
-    @OptIn(ExperimentalPathApi::class)
     @After
     fun after() {
         Paths.get(Constants.BASE_DIR).deleteRecursively()
