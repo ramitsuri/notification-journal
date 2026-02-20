@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                     navigator = navigator,
                 )
                 LaunchedEffect(navigator) {
-                    navigateIfNecessary()
+                    navigateIfNecessary(intent)
                 }
             }
         }
@@ -82,11 +82,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        navigateIfNecessary()
+        navigateIfNecessary(intent)
     }
 
-    private fun navigateIfNecessary() {
-        val receivedTextProperties = intent.receivedText()
+    private fun navigateIfNecessary(receivedIntent: Intent) {
+        val receivedTextProperties = receivedIntent.receivedText()
         val route =
             if (receivedTextProperties.hasValues()) {
                 Route.AddEntry.fromReceivedText(
@@ -94,8 +94,8 @@ class MainActivity : ComponentActivity() {
                     tag = receivedTextProperties.tag,
                 )
             } else {
-                val uri: Uri? = intent.data
-                intent.data = null
+                val uri: Uri? = receivedIntent.data
+                receivedIntent.data = null
                 uri?.let {
                     val request = DeepLinkRequest(uri)
                     val match =
