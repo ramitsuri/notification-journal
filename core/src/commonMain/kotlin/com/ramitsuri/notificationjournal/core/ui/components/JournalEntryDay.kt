@@ -326,7 +326,6 @@ fun JournalEntryDay(
                             .fillMaxWidth()
                             .clip(shape)
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .then(if (!showAddButtonItem) Modifier.clip(shape) else Modifier)
                             .onKeyEvent {
                                 if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
                                     onAction(DayGroupAction.EditEntry(entry))
@@ -575,11 +574,10 @@ private fun ListItem(
         }
     var isPressed by remember { mutableStateOf(false) }
     LaunchedEffect(isPressed) {
-        if (isPressed)
-            {
-                delay(100)
-                isPressed = false
-            }
+        if (isPressed) {
+            delay(100)
+            isPressed = false
+        }
     }
     val scaleFactor by animateFloatAsState(if (isPressed) 0.94f else 1f)
     Row(
