@@ -1,7 +1,5 @@
 package com.ramitsuri.notificationjournal.core.ui.templates
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -126,8 +124,7 @@ fun TemplatesScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier =
             Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .fillMaxSize(),
         floatingActionButton = {
             if (state.canAddMore) {
                 FloatingActionButton(
@@ -290,8 +287,10 @@ private fun ListItem(
 ) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
     ) {
         Row(
             horizontalArrangement = Arrangement.End,

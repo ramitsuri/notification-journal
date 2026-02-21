@@ -2,7 +2,6 @@ package com.ramitsuri.notificationjournal.core.ui.tags
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -137,8 +136,7 @@ fun TagsScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier =
             Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
@@ -320,8 +318,10 @@ private fun ListItem(
     var showMenu by remember { mutableStateOf(false) }
     Card(
         elevation = elevation,
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
     ) {
         Row(
             horizontalArrangement = Arrangement.End,
