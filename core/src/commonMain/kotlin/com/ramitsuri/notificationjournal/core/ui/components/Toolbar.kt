@@ -23,7 +23,7 @@ fun Toolbar(
     CenterAlignedTopAppBar(
         colors =
             TopAppBarDefaults
-                .centerAlignedTopAppBarColors()
+                .topAppBarColors()
                 .copy(scrolledContainerColor = MaterialTheme.colorScheme.background),
         title = { },
         navigationIcon = {

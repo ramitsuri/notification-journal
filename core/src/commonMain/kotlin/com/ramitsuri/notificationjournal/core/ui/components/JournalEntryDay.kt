@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,6 +45,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,9 +66,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -92,12 +94,8 @@ import com.ramitsuri.notificationjournal.core.model.NotifyTime
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
-import com.ramitsuri.notificationjournal.core.ui.bottomBorder
-import com.ramitsuri.notificationjournal.core.ui.fullBorder
-import com.ramitsuri.notificationjournal.core.ui.sideBorder
 import com.ramitsuri.notificationjournal.core.ui.theme.green
 import com.ramitsuri.notificationjournal.core.ui.theme.red
-import com.ramitsuri.notificationjournal.core.ui.topBorder
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.getDiffAsAnnotatedText
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
@@ -138,11 +136,22 @@ fun JournalEntryDay(
     onAction: (DayGroupAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val strokeWidth: Dp = 1.dp
-    val strokeColor: Color = MaterialTheme.colorScheme.outline
     val cornerRadius: Dp = 16.dp
-    val topShape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
-    val bottomShape = RoundedCornerShape(bottomStart = cornerRadius, bottomEnd = cornerRadius)
+    val cornerRadiusSmall: Dp = 4.dp
+    val topShape =
+        RoundedCornerShape(
+            topStart = cornerRadius,
+            topEnd = cornerRadius,
+            bottomStart = cornerRadiusSmall,
+            bottomEnd = cornerRadiusSmall,
+        )
+    val bottomShape =
+        RoundedCornerShape(
+            topStart = cornerRadiusSmall,
+            topEnd = cornerRadiusSmall,
+            bottomStart = cornerRadius,
+            bottomEnd = cornerRadius,
+        )
 
     val lazyColumnState = rememberLazyListState(initialFirstVisibleItemIndex = entryDayHighlight?.index ?: 0)
     var highlightEntryId: String? by remember { mutableStateOf(null) }
@@ -179,7 +188,7 @@ fun JournalEntryDay(
         onReconcileRequested = { onAction(DayGroupAction.ReconcileDayGroup) },
         onUploadRequested = { onAction(DayGroupAction.UploadDayGroup) },
     )
-    var swipeAmount by remember { mutableStateOf(0f) }
+    var swipeAmount by remember { mutableFloatStateOf(0f) }
     LazyColumn(
         state = lazyColumnState,
         modifier =
@@ -230,8 +239,6 @@ fun JournalEntryDay(
                 (showEmptyTags || entries.isNotEmpty()) &&
                     tagGroup.tag != Tag.NO_TAG.value &&
                     config.allowAdd
-            var shape: Shape
-            var borderModifier: Modifier
             if (showEmptyTags || entries.isNotEmpty()) {
                 stickyHeader(key = dayGroup.date.toString().plus(tagGroup.tag)) {
                     SubHeaderItem(
@@ -257,31 +264,24 @@ fun JournalEntryDay(
                 count = entries.size,
                 key = { index -> entries[index].id },
             ) { index ->
-                when {
-                    entries.size == 1 && !showAddButtonItem -> {
-                        shape = RoundedCornerShape(16.dp)
-                        borderModifier =
-                            Modifier.fullBorder(strokeWidth, strokeColor, cornerRadius)
-                    }
+                val shape =
+                    when {
+                        entries.size == 1 && !showAddButtonItem -> {
+                            RoundedCornerShape(cornerRadius)
+                        }
 
-                    index == 0 -> {
-                        shape = topShape
-                        borderModifier =
-                            Modifier.topBorder(strokeWidth, strokeColor, cornerRadius)
-                    }
+                        index == 0 -> {
+                            topShape
+                        }
 
-                    index == entries.lastIndex && !showAddButtonItem -> {
-                        shape = bottomShape
-                        borderModifier =
-                            Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
-                    }
+                        index == entries.lastIndex && !showAddButtonItem -> {
+                            bottomShape
+                        }
 
-                    else -> {
-                        shape = RectangleShape
-                        borderModifier =
-                            Modifier.sideBorder(strokeWidth, strokeColor)
+                        else -> {
+                            RoundedCornerShape(cornerRadiusSmall)
+                        }
                     }
-                }
                 val entry = entries[index]
                 ListItem(
                     item = entry,
@@ -325,7 +325,7 @@ fun JournalEntryDay(
                             .padding(horizontal = 12.dp)
                             .fillMaxWidth()
                             .clip(shape)
-                            .then(borderModifier)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                             .onKeyEvent {
                                 if (it.key == Key.E && it.type == KeyEventType.KeyUp) {
                                     onAction(DayGroupAction.EditEntry(entry))
@@ -335,14 +335,16 @@ fun JournalEntryDay(
                                 }
                             },
                 )
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.5.dp,
+                    color = MaterialTheme.colorScheme.background,
+                )
             }
             if (showAddButtonItem) {
                 item {
                     AddForTagButton(
                         isAddTheOnlyItem = entries.isEmpty(),
-                        strokeWidth = strokeWidth,
-                        strokeColor = strokeColor,
-                        cornerRadius = cornerRadius,
                         defaultBottomShape = bottomShape,
                         onAddForTagButtonClick = {
                             onAction(
@@ -369,23 +371,14 @@ fun JournalEntryDay(
 @Composable
 private fun AddForTagButton(
     isAddTheOnlyItem: Boolean,
-    strokeWidth: Dp,
-    strokeColor: Color,
-    cornerRadius: Dp,
     defaultBottomShape: Shape,
     onAddForTagButtonClick: () -> Unit,
 ) {
-    val (addButtonShape, addButtonBorderModifier) =
+    val addButtonShape =
         if (isAddTheOnlyItem) {
-            RoundedCornerShape(16.dp) to
-                Modifier.fullBorder(
-                    strokeWidth,
-                    strokeColor.copy(alpha = 0.3f),
-                    cornerRadius,
-                )
+            RoundedCornerShape(16.dp)
         } else {
-            defaultBottomShape to
-                Modifier.bottomBorder(strokeWidth, strokeColor, cornerRadius)
+            defaultBottomShape
         }
     Row(
         modifier =
@@ -393,7 +386,7 @@ private fun AddForTagButton(
                 .padding(horizontal = 12.dp)
                 .fillMaxWidth()
                 .clip(addButtonShape)
-                .then(addButtonBorderModifier),
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         horizontalArrangement = Arrangement.Center,
     ) {
         IconButton(
@@ -575,15 +568,38 @@ private fun ListItem(
     var showDetails by remember { mutableStateOf(false) }
     var showConflictResolutionDialog by remember { mutableStateOf(false) }
     val highlightColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    val mutableInteractionSource =
+        remember {
+            MutableInteractionSource()
+        }
+    var isPressed by remember { mutableStateOf(false) }
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            delay(100)
+            isPressed = false
+        }
+    }
+    val scaleFactor by animateFloatAsState(if (isPressed) 0.94f else 1f)
     Row(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
         modifier =
-            modifier
+            Modifier
+                .graphicsLayer {
+                    scaleX = scaleFactor
+                }
+                .then(modifier)
                 .applyIf(highlight) {
                     background(highlightColor)
                 }
-                .clickable(onClick = { if (allowEdits) showDetails = true else onCopyRequested() }),
+                .clickable(
+                    interactionSource = mutableInteractionSource,
+                    indication = null,
+                    onClick = {
+                        isPressed = true
+                        if (allowEdits) showDetails = true else onCopyRequested()
+                    },
+                ),
     ) {
         Row(
             modifier =
