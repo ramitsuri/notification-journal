@@ -3,7 +3,6 @@ package com.ramitsuri.notificationjournal.core.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -36,8 +35,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
@@ -76,7 +73,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -86,6 +82,7 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.ui.theme.red
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import kotlinx.datetime.LocalDate
@@ -108,7 +105,6 @@ import org.jetbrains.compose.resources.stringResource
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AddEditEntryDialog(
-    isLoading: Boolean,
     textState: TextFieldState,
     tags: List<Tag>,
     selectedTag: String?,
@@ -118,9 +114,7 @@ fun AddEditEntryDialog(
     textCorrections: Map<String, List<String>>,
     textChangeNeedsWarning: Boolean,
     suggestions: List<String>,
-    showSuggestions: Boolean,
     onSuggestionClicked: (String?) -> Unit,
-    onSuggestionsEnabledChanged: () -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
@@ -186,14 +180,6 @@ fun AddEditEntryDialog(
                             it.key == Key.S &&
                             it.type == KeyEventType.KeyUp -> {
                             onAddAnother()
-                            true
-                        }
-
-                        // Meta + F -> Toggle show suggestions
-                        it.isMetaPressed &&
-                            it.key == Key.F &&
-                            it.type == KeyEventType.KeyUp -> {
-                            onSuggestionsEnabledChanged()
                             true
                         }
 
@@ -524,65 +510,50 @@ fun AddEditEntryDialog(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Toolbar(onBackClick = onCancelWithWarning, scrollBehavior = scrollBehavior)
-            if (isLoading) {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    CircularWavyProgressIndicator()
+            DateTimeEntry(
+                dateTime = dateTime,
+                onDateSelected = onDateSelected,
+                onTimeSelected = onTimeSelected,
+                onResetDate = onResetDate,
+                onResetTime = onResetTime,
+                onResetDateToToday = onResetDateToToday,
+                onResetTimeToNow = onResetTimeToNow,
+            )
+            Content(
+                modifier =
+                    Modifier
+                        .nestedScroll(scrollBehavior.nestedScrollConnection)
+                        .weight(1f),
+                textState = textState,
+                tags = tags,
+                selectedTag = selectedTag,
+                templates = templates,
+                textCorrections = textCorrections,
+                showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
+                showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
+                suggestions = suggestions,
+                onSuggestionClicked = onSuggestionClicked,
+                onTagClicked = onTagClicked,
+                onTemplateClicked = onTemplateClickedWithWarning,
+                onCorrectionAccepted = onCorrectionAccepted,
+                onAddDictionaryWord = onAddDictionaryWord,
+            )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                if (showAddAnother) {
+                    OutlinedButton(onClick = onAddAnother, modifier = Modifier.weight(1f)) {
+                        Text(text = stringResource(Res.string.add_entry_save_and_add_another))
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
                 }
-            } else {
-                DateTimeEntry(
-                    dateTime = dateTime,
-                    onDateSelected = onDateSelected,
-                    onTimeSelected = onTimeSelected,
-                    onResetDate = onResetDate,
-                    onResetTime = onResetTime,
-                    onResetDateToToday = onResetDateToToday,
-                    onResetTimeToNow = onResetTimeToNow,
-                )
-                Content(
-                    modifier =
-                        Modifier
-                            .nestedScroll(scrollBehavior.nestedScrollConnection)
-                            .weight(1f),
-                    textState = textState,
-                    tags = tags,
-                    selectedTag = selectedTag,
-                    templates = templates,
-                    textCorrections = textCorrections,
-                    showTagsKeyboardShortcutHint = showTagsKeyboardShortcutHints,
-                    showTemplatesKeyboardShortcutHint = showTemplatesKeyboardShortcutHints,
-                    suggestions = suggestions,
-                    showSuggestions = showSuggestions,
-                    onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
-                    onSuggestionClicked = onSuggestionClicked,
-                    onTagClicked = onTagClicked,
-                    onTemplateClicked = onTemplateClickedWithWarning,
-                    onCorrectionAccepted = onCorrectionAccepted,
-                    onAddDictionaryWord = onAddDictionaryWord,
-                )
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    if (showAddAnother) {
-                        OutlinedButton(onClick = onAddAnother, modifier = Modifier.weight(1f)) {
-                            Text(text = stringResource(Res.string.add_entry_save_and_add_another))
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                    }
-                    OutlinedButton(onClick = onSave, modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(Res.string.add_entry_save))
-                    }
+                OutlinedButton(onClick = onSave, modifier = Modifier.weight(1f)) {
+                    Text(text = stringResource(Res.string.add_entry_save))
                 }
             }
         }
@@ -652,8 +623,6 @@ private fun Content(
     showTagsKeyboardShortcutHint: Boolean,
     showTemplatesKeyboardShortcutHint: Boolean,
     suggestions: List<String>,
-    showSuggestions: Boolean,
-    onSuggestionsEnabledChanged: () -> Unit,
     onSuggestionClicked: (String?) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
@@ -683,8 +652,6 @@ private fun Content(
             textFieldFocusRequester = textFieldFocusRequester,
             textCorrections = textCorrections,
             suggestions = suggestions,
-            showSuggestions = showSuggestions,
-            onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
             onSuggestionClicked = onSuggestionClicked,
             onCorrectionAccepted = onCorrectionAccepted,
             onAddDictionaryWord = onAddDictionaryWord,
@@ -793,15 +760,22 @@ private fun TextField(
     textFieldFocusRequester: FocusRequester,
     textCorrections: Map<String, List<String>>,
     suggestions: List<String>,
-    showSuggestions: Boolean,
-    onSuggestionsEnabledChanged: () -> Unit,
     onSuggestionClicked: (String?) -> Unit,
     onCorrectionAccepted: (String, String) -> Unit,
     onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
+    val incorrectWords = textCorrections.keys.toList()
+    val incorrectWordColor = MaterialTheme.colorScheme.red
+    val incorrectWordsOutputTransformation =
+        remember(incorrectWords) {
+            IncorrectWordsOutputTransformation(
+                color = incorrectWordColor,
+                incorrectWords = incorrectWords,
+            )
+        }
     ExposedDropdownMenuBox(
-        expanded = showSuggestions && suggestions.isNotEmpty(),
+        expanded = suggestions.isNotEmpty(),
         onExpandedChange = { },
         modifier = Modifier.focusable(false),
     ) {
@@ -816,6 +790,7 @@ private fun TextField(
             ) {
                 BasicTextField(
                     state = textState,
+                    outputTransformation = incorrectWordsOutputTransformation,
                     keyboardOptions =
                         KeyboardOptions(
                             capitalization = KeyboardCapitalization.Sentences,
@@ -855,23 +830,9 @@ private fun TextField(
                     Text(text = textCorrections.size.toString())
                 }
             }
-            Row(
-                modifier =
-                    Modifier
-                        .clickable(role = Role.Checkbox, onClick = { onSuggestionsEnabledChanged() })
-                        .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = "Show suggestions",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                Checkbox(checked = showSuggestions, onCheckedChange = null)
-            }
         }
         ExposedDropdownMenu(
-            expanded = showSuggestions && suggestions.isNotEmpty(),
+            expanded = suggestions.isNotEmpty(),
             onDismissRequest = { onSuggestionClicked(null) },
             modifier = Modifier.focusable(false),
         ) {

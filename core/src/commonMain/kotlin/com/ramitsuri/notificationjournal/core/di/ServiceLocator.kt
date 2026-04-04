@@ -258,6 +258,7 @@ object ServiceLocator {
                             listOf(
                                 "show_logs_button",
                                 "show_reconciled",
+                                "show_suggestions",
                             ),
                     )
                 }

@@ -48,6 +48,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ViewJournalEntryDayScreen(
     state: ViewState,
+    showContent: Boolean,
     onBackClick: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
     onAction: (DayGroupAction) -> Unit,
@@ -129,6 +130,7 @@ fun ViewJournalEntryDayScreen(
                     onAction = onAction,
                     config = JournalEntryDayConfig.allDisabled,
                     entryDayHighlight = state.highlight,
+                    showContent = showContent,
                     allowNotify = false,
                 )
             }

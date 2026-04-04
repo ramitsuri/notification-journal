@@ -59,7 +59,6 @@ class EditJournalEntryViewModel(
             _state.update {
                 it.textFieldState.setTextAndPlaceCursorAtEnd(entry.text)
                 it.copy(
-                    isLoading = false,
                     selectedTag = entry.tag,
                     dateTime = entry.entryTime,
                 )
@@ -107,7 +106,6 @@ class EditJournalEntryViewModel(
             return
         }
         val dateTime = currentState.dateTime
-        _state.update { it.copy(isLoading = true) }
         val tag = currentState.selectedTag ?: Tag.NO_TAG.value
         viewModelScope.launch {
             repository.updateText(entry.copy(text = text, tag = tag, entryTime = dateTime))
@@ -195,12 +193,6 @@ class EditJournalEntryViewModel(
         _state.update { it.copy(suggestions = listOf()) }
     }
 
-    fun onSuggestionEnabledChanged() {
-        viewModelScope.launch {
-            prefManager.setShowSuggestions(!state.value.suggestionsEnabled)
-        }
-    }
-
     override fun onCleared() {
         super.onCleared()
         spellChecker.reset()
@@ -264,13 +256,6 @@ class EditJournalEntryViewModel(
                 }
         }
         viewModelScope.launch {
-            prefManager.showSuggestions().collect { showSuggestions ->
-                _state.update {
-                    it.copy(suggestionsEnabled = showSuggestions)
-                }
-            }
-        }
-        viewModelScope.launch {
             snapshotFlow {
                 val lastLine = _state.value.textFieldState.text.split("\n").lastOrNull()
                 lastLine == null || lastLine.isEmpty()
@@ -305,7 +290,6 @@ class EditJournalEntryViewModel(
 }
 
 data class EditJournalEntryViewState(
-    val isLoading: Boolean = true,
     val textFieldState: TextFieldState = TextFieldState(),
     val tags: List<Tag> = listOf(),
     val selectedTag: String? = null,
@@ -314,5 +298,4 @@ data class EditJournalEntryViewState(
     val dateTime: LocalDateTime = Clock.System.nowLocal(),
     val textChangeNeedsWarning: Boolean = false,
     val suggestions: List<String> = listOf(),
-    val suggestionsEnabled: Boolean = false,
 )
