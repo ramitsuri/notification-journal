@@ -11,12 +11,12 @@ class IncorrectWordsOutputTransformation(
 ) : OutputTransformation {
     override fun TextFieldBuffer.transformOutput() {
         incorrectWords.forEach { word ->
-            val start = originalText.indexOf(word)
-            if (start == -1) {
-                return@forEach
+            var start = originalText.indexOf(word)
+            while (start != -1) {
+                val end = start + word.length
+                addStyle(SpanStyle(color = color), start, end)
+                start = originalText.indexOf(word, end)
             }
-            val end = start + word.length
-            addStyle(SpanStyle(color = color), start, end)
         }
     }
 }

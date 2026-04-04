@@ -765,13 +765,12 @@ private fun TextField(
     onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
-    val incorrectWords = textCorrections.keys.toList()
     val incorrectWordColor = MaterialTheme.colorScheme.red
     val incorrectWordsOutputTransformation =
-        remember(incorrectWords) {
+        remember(textCorrections, incorrectWordColor) {
             IncorrectWordsOutputTransformation(
                 color = incorrectWordColor,
-                incorrectWords = incorrectWords,
+                incorrectWords = textCorrections.keys.toList(),
             )
         }
     ExposedDropdownMenuBox(
