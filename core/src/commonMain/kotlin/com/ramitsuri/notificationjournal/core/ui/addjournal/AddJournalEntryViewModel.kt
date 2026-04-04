@@ -222,12 +222,6 @@ class AddJournalEntryViewModel(
         _state.update { it.copy(suggestions = listOf()) }
     }
 
-    fun onSuggestionEnabledChanged() {
-        viewModelScope.launch {
-            prefManager.setShowSuggestions(!state.value.suggestionsEnabled)
-        }
-    }
-
     override fun onCleared() {
         super.onCleared()
         spellChecker.reset()
@@ -239,7 +233,6 @@ class AddJournalEntryViewModel(
         if (text.isEmpty()) {
             return
         }
-        _state.update { it.copy(isLoading = true) }
         val tag = currentState.tags.firstOrNull { it.value == currentState.selectedTag }?.value
         viewModelScope.launch {
             repository.insert(
@@ -254,7 +247,6 @@ class AddJournalEntryViewModel(
             } else {
                 _state.update {
                     it.copy(
-                        isLoading = false,
                         textFieldState = TextFieldState(),
                         selectedTag = null,
                     )
@@ -340,16 +332,9 @@ class AddJournalEntryViewModel(
                 }
         }
         viewModelScope.launch {
-            prefManager.showSuggestions().collect { showSuggestions ->
-                _state.update {
-                    it.copy(suggestionsEnabled = showSuggestions)
-                }
-            }
-        }
-        viewModelScope.launch {
             snapshotFlow {
                 val lastLine = _state.value.textFieldState.text.split("\n").lastOrNull()
-                lastLine == null || lastLine.isEmpty()
+                lastLine.isNullOrEmpty()
             }.distinctUntilChanged()
                 .collect { isEmpty ->
                     if (isEmpty) {
@@ -384,7 +369,6 @@ class AddJournalEntryViewModel(
 }
 
 data class AddJournalEntryViewState(
-    val isLoading: Boolean = false,
     val textFieldState: TextFieldState = TextFieldState(),
     val tags: List<Tag> = listOf(),
     val selectedTag: String? = null,
@@ -392,7 +376,6 @@ data class AddJournalEntryViewState(
     val corrections: Map<String, List<String>> = mapOf(),
     val dateTime: LocalDateTime,
     val suggestions: List<String> = listOf(),
-    val suggestionsEnabled: Boolean = false,
 ) {
     val textChangeNeedsWarning
         get() = textFieldState.text.toString().isNotEmpty()

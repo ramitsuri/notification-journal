@@ -52,7 +52,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -85,9 +84,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.NotifyTime
@@ -133,6 +129,7 @@ fun JournalEntryDay(
     config: JournalEntryDayConfig,
     entryDayHighlight: EntryDayHighlight? = null,
     allowNotify: Boolean,
+    showContent: Boolean,
     onAction: (DayGroupAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -155,22 +152,6 @@ fun JournalEntryDay(
 
     val lazyColumnState = rememberLazyListState(initialFirstVisibleItemIndex = entryDayHighlight?.index ?: 0)
     var highlightEntryId: String? by remember { mutableStateOf(null) }
-    var showContent by remember { mutableStateOf(false) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, lifecycleEvent ->
-                if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
-                    showContent = true
-                } else if (lifecycleEvent == Lifecycle.Event.ON_PAUSE) {
-                    showContent = false
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
     LaunchedEffect(entryDayHighlight) {
         repeat(3) {
             delay(200)

@@ -9,7 +9,6 @@ import kotlinx.datetime.LocalTime
 @Composable
 fun AddJournalEntryScreen(
     state: AddJournalEntryViewState,
-    onSuggestionsEnabledChanged: () -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
     onSave: () -> Unit,
@@ -28,7 +27,6 @@ fun AddJournalEntryScreen(
     onSuggestionClicked: (String?) -> Unit,
 ) {
     AddEditEntryDialog(
-        isLoading = state.isLoading,
         textState = state.textFieldState,
         tags = state.tags,
         selectedTag = state.selectedTag,
@@ -38,7 +36,6 @@ fun AddJournalEntryScreen(
         textCorrections = state.corrections,
         textChangeNeedsWarning = state.textChangeNeedsWarning,
         suggestions = state.suggestions,
-        showSuggestions = state.suggestionsEnabled,
         onTagClicked = onTagClicked,
         onTemplateClicked = onTemplateClicked,
         onSave = onSave,
@@ -55,6 +52,5 @@ fun AddJournalEntryScreen(
         onCorrectionAccepted = onCorrectionAccepted,
         onAddDictionaryWord = onAddDictionaryWord,
         onSuggestionClicked = onSuggestionClicked,
-        onSuggestionsEnabledChanged = onSuggestionsEnabledChanged,
     )
 }

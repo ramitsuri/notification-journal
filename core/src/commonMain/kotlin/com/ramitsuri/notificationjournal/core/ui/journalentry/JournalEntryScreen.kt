@@ -91,6 +91,7 @@ import org.jetbrains.compose.resources.vectorResource
 fun JournalEntryScreen(
     state: ViewState,
     showBackButton: Boolean,
+    showContent: Boolean,
     onEntryScreenAction: (EntryScreenAction) -> Unit,
     onDayGroupAction: (DayGroupAction) -> Unit,
 ) {
@@ -264,6 +265,7 @@ fun JournalEntryScreen(
                     showConflictDiffInline = state.showConflictDiffInline,
                     allowNotify = state.allowNotify,
                     scrollConnection = scrollBehavior.nestedScrollConnection,
+                    showContent = showContent,
                     onAction = { action ->
                         when (action) {
                             is DayGroupAction.DeleteEntry -> {
@@ -432,6 +434,7 @@ private fun List(
     allowNotify: Boolean,
     modifier: Modifier = Modifier,
     scrollConnection: NestedScrollConnection,
+    showContent: Boolean,
     onAction: (DayGroupAction) -> Unit,
 ) {
     JournalEntryDay(
@@ -445,6 +448,7 @@ private fun List(
         onAction = onAction,
         config = JournalEntryDayConfig.allEnabled,
         allowNotify = allowNotify,
+        showContent = showContent,
         modifier = modifier,
     )
 }

@@ -1,9 +1,16 @@
 package com.ramitsuri.notificationjournal.core.ui.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -46,7 +53,22 @@ fun NavGraph(
     navigator: Navigator,
 ) {
     val listDetailStrategy = rememberListDetailSceneStrategy<Route>()
-
+    var showContent by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, lifecycleEvent ->
+                if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
+                    showContent = true
+                } else if (lifecycleEvent == Lifecycle.Event.ON_PAUSE) {
+                    showContent = false
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     val entryProvider: (Route) -> NavEntry<Route> =
         entryProvider {
             entry<Route.JournalEntryDays>(
@@ -116,6 +138,7 @@ fun NavGraph(
                 JournalEntryScreen(
                     state = viewState,
                     showBackButton = !isListDetail,
+                    showContent = showContent,
                     onEntryScreenAction = { action ->
                         when (action) {
                             is EntryScreenAction.AddWithDate -> {
@@ -303,7 +326,6 @@ fun NavGraph(
                     onCorrectionAccepted = viewModel::correctionAccepted,
                     onAddDictionaryWord = viewModel::addDictionaryWord,
                     onSuggestionClicked = viewModel::onSuggestionClicked,
-                    onSuggestionsEnabledChanged = viewModel::onSuggestionEnabledChanged,
                 )
             }
 
@@ -335,7 +357,6 @@ fun NavGraph(
                     onCorrectionAccepted = viewModel::correctionAccepted,
                     onAddDictionaryWord = viewModel::addDictionaryWord,
                     onSuggestionClicked = viewModel::onSuggestionClicked,
-                    onSuggestionsEnabledChanged = viewModel::onSuggestionEnabledChanged,
                 )
             }
 
@@ -478,6 +499,7 @@ fun NavGraph(
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 ViewJournalEntryDayScreen(
                     state = viewState,
+                    showContent = showContent,
                     onBackClick = { navigator.goBack() },
                     onDateSelected = viewModel::onDateSelected,
                     onAction = { action ->

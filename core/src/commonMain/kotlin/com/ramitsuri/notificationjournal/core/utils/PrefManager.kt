@@ -85,14 +85,6 @@ class PrefManager(
         keyValueStore.removeLegacy(stringPrefs = stringPrefs, booleanPrefs = booleanPrefs, intPrefs = intPrefs)
     }
 
-    fun showSuggestions(): Flow<Boolean> {
-        return keyValueStore.getBooleanFlow(Key.SHOW_SUGGESTIONS, false)
-    }
-
-    suspend fun setShowSuggestions(showSuggestions: Boolean) {
-        keyValueStore.putBoolean(Key.SHOW_SUGGESTIONS, showSuggestions)
-    }
-
     fun getExportDirectory(): Flow<String> {
         return keyValueStore
             .getStringFlow(Key.EXPORT_DIRECTORY, "")
