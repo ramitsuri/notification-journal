@@ -8,6 +8,7 @@ object Constants {
     const val ACTION_UPLOAD = "action_upload"
     const val TEMPLATED_TIME = "{{time}}"
     const val TEMPLATED_TASK = "[ ]"
+    const val DEFAULT_ADD_EDIT_FONT_SIZE = 14
 
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"

@@ -16,6 +16,7 @@ import com.ramitsuri.notificationjournal.core.model.template.getShortcutTemplate
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
@@ -68,6 +69,7 @@ class EditJournalEntryViewModel(
         loadTemplates()
         loadCorrections()
         loadSuggestions()
+        loadFontSize()
     }
 
     fun tagClicked(tag: String) {
@@ -287,6 +289,16 @@ class EditJournalEntryViewModel(
             .distinctBy { it.lowercase() }
             .take(10)
     }
+
+    private fun loadFontSize() {
+        viewModelScope.launch {
+            prefManager.getAddEditFontSize().collect { fontSize ->
+                _state.update { state ->
+                    state.copy(addEditFontSize = fontSize)
+                }
+            }
+        }
+    }
 }
 
 data class EditJournalEntryViewState(
@@ -298,4 +310,5 @@ data class EditJournalEntryViewState(
     val dateTime: LocalDateTime = Clock.System.nowLocal(),
     val textChangeNeedsWarning: Boolean = false,
     val suggestions: List<String> = listOf(),
+    val addEditFontSize: Int = Constants.DEFAULT_ADD_EDIT_FONT_SIZE,
 )

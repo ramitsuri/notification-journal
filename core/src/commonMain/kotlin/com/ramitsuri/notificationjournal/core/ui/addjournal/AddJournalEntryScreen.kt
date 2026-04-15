@@ -28,6 +28,7 @@ fun AddJournalEntryScreen(
 ) {
     AddEditEntryDialog(
         textState = state.textFieldState,
+        addEditFontSize = state.addEditFontSize,
         tags = state.tags,
         selectedTag = state.selectedTag,
         showAddAnother = true,

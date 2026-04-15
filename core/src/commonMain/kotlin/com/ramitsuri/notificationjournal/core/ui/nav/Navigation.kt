@@ -388,6 +388,8 @@ fun NavGraph(
                     onDeleteAll = viewModel::deleteAll,
                     onShowStatsToggled = viewModel::onStatsRequestToggled,
                     onExportDirectorySet = viewModel::setExportDirectory,
+                    onIncreaseAddEditFontSize = viewModel::increaseAddEditFontSize,
+                    onDecreaseAddEditFontSize = viewModel::decreaseAddEditFontSize,
                 )
             }
 

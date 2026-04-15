@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -59,6 +60,7 @@ import notificationjournal.core.generated.resources.device_name
 import notificationjournal.core.generated.resources.exchange_name
 import notificationjournal.core.generated.resources.export_directory_dialog_title
 import notificationjournal.core.generated.resources.export_directory_input_label
+import notificationjournal.core.generated.resources.font_size
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.settings_app_version
@@ -111,6 +113,8 @@ fun SettingsScreen(
     onDeleteAll: () -> Unit,
     onShowStatsToggled: () -> Unit,
     onExportDirectorySet: (String) -> Unit,
+    onIncreaseAddEditFontSize: () -> Unit,
+    onDecreaseAddEditFontSize: () -> Unit,
 ) {
     var showDataSharingPropertiesDialog by rememberSaveable { mutableStateOf(false) }
     var showForceUploadAllDialog by rememberSaveable { mutableStateOf(false) }
@@ -204,6 +208,13 @@ fun SettingsScreen(
                         subtitle = stringResource(Res.string.settings_templates_subtitle),
                         onClick = onTemplatesClicked,
                         showProgress = false,
+                    )
+                }
+                item {
+                    AddEditFontSizeItem(
+                        fontSize = state.addEditFontSize,
+                        onIncreaseClick = onIncreaseAddEditFontSize,
+                        onDecreaseClick = onDecreaseAddEditFontSize,
                     )
                 }
                 item {
@@ -357,6 +368,44 @@ private fun SettingsItemWithToggle(
             checked = value,
             onCheckedChange = null,
         )
+    }
+}
+
+@Composable
+private fun AddEditFontSizeItem(
+    modifier: Modifier = Modifier,
+    fontSize: Int,
+    onIncreaseClick: () -> Unit,
+    onDecreaseClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 64.dp)
+                .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.Center) {
+            Text(
+                text = stringResource(Res.string.font_size),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(4.dp),
+            )
+            Text(
+                text = fontSize.toString(),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        OutlinedButton(onClick = onDecreaseClick) {
+            Text(text = "-")
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        OutlinedButton(onClick = onIncreaseClick) {
+            Text(text = "+")
+        }
     }
 }
 

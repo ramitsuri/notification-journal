@@ -136,4 +136,12 @@ class PrefManager(
     suspend fun setWindowPosition(windowPosition: WindowPosition) {
         keyValueStore.putString(Key.WINDOW_POSITION, json.encodeToString(windowPosition))
     }
+
+    fun getAddEditFontSize(): Flow<Int> {
+        return keyValueStore.getIntFlow(Key.ADD_EDIT_FONT_SIZE, 14)
+    }
+
+    suspend fun setAddEditFontSize(fontSize: Int) {
+        keyValueStore.putInt(Key.ADD_EDIT_FONT_SIZE, fontSize)
+    }
 }
