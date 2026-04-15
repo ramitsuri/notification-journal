@@ -66,4 +66,5 @@ enum class Key(val value: String) {
     DATA_HOST_PROPERTIES("data_host_properties"),
     WINDOW_SIZE("window_size"),
     WINDOW_POSITION("window_position"),
+    ADD_EDIT_FONT_SIZE("add_edit_font_size"),
 }

@@ -30,6 +30,7 @@
     <string name="select_all">Select all</string>
     <string name="unselect_all">Unselect all</string>
     <string name="entry_days_empty">No Entry Days</string>
+    <string name="font_size">Font Size</string>
 
     <string name="alert">Alert!</string>
     <string name="delete_warning_message">The entry will be deleted</string>

@@ -75,14 +75,15 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
-import com.ramitsuri.notificationjournal.core.ui.theme.red
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import kotlinx.datetime.LocalDate
@@ -114,6 +115,7 @@ fun AddEditEntryDialog(
     textCorrections: Map<String, List<String>>,
     textChangeNeedsWarning: Boolean,
     suggestions: List<String>,
+    addEditFontSize: Int,
     onSuggestionClicked: (String?) -> Unit,
     onTagClicked: (String) -> Unit,
     onTemplateClicked: (JournalEntryTemplate) -> Unit,
@@ -525,6 +527,7 @@ fun AddEditEntryDialog(
                         .nestedScroll(scrollBehavior.nestedScrollConnection)
                         .weight(1f),
                 textState = textState,
+                fontSize = addEditFontSize.sp,
                 tags = tags,
                 selectedTag = selectedTag,
                 templates = templates,
@@ -616,6 +619,7 @@ private fun DiscardTextWarningDialog(
 private fun Content(
     modifier: Modifier = Modifier,
     textState: TextFieldState,
+    fontSize: TextUnit,
     tags: List<Tag>,
     selectedTag: String?,
     textCorrections: Map<String, List<String>>,
@@ -649,6 +653,7 @@ private fun Content(
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
             textState = textState,
+            fontSize = fontSize,
             textFieldFocusRequester = textFieldFocusRequester,
             textCorrections = textCorrections,
             suggestions = suggestions,
@@ -756,6 +761,7 @@ private fun Content(
 
 @Composable
 private fun TextField(
+    fontSize: TextUnit,
     textState: TextFieldState,
     textFieldFocusRequester: FocusRequester,
     textCorrections: Map<String, List<String>>,
@@ -765,11 +771,9 @@ private fun TextField(
     onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
-    val incorrectWordColor = MaterialTheme.colorScheme.red
     val incorrectWordsOutputTransformation =
-        remember(textCorrections, incorrectWordColor) {
+        remember(textCorrections) {
             IncorrectWordsOutputTransformation(
-                color = incorrectWordColor,
                 incorrectWords = textCorrections.keys.toList(),
             )
         }
@@ -796,7 +800,7 @@ private fun TextField(
                         ),
                     textStyle =
                         MaterialTheme.typography.bodyMedium
-                            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = fontSize),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant),
                     lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 10),
                     modifier =

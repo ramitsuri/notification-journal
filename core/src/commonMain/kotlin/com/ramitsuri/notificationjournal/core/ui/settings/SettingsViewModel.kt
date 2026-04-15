@@ -11,6 +11,7 @@ import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +43,7 @@ class SettingsViewModel(
             statsRequested,
             prefManager.getDataHostProperties(),
             prefManager.getExportDirectory(),
+            prefManager.getAddEditFontSize(),
         ) {
                 forceUploadStatus,
                 showEmptyTags,
@@ -50,6 +52,7 @@ class SettingsViewModel(
                 statsRequested,
                 dataHostProperties,
                 exportDirectory,
+                addEditFontSize,
             ->
             SettingsViewState(
                 forceUploadStatus = forceUploadStatus,
@@ -61,6 +64,7 @@ class SettingsViewModel(
                 allowDelete = journalEntryDao != null && conflictDao != null,
                 stats = if (statsRequested) repository.getStats() else null,
                 exportDirectory = if (enableExport) exportDirectory else null,
+                addEditFontSize = addEditFontSize,
             )
         }.stateIn(
             viewModelScope,
@@ -139,6 +143,18 @@ class SettingsViewModel(
         }
     }
 
+    fun increaseAddEditFontSize() {
+        viewModelScope.launch {
+            prefManager.setAddEditFontSize(state.value.addEditFontSize + 1)
+        }
+    }
+
+    fun decreaseAddEditFontSize() {
+        viewModelScope.launch {
+            prefManager.setAddEditFontSize(state.value.addEditFontSize - 1)
+        }
+    }
+
     companion object {
         fun factory() =
             object : ViewModelProvider.Factory {
@@ -172,4 +188,5 @@ data class SettingsViewState(
     val stats: EntryStats? = null,
     // Null means export is not enabled
     val exportDirectory: String? = null,
+    val addEditFontSize: Int = Constants.DEFAULT_ADD_EDIT_FONT_SIZE,
 )
