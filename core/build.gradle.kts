@@ -74,6 +74,15 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.jsystemthemedetector)
+            implementation(libs.ktor.server)
+            implementation(libs.ktor.ws)
+            implementation(libs.logback)
+            implementation(libs.logback.core)
+
+            configurations.all {
+                exclude(group = "org.slf4j", module = "slf4j-simple")
+                exclude(group = "org.slf4j", module = "slf4j-nop")
+            }
         }
         jvmTest.dependencies {
             implementation(libs.androidx.room.testing)

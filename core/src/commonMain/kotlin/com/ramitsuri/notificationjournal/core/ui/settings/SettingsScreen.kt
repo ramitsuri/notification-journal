@@ -57,7 +57,6 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.data_host
 import notificationjournal.core.generated.resources.device_name
-import notificationjournal.core.generated.resources.exchange_name
 import notificationjournal.core.generated.resources.export_directory_dialog_title
 import notificationjournal.core.generated.resources.export_directory_input_label
 import notificationjournal.core.generated.resources.font_size
@@ -102,7 +101,7 @@ fun SettingsScreen(
     state: SettingsViewState,
     onBack: () -> Unit,
     onForceUploadAllClicked: () -> Unit,
-    onDataSharingPropertiesSet: (DataHost, ExchangeName, DeviceName) -> Unit,
+    onDataSharingPropertiesSet: (DataHost, DeviceName) -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
     onToggleShowConflictDiffInline: () -> Unit,
@@ -123,9 +122,9 @@ fun SettingsScreen(
     if (showDataSharingPropertiesDialog) {
         DataSharingPropertiesDialog(
             dataHostProperties = state.dataHostProperties,
-            onPositiveClick = { dataHost, exchangeName, deviceName ->
+            onPositiveClick = { dataHost, deviceName ->
                 showDataSharingPropertiesDialog = !showDataSharingPropertiesDialog
-                onDataSharingPropertiesSet(dataHost, exchangeName, deviceName)
+                onDataSharingPropertiesSet(dataHost, deviceName)
             },
             onNegativeClick = { showDataSharingPropertiesDialog = !showDataSharingPropertiesDialog },
         )
@@ -174,10 +173,6 @@ fun SettingsScreen(
                         buildString {
                             if (state.dataHostProperties.dataHost.isNotEmpty()) {
                                 append(state.dataHostProperties.dataHost)
-                                append(" : ")
-                            }
-                            if (state.dataHostProperties.exchangeName.isNotEmpty()) {
-                                append(state.dataHostProperties.exchangeName)
                                 append(" : ")
                             }
                             if (state.dataHostProperties.deviceName.isNotEmpty()) {
@@ -473,11 +468,10 @@ private fun ForceUploadAllStatusDialog(
 @Composable
 private fun DataSharingPropertiesDialog(
     dataHostProperties: DataHostProperties,
-    onPositiveClick: (DataHost, ExchangeName, DeviceName) -> Unit,
+    onPositiveClick: (DataHost, DeviceName) -> Unit,
     onNegativeClick: () -> Unit,
 ) {
     var dataHostText by rememberSaveable { mutableStateOf(dataHostProperties.dataHost) }
-    var exchangeNameText by rememberSaveable { mutableStateOf(dataHostProperties.exchangeName) }
     var deviceNameText by rememberSaveable { mutableStateOf(dataHostProperties.deviceName) }
 
     Dialog(onDismissRequest = { }) {
@@ -505,16 +499,6 @@ private fun DataSharingPropertiesDialog(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
-                    value = exchangeNameText,
-                    singleLine = true,
-                    label = {
-                        Text(stringResource(Res.string.exchange_name))
-                    },
-                    onValueChange = { exchangeNameText = it },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
                     value = deviceNameText,
                     singleLine = true,
                     label = {
@@ -532,7 +516,6 @@ private fun DataSharingPropertiesDialog(
                     onPositiveClick = {
                         onPositiveClick(
                             DataHost(dataHostText),
-                            ExchangeName(exchangeNameText),
                             DeviceName(deviceNameText),
                         )
                     },

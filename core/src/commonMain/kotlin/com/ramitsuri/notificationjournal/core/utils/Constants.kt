@@ -9,6 +9,8 @@ object Constants {
     const val TEMPLATED_TIME = "{{time}}"
     const val TEMPLATED_TASK = "[ ]"
     const val DEFAULT_ADD_EDIT_FONT_SIZE = 14
+    const val DATA_HOST_EXCHANGE = "Exchange"
+    const val DATA_HOST_PORT = 8000
 
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"

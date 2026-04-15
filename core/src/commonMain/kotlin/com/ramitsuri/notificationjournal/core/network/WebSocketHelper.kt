@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.network
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocket
@@ -48,8 +49,8 @@ class WebSocketHelper(
             httpClient.webSocket(
                 method = HttpMethod.Get,
                 host = dataHostProperties.dataHost,
-                port = dataHostProperties.port,
-                path = "/${dataHostProperties.exchangeName}",
+                port = Constants.DATA_HOST_PORT,
+                path = "/${Constants.DATA_HOST_EXCHANGE}",
             ) {
                 session = this
                 log("Connected to websocket: $session")

@@ -362,7 +362,6 @@ object ServiceLocator {
         DataHostProperties(
             deviceName = oldKVStore.getString("device_name") ?: "",
             deviceId = oldKVStore.getString("device_id") ?: "",
-            exchangeName = oldKVStore.getString("exchange_name") ?: "",
             dataHost = oldKVStore.getString("data_host") ?: "",
             username = oldKVStore.getString("username") ?: "",
             password = oldKVStore.getString("password") ?: "",
