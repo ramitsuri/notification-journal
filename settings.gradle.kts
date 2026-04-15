@@ -17,4 +17,3 @@ rootProject.name = "NotificationJournal"
 include(":app")
 include(":wearos")
 include(":core")
-include(":server")

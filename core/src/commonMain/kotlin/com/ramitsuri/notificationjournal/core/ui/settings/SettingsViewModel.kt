@@ -84,7 +84,6 @@ class SettingsViewModel(
 
     fun setDataSharingProperties(
         dataHost: DataHost,
-        exchangeName: ExchangeName,
         deviceName: DeviceName,
     ) {
         viewModelScope.launch {
@@ -99,7 +98,6 @@ class SettingsViewModel(
                             .toSet()
                     existing.copy(
                         deviceName = deviceName.name,
-                        exchangeName = exchangeName.name,
                         dataHost = dataHost.host,
                         otherHosts = newOtherHosts,
                     )

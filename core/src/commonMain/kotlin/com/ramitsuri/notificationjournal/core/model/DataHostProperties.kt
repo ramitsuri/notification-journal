@@ -10,12 +10,8 @@ data class DataHostProperties(
     val deviceName: String = "",
     @SerialName("deviceId")
     val deviceId: String = "",
-    @SerialName("exchangeName")
-    val exchangeName: String = "",
     @SerialName("dataHost")
     val dataHost: String = "http://",
-    @SerialName("port")
-    val port: Int = 8000,
     @SerialName("username")
     val username: String = "",
     @SerialName("password")
@@ -24,8 +20,7 @@ data class DataHostProperties(
     val otherHosts: Set<String> = emptySet(),
 ) {
     fun isValid(): Boolean {
-        return deviceName.isNotBlank() && deviceId.isNotBlank() && exchangeName.isNotBlank() &&
-            dataHost.isNotBlank()
+        return deviceName.isNotBlank() && deviceId.isNotBlank() && dataHost.isNotBlank()
     }
 }
 

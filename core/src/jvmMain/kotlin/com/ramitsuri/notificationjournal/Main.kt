@@ -20,23 +20,35 @@ import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
+import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.server.module
+import io.ktor.server.application.Application
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.awt.Desktop
 import java.awt.desktop.AppForegroundEvent
 import java.awt.desktop.AppForegroundListener
 import com.ramitsuri.notificationjournal.core.model.WindowPosition as AppWindowPosition
 
-fun main() =
+fun main() {
+    val factory = DiFactory()
+    ServiceLocator.init(factory)
+
+    // This is not called automatically when the app first starts
+    ServiceLocator.onAppStart()
+
+    ServiceLocator.coroutineScope.launch {
+        embeddedServer(Netty, port = Constants.DATA_HOST_PORT, module = Application::module).start(wait = true)
+    }
+
     application {
-        val factory = DiFactory()
-        ServiceLocator.init(factory)
-        // This is not called automatically when the app first starts
-        ServiceLocator.onAppStart()
         var sizeIncreasedLastTime by remember { mutableStateOf(false) }
 
         val windowState =
@@ -108,6 +120,7 @@ fun main() =
             }
         }
     }
+}
 
 private fun getWindowPosition(): WindowPosition {
     return runBlocking {
