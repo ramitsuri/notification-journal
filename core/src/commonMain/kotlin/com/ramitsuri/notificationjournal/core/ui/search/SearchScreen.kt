@@ -48,7 +48,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,10 +56,10 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +82,7 @@ import com.ramitsuri.notificationjournal.core.ui.fullBorder
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYear
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.search_end_date
@@ -145,7 +145,6 @@ fun SearchScreen(
                 searchFieldState = state.searchTextState,
                 onClearClick = onClearClick,
                 onToggleFilters = { showFilters = !showFilters },
-                hasTags = state.tags.isNotEmpty(),
             )
 
             AnimatedVisibility(visible = showFilters) {
@@ -351,7 +350,6 @@ private fun SearchRow(
     searchFieldState: TextFieldState,
     onClearClick: () -> Unit,
     onToggleFilters: () -> Unit,
-    hasTags: Boolean,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
     val showKeyboard by remember { mutableStateOf(true) }
@@ -437,15 +435,7 @@ private fun SwipeableSearchItem(
     onEntrySwiped: () -> Unit,
 ) {
     val dismissState = rememberSwipeToDismissBoxState()
-    val swiped by remember {
-        derivedStateOf { dismissState.currentValue == SwipeToDismissBoxValue.EndToStart }
-    }
-    LaunchedEffect(swiped) {
-        if (swiped) {
-            dismissState.reset()
-            onEntrySwiped()
-        }
-    }
+    val coroutineScope = rememberCoroutineScope()
     SwipeToDismissBox(
         modifier = Modifier,
         state = dismissState,
@@ -469,6 +459,12 @@ private fun SwipeableSearchItem(
                     contentDescription = null,
                 )
             }
+        },
+        onDismiss = {
+            coroutineScope.launch {
+                dismissState.reset()
+            }
+            onEntrySwiped()
         },
     ) {
         Column(
