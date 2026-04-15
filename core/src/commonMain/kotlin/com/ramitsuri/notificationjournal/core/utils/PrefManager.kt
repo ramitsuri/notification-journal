@@ -138,7 +138,7 @@ class PrefManager(
     }
 
     fun getAddEditFontSize(): Flow<Int> {
-        return keyValueStore.getIntFlow(Key.ADD_EDIT_FONT_SIZE, 14)
+        return keyValueStore.getIntFlow(Key.ADD_EDIT_FONT_SIZE, Constants.DEFAULT_ADD_EDIT_FONT_SIZE)
     }
 
     suspend fun setAddEditFontSize(fontSize: Int) {
