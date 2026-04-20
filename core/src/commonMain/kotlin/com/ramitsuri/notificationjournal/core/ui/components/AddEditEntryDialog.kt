@@ -779,7 +779,7 @@ private fun TextField(
         remember(textCorrections) {
             textCorrections.keys.toList()
         }
-    textState.toTextFieldBuffer()
+
     ExposedDropdownMenuBox(
         expanded = suggestions.isNotEmpty(),
         onExpandedChange = { },
