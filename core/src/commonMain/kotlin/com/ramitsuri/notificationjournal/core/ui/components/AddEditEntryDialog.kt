@@ -27,8 +27,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.toTextFieldBuffer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -73,8 +75,10 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -771,12 +775,11 @@ private fun TextField(
     onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
-    val incorrectWordsOutputTransformation =
+    val incorrectWords =
         remember(textCorrections) {
-            IncorrectWordsOutputTransformation(
-                incorrectWords = textCorrections.keys.toList(),
-            )
+            textCorrections.keys.toList()
         }
+    textState.toTextFieldBuffer()
     ExposedDropdownMenuBox(
         expanded = suggestions.isNotEmpty(),
         onExpandedChange = { },
@@ -793,7 +796,17 @@ private fun TextField(
             ) {
                 BasicTextField(
                     state = textState,
-                    outputTransformation = incorrectWordsOutputTransformation,
+                    outputTransformation =
+                        OutputTransformation {
+                            incorrectWords.forEach { word ->
+                                var start = originalText.indexOf(word)
+                                while (start != -1) {
+                                    val end = start + word.length
+                                    addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
+                                    start = originalText.indexOf(word, end)
+                                }
+                            }
+                        },
                     keyboardOptions =
                         KeyboardOptions(
                             capitalization = KeyboardCapitalization.Sentences,

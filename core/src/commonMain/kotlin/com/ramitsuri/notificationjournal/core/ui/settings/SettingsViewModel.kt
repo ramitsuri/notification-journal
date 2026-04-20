@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
@@ -11,7 +12,9 @@ import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.ui.settings.SettingsViewModel.Companion.TAG
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +32,9 @@ class SettingsViewModel(
     private val journalEntryDao: JournalEntryDao?,
     private val conflictDao: EntryConflictDao?,
     private val enableExport: Boolean,
+    private val encryptionHelper: EncryptionHelper,
+    getIpAddress: () -> String?,
+    actsAsServer: Boolean,
 ) : ViewModel() {
     private val forceUploadStatus: MutableStateFlow<ForceUploadAllStatus> =
         MutableStateFlow(ForceUploadAllStatus.Initial)
@@ -44,6 +50,8 @@ class SettingsViewModel(
             prefManager.getDataHostProperties(),
             prefManager.getExportDirectory(),
             prefManager.getAddEditFontSize(),
+            encryptionHelper.getSalt(),
+            encryptionHelper.getPassword(),
         ) {
                 forceUploadStatus,
                 showEmptyTags,
@@ -53,6 +61,8 @@ class SettingsViewModel(
                 dataHostProperties,
                 exportDirectory,
                 addEditFontSize,
+                encryptionSalt,
+                encryptionPassword,
             ->
             SettingsViewState(
                 forceUploadStatus = forceUploadStatus,
@@ -65,6 +75,10 @@ class SettingsViewModel(
                 stats = if (statsRequested) repository.getStats() else null,
                 exportDirectory = if (enableExport) exportDirectory else null,
                 addEditFontSize = addEditFontSize,
+                actsAsServer = actsAsServer,
+                ipAddress = getIpAddress(),
+                encryptionPassword = encryptionPassword,
+                encryptionSalt = encryptionSalt,
             )
         }.stateIn(
             viewModelScope,
@@ -153,6 +167,24 @@ class SettingsViewModel(
         }
     }
 
+    fun onQrCodeScanned(qrCodeContent: String) {
+        val parts = qrCodeContent.split(";;;")
+        val encryptionSalt = parts[0]
+        val encryptionPassword = parts[1]
+        val ipAddress = parts[2]
+
+        viewModelScope.launch {
+            val newDataHostProperties =
+                prefManager.getDataHostProperties().first().copy(
+                    dataHost = ipAddress,
+                )
+            prefManager.setDataHostProperties(newDataHostProperties)
+
+            encryptionHelper.setSalt(encryptionSalt)
+            encryptionHelper.setPassword(encryptionPassword)
+        }
+    }
+
     companion object {
         fun factory() =
             object : ViewModelProvider.Factory {
@@ -168,9 +200,14 @@ class SettingsViewModel(
                         journalEntryDao = ServiceLocator.journalEntryDao,
                         conflictDao = ServiceLocator.conflictDao,
                         enableExport = ServiceLocator.exportRepository != null,
+                        encryptionHelper = ServiceLocator.encryptionHelper,
+                        getIpAddress = ServiceLocator::getIpAddress,
+                        actsAsServer = ServiceLocator.actsAsServer(),
                     ) as T
                 }
             }
+
+        internal const val TAG = "SettingsVM"
     }
 }
 
@@ -187,4 +224,23 @@ data class SettingsViewState(
     // Null means export is not enabled
     val exportDirectory: String? = null,
     val addEditFontSize: Int = Constants.DEFAULT_ADD_EDIT_FONT_SIZE,
-)
+    val ipAddress: String? = null,
+    val encryptionPassword: String? = null,
+    val encryptionSalt: String? = null,
+    val actsAsServer: Boolean = false,
+) {
+    val qrCodeContent: String?
+        get() =
+            if (ipAddress.isNullOrEmpty() || encryptionSalt.isNullOrEmpty() || encryptionPassword.isNullOrEmpty()) {
+                if (actsAsServer) {
+                    Logger.w(TAG) {
+                        "ipAddress null or empty: ${ipAddress.isNullOrEmpty()}, " +
+                            "encryptionSalt null or empty: ${encryptionSalt.isNullOrEmpty()}, " +
+                            "encryptionPassword null or empty: ${encryptionPassword.isNullOrEmpty()}"
+                    }
+                }
+                null
+            } else {
+                "$encryptionSalt;;;$encryptionPassword;;;$ipAddress"
+            }
+}

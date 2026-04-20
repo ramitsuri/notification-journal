@@ -67,4 +67,6 @@ enum class Key(val value: String) {
     WINDOW_SIZE("window_size"),
     WINDOW_POSITION("window_position"),
     ADD_EDIT_FONT_SIZE("add_edit_font_size"),
+    ENCRYPTION_PASSWORD("encryption_password"),
+    ENCRYPTION_SALT("encryption_salt"),
 }

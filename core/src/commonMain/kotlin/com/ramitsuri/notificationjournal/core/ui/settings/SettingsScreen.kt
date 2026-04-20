@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -57,9 +58,12 @@ import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.data_host
 import notificationjournal.core.generated.resources.device_name
+import notificationjournal.core.generated.resources.encryption_password
+import notificationjournal.core.generated.resources.encryption_salt
 import notificationjournal.core.generated.resources.export_directory_dialog_title
 import notificationjournal.core.generated.resources.export_directory_input_label
 import notificationjournal.core.generated.resources.font_size
+import notificationjournal.core.generated.resources.ip_address
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.settings_app_version
@@ -114,6 +118,7 @@ fun SettingsScreen(
     onExportDirectorySet: (String) -> Unit,
     onIncreaseAddEditFontSize: () -> Unit,
     onDecreaseAddEditFontSize: () -> Unit,
+    onQrCodeScanned: (String) -> Unit,
 ) {
     var showDataSharingPropertiesDialog by rememberSaveable { mutableStateOf(false) }
     var showForceUploadAllDialog by rememberSaveable { mutableStateOf(false) }
@@ -122,11 +127,20 @@ fun SettingsScreen(
     if (showDataSharingPropertiesDialog) {
         DataSharingPropertiesDialog(
             dataHostProperties = state.dataHostProperties,
+            ipAddress = state.ipAddress,
+            encryptionSalt = state.encryptionSalt,
+            encryptionPassword = state.encryptionPassword,
+            qrCodeContent = state.qrCodeContent,
+            actsAsServer = state.actsAsServer,
             onPositiveClick = { dataHost, deviceName ->
                 showDataSharingPropertiesDialog = !showDataSharingPropertiesDialog
                 onDataSharingPropertiesSet(dataHost, deviceName)
             },
             onNegativeClick = { showDataSharingPropertiesDialog = !showDataSharingPropertiesDialog },
+            onQrCodeScanned = {
+                showDataSharingPropertiesDialog = false
+                onQrCodeScanned(it)
+            },
         )
     }
     if (showForceUploadAllDialog) {
@@ -468,15 +482,28 @@ private fun ForceUploadAllStatusDialog(
 @Composable
 private fun DataSharingPropertiesDialog(
     dataHostProperties: DataHostProperties,
+    qrCodeContent: String?,
+    actsAsServer: Boolean,
+    ipAddress: String?,
+    encryptionPassword: String?,
+    encryptionSalt: String?,
+    onQrCodeScanned: (String) -> Unit,
     onPositiveClick: (DataHost, DeviceName) -> Unit,
     onNegativeClick: () -> Unit,
 ) {
-    var dataHostText by rememberSaveable { mutableStateOf(dataHostProperties.dataHost) }
-    var deviceNameText by rememberSaveable { mutableStateOf(dataHostProperties.deviceName) }
+    var dataHostText by rememberSaveable(dataHostProperties.dataHost) {
+        mutableStateOf(dataHostProperties.dataHost)
+    }
+    var deviceNameText by rememberSaveable(dataHostProperties.deviceName) {
+        mutableStateOf(dataHostProperties.deviceName)
+    }
 
     Dialog(onDismissRequest = { }) {
         Card {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -511,6 +538,38 @@ private fun DataSharingPropertiesDialog(
                     onValueChange = { deviceNameText = it },
                     modifier = Modifier.fillMaxWidth(),
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                if (qrCodeContent != null && actsAsServer) {
+                    QrCodeImage(
+                        content = qrCodeContent,
+                        modifier = Modifier.size(256.dp),
+                    )
+                } else {
+                    QrCodeScanner(
+                        modifier =
+                            Modifier
+                                .sizeIn(maxHeight = 400.dp),
+                        onQrCodeScanned = onQrCodeScanned,
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(Res.string.encryption_password, encryptionPassword.toString()),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(Res.string.encryption_salt, encryptionSalt.toString()),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (ipAddress != null && actsAsServer) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(Res.string.ip_address, ipAddress),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 DialogButtonRow(
                     showCancel = true,
                     onPositiveClick = {

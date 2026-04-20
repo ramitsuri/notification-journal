@@ -14,9 +14,6 @@ import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
 import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
-import com.ramitsuri.notificationjournal.core.model.DataHostProperties
-import com.ramitsuri.notificationjournal.core.model.WindowPosition
-import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
@@ -33,13 +30,13 @@ import com.ramitsuri.notificationjournal.core.ui.editjournal.EditJournalEntryVie
 import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.Importance
 import com.ramitsuri.notificationjournal.core.utils.JournalEntryNotificationHelper
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
-import com.ramitsuri.notificationjournal.core.utils.PrefsKeyValueStore
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -89,12 +86,12 @@ object ServiceLocator {
             ),
         )
         runBlocking {
-            migrateFromKeyValueStore()
             prefManager.getDataHostProperties().first().let { dataHostProperties ->
                 if (dataHostProperties.deviceId.isEmpty()) {
                     prefManager.setDataHostProperties(dataHostProperties.copy(deviceId = UUID.randomUUID().toString()))
                 }
             }
+            encryptionHelper.resetValues(overwrite = false)
         }
         Logger.setLogWriters(inMemoryLogWriter, platformLogWriter())
     }
@@ -242,14 +239,24 @@ object ServiceLocator {
         return notificationHelper != null
     }
 
+    fun getIpAddress(): String? {
+        return factory.getIpAddress()
+    }
+
+    fun actsAsServer(): Boolean {
+        return factory.actsAsServer
+    }
+
+    private val keyValueStore by lazy {
+        DataStoreKeyValueStore(
+            dataStore =
+                PreferenceDataStoreFactory.createWithPath(
+                    produceFile = { factory.getDataStorePath().toOkioPath() },
+                ),
+        )
+    }
+
     val prefManager by lazy {
-        val keyValueStore =
-            DataStoreKeyValueStore(
-                dataStore =
-                    PreferenceDataStoreFactory.createWithPath(
-                        produceFile = { factory.getDataStorePath().toOkioPath() },
-                    ),
-            )
         PrefManager(keyValueStore = keyValueStore, json = json)
             .also {
                 coroutineScope.launch {
@@ -279,6 +286,13 @@ object ServiceLocator {
                 HttpClient {
                     install(io.ktor.client.plugins.websocket.WebSockets)
                 },
+            encryptionHelper = encryptionHelper,
+        )
+    }
+
+    val encryptionHelper by lazy {
+        EncryptionHelper(
+            keyValueStore = keyValueStore,
         )
     }
 
@@ -353,37 +367,6 @@ object ServiceLocator {
                     }
                 }
         }
-
-    private suspend fun migrateFromKeyValueStore() {
-        val oldKVStore = PrefsKeyValueStore(factory)
-        if (!oldKVStore.hasKeys()) {
-            return
-        }
-        DataHostProperties(
-            deviceName = oldKVStore.getString("device_name") ?: "",
-            deviceId = oldKVStore.getString("device_id") ?: "",
-            dataHost = oldKVStore.getString("data_host") ?: "",
-            username = oldKVStore.getString("username") ?: "",
-            password = oldKVStore.getString("password") ?: "",
-        ).let {
-            prefManager.setDataHostProperties(it)
-        }
-
-        WindowSize(
-            height = oldKVStore.getInt("window_size_height", 0).toFloat(),
-            width = oldKVStore.getInt("window_size_width", 0).toFloat(),
-        ).let {
-            prefManager.setWindowSize(it)
-        }
-
-        WindowPosition(
-            x = oldKVStore.getInt("window_position_x", 0).toFloat(),
-            y = oldKVStore.getInt("window_position_y", 0).toFloat(),
-        ).let {
-            prefManager.setWindowPosition(it)
-        }
-        oldKVStore.clear()
-    }
 
     private lateinit var factory: DiFactory
     private const val TAG = "ServiceLocator"

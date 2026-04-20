@@ -8,7 +8,7 @@ class Client(
     private val session: DefaultWebSocketSession,
     val id: String = Uuid.random().toString(),
 ) {
-    suspend fun send(message: String) {
+    suspend fun send(message: ByteArray) {
         session.send(message)
     }
 }

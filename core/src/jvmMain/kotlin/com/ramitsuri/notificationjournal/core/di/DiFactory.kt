@@ -18,6 +18,8 @@ import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.datetime.LocalDateTime
+import java.net.DatagramSocket
+import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -25,6 +27,8 @@ import java.util.prefs.Preferences
 
 actual class DiFactory {
     actual val allowJournalImport: Boolean = true
+
+    actual val actsAsServer: Boolean = true
 
     actual fun getSettings(): Settings {
         // File located at ~/Library/Preferences/com.apple.java.util.prefs
@@ -99,6 +103,13 @@ actual class DiFactory {
 
     actual fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository? {
         return ExportRepositoryImpl(ioDispatcher)
+    }
+
+    actual fun getIpAddress(): String? {
+        DatagramSocket().use { socket ->
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002)
+            return socket.localAddress.hostAddress
+        }
     }
 
     companion object {

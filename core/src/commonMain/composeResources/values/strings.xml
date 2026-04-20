@@ -81,7 +81,7 @@
     <string name="settings_templates_title">Templates</string>
     <string name="settings_templates_subtitle">Add or edit templates</string>
 
-    <string name= "settings_logs">Logs</string>
+    <string name="settings_logs">Logs</string>
 
     <string name="settings_app_version">App version</string>
 
@@ -201,4 +201,8 @@
 
     <string name="export_directory_dialog_title">Set Export Directory</string>
     <string name="export_directory_input_label">Export Path</string>
+
+    <string name="encryption_password">Encryption password: %1$s</string>
+    <string name="encryption_salt">Encryption salt: %1$s</string>
+    <string name="ip_address">IP address: %1$s</string>
 </resources>
