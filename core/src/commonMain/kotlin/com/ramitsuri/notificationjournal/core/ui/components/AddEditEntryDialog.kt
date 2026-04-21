@@ -787,6 +787,10 @@ private fun TextField(
                 Regex(pattern)
             }
         }
+    val incorrectWordMatches =
+        remember(textState.text, regex) {
+            regex?.findAll(textState.text)?.toList() ?: emptyList()
+        }
 
     ExposedDropdownMenuBox(
         expanded = suggestions.isNotEmpty(),
@@ -806,7 +810,7 @@ private fun TextField(
                     state = textState,
                     outputTransformation =
                         OutputTransformation {
-                            regex?.findAll(originalText)?.forEach { match ->
+                            incorrectWordMatches.forEach { match ->
                                 addStyle(
                                     spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
                                     start = match.range.first,

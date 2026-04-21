@@ -243,10 +243,9 @@ data class SettingsViewState(
                 null
             } else {
                 "$encryptionSalt;;;$encryptionPassword;;;$ipAddress".also {
-                    if (BuildKonfig.IS_DEBUG)
-                        {
-                            Logger.d(TAG) { "qrCodeContent: $it" }
-                        }
+                    if (BuildKonfig.IS_DEBUG) {
+                        Logger.d(TAG) { "qrCodeContent: $it" }
+                    }
                 }
             }
 }

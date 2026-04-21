@@ -18,6 +18,7 @@ abstract class BaseTest {
     lateinit var db: AppDatabase
     lateinit var prefManager: PrefManager
     lateinit var repository: JournalRepository
+    lateinit var encryptionHelper: EncryptionHelper
 
     @Before
     fun before() =
@@ -25,10 +26,12 @@ abstract class BaseTest {
             db = getTestDb()
             dataSendHelper = TestDataSendHelper()
             clock = TestClock()
+            val keyValueStore = getTestDataKeyValueStore()
+            encryptionHelper = EncryptionHelper(keyValueStore)
             prefManager =
                 PrefManager(
                     testJson,
-                    getTestDataKeyValueStore(),
+                    keyValueStore,
                 )
             repository =
                 JournalRepository(

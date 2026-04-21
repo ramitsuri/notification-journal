@@ -21,7 +21,7 @@ class EncryptionHelper(
 ) {
     private val provider = CryptographyProvider.Default
     private val initMutex = Mutex()
-    private lateinit var cipher: IvAuthenticatedCipher
+    private var cipher: IvAuthenticatedCipher? = null
 
     fun getPassword(): Flow<String?> {
         return keyValueStore
@@ -32,7 +32,10 @@ class EncryptionHelper(
     }
 
     suspend fun setPassword(password: String) {
-        keyValueStore.putString(Key.ENCRYPTION_PASSWORD, password)
+        initMutex.withLock {
+            keyValueStore.putString(Key.ENCRYPTION_PASSWORD, password)
+            cipher = null
+        }
     }
 
     fun getSalt(): Flow<String?> {
@@ -44,7 +47,10 @@ class EncryptionHelper(
     }
 
     suspend fun setSalt(salt: String) {
-        keyValueStore.putString(Key.ENCRYPTION_SALT, salt)
+        initMutex.withLock {
+            keyValueStore.putString(Key.ENCRYPTION_SALT, salt)
+            cipher = null
+        }
     }
 
     suspend fun resetValues(overwrite: Boolean = false) {
@@ -78,9 +84,7 @@ class EncryptionHelper(
 
     private suspend fun getCipher(): IvAuthenticatedCipher =
         initMutex.withLock {
-            if (::cipher.isInitialized) {
-                return cipher
-            }
+            cipher?.let { return it }
             val password = getPassword().first()?.encodeToByteArray() ?: error("Encryption password not set")
             val salt = getSalt().first()?.let { Base64.decode(it) } ?: error("Encryption salt not set")
 
@@ -92,13 +96,14 @@ class EncryptionHelper(
                     salt = salt,
                 ).deriveSecretToByteArray(password)
 
-            cipher =
-                provider
-                    .get(AES.GCM)
-                    .keyDecoder()
-                    .decodeFromByteArray(AES.Key.Format.RAW, key)
-                    .cipher()
-            return cipher
+            return provider
+                .get(AES.GCM)
+                .keyDecoder()
+                .decodeFromByteArray(AES.Key.Format.RAW, key)
+                .cipher()
+                .also {
+                    cipher = it
+                }
         }
 
     companion object {
