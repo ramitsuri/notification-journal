@@ -788,7 +788,7 @@ private fun TextField(
                 Regex(pattern)
             }
         }
-    var incorrectWordMatches by remember { mutableStateOf<List<MatchResult>>(emptyList()) }
+    var incorrectWordMatches by remember { mutableStateOf<List<IntRange>>(emptyList()) }
 
     LaunchedEffect(textState.text, regex) {
         if (regex == null) {
@@ -796,7 +796,7 @@ private fun TextField(
         } else {
             // Debounce regex scanning to prevent lag while typing fast
             delay(100)
-            incorrectWordMatches = regex.findAll(textState.text).toList()
+            incorrectWordMatches = regex.findAll(textState.text).map { it.range }.toList()
         }
     }
 
@@ -818,17 +818,13 @@ private fun TextField(
                     state = textState,
                     outputTransformation =
                         OutputTransformation {
-                            incorrectWordMatches.forEach { match ->
-                                val start = match.range.first
-                                val end = match.range.last
-                                if (start <= this.originalText.lastIndex && end <= this.originalText.lastIndex) {
-                                    addStyle(
-                                        spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
-                                        start = start,
-                                        // + 1 because addStyle end is exclusive
-                                        end = end + 1,
-                                    )
-                                }
+                            incorrectWordMatches.forEach { range ->
+                                addStyle(
+                                    spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
+                                    start = range.first,
+                                    // + 1 because addStyle end is exclusive
+                                    end = minOf(range.last, originalText.lastIndex) + 1,
+                                )
                             }
                         },
                     keyboardOptions =
