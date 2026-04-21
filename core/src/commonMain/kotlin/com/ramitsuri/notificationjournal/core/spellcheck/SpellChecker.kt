@@ -59,7 +59,7 @@ class SpellChecker(
     suspend fun onTextUpdated(text: String) =
         coroutineScope {
             withContext(defaultDispatcher) {
-                val wordsInText = getWordsInText(text)
+                val wordsInText = getWordsInText(text).toSet()
 
                 wordsInText.forEach { word ->
                     // Storing in a separate list so that it can be immediately updated with encountered
@@ -71,11 +71,15 @@ class SpellChecker(
                     }
                 }
 
+                var removedWords = setOf<String>()
                 _corrections.update { existing ->
                     existing.filter {
                         wordsInText.contains(it.key)
+                    }.also {
+                        removedWords = existing.keys - it.keys
                     }
                 }
+                removeFromEncounteredWords(removedWords)
             }
         }
 
@@ -127,13 +131,22 @@ class SpellChecker(
         val regex = """(?<!\w)'(?!\w)|[.,!?;:"-]""".toRegex()
         return text
             .replace(regex, "")
-            .split("\n")
-            .flatMap { it.split(" ") }
+            .split("\n", " ")
+            .filter { it.isNotBlank() }
     }
 
     private suspend fun addToEncounteredWords(word: String): Boolean {
         mutex.withLock {
             return encounteredWords.add(word)
+        }
+    }
+
+    private suspend fun removeFromEncounteredWords(words: Set<String>) {
+        if (words.isEmpty()) {
+            return
+        }
+        mutex.withLock {
+            encounteredWords.removeAll(words)
         }
     }
 }

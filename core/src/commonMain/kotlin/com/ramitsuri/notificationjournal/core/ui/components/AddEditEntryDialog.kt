@@ -30,7 +30,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.toTextFieldBuffer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -775,9 +774,18 @@ private fun TextField(
     onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
-    val incorrectWords =
+    val regex =
         remember(textCorrections) {
-            textCorrections.keys.toList()
+            val incorrectWords = textCorrections.keys.toList()
+            if (incorrectWords.isEmpty()) {
+                null
+            } else {
+                val pattern =
+                    incorrectWords.joinToString(separator = "|", prefix = "\\b(", postfix = ")\\b") {
+                        Regex.escape(it)
+                    }
+                Regex(pattern)
+            }
         }
 
     ExposedDropdownMenuBox(
@@ -798,13 +806,12 @@ private fun TextField(
                     state = textState,
                     outputTransformation =
                         OutputTransformation {
-                            incorrectWords.forEach { word ->
-                                var start = originalText.indexOf(word)
-                                while (start != -1) {
-                                    val end = start + word.length
-                                    addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
-                                    start = originalText.indexOf(word, end)
-                                }
+                            regex?.findAll(originalText)?.forEach { match ->
+                                addStyle(
+                                    spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
+                                    start = match.range.first,
+                                    end = match.range.last + 1,
+                                )
                             }
                         },
                     keyboardOptions =

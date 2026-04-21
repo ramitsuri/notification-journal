@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import co.touchlab.kermit.Logger
+import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
@@ -241,6 +242,11 @@ data class SettingsViewState(
                 }
                 null
             } else {
-                "$encryptionSalt;;;$encryptionPassword;;;$ipAddress"
+                "$encryptionSalt;;;$encryptionPassword;;;$ipAddress".also {
+                    if (BuildKonfig.IS_DEBUG)
+                        {
+                            Logger.d(TAG) { "qrCodeContent: $it" }
+                        }
+                }
             }
 }
