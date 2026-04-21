@@ -118,8 +118,7 @@ class SpellChecker(
                             }
                         }
                     }
-                    .takeIf { it.isNotEmpty() }
-                    ?.let { suggestions ->
+                    .let { suggestions ->
                         _corrections.update { existing ->
                             existing + (word to suggestions)
                         }
