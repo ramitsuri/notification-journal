@@ -12,10 +12,6 @@ data class DataHostProperties(
     val deviceId: String = "",
     @SerialName("dataHost")
     val dataHost: String = "http://",
-    @SerialName("username")
-    val username: String = "",
-    @SerialName("password")
-    val password: String = "",
     @SerialName("otherHosts")
     val otherHosts: Set<String> = emptySet(),
 ) {

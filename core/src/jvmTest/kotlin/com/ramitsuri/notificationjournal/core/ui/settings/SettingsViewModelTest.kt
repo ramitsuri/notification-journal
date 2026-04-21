@@ -23,7 +23,6 @@ class SettingsViewModelTest : BaseTest() {
 
                 viewModel.setDataSharingProperties(
                     dataHost = DataHost("host-2"),
-                    exchangeName = ExchangeName(""),
                     deviceName = DeviceName(""),
                 )
 
@@ -45,7 +44,6 @@ class SettingsViewModelTest : BaseTest() {
 
                 viewModel.setDataSharingProperties(
                     dataHost = DataHost("host-1"),
-                    exchangeName = ExchangeName(""),
                     deviceName = DeviceName(""),
                 )
 
@@ -63,7 +61,6 @@ class SettingsViewModelTest : BaseTest() {
 
                 viewModel.setDataSharingProperties(
                     dataHost = DataHost("host-1"),
-                    exchangeName = ExchangeName(""),
                     deviceName = DeviceName(""),
                 )
 
@@ -82,6 +79,9 @@ class SettingsViewModelTest : BaseTest() {
                 journalEntryDao = db.journalEntryDao(),
                 conflictDao = db.entryConflictDao(),
                 enableExport = true,
+                encryptionHelper = encryptionHelper,
+                getIpAddress = { null },
+                actsAsServer = false,
             )
     }
 }

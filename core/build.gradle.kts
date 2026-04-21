@@ -62,6 +62,12 @@ kotlin {
 
             implementation(libs.ktor.client)
             implementation(libs.ktor.ws.client)
+
+            implementation(libs.cryptography.core)
+            implementation(libs.cryptography.provider.optimal)
+
+            implementation(libs.zxing.core)
+            implementation(libs.zxing.javase)
         }
         androidMain.dependencies {
             implementation(libs.androidx.ktx)
@@ -69,6 +75,12 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.playservices.coroutines)
             implementation(libs.androidx.work.runtime.ktx)
+
+            implementation(libs.androidx.camera.core)
+            implementation(libs.androidx.camera.compose)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.barcode.scanning)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -99,6 +111,7 @@ kotlin {
     }
     compilerOptions {
         optIn.addAll(
+            "androidx.camera.core.ExperimentalGetImage",
             "androidx.compose.animation.ExperimentalAnimationApi",
             "androidx.compose.foundation.ExperimentalFoundationApi",
             "androidx.compose.foundation.layout.ExperimentalLayoutApi",

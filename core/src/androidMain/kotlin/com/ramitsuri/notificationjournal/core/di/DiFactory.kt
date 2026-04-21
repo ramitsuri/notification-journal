@@ -20,6 +20,8 @@ import java.nio.file.Path
 actual class DiFactory(private val application: Application) {
     actual val allowJournalImport: Boolean = false
 
+    actual val actsAsServer: Boolean = false
+
     actual fun getSettings(): Settings {
         return SharedPreferencesSettings(
             application.getSharedPreferences(
@@ -56,6 +58,10 @@ actual class DiFactory(private val application: Application) {
     }
 
     actual fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository? {
+        return null
+    }
+
+    actual fun getIpAddress(): String? {
         return null
     }
 }

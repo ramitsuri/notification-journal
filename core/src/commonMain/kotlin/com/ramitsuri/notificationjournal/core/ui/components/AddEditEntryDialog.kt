@@ -27,6 +27,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
@@ -73,8 +74,10 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -771,12 +774,24 @@ private fun TextField(
     onAddDictionaryWord: (String) -> Unit,
 ) {
     var showTextCorrectionsDialog by remember { mutableStateOf(false) }
-    val incorrectWordsOutputTransformation =
+    val regex =
         remember(textCorrections) {
-            IncorrectWordsOutputTransformation(
-                incorrectWords = textCorrections.keys.toList(),
-            )
+            val incorrectWords = textCorrections.keys.toList()
+            if (incorrectWords.isEmpty()) {
+                null
+            } else {
+                val pattern =
+                    incorrectWords.joinToString(separator = "|", prefix = "\\b(", postfix = ")\\b") {
+                        Regex.escape(it)
+                    }
+                Regex(pattern)
+            }
         }
+    val incorrectWordMatches =
+        remember(textState.text, regex) {
+            regex?.findAll(textState.text)?.toList() ?: emptyList()
+        }
+
     ExposedDropdownMenuBox(
         expanded = suggestions.isNotEmpty(),
         onExpandedChange = { },
@@ -793,7 +808,16 @@ private fun TextField(
             ) {
                 BasicTextField(
                     state = textState,
-                    outputTransformation = incorrectWordsOutputTransformation,
+                    outputTransformation =
+                        OutputTransformation {
+                            incorrectWordMatches.forEach { match ->
+                                addStyle(
+                                    spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
+                                    start = match.range.first,
+                                    end = match.range.last + 1,
+                                )
+                            }
+                        },
                     keyboardOptions =
                         KeyboardOptions(
                             capitalization = KeyboardCapitalization.Sentences,

@@ -8,7 +8,7 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
-import io.ktor.websocket.readText
+import io.ktor.websocket.readBytes
 import java.util.Collections
 
 @Suppress("unused")
@@ -27,8 +27,8 @@ private fun Route.startWebSocket(exchange: String) {
         clients += thisClient
         try {
             for (frame in incoming) {
-                frame as? Frame.Text ?: continue
-                val receivedText = frame.readText()
+                frame as? Frame.Binary ?: continue
+                val receivedText = frame.readBytes()
                 clients.forEach { client ->
                     if (client.id != thisClient.id) {
                         client.send(receivedText)

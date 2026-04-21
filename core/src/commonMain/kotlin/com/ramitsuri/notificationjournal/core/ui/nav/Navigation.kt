@@ -390,6 +390,7 @@ fun NavGraph(
                     onExportDirectorySet = viewModel::setExportDirectory,
                     onIncreaseAddEditFontSize = viewModel::increaseAddEditFontSize,
                     onDecreaseAddEditFontSize = viewModel::decreaseAddEditFontSize,
+                    onQrCodeScanned = viewModel::onQrCodeScanned,
                 )
             }
 

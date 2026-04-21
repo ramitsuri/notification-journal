@@ -13,6 +13,8 @@ import java.nio.file.Path
 expect class DiFactory {
     val allowJournalImport: Boolean
 
+    val actsAsServer: Boolean
+
     fun getSettings(): Settings
 
     fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
@@ -26,4 +28,6 @@ expect class DiFactory {
     fun getImportRepository(ioDispatcher: CoroutineDispatcher): ImportRepository
 
     fun getExportRepository(ioDispatcher: CoroutineDispatcher): ExportRepository?
+
+    fun getIpAddress(): String?
 }
