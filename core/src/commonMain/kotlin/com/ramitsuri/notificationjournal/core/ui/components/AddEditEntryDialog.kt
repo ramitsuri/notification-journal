@@ -89,6 +89,7 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
+import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -787,10 +788,17 @@ private fun TextField(
                 Regex(pattern)
             }
         }
-    val incorrectWordMatches =
-        remember(textState.text, regex) {
-            regex?.findAll(textState.text)?.toList() ?: emptyList()
+    var incorrectWordMatches by remember { mutableStateOf<List<MatchResult>>(emptyList()) }
+
+    LaunchedEffect(textState.text, regex) {
+        if (regex == null) {
+            incorrectWordMatches = emptyList()
+        } else {
+            // Debounce regex scanning to prevent lag while typing fast
+            delay(100)
+            incorrectWordMatches = regex.findAll(textState.text).toList()
         }
+    }
 
     ExposedDropdownMenuBox(
         expanded = suggestions.isNotEmpty(),
@@ -811,11 +819,16 @@ private fun TextField(
                     outputTransformation =
                         OutputTransformation {
                             incorrectWordMatches.forEach { match ->
-                                addStyle(
-                                    spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
-                                    start = match.range.first,
-                                    end = match.range.last + 1,
-                                )
+                                val start = match.range.first
+                                val end = match.range.last
+                                if (start <= this.originalText.lastIndex && end <= this.originalText.lastIndex) {
+                                    addStyle(
+                                        spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
+                                        start = start,
+                                        // + 1 because addStyle end is exclusive
+                                        end = end + 1,
+                                    )
+                                }
                             }
                         },
                     keyboardOptions =
