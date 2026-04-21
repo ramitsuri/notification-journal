@@ -819,12 +819,17 @@ private fun TextField(
                     outputTransformation =
                         OutputTransformation {
                             incorrectWordMatches.forEach { range ->
-                                addStyle(
-                                    spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
-                                    start = range.first,
-                                    // + 1 because addStyle end is exclusive
-                                    end = minOf(range.last, originalText.lastIndex) + 1,
-                                )
+                                // When deleting text, regex results might not have been updated yet, so check if
+                                // incorrect words still lie within the text
+                                val end = minOf(range.last, originalText.lastIndex)
+                                if (range.first <= end) {
+                                    addStyle(
+                                        spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
+                                        start = range.first,
+                                        // + 1 because addStyle end is exclusive
+                                        end = end + 1,
+                                    )
+                                }
                             }
                         },
                     keyboardOptions =
