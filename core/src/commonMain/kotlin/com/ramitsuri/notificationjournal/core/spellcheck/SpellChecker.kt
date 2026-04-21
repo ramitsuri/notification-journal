@@ -104,10 +104,15 @@ class SpellChecker(
                     Verbosity.Closest,
                     2.0,
                 )
-                    .filter {
+                    .takeIf {
+                        // Even correct words return a single item suggestion list which has the word itself as the
+                        // suggestion. So use the returned list only if there are zero or more than 1 suggestions
+                        it.size != 1 || it[0].term.lowercase() != word.lowercase()
+                    }
+                    ?.filter {
                         it.term.lowercase() != word.lowercase()
                     }
-                    .map { suggestion ->
+                    ?.map { suggestion ->
                         suggestion.term.replaceFirstChar {
                             if (word.first().isUpperCase()) {
                                 it.titlecase(locale)
@@ -118,7 +123,7 @@ class SpellChecker(
                             }
                         }
                     }
-                    .let { suggestions ->
+                    ?.let { suggestions ->
                         _corrections.update { existing ->
                             existing + (word to suggestions)
                         }

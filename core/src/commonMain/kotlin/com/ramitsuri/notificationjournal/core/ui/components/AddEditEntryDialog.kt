@@ -822,7 +822,7 @@ private fun TextField(
                                 // When deleting text, regex results might not have been updated yet, so check if
                                 // incorrect words still lie within the text
                                 val end = minOf(range.last, originalText.lastIndex)
-                                if (range.first < end) {
+                                if (range.first <= end) {
                                     addStyle(
                                         spanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
                                         start = range.first,
