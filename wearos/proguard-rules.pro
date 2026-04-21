@@ -20,3 +20,8 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 -dontwarn org.slf4j.impl.StaticLoggerBinder
+
+-dontwarn javax.imageio.spi.ImageInputStreamSpi
+-dontwarn javax.imageio.spi.ImageOutputStreamSpi
+-dontwarn javax.imageio.spi.ImageReaderSpi
+-dontwarn javax.imageio.spi.ImageWriterSpi
