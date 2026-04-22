@@ -135,30 +135,6 @@ jobs:
           name: linux-app
           path: core/build/compose/binaries/main/deb/Journal-1.0.0.deb
 
-  build_server:
-    name: "Build server"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Build server
-        run: ./server/scripts/build.sh
-
-      - name: Upload server app
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-app
-          path: |
-            server/build/libs/app.jar
-            app_version.txt
-
   create_release:
     name: "Create release"
     needs: [build_windows_app, build_macos_app, build_linux_app, build_server]
@@ -179,11 +155,6 @@ jobs:
         with:
           name: linux-app
 
-      - name: Download server-app
-        uses: actions/download-artifact@v4
-        with:
-          name: server-app
-
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
@@ -191,5 +162,3 @@ jobs:
             Journal-1.0.0.msi
             Journal-1.0.0.dmg
             Journal-1.0.0.deb
-            server/build/libs/app.jar
-            app_version.txt
