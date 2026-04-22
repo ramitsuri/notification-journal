@@ -137,7 +137,7 @@ jobs:
 
   create_release:
     name: "Create release"
-    needs: [build_windows_app, build_macos_app, build_linux_app, build_server]
+    needs: [build_windows_app, build_macos_app, build_linux_app]
     runs-on: ubuntu-latest
     steps:
       - name: Download macos-app
