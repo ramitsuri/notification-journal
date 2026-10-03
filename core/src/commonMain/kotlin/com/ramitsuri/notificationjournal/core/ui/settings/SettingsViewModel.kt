@@ -183,6 +183,7 @@ class SettingsViewModel(
 
             encryptionHelper.setSalt(encryptionSalt)
             encryptionHelper.setPassword(encryptionPassword)
+            ServiceLocator.resetReceiveHelper(resetWebsocket = true)
         }
     }
 

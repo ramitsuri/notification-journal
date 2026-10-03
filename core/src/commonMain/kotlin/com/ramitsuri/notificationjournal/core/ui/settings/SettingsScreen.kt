@@ -498,7 +498,7 @@ private fun DataSharingPropertiesDialog(
         mutableStateOf(dataHostProperties.deviceName)
     }
 
-    Dialog(onDismissRequest = { }) {
+    Dialog(onDismissRequest = onNegativeClick) {
         Card {
             Column(
                 modifier = Modifier.padding(16.dp),
