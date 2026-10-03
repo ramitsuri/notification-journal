@@ -84,14 +84,19 @@ class AddJournalEntryViewModel(
 
     fun tagClicked(tag: String) {
         _state.update {
-            it.copy(selectedTag = tag)
+            if (it.selectedTag == tag) {
+                it.copy(selectedTag = null)
+            } else {
+                it.copy(selectedTag = tag)
+            }
         }
         viewModelScope.launch {
             // If tag clicked, enable suggestions
             enableGettingSuggestions.set(true)
             val text = _state.value.textFieldState.text
+            val selectedTag = _state.value.selectedTag
             _state.update {
-                it.copy(suggestions = getSuggestions(text = text, tag = tag))
+                it.copy(suggestions = getSuggestions(text = text, tag = selectedTag))
             }
         }
     }
