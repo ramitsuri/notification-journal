@@ -16,19 +16,14 @@ import kotlinx.coroutines.flow.Flow
 abstract class TagsDao {
     @Transaction
     open suspend fun updateOrder(tags: List<Tag>) {
-        tags.map { tag ->
+        tags.forEach { tag ->
             updateOrder(TagOrderUpdate(id = tag.id, order = tag.order))
         }
     }
 
     @Transaction
-    open suspend fun deleteIfPossible(tag: Tag): Boolean {
-        val rowCountForTag = getRowCountForTag(tag.value)
-        if (rowCountForTag != 0) {
-            return false
-        }
+    open suspend fun deleteIfPossible(tag: Tag) {
         delete(tag)
-        return true
     }
 
     @Transaction
@@ -43,11 +38,6 @@ abstract class TagsDao {
 
     @Transaction
     open suspend fun updateTextIfPossible(tagTextUpdate: TagTextUpdate): Boolean {
-        val currentTag = getAll().firstOrNull { it.id == tagTextUpdate.id } ?: return false
-        val rowCountForTag = getRowCountForTag(currentTag.value)
-        if (rowCountForTag != 0) {
-            return false
-        }
         return try {
             updateText(tagTextUpdate)
             true
@@ -79,19 +69,9 @@ abstract class TagsDao {
     @Delete
     protected abstract suspend fun delete(tag: Tag)
 
-    @Query("SELECT COUNT(id) from journalentry WHERE tag = :tag")
-    protected abstract suspend fun getJournalEntryCountForTag(tag: String): Int
-
-    @Query("SELECT COUNT(id) from journalentrytemplate WHERE tag = :tag")
-    protected abstract suspend fun getTemplateCountForTag(tag: String): Int
-
     @Query("DELETE FROM tags")
     protected abstract suspend fun deleteAll()
 
     @Update(entity = Tag::class)
     protected abstract suspend fun updateOrder(tagOrderUpdate: TagOrderUpdate)
-
-    private suspend fun getRowCountForTag(tag: String): Int {
-        return getJournalEntryCountForTag(tag) + getTemplateCountForTag(tag)
-    }
 }

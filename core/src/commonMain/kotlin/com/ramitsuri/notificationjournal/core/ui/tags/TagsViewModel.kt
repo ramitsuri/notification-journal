@@ -106,12 +106,7 @@ class TagsViewModel(
 
     fun delete(tag: Tag) {
         viewModelScope.launch {
-            val success = dao.deleteIfPossible(tag)
-            if (!success) {
-                _state.update {
-                    it.copy(error = TagError.DELETE_FAIL)
-                }
-            }
+            dao.deleteIfPossible(tag)
         }
     }
 
@@ -183,6 +178,5 @@ data class TagsViewState(
 )
 
 enum class TagError {
-    DELETE_FAIL,
     INSERT_FAIL,
 }

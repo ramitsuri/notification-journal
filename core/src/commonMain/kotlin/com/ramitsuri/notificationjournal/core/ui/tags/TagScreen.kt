@@ -34,7 +34,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -87,10 +86,9 @@ import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.not_default_tag
 import notificationjournal.core.generated.resources.ok
 import notificationjournal.core.generated.resources.settings_upload_title
-import notificationjournal.core.generated.resources.tag_delete_fail_message
-import notificationjournal.core.generated.resources.tag_info
 import notificationjournal.core.generated.resources.tag_insert_fail_message
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun TagsScreen(
@@ -193,7 +191,6 @@ fun TagsScreen(
                 }
             } else {
                 Spacer(modifier = Modifier.height(24.dp))
-                HelperText()
                 List(
                     tags = state.tags,
                     defaultTag = state.defaultTag,
@@ -242,28 +239,6 @@ private fun TopRow(
                 contentDescription = stringResource(Res.string.settings_upload_title),
             )
         }
-    }
-}
-
-@Composable
-private fun HelperText() {
-    Column {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(Res.string.tag_info),
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -451,7 +426,7 @@ private fun AddEditTagDialog(
             ) {
                 LaunchedEffect(focusRequester) {
                     if (showKeyboard) {
-                        delay(100)
+                        delay(100.milliseconds)
                         focusRequester.requestFocus()
                         keyboard?.show()
                     }
@@ -520,7 +495,6 @@ private fun TagError?.string(): String? {
     }
     val resId =
         when (this) {
-            TagError.DELETE_FAIL -> Res.string.tag_delete_fail_message
             TagError.INSERT_FAIL -> Res.string.tag_insert_fail_message
         }
     return stringResource(resId)
