@@ -37,11 +37,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -106,6 +107,7 @@ import notificationjournal.core.generated.resources.reset
 import notificationjournal.core.generated.resources.tags
 import notificationjournal.core.generated.resources.unsaved_warning_message
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -795,7 +797,7 @@ private fun TextField(
             incorrectWordMatches = emptyList()
         } else {
             // Debounce regex scanning to prevent lag while typing fast
-            delay(100)
+            delay(100.milliseconds)
             incorrectWordMatches = regex.findAll(textState.text).map { it.range }.toList()
         }
     }
@@ -808,7 +810,7 @@ private fun TextField(
         Column(
             modifier =
                 Modifier.fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryEditable, true),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
