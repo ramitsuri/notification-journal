@@ -9,13 +9,13 @@ plugins {
 
 android {
     namespace = "com.ramitsuri.notificationjournal"
-    compileSdk = 36
+    compileSdk = 37
 
     val appVersion = libs.versions.appVersion.get()
     defaultConfig {
         applicationId = "com.ramitsuri.notificationjournal"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         versionCode = appVersion.toDouble().times(100).toInt()
         versionName = appVersion
 
@@ -28,12 +28,13 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
             // Enable if testing
-            // signingConfig signingConfigs.debug
+            // signingConfig = signingConfigs.getByName("debug")
         }
         debug {
             isMinifyEnabled = false
@@ -51,9 +52,6 @@ android {
             optIn.add("kotlin.time.ExperimentalTime")
         }
     }
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + "-Xjvm-default=all"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -65,12 +63,18 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll(listOf("-Xjvm-default=all"))
+    }
+}
+
 dependencies {
     implementation(project(":core"))
 
     implementation(libs.androidx.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.work.runtime)
 
     val composeBom = platform(libs.composeBom)
     implementation(composeBom)

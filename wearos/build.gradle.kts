@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.composeCompiler)
@@ -7,13 +9,13 @@ plugins {
 
 android {
     namespace = "com.ramitsuri.notificationjournal"
-    compileSdk = 36
+    compileSdk = 37
 
     val appVersion = libs.versions.appVersion.get()
     defaultConfig {
         applicationId = "com.ramitsuri.notificationjournal"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         versionCode = appVersion.toDouble().times(100).plus(1).toInt()
         versionName = appVersion
 
@@ -25,12 +27,13 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
             // Enable if testing
-            // signingConfig signingConfigs.debug
+            // signingConfig = signingConfigs.getByName("debug")
         }
         debug {
             isMinifyEnabled = false
@@ -41,9 +44,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
     kotlin {
         compilerOptions {
@@ -57,6 +57,12 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.fromTarget("17")
     }
 }
 

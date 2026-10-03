@@ -522,7 +522,7 @@ fun NavGraph(
     NavDisplay(
         backStack = navigator.backstack,
         entryProvider = entryProvider,
-        sceneStrategy = listDetailStrategy,
+        sceneStrategies = listOf(listDetailStrategy),
         onBack = { navigator.goBack() },
         entryDecorators =
             listOf(

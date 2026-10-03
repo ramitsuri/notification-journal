@@ -74,7 +74,7 @@ kotlin {
             implementation(libs.playservices.wearable)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.playservices.coroutines)
-            implementation(libs.androidx.work.runtime.ktx)
+            implementation(libs.androidx.work.runtime)
 
             implementation(libs.androidx.camera.core)
             implementation(libs.androidx.camera.compose)
@@ -130,7 +130,7 @@ kotlin {
 
 android {
     namespace = "com.ramitsuri.notificationjournal.core"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 30
