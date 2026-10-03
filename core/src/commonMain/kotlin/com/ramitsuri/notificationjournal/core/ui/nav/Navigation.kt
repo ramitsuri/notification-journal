@@ -121,8 +121,13 @@ fun NavGraph(
                 metadata = ListDetailScene.detailPane(),
             ) { arg ->
                 val isListDetail = LocalIsListDetailScene.current
+                val selectedDate = navigator.selectedDate ?: arg.selectedDate
+                val dates by navigator.dates.collectAsStateWithLifecycle()
                 val viewModel: JournalEntryViewModel =
-                    viewModel(factory = JournalEntryViewModel.factory(selectedDate = arg.selectedDate))
+                    viewModel(factory = JournalEntryViewModel.factory(initialDate = selectedDate))
+                LaunchedEffect(selectedDate) {
+                    viewModel.onDateSelected(selectedDate)
+                }
                 val state =
                     rememberNavigationEventState(
                         currentInfo = NavigationEventInfo.None,
@@ -137,6 +142,9 @@ fun NavGraph(
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 JournalEntryScreen(
                     state = viewState,
+                    dates = dates.orEmpty(),
+                    selectedDate = selectedDate,
+                    onDateSettled = navigator::selectDate,
                     showBackButton = !isListDetail,
                     showContent = showContent,
                     onEntryScreenAction = { action ->
@@ -278,13 +286,6 @@ fun NavGraph(
                                 viewModel.resolveConflict(action.entry, action.conflict)
                             }
 
-                            is DayGroupAction.ShowPreviousDay -> {
-                                navigator.selectPrevious()
-                            }
-
-                            is DayGroupAction.ShowNextDay -> {
-                                navigator.selectNextDate()
-                            }
 
                             is DayGroupAction.Notify -> {
                                 viewModel.notify(action.entry, action.inTime)

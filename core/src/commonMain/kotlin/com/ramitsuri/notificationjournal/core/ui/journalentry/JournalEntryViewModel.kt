@@ -22,10 +22,13 @@ import com.ramitsuri.notificationjournal.core.utils.dayMonthDateWithYearSuspend
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.plus
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -36,8 +39,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class JournalEntryViewModel(
-    selectedDate: LocalDate,
+    initialDate: LocalDate,
     private val repository: JournalRepository,
     private val exportRepository: ExportRepository?,
     private val tagsDao: TagsDao,
@@ -46,11 +50,14 @@ class JournalEntryViewModel(
     webSocketHelper: WebSocketHelper,
 ) : ViewModel() {
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
+    private val selectedDate: MutableStateFlow<LocalDate> = MutableStateFlow(initialDate)
 
     val state: StateFlow<ViewState> =
         combine(
             contentForCopy,
-            repository.getForDateFlow(selectedDate),
+            selectedDate.flatMapLatest { date ->
+                repository.getForDateFlow(date).map { entries -> date to entries }
+            },
             repository.getForUploadCountFlow(),
             repository.getConflicts(),
             prefManager.showEmptyTags(),
@@ -58,7 +65,7 @@ class JournalEntryViewModel(
             webSocketHelper.isConnected,
         ) {
                 contentForCopy,
-                entries,
+                (date, entries),
                 forUploadCount,
                 entryConflicts,
                 showEmptyTags,
@@ -68,7 +75,11 @@ class JournalEntryViewModel(
             val tags = tagsDao.getAll()
             val entryIds = entries.map { it.id }
             ViewState(
-                dayGroup = entries.toDayGroups(tags.map { it.value }).first(),
+                dayGroup =
+                    entries
+                        .toDayGroups(tags.map { it.value })
+                        .firstOrNull()
+                        ?: DayGroup(date = date, tagGroups = listOf()),
                 tags = tags,
                 notUploadedCount = forUploadCount,
                 entryConflicts = entryConflicts.filter { entryIds.contains(it.entryId) },
@@ -83,6 +94,17 @@ class JournalEntryViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ViewState(dayGroup = null),
         )
+
+    fun onDateSelected(date: LocalDate) {
+        selectedDate.value = date
+    }
+
+    /**
+     * Day group for the currently selected date, null if it's still loading (for example, right after
+     * the date was switched and the previous date's data is still in [state]).
+     */
+    private val currentDayGroup: DayGroup?
+        get() = state.value.dayGroup?.takeIf { it.date == selectedDate.value }
 
     fun delete(journalEntry: JournalEntry) {
         viewModelScope.launch {
@@ -197,7 +219,7 @@ class JournalEntryViewModel(
     }
 
     fun upload() {
-        val dayGroup = state.value.dayGroup ?: return
+        val dayGroup = currentDayGroup ?: return
         viewModelScope.launch {
             repository.upload(dayGroup.tagGroups.flatMap { it.entries })
         }
@@ -245,7 +267,7 @@ class JournalEntryViewModel(
 
     fun onReconcile() {
         viewModelScope.launch(Dispatchers.Default) {
-            val dayGroup = state.value.dayGroup ?: return@launch
+            val dayGroup = currentDayGroup ?: return@launch
             if (dayGroup.untaggedCount > 0) {
                 Logger.i(TAG) { "Cannot export day group with untagged entries" }
                 return@launch
@@ -321,7 +343,7 @@ class JournalEntryViewModel(
         )
 
     companion object {
-        fun factory(selectedDate: LocalDate) =
+        fun factory(initialDate: LocalDate) =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(
@@ -329,7 +351,7 @@ class JournalEntryViewModel(
                     extras: CreationExtras,
                 ): T {
                     return JournalEntryViewModel(
-                        selectedDate = selectedDate,
+                        initialDate = initialDate,
                         repository = ServiceLocator.repository,
                         exportRepository = ServiceLocator.exportRepository,
                         tagsDao = ServiceLocator.tagsDao,

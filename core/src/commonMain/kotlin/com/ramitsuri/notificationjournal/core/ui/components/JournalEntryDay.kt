@@ -5,7 +5,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,7 +53,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -75,7 +73,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -114,7 +111,6 @@ import notificationjournal.core.generated.resources.untagged
 import notificationjournal.core.generated.resources.untagged_format
 import notificationjournal.core.generated.resources.upload
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.absoluteValue
 import kotlin.time.Duration
 
 @Composable
@@ -169,7 +165,6 @@ fun JournalEntryDay(
         onReconcileRequested = { onAction(DayGroupAction.ReconcileDayGroup) },
         onUploadRequested = { onAction(DayGroupAction.UploadDayGroup) },
     )
-    var swipeAmount by remember { mutableFloatStateOf(0f) }
     LazyColumn(
         state = lazyColumnState,
         modifier =
@@ -184,35 +179,7 @@ fun JournalEntryDay(
                 .alpha(if (showContent) 1f else 0f)
                 .nestedScroll(scrollConnection)
                 .fillMaxSize()
-                .padding(horizontal = 4.dp)
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragStart = {
-                            swipeAmount = 0f
-                        },
-                        onDragEnd = {
-                            if (!config.allowDaySelection) {
-                                return@detectHorizontalDragGestures
-                            }
-                            if (swipeAmount.absoluteValue < (size.width / 4)) {
-                                swipeAmount = 0f
-                                return@detectHorizontalDragGestures
-                            }
-                            if (swipeAmount > 0) {
-                                onAction(DayGroupAction.ShowPreviousDay)
-                            } else {
-                                onAction(DayGroupAction.ShowNextDay)
-                            }
-                            swipeAmount = 0f
-                        },
-                        onDragCancel = {
-                            swipeAmount = 0f
-                        },
-                    ) { change, dragAmount ->
-                        change.consume()
-                        swipeAmount += dragAmount
-                    }
-                },
+                .padding(horizontal = 4.dp),
     ) {
         dayGroup.tagGroups.forEach { tagGroup ->
             val entries = tagGroup.entries

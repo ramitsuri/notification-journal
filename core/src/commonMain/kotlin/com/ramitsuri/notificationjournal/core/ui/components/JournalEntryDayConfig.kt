@@ -5,7 +5,6 @@ data class JournalEntryDayConfig(
     val allowReconcile: Boolean,
     val allowTagMenu: Boolean,
     val allowEdits: Boolean,
-    val allowDaySelection: Boolean,
     val allowUpload: Boolean,
 ) {
     companion object {
@@ -15,7 +14,6 @@ data class JournalEntryDayConfig(
                 allowReconcile = true,
                 allowTagMenu = true,
                 allowEdits = true,
-                allowDaySelection = true,
                 allowUpload = true,
             )
         val allDisabled =
@@ -24,7 +22,6 @@ data class JournalEntryDayConfig(
                 allowReconcile = false,
                 allowTagMenu = false,
                 allowEdits = false,
-                allowDaySelection = false,
                 allowUpload = false,
             )
     }

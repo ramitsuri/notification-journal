@@ -1,5 +1,9 @@
 package com.ramitsuri.notificationjournal.core.ui.journalentry
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -18,6 +22,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -45,8 +52,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,6 +75,8 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
@@ -73,6 +85,11 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.alert
@@ -86,10 +103,14 @@ import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_up
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
+import kotlin.math.absoluteValue
 
 @Composable
 fun JournalEntryScreen(
     state: ViewState,
+    dates: List<LocalDate>,
+    selectedDate: LocalDate,
+    onDateSettled: (LocalDate) -> Unit,
     showBackButton: Boolean,
     showContent: Boolean,
     onEntryScreenAction: (EntryScreenAction) -> Unit,
@@ -99,6 +120,9 @@ fun JournalEntryScreen(
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
+    val dayPages = remember(dates) { dates.toDayPages() }
+    val pagerState = rememberDayPagerState(dayPages, selectedDate, onDateSettled)
 
     // The view needs to be focussed for it to receive keyboard events
     val focusRequester = remember { FocusRequester() }
@@ -168,12 +192,12 @@ fun JournalEntryScreen(
                     } else if ((it.key == Key.J || it.key == Key.DirectionLeft) &&
                         it.type == KeyEventType.KeyDown
                     ) {
-                        onDayGroupAction(DayGroupAction.ShowPreviousDay)
+                        coroutineScope.launch { pagerState.animateScrollBy(pages = -1, dayPages = dayPages) }
                         true
                     } else if ((it.key == Key.K || it.key == Key.DirectionRight) &&
                         it.type == KeyEventType.KeyDown
                     ) {
-                        onDayGroupAction(DayGroupAction.ShowNextDay)
+                        coroutineScope.launch { pagerState.animateScrollBy(pages = 1, dayPages = dayPages) }
                         true
                     } else if (it.key == Key.S &&
                         it.type == KeyEventType.KeyDown
@@ -227,8 +251,7 @@ fun JournalEntryScreen(
                 scrollBehavior = scrollBehavior,
             )
 
-            val dayGroup = state.dayGroup
-            if (dayGroup == null) {
+            if (dates.isEmpty()) {
                 Column(
                     modifier =
                         Modifier
@@ -240,44 +263,207 @@ fun JournalEntryScreen(
                 ) {
                     CircularWavyProgressIndicator()
                 }
-            } else if (dayGroup.tagGroups.isEmpty()) {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .navigationBarsPadding()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.no_items),
-                        style = MaterialTheme.typography.displaySmall,
-                    )
-                }
             } else {
-                List(
-                    dayGroup = state.dayGroup,
-                    conflictCount = state.dayGroupConflictCount,
-                    conflicts = state.entryConflicts,
-                    tags = state.tags,
-                    showEmptyTags = state.showEmptyTags,
-                    showConflictDiffInline = state.showConflictDiffInline,
-                    allowNotify = state.allowNotify,
-                    scrollConnection = scrollBehavior.nestedScrollConnection,
-                    showContent = showContent,
-                    onAction = { action ->
-                        when (action) {
-                            is DayGroupAction.DeleteEntry -> {
-                                journalEntryForDelete = action.entry
+                HorizontalPager(
+                    state = pagerState,
+                    key = { page -> dayPages[page].key },
+                    modifier = Modifier.fillMaxSize(),
+                ) { page ->
+                    val date = dayPages[page].date
+                    // Only the selected date's data is loaded. Other pages (the ones peeking in while
+                    // swiping, or the new page until its data is loaded) show the date instead.
+                    val dayGroup = state.dayGroup?.takeIf { it.date == date }
+                    // Only crossfade between placeholder and content, not on every data update
+                    updateTransition(targetState = dayGroup).Crossfade(
+                        contentKey = { it == null },
+                        modifier = Modifier.fillMaxSize(),
+                    ) { loadedDayGroup ->
+                        when {
+                            loadedDayGroup == null -> {
+                                DatePlaceholder(date = date)
                             }
 
-                            else -> onDayGroupAction(action)
+                            loadedDayGroup.tagGroups.isEmpty() -> {
+                                Column(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .navigationBarsPadding()
+                                            .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.no_items),
+                                        style = MaterialTheme.typography.displaySmall,
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    List(
+                                        dayGroup = loadedDayGroup,
+                                        conflictCount = state.dayGroupConflictCount,
+                                        conflicts = state.entryConflicts,
+                                        tags = state.tags,
+                                        showEmptyTags = state.showEmptyTags,
+                                        showConflictDiffInline = state.showConflictDiffInline,
+                                        allowNotify = state.allowNotify,
+                                        scrollConnection = scrollBehavior.nestedScrollConnection,
+                                        showContent = showContent,
+                                        onAction = { action ->
+                                            when (action) {
+                                                is DayGroupAction.DeleteEntry -> {
+                                                    journalEntryForDelete = action.entry
+                                                }
+
+                                                else -> onDayGroupAction(action)
+                                            }
+                                        },
+                                    )
+                                }
+                            }
                         }
-                    },
-                )
+                    }
+                }
             }
         }
+    }
+}
+
+/**
+ * A page in the day pager. To allow wrapping around, when there are at least 2 dates, the pages are
+ * `[last*, first, ..., last, first*]` where `*` marks a copy. Settling on a copy jumps to the real
+ * page of the same date, which has neighbors on both sides.
+ */
+private data class DayPage(
+    val date: LocalDate,
+    val isCopy: Boolean,
+) {
+    // Strings so that they can be saved by the pager
+    val key: String = if (isCopy) "copy-$date" else "day-$date"
+}
+
+private fun List<LocalDate>.toDayPages(): List<DayPage> {
+    val pages = map { DayPage(date = it, isCopy = false) }
+    if (size < 2) {
+        return pages
+    }
+    return listOf(DayPage(date = last(), isCopy = true)) + pages + DayPage(date = first(), isCopy = true)
+}
+
+private fun List<DayPage>.indexOfRealPage(date: LocalDate): Int = indexOfFirst { !it.isCopy && it.date == date }
+
+/**
+ * Keeps the pager and [selectedDate] in sync in both directions:
+ * - When the user settles on a page, [onDateSettled] is called with that page's date. If that page is
+ *   a copy, first jumps to the real page for that date.
+ * - When [selectedDate] changes from elsewhere (list pane, reconcile, deep link), the pager scrolls to it.
+ */
+@Composable
+private fun rememberDayPagerState(
+    dayPages: List<DayPage>,
+    selectedDate: LocalDate,
+    onDateSettled: (LocalDate) -> Unit,
+): PagerState {
+    val currentDayPages by rememberUpdatedState(dayPages)
+    val currentOnDateSettled by rememberUpdatedState(onDateSettled)
+    val pagerState =
+        rememberPagerState(
+            initialPage = dayPages.indexOfRealPage(selectedDate).coerceAtLeast(0),
+        ) { currentDayPages.size }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow {
+            // Read the key from the measured pages rather than indexing into pages, so that the
+            // page always matches what's on screen even while dates are changing.
+            val settledPage = pagerState.settledPage
+            val key =
+                pagerState.layoutInfo.visiblePagesInfo
+                    .firstOrNull { it.index == settledPage }
+                    ?.key
+            currentDayPages.firstOrNull { it.key == key }
+        }
+            .filterNotNull()
+            .distinctUntilChanged()
+            .collect { page ->
+                if (page.isCopy) {
+                    // Invisible jump as both pages show the same date. Settling on the real page
+                    // will emit again and report the date.
+                    val realPage = currentDayPages.indexOfRealPage(page.date)
+                    if (realPage != -1) {
+                        pagerState.scrollToPage(realPage)
+                    }
+                } else {
+                    currentOnDateSettled(page.date)
+                }
+            }
+    }
+
+    LaunchedEffect(selectedDate, dayPages) {
+        val targetPage = dayPages.indexOfRealPage(selectedDate)
+        if (targetPage == -1 || pagerState.isScrollInProgress) {
+            // Scroll in progress means the user (or keyboard) is moving the pager; it will report
+            // back once it settles.
+            return@LaunchedEffect
+        }
+        if (dayPages.getOrNull(pagerState.currentPage)?.date == selectedDate) {
+            // Already showing it (possibly on a copy, which jumps to the real page on its own)
+            return@LaunchedEffect
+        }
+        if ((targetPage - pagerState.currentPage).absoluteValue > 1) {
+            pagerState.scrollToPage(targetPage)
+        } else {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
+    return pagerState
+}
+
+/**
+ * Moves [pages] away from where the pager is headed (not where it currently is), so that repeated key
+ * presses while an animation is running keep moving forward instead of restarting from the same page.
+ */
+private suspend fun PagerState.animateScrollBy(
+    pages: Int,
+    dayPages: List<DayPage>,
+) {
+    var from = targetPage
+    val fromPage = dayPages.getOrNull(from)
+    if (fromPage?.isCopy == true) {
+        // Headed to a copy, jump to its real page first so that we don't run into the end
+        val realPage = dayPages.indexOfRealPage(fromPage.date)
+        if (realPage != -1) {
+            scrollToPage(realPage)
+            from = realPage
+        }
+    }
+    val target = (from + pages).coerceIn(0, (dayPages.size - 1).coerceAtLeast(0))
+    if (target != from) {
+        animateScrollToPage(target, animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing))
+    }
+}
+
+@Composable
+private fun DatePlaceholder(
+    date: LocalDate,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, bottom = 64.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = dayMonthDate(toFormat = date),
+            style = MaterialTheme.typography.displayLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
