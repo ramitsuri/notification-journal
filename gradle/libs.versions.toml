@@ -1,6 +1,6 @@
 [versions]
 
-appVersion = "12.5"
+appVersion = "12.6"
 
 activityCompose = "1.13.0"
 androidxAdaptive = "1.3.0-rc01"
