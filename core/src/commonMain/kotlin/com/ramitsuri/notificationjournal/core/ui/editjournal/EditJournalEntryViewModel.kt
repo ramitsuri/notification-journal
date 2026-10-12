@@ -72,9 +72,9 @@ class EditJournalEntryViewModel(
         loadFontSize()
     }
 
-    fun tagClicked(tag: String) {
+    fun tagClicked(tag: String, clearExisting: Boolean = false) {
         _state.update {
-            if (it.selectedTag == tag) {
+            if (it.selectedTag == tag && clearExisting) {
                 it.copy(selectedTag = null)
             } else {
                 it.copy(selectedTag = tag)
@@ -94,7 +94,7 @@ class EditJournalEntryViewModel(
     fun templateClicked(template: JournalEntryTemplate) {
         _state.value.textFieldState.edit {
             if (template.replacesExistingValues) {
-                tagClicked(template.tag)
+                tagClicked(tag = template.tag, clearExisting = false)
                 delete(0, length)
                 insert(0, template.text)
             } else {
