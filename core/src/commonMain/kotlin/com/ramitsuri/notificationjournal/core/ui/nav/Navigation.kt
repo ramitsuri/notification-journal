@@ -96,6 +96,7 @@ fun NavGraph(
                     state = viewState,
                     showToolbarActions = !isListDetail,
                     showFloatingActionButton = !isListDetail,
+                    ownsKeyboardShortcuts = !isListDetail,
                     onDateSelected = {
                         navigator.selectDate(it)
                     },

@@ -61,7 +61,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -85,6 +84,7 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
+import com.ramitsuri.notificationjournal.core.ui.components.rememberShortcutsFocusRequester
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -125,11 +125,11 @@ fun JournalEntryScreen(
     val dayPages = remember(dates) { dates.toDayPages() }
     val pagerState = rememberDayPagerState(dayPages, selectedDate, onDateSettled)
 
-    // The view needs to be focussed for it to receive keyboard events
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(focusRequester) {
-        focusRequester.requestFocus()
-    }
+    // The view needs to be focussed for it to receive keyboard events. Request again when the day
+    // changes (the page content is swapped, and in list-detail the list pane had focus) or when
+    // entries change (a focused entry may have been removed, which leaves nothing focused).
+    val entryIds = remember(state.dayGroup) { state.dayGroup?.tagGroups?.flatMap { tagGroup -> tagGroup.entries.map { it.id } } }
+    val focusRequester = rememberShortcutsFocusRequester(selectedDate, entryIds)
 
     LaunchedEffect(state.contentForCopy) {
         if (state.contentForCopy.isNotEmpty()) {

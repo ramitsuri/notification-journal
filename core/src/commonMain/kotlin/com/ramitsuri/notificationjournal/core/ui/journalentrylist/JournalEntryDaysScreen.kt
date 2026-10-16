@@ -64,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -74,6 +75,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
+import com.ramitsuri.notificationjournal.core.ui.components.rememberShortcutsFocusRequester
 import com.ramitsuri.notificationjournal.core.ui.theme.greenColor
 import com.ramitsuri.notificationjournal.core.ui.theme.redColor
 import com.ramitsuri.notificationjournal.core.utils.dayOfWeek
@@ -100,6 +102,8 @@ fun JournalEntryDaysScreen(
     state: ViewState,
     showToolbarActions: Boolean,
     showFloatingActionButton: Boolean,
+    // False when shown next to the day screen, which then owns keyboard shortcuts
+    ownsKeyboardShortcuts: Boolean,
     onAddClicked: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
     onSettingsClicked: () -> Unit,
@@ -110,12 +114,15 @@ fun JournalEntryDaysScreen(
     onReconcileAll: (uploadOnSuccess: Boolean) -> Unit,
 ) {
     var showReconcileAllConfirmation by remember { mutableStateOf(false) }
+    // The view needs to be focussed for it to receive keyboard events
+    val focusRequester = rememberShortcutsFocusRequester(state.dateWithCountList, enabled = ownsKeyboardShortcuts)
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier =
             Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .focusRequester(focusRequester)
                 .focusable()
                 .onKeyEvent {
                     if (
