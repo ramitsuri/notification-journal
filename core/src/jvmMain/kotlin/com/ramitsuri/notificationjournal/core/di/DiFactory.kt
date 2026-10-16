@@ -30,6 +30,8 @@ actual class DiFactory {
 
     actual val actsAsServer: Boolean = true
 
+    actual val isDesktop: Boolean = true
+
     actual fun getSettings(): Settings {
         // File located at ~/Library/Preferences/com.apple.java.util.prefs
         return PreferencesSettings(Preferences.userRoot().node(packageName))

@@ -147,6 +147,7 @@ fun NavGraph(
                     onDateSettled = navigator::selectDate,
                     showBackButton = !isListDetail,
                     showContent = showContent,
+                    pagerScrollEnabled = !ServiceLocator.isDesktop,
                     onEntryScreenAction = { action ->
                         when (action) {
                             is EntryScreenAction.AddWithDate -> {

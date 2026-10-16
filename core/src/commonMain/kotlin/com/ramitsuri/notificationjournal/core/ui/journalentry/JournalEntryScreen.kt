@@ -1,9 +1,9 @@
 package com.ramitsuri.notificationjournal.core.ui.journalentry
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -113,6 +113,7 @@ fun JournalEntryScreen(
     onDateSettled: (LocalDate) -> Unit,
     showBackButton: Boolean,
     showContent: Boolean,
+    pagerScrollEnabled: Boolean,
     onEntryScreenAction: (EntryScreenAction) -> Unit,
     onDayGroupAction: (DayGroupAction) -> Unit,
 ) {
@@ -268,6 +269,7 @@ fun JournalEntryScreen(
                     state = pagerState,
                     key = { page -> dayPages[page].key },
                     modifier = Modifier.fillMaxSize(),
+                    userScrollEnabled = pagerScrollEnabled,
                 ) { page ->
                     val date = dayPages[page].date
                     // Only the selected date's data is loaded. Other pages (the ones peeking in while

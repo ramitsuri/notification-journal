@@ -22,6 +22,8 @@ actual class DiFactory(private val application: Application) {
 
     actual val actsAsServer: Boolean = false
 
+    actual val isDesktop: Boolean = false
+
     actual fun getSettings(): Settings {
         return SharedPreferencesSettings(
             application.getSharedPreferences(

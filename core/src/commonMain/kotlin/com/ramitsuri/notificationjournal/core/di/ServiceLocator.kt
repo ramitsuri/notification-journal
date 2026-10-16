@@ -99,6 +99,9 @@ object ServiceLocator {
     val allowJournalImport: Boolean
         get() = factory.allowJournalImport
 
+    val isDesktop: Boolean
+        get() = factory.isDesktop
+
     fun onAppStart() {
         Logger.i(TAG) { "app start" }
         appStopJob?.cancel()

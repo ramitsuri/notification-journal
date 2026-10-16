@@ -15,6 +15,8 @@ expect class DiFactory {
 
     val actsAsServer: Boolean
 
+    val isDesktop: Boolean
+
     fun getSettings(): Settings
 
     fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
