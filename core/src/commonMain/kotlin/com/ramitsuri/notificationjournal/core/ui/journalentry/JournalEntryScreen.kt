@@ -267,7 +267,7 @@ fun JournalEntryScreen(
             } else {
                 HorizontalPager(
                     state = pagerState,
-                    key = { page -> dayPages[page].key },
+                    key = { page -> dayPages.getOrNull(page)?.key ?: page },
                     modifier = Modifier.fillMaxSize(),
                     userScrollEnabled = pagerScrollEnabled,
                 ) { page ->
