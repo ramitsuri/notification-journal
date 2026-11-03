@@ -52,6 +52,7 @@ fun NavGraph(
     modifier: Modifier = Modifier,
     navigator: Navigator,
     onAssistantRequested: (() -> Unit)? = null,
+    onAiDiagnosticsRequested: (() -> Unit)? = null,
 ) {
     val listDetailStrategy = rememberListDetailSceneStrategy<Route>()
     var showContent by remember { mutableStateOf(false) }
@@ -291,7 +292,6 @@ fun NavGraph(
                                 viewModel.resolveConflict(action.entry, action.conflict)
                             }
 
-
                             is DayGroupAction.Notify -> {
                                 viewModel.notify(action.entry, action.inTime)
                             }
@@ -397,6 +397,7 @@ fun NavGraph(
                     onIncreaseAddEditFontSize = viewModel::increaseAddEditFontSize,
                     onDecreaseAddEditFontSize = viewModel::decreaseAddEditFontSize,
                     onQrCodeScanned = viewModel::onQrCodeScanned,
+                    onAiDiagnosticsClicked = onAiDiagnosticsRequested,
                 )
             }
 

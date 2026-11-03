@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.ai.extractor
 
+import android.util.Log
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Feature
 import com.google.mlkit.genai.prompt.GenerateContentRequest
@@ -7,9 +8,13 @@ import com.google.mlkit.genai.prompt.Generation
 import com.google.mlkit.genai.prompt.GenerativeModel
 import com.google.mlkit.genai.prompt.TextPart
 import com.google.mlkit.genai.prompt.generateTypedContentRequest
+import com.ramitsuri.notificationjournal.ai.model.ExtractionResult
 import com.ramitsuri.notificationjournal.ai.model.JournalIntent
+import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import org.json.JSONObject
 import java.time.LocalDate
+
+private const val TAG = "JournalAI"
 
 class NanoJournalIntentExtractor(
     private val fallbackExtractor: JournalIntentExtractor = RuleBasedJournalIntentExtractor(),
@@ -19,79 +24,104 @@ class NanoJournalIntentExtractor(
     override suspend fun isAvailable(): Boolean =
         try {
             generativeModel.checkStatus() == FeatureStatus.AVAILABLE
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "checkStatus failed in isAvailable", e)
             false
         }
 
     private suspend fun isStructuredOutputSupported(): Boolean =
         try {
-            generativeModel.getAvailableFeatures().contains(Feature.STRUCTURED_OUTPUT)
-        } catch (_: Exception) {
+            val features = generativeModel.getAvailableFeatures()
+            Log.d(TAG, "AICore available features: $features")
+            features.contains(Feature.STRUCTURED_OUTPUT)
+        } catch (e: Exception) {
+            Log.w(TAG, "getAvailableFeatures failed", e)
             false
         }
 
-    override suspend fun extractIntent(userInput: String): JournalIntent? {
+    override suspend fun extractIntent(userInput: String): ExtractionResult? {
         val today = LocalDate.now().toString()
 
-        // 1. Try structured output if supported by AICore
-        if (isStructuredOutputSupported()) {
+        val status =
             try {
-                val prompt =
-                    """
-                    You are a personal journal assistant.
-                    Today's date is $today.
-                    Analyze the user's input and extract their structured intent:
-                    "$userInput"
-                    """.trimIndent()
+                generativeModel.checkStatus()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking Gemini Nano status", e)
+                FeatureStatus.UNAVAILABLE
+            }
 
-                val baseRequest = GenerateContentRequest.Builder(TextPart(prompt)).build()
-                val typedRequest =
-                    generateTypedContentRequest(
-                        generateContentRequest = baseRequest,
-                        outputClass = JournalIntent::class,
-                    )
+        Log.d(TAG, "Gemini Nano status: $status (AVAILABLE=${FeatureStatus.AVAILABLE})")
 
-                val response = generativeModel.generateContent(typedRequest)
-                val typedResponse = response.candidates.firstOrNull()?.response
-                if (typedResponse != null) {
-                    return typedResponse
+        if (status == FeatureStatus.DOWNLOADABLE) {
+            Log.i(TAG, "Gemini Nano is DOWNLOADABLE. Initiating model download...")
+            try {
+                generativeModel.download().collect { downloadStatus ->
+                    Log.d(TAG, "Download progress: $downloadStatus")
                 }
-            } catch (_: Exception) {
-                // Structured output failed or unsupported on this AICore build; fallback to JSON prompt
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initiate model download", e)
             }
         }
 
-        // 2. Unstructured JSON prompt with Gemini Nano
-        try {
-            val jsonPrompt =
-                """
-                You are a personal journal assistant. Today's date is $today.
-                Analyze the user's input: "$userInput"
+        if (status == FeatureStatus.AVAILABLE) {
+            // 1. Try structured output if supported by AICore
+            if (isStructuredOutputSupported()) {
+                try {
+                    Log.d(TAG, "Attempting Structured Output extraction...")
+                    val prompt = JournalPrompts.getStructuredOutputPrompt(userInput, today)
 
-                Respond with ONLY a single raw JSON object (no markdown, no backticks, no other text) with the following structure:
-                {
-                  "action": "ADD_ENTRY" or "QUERY_ENTRIES" or "CONVERSE",
-                  "entryText": "narrative entry text or null",
-                  "tag": "Personal or null",
-                  "targetDate": "YYYY-MM-DD or null",
-                  "searchKeyword": "search keyword or null",
-                  "conversationalReply": "short reply to user"
-                }
-                """.trimIndent()
+                    val baseRequest = GenerateContentRequest.Builder(TextPart(prompt)).build()
+                    val typedRequest =
+                        generateTypedContentRequest(
+                            generateContentRequest = baseRequest,
+                            outputClass = JournalIntent::class,
+                        )
 
-            val textResponse = generativeModel.generateContent(jsonPrompt)
-            val responseText = textResponse.candidates.firstOrNull()?.text
-            if (!responseText.isNullOrBlank()) {
-                val parsed = parseJson(responseText)
-                if (parsed != null) {
-                    return parsed
+                    val response = generativeModel.generateContent(typedRequest)
+                    val typedResponse = response.candidates.firstOrNull()?.response
+                    if (typedResponse != null) {
+                        Log.d(TAG, "Structured output succeeded: $typedResponse")
+                        return ExtractionResult(
+                            intent = typedResponse,
+                            engine = "Gemini Nano (Structured Output)",
+                        )
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Structured output failed; falling back to JSON prompt", e)
                 }
+            } else {
+                Log.d(TAG, "Structured output not supported on this model build. Using JSON prompt...")
             }
-        } catch (_: Exception) {
-            // Gemini Nano text generation failed; fallback to rule-based parser
+
+            // 2. Unstructured JSON prompt with Gemini Nano
+            try {
+                Log.d(TAG, "Attempting JSON prompt extraction...")
+                val jsonPrompt = JournalPrompts.getJsonPrompt(userInput, today)
+
+                val textResponse = generativeModel.generateContent(jsonPrompt)
+                val responseText = textResponse.candidates.firstOrNull()?.text
+                Log.d(TAG, "Gemini Nano text response: $responseText")
+                if (!responseText.isNullOrBlank()) {
+                    val parsed = parseJson(responseText)
+                    if (parsed != null) {
+                        Log.d(TAG, "JSON prompt parsing succeeded: $parsed")
+                        return ExtractionResult(
+                            intent = parsed,
+                            engine = "Gemini Nano (Prompted)",
+                        )
+                    } else {
+                        Log.w(TAG, "Could not parse JSON from: $responseText")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "JSON prompt generation failed", e)
+            }
+        } else {
+            Log.w(TAG, "Gemini Nano status ($status) is not AVAILABLE. Using fallback extractor.")
         }
 
         // 3. Fallback to rule-based extractor
+        Log.d(TAG, "Using RuleBasedJournalIntentExtractor for: $userInput")
         return fallbackExtractor.extractIntent(userInput)
     }
 
@@ -121,7 +151,11 @@ class NanoJournalIntentExtractor(
         }
 
     override fun release() {
-        generativeModel.close()
+        try {
+            generativeModel.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error closing generative model", e)
+        }
         fallbackExtractor.release()
     }
 }

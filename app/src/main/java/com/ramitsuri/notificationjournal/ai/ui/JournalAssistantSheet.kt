@@ -136,6 +136,14 @@ fun JournalAssistantSheet(
                 }
                 is AssistantUiState.Success -> {
                     Text(current.message, style = MaterialTheme.typography.bodyLarge)
+                    if (current.engine.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Processed via ${current.engine}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        )
+                    }
                     if (current.matchedEntries.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {

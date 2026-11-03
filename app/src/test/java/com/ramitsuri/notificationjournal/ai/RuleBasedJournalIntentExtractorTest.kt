@@ -16,9 +16,10 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("Went for a 5k run this morning")
             assertNotNull(result)
-            assertEquals("ADD_ENTRY", result.action)
-            assertEquals("Went for a 5k run this morning", result.entryText)
-            assertEquals("Personal", result.tag)
+            assertEquals("ADD_ENTRY", result.intent.action)
+            assertEquals("Went for a 5k run this morning", result.intent.entryText)
+            assertEquals("Personal", result.intent.tag)
+            assertEquals("Rule-based fallback", result.engine)
         }
 
     @Test
@@ -26,8 +27,26 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("log Went for a 5k run this morning")
             assertNotNull(result)
-            assertEquals("ADD_ENTRY", result.action)
-            assertEquals("Went for a 5k run this morning", result.entryText)
+            assertEquals("ADD_ENTRY", result.intent.action)
+            assertEquals("Went for a 5k run this morning", result.intent.entryText)
+        }
+
+    @Test
+    fun testAddEntryWithCommandPhrase() =
+        runTest {
+            val result = extractor.extractIntent("add a new entry that I slept well")
+            assertNotNull(result)
+            assertEquals("ADD_ENTRY", result.intent.action)
+            assertEquals("I slept well", result.intent.entryText)
+        }
+
+    @Test
+    fun testAddEntryWithWriteDownThat() =
+        runTest {
+            val result = extractor.extractIntent("write down that we had tacos for dinner")
+            assertNotNull(result)
+            assertEquals("ADD_ENTRY", result.intent.action)
+            assertEquals("we had tacos for dinner", result.intent.entryText)
         }
 
     @Test
@@ -35,8 +54,8 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("Find run")
             assertNotNull(result)
-            assertEquals("QUERY_ENTRIES", result.action)
-            assertEquals("run", result.searchKeyword)
+            assertEquals("QUERY_ENTRIES", result.intent.action)
+            assertEquals("run", result.intent.searchKeyword)
         }
 
     @Test
@@ -44,8 +63,8 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("What did I write yesterday?")
             assertNotNull(result)
-            assertEquals("QUERY_ENTRIES", result.action)
-            assertEquals(LocalDate.now().minusDays(1).toString(), result.targetDate)
+            assertEquals("QUERY_ENTRIES", result.intent.action)
+            assertEquals(LocalDate.now().minusDays(1).toString(), result.intent.targetDate)
         }
 
     @Test

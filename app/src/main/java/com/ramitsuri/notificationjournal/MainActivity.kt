@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.coroutineScope
+import com.ramitsuri.notificationjournal.ai.diagnostics.AiDiagnosticsScreen
 import com.ramitsuri.notificationjournal.ai.ui.JournalAssistantSheet
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkMatcher
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkPattern
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity() {
     private val deepLinkPatterns: List<DeepLinkPattern<out Route>> = Route.deepLinksWithArgNames
     private lateinit var navigator: Navigator
     private var showAssistantSheet by mutableStateOf(false)
+    private var showAiDiagnostics by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -88,10 +90,16 @@ class MainActivity : ComponentActivity() {
                 NavGraph(
                     navigator = navigator,
                     onAssistantRequested = { showAssistantSheet = true },
+                    onAiDiagnosticsRequested = { showAiDiagnostics = true },
                 )
                 if (showAssistantSheet) {
                     JournalAssistantSheet(
                         onDismiss = { showAssistantSheet = false },
+                    )
+                }
+                if (showAiDiagnostics) {
+                    AiDiagnosticsScreen(
+                        onBack = { showAiDiagnostics = false },
                     )
                 }
                 LaunchedEffect(navigator) {

@@ -66,6 +66,8 @@ import notificationjournal.core.generated.resources.font_size
 import notificationjournal.core.generated.resources.ip_address
 import notificationjournal.core.generated.resources.more
 import notificationjournal.core.generated.resources.ok
+import notificationjournal.core.generated.resources.settings_ai_diagnostics_subtitle
+import notificationjournal.core.generated.resources.settings_ai_diagnostics_title
 import notificationjournal.core.generated.resources.settings_app_version
 import notificationjournal.core.generated.resources.settings_copy_with_empty_tags
 import notificationjournal.core.generated.resources.settings_data_sharing_not_set
@@ -119,6 +121,7 @@ fun SettingsScreen(
     onIncreaseAddEditFontSize: () -> Unit,
     onDecreaseAddEditFontSize: () -> Unit,
     onQrCodeScanned: (String) -> Unit,
+    onAiDiagnosticsClicked: (() -> Unit)? = null,
 ) {
     var showDataSharingPropertiesDialog by rememberSaveable { mutableStateOf(false) }
     var showForceUploadAllDialog by rememberSaveable { mutableStateOf(false) }
@@ -289,6 +292,16 @@ fun SettingsScreen(
                                     stringResource(Res.string.settings_journal_export_subtitle)
                                 },
                             onClick = { showExportDirectoryDialog = true },
+                            showProgress = false,
+                        )
+                    }
+                }
+                if (onAiDiagnosticsClicked != null) {
+                    item {
+                        SettingsItem(
+                            title = stringResource(Res.string.settings_ai_diagnostics_title),
+                            subtitle = stringResource(Res.string.settings_ai_diagnostics_subtitle),
+                            onClick = onAiDiagnosticsClicked,
                             showProgress = false,
                         )
                     }
@@ -664,7 +677,8 @@ private fun StatsDialog(
         Card {
             Column(
                 modifier =
-                    Modifier.fillMaxWidth()
+                    Modifier
+                        .fillMaxWidth()
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,

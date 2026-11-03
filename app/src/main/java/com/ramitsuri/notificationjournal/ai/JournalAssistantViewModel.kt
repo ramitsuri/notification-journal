@@ -31,6 +31,7 @@ sealed interface AssistantUiState {
     data class Success(
         val message: String,
         val matchedEntries: List<JournalEntry> = emptyList(),
+        val engine: String = "",
     ) : AssistantUiState
 
     data class Error(
@@ -62,24 +63,27 @@ class JournalAssistantViewModel(
         viewModelScope.launch {
             _uiState.value = AssistantUiState.Processing(input)
             try {
-                val intent =
+                val result =
                     withContext(Dispatchers.Default) {
                         extractor.extractIntent(input)
                     }
 
-                if (intent == null) {
+                if (result == null) {
                     _uiState.value = AssistantUiState.Error("Could not understand your request.")
                     return@launch
                 }
 
-                handleIntent(intent)
+                handleIntent(result.intent, result.engine)
             } catch (e: Exception) {
                 _uiState.value = AssistantUiState.Error("Error processing request: ${e.message}")
             }
         }
     }
 
-    private suspend fun handleIntent(intent: JournalIntent) {
+    private suspend fun handleIntent(
+        intent: JournalIntent,
+        engine: String,
+    ) {
         withContext(Dispatchers.IO) {
             when (intent.action) {
                 "ADD_ENTRY" -> {
@@ -103,16 +107,16 @@ class JournalAssistantViewModel(
                         repository.insert(text = text, tag = intent.tag)
                     }
                     val reply = intent.conversationalReply ?: "Saved to journal: \"$text\""
-                    _uiState.value = AssistantUiState.Success(reply)
+                    _uiState.value = AssistantUiState.Success(reply, engine = engine)
                 }
 
                 "QUERY_ENTRIES" -> {
                     val entries = queryDatabase(intent.targetDate, intent.searchKeyword)
                     if (entries.isEmpty()) {
-                        _uiState.value = AssistantUiState.Success("No matching entries found.")
+                        _uiState.value = AssistantUiState.Success("No matching entries found.", engine = engine)
                     } else {
                         val reply = intent.conversationalReply ?: "Found ${entries.size} matching entry/entries."
-                        _uiState.value = AssistantUiState.Success(reply, matchedEntries = entries)
+                        _uiState.value = AssistantUiState.Success(reply, matchedEntries = entries, engine = engine)
                     }
                 }
 
@@ -120,6 +124,7 @@ class JournalAssistantViewModel(
                     _uiState.value =
                         AssistantUiState.Success(
                             intent.conversationalReply ?: "I didn't detect an entry to add or query.",
+                            engine = engine,
                         )
                 }
             }
