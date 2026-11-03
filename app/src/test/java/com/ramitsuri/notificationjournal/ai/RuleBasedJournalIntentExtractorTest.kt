@@ -1,6 +1,6 @@
 package com.ramitsuri.notificationjournal.ai
 
-import com.ramitsuri.notificationjournal.ai.extractor.FakeJournalIntentExtractor
+import com.ramitsuri.notificationjournal.ai.extractor.RuleBasedJournalIntentExtractor
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -8,8 +8,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
-class FakeJournalIntentExtractorTest {
-    private val extractor = FakeJournalIntentExtractor()
+class RuleBasedJournalIntentExtractorTest {
+    private val extractor = RuleBasedJournalIntentExtractor()
 
     @Test
     fun testAddEntryExtraction() =

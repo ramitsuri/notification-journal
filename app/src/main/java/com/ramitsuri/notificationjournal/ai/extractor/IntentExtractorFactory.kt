@@ -11,7 +11,7 @@ object IntentExtractorFactory {
                 Build.HARDWARE.contains("ranchu")
 
         return if (isEmulator) {
-            FakeJournalIntentExtractor()
+            RuleBasedJournalIntentExtractor()
         } else {
             NanoJournalIntentExtractor()
         }

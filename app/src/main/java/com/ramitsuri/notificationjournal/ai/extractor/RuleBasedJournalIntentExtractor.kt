@@ -3,7 +3,11 @@ package com.ramitsuri.notificationjournal.ai.extractor
 import com.ramitsuri.notificationjournal.ai.model.JournalIntent
 import java.time.LocalDate
 
-class FakeJournalIntentExtractor : JournalIntentExtractor {
+/**
+ * A deterministic, rule-based intent extractor using pattern matching.
+ * Used on emulators without AICore/Gemini Nano and as a reliable offline fallback.
+ */
+class RuleBasedJournalIntentExtractor : JournalIntentExtractor {
     override suspend fun isAvailable(): Boolean = true
 
     override suspend fun extractIntent(userInput: String): JournalIntent {
@@ -14,10 +18,7 @@ class FakeJournalIntentExtractor : JournalIntentExtractor {
                     action = "QUERY_ENTRIES",
                     targetDate = if (lower.contains("yesterday")) LocalDate.now().minusDays(1).toString() else null,
                     searchKeyword =
-                        if (!lower.contains(
-                                "yesterday",
-                            )
-                        ) {
+                        if (!lower.contains("yesterday")) {
                             userInput.replace(Regex("(?i)find|search"), "").trim()
                         } else {
                             null

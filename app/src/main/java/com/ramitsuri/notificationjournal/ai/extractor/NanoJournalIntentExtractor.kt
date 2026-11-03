@@ -12,7 +12,7 @@ import org.json.JSONObject
 import java.time.LocalDate
 
 class NanoJournalIntentExtractor(
-    private val fallbackExtractor: JournalIntentExtractor = FakeJournalIntentExtractor(),
+    private val fallbackExtractor: JournalIntentExtractor = RuleBasedJournalIntentExtractor(),
 ) : JournalIntentExtractor {
     private val generativeModel: GenerativeModel = Generation.getClient()
 
