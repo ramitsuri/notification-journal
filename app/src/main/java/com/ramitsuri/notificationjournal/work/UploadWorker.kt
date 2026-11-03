@@ -13,7 +13,10 @@ import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 
-class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+class UploadWorker(
+    context: Context,
+    params: WorkerParameters,
+) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         ServiceLocator.repository.uploadAll()
         ServiceLocator.onAppStop()
@@ -22,37 +25,37 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val notification =
-            NotificationCompat.Builder(
-                applicationContext,
-                NotificationChannelType.MAIN.id,
-            ).apply {
-                setSmallIcon(R.drawable.ic_notification)
-                setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                setContentTitle(
-                    applicationContext.getString(R.string.upload_worker_notification_title),
-                )
-            }.build()
+            NotificationCompat
+                .Builder(
+                    applicationContext,
+                    NotificationChannelType.MAIN.id,
+                ).apply {
+                    setSmallIcon(R.drawable.ic_notification)
+                    setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    setContentTitle(
+                        applicationContext.getString(R.string.upload_worker_notification_title),
+                    )
+                }.build()
         return ForegroundInfo(2, notification)
     }
 
     companion object {
         private const val WORK_TAG = "TAG-UploadWorker"
 
-        fun enqueueImmediate(context: Context) {
-            return OneTimeWorkRequest
+        fun enqueueImmediate(context: Context) =
+            OneTimeWorkRequest
                 .Builder(UploadWorker::class)
                 .addTag(WORK_TAG)
                 .setConstraints(
-                    Constraints.Builder()
+                    Constraints
+                        .Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build(),
-                )
-                .build()
+                ).build()
                 .let { request ->
                     WorkManager
                         .getInstance(context)
                         .enqueue(request)
                 }
-        }
     }
 }

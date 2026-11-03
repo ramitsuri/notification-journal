@@ -13,9 +13,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.coroutineScope
+import com.ramitsuri.notificationjournal.ai.ui.JournalAssistantSheet
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkMatcher
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkPattern
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkRequest
@@ -33,6 +37,7 @@ import java.net.URLEncoder
 class MainActivity : ComponentActivity() {
     private val deepLinkPatterns: List<DeepLinkPattern<out Route>> = Route.deepLinksWithArgNames
     private lateinit var navigator: Navigator
+    private var showAssistantSheet by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -67,12 +72,28 @@ class MainActivity : ComponentActivity() {
             }
 
             NotificationJournalTheme(
-                dynamicDarkColorScheme = dynamicDarkColorScheme(this),
-                dynamicLightColorScheme = dynamicLightColorScheme(this),
+                dynamicDarkColorScheme =
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        dynamicDarkColorScheme(this)
+                    } else {
+                        null
+                    },
+                dynamicLightColorScheme =
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        dynamicLightColorScheme(this)
+                    } else {
+                        null
+                    },
             ) {
                 NavGraph(
                     navigator = navigator,
+                    onAssistantRequested = { showAssistantSheet = true },
                 )
+                if (showAssistantSheet) {
+                    JournalAssistantSheet(
+                        onDismiss = { showAssistantSheet = false },
+                    )
+                }
                 LaunchedEffect(navigator) {
                     navigateIfNecessary(intent)
                 }

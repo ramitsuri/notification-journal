@@ -75,6 +75,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
+import com.ramitsuri.notificationjournal.core.ui.components.JournalFab
 import com.ramitsuri.notificationjournal.core.ui.components.rememberShortcutsFocusRequester
 import com.ramitsuri.notificationjournal.core.ui.theme.greenColor
 import com.ramitsuri.notificationjournal.core.ui.theme.redColor
@@ -105,6 +106,7 @@ fun JournalEntryDaysScreen(
     // False when shown next to the day screen, which then owns keyboard shortcuts
     ownsKeyboardShortcuts: Boolean,
     onAddClicked: () -> Unit,
+    onAddLongClicked: (() -> Unit)? = null,
     onDateSelected: (LocalDate) -> Unit,
     onSettingsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
@@ -150,9 +152,10 @@ fun JournalEntryDaysScreen(
                 },
         floatingActionButton = {
             if (showFloatingActionButton) {
-                FloatingActionButton(
+                JournalFab(
                     modifier = Modifier.padding(bottom = 32.dp),
                     onClick = onAddClicked,
+                    onLongClick = onAddLongClicked,
                 ) {
                     Icon(
                         Icons.Filled.Add,

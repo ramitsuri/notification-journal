@@ -18,7 +18,9 @@ import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
 import com.ramitsuri.notificationjournal.work.ShowNotificationWorker
 import kotlin.time.Duration
 
-class MainApplication : Application(), DefaultLifecycleObserver {
+class MainApplication :
+    Application(),
+    DefaultLifecycleObserver {
     override fun onCreate() {
         super<Application>.onCreate()
 

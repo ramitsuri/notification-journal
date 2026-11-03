@@ -51,6 +51,7 @@ import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
 fun NavGraph(
     modifier: Modifier = Modifier,
     navigator: Navigator,
+    onAssistantRequested: (() -> Unit)? = null,
 ) {
     val listDetailStrategy = rememberListDetailSceneStrategy<Route>()
     var showContent by remember { mutableStateOf(false) }
@@ -115,6 +116,7 @@ fun NavGraph(
                     onAddClicked = {
                         navigator.navigate(Route.AddEntry.fromDate(null))
                     },
+                    onAddLongClicked = onAssistantRequested,
                 )
             }
 
@@ -149,6 +151,7 @@ fun NavGraph(
                     showBackButton = !isListDetail,
                     showContent = showContent,
                     pagerScrollEnabled = !ServiceLocator.isDesktop,
+                    onAssistantRequested = onAssistantRequested,
                     onEntryScreenAction = { action ->
                         when (action) {
                             is EntryScreenAction.AddWithDate -> {

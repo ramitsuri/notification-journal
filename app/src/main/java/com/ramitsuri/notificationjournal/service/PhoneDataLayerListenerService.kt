@@ -32,7 +32,8 @@ class PhoneDataLayerListenerService : WearableListenerService() {
             val journalEntryText = dataMap.getString(Constants.WearDataSharing.JOURNAL_ENTRY_VALUE)
             if (!journalEntryText.isNullOrEmpty()) {
                 val journalEntryTime =
-                    dataMap.getString(Constants.WearDataSharing.JOURNAL_ENTRY_TIME)
+                    dataMap
+                        .getString(Constants.WearDataSharing.JOURNAL_ENTRY_TIME)
                         ?.let { LocalDateTime.parse(it) }
                         ?: Clock.System.nowLocal()
 

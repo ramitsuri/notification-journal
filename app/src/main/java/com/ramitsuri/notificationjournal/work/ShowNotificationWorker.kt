@@ -53,10 +53,11 @@ class ShowNotificationWorker(
             isForegroundServiceImmediate = false,
             isOngoing = false,
             clickDeepLinkUri =
-                Route.JournalEntry(
-                    selectedDate = journalEntry.entryTime.date,
-                    highlightEntryId = journalEntry.id,
-                ).reminderDeepLink,
+                Route
+                    .JournalEntry(
+                        selectedDate = journalEntry.entryTime.date,
+                        highlightEntryId = journalEntry.id,
+                    ).reminderDeepLink,
         ).let { notificationInfo ->
             ServiceLocator.notificationHandler.showNotification(notificationInfo)
         }
@@ -64,16 +65,17 @@ class ShowNotificationWorker(
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val notification =
-            NotificationCompat.Builder(
-                applicationContext,
-                NotificationChannelType.MAIN.id,
-            ).apply {
-                setSmallIcon(R.drawable.ic_notification)
-                setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                setContentTitle(
-                    applicationContext.getString(R.string.upload_worker_notification_title),
-                )
-            }.build()
+            NotificationCompat
+                .Builder(
+                    applicationContext,
+                    NotificationChannelType.MAIN.id,
+                ).apply {
+                    setSmallIcon(R.drawable.ic_notification)
+                    setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    setContentTitle(
+                        applicationContext.getString(R.string.upload_worker_notification_title),
+                    )
+                }.build()
         return ForegroundInfo(2, notification)
     }
 

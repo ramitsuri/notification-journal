@@ -84,6 +84,7 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
+import com.ramitsuri.notificationjournal.core.ui.components.JournalFab
 import com.ramitsuri.notificationjournal.core.ui.components.rememberShortcutsFocusRequester
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -116,6 +117,7 @@ fun JournalEntryScreen(
     pagerScrollEnabled: Boolean,
     onEntryScreenAction: (EntryScreenAction) -> Unit,
     onDayGroupAction: (DayGroupAction) -> Unit,
+    onAssistantRequested: (() -> Unit)? = null,
 ) {
     var journalEntryForDelete: JournalEntry? by rememberSaveable { mutableStateOf(null) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -210,9 +212,10 @@ fun JournalEntryScreen(
                     }
                 },
         floatingActionButton = {
-            FloatingActionButton(
+            JournalFab(
                 modifier = Modifier.padding(bottom = 32.dp),
                 onClick = { onEntryScreenAction(EntryScreenAction.AddWithDate()) },
+                onLongClick = onAssistantRequested,
             ) {
                 Icon(
                     Icons.Filled.Add,

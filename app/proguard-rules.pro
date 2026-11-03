@@ -25,3 +25,7 @@
 -dontwarn javax.imageio.spi.ImageOutputStreamSpi
 -dontwarn javax.imageio.spi.ImageReaderSpi
 -dontwarn javax.imageio.spi.ImageWriterSpi
+
+# Preserve structured output models for ML Kit deserialization
+-keep class com.ramitsuri.notificationjournal.ai.model.** { *; }
+-keepclassmembers class com.ramitsuri.notificationjournal.ai.model.** { *; }

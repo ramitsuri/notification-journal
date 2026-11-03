@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.ktlint)
@@ -72,6 +73,9 @@ kotlin {
 dependencies {
     implementation(project(":core"))
 
+    implementation(libs.mlkit.genai.prompt)
+    ksp(libs.mlkit.genai.schema.compiler)
+
     implementation(libs.androidx.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.work.runtime)
@@ -107,6 +111,7 @@ dependencies {
     implementation(libs.kotlin.datetime)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.test.espresso)
