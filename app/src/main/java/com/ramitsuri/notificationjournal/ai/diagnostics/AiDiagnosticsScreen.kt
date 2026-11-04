@@ -162,7 +162,16 @@ fun AiDiagnosticsScreen(
     val stopListening = {
         listeningJob?.cancel()
         listeningJob = null
-        viewModel.onSpeechListeningStopped()
+        val currentInput = state.testInput
+        if (currentInput.isNotBlank()) {
+            viewModel.onSpeechFinalResult(
+                text = currentInput,
+                engineName = state.selectedSpeechEngine.displayName,
+                durationMs = 0L,
+            )
+        } else {
+            viewModel.onSpeechListeningStopped()
+        }
     }
 
     Scaffold(

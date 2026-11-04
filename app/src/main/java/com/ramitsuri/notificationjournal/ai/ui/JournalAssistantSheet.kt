@@ -107,6 +107,7 @@ fun JournalAssistantSheet(
         viewModel = viewModel,
         onStartVoice = requestVoiceWithPermission,
         onStopVoice = stopVoice,
+        onCommitVoice = viewModel::commitVoiceSession,
         onDismiss = {
             stopVoice()
             onDismiss()
@@ -120,6 +121,7 @@ private fun JournalAssistantContent(
     viewModel: JournalAssistantViewModel,
     onStartVoice: () -> Unit,
     onStopVoice: () -> Unit,
+    onCommitVoice: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -216,7 +218,7 @@ private fun JournalAssistantContent(
 
                 is AssistantUiState.Listening -> {
                     IconButton(
-                        onClick = onStopVoice,
+                        onClick = onCommitVoice,
                         modifier =
                             Modifier
                                 .size(72.dp)

@@ -9,24 +9,27 @@ import com.google.mlkit.genai.speechrecognition.SpeechRecognition
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizerOptions
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizerRequest
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizerResponse
-import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.transformWhile
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "MlKitGenAiSpeech"
+private val SILENCE_TIMEOUT = 1500.milliseconds
+private val INITIAL_SPEECH_TIMEOUT = 6000.milliseconds
 
 /**
  * Manages on-device voice transcription using ML Kit's GenAI Speech Recognition API.
- * Uses Google Speech Services via MODE_BASIC for broad on-device device compatibility.
+ * Uses Google Speech Services via MODE_BASIC with automatic silence endpointing.
  */
 @RequiresApi(Build.VERSION_CODES.S)
 class MlKitGenAiVoiceInputManager : VoiceInputManager {
     override fun startListening(): Flow<VoiceInputEvent> =
-        flow {
+        channelFlow {
             val options =
                 SpeechRecognizerOptions
                     .builder()
@@ -54,21 +57,22 @@ class MlKitGenAiVoiceInputManager : VoiceInputManager {
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Speech model download failed", e)
-                    emit(VoiceInputEvent.Error("ML Kit speech model needs download: ${e.message}"))
+                    trySend(VoiceInputEvent.Error("ML Kit speech model needs download: ${e.message}"))
                     recognizer.close()
-                    return@flow
+                    close()
+                    return@channelFlow
                 }
             } else if (status != FeatureStatus.AVAILABLE) {
-                emit(
+                trySend(
                     VoiceInputEvent.Error(
-                        "ML Kit GenAI Speech is not available on this device (status: $status). Try switching to Platform SpeechRecognizer.",
+                        "ML Kit GenAI Speech is not available on this device (status: $status).",
                     ),
                 )
                 recognizer.close()
-                return@flow
+                close()
+                return@channelFlow
             }
 
-            var speechStarted = false
             val audioSource = AudioSource.fromMic()
             val request =
                 SpeechRecognizerRequest
@@ -77,60 +81,88 @@ class MlKitGenAiVoiceInputManager : VoiceInputManager {
                         this.audioSource = audioSource
                     }.build()
 
-            try {
-                recognizer
-                    .startRecognition(request)
-                    .catch { e ->
-                        Log.e(TAG, "startRecognition stream error", e)
-                        emit(VoiceInputEvent.Error("Speech recognition error: ${e.message}"))
-                    }.transformWhile { response ->
-                        when (response) {
-                            is SpeechRecognizerResponse.PartialTextResponse -> {
-                                if (!speechStarted) {
-                                    speechStarted = true
-                                    emit(VoiceInputEvent.SpeechStarted)
-                                }
-                                if (response.text.isNotBlank()) {
-                                    emit(VoiceInputEvent.PartialResult(response.text))
-                                }
-                                true
-                            }
+            var speechStarted = false
+            var lastRecognizedText = ""
+            var silenceJob: Job? = null
 
-                            is SpeechRecognizerResponse.FinalTextResponse -> {
-                                if (response.text.isNotBlank()) {
-                                    emit(VoiceInputEvent.FinalResult(response.text))
-                                } else {
-                                    emit(VoiceInputEvent.Error("No speech recognized."))
+            // If user hasn't started speaking within timeout, finish with error
+            val initialTimeoutJob =
+                launch {
+                    delay(INITIAL_SPEECH_TIMEOUT)
+                    if (!speechStarted) {
+                        trySend(VoiceInputEvent.Error("No speech detected. Try speaking again."))
+                        close()
+                    }
+                }
+
+            val recognitionJob =
+                launch {
+                    try {
+                        recognizer.startRecognition(request).collect { response ->
+                            when (response) {
+                                is SpeechRecognizerResponse.PartialTextResponse -> {
+                                    if (!speechStarted) {
+                                        speechStarted = true
+                                        initialTimeoutJob.cancel()
+                                        trySend(VoiceInputEvent.SpeechStarted)
+                                    }
+                                    if (response.text.isNotBlank()) {
+                                        lastRecognizedText = response.text
+                                        trySend(VoiceInputEvent.PartialResult(response.text))
+
+                                        // Reset silence detector: when user pauses for 1.5s, finalize
+                                        silenceJob?.cancel()
+                                        silenceJob =
+                                            this@channelFlow.launch {
+                                                delay(SILENCE_TIMEOUT)
+                                                Log.d(TAG, "Silence detected, finalizing: $lastRecognizedText")
+                                                trySend(VoiceInputEvent.FinalResult(lastRecognizedText))
+                                                close()
+                                            }
+                                    }
                                 }
-                                false
-                            }
 
-                            is SpeechRecognizerResponse.ErrorResponse -> {
-                                Log.e(TAG, "ErrorResponse: ${response.e.message}")
-                                emit(VoiceInputEvent.Error(response.e.message ?: "GenAI Speech error"))
-                                false
-                            }
+                                is SpeechRecognizerResponse.FinalTextResponse -> {
+                                    initialTimeoutJob.cancel()
+                                    silenceJob?.cancel()
+                                    val finalText = response.text.ifBlank { lastRecognizedText }
+                                    if (finalText.isNotBlank()) {
+                                        trySend(VoiceInputEvent.FinalResult(finalText))
+                                    } else {
+                                        trySend(VoiceInputEvent.Error("No speech recognized."))
+                                    }
+                                    close()
+                                }
 
-                            else -> true
+                                is SpeechRecognizerResponse.ErrorResponse -> {
+                                    initialTimeoutJob.cancel()
+                                    silenceJob?.cancel()
+                                    Log.e(TAG, "ErrorResponse: ${response.e.message}")
+                                    trySend(VoiceInputEvent.Error(response.e.message ?: "GenAI Speech error"))
+                                    close()
+                                }
+
+                                else -> {}
+                            }
                         }
-                    }.collect {}
-            } catch (e: Exception) {
-                Log.e(TAG, "startRecognition failed", e)
-                emit(VoiceInputEvent.Error("Failed to start speech recognition: ${e.message}"))
-            } finally {
-                withContext(NonCancellable) {
-                    try {
-                        audioSource.close()
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        Log.e(TAG, "startRecognition failed", e)
+                        trySend(VoiceInputEvent.Error("Speech recognition error: ${e.message}"))
+                        close()
                     }
-                    try {
-                        recognizer.stopRecognition()
-                    } catch (_: Exception) {
-                    }
-                    try {
-                        recognizer.close()
-                    } catch (_: Exception) {
-                    }
+                }
+
+            awaitClose {
+                initialTimeoutJob.cancel()
+                silenceJob?.cancel()
+                recognitionJob.cancel()
+                try {
+                    audioSource.close()
+                } catch (_: Exception) {
+                }
+                try {
+                    recognizer.close()
+                } catch (_: Exception) {
                 }
             }
         }

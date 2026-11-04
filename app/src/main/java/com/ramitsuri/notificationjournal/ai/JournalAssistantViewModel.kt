@@ -118,6 +118,18 @@ class JournalAssistantViewModel(
             }
     }
 
+    fun commitVoiceSession() {
+        val current = _uiState.value
+        val textToProcess = if (current is AssistantUiState.Listening) current.partialText else null
+        voiceSessionJob?.cancel()
+        voiceSessionJob = null
+        if (!textToProcess.isNullOrBlank()) {
+            processQuery(textToProcess, speechEngine.value.displayName)
+        } else {
+            _uiState.value = AssistantUiState.Idle
+        }
+    }
+
     fun stopVoiceSession() {
         voiceSessionJob?.cancel()
         voiceSessionJob = null
