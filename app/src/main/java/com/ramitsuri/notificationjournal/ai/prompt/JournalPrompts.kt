@@ -8,10 +8,15 @@ object JournalPrompts {
         today: String = LocalDate.now().toString(),
     ): String =
         """
-        You are a personal journal assistant.
-        Today's date is $today.
-        Extract the user's intent. If adding an entry, entryText must ONLY contain the journal entry content, stripping out command words like 'add a new entry that', 'log that', etc.
-        User input: "$userInput"
+        You are a personal journal assistant. Today's date is $today.
+        Analyze the user's input: "$userInput"
+
+        Rules:
+        - action: "ADD_ENTRY" to log a new entry, "QUERY_ENTRIES" to search past entries, else "CONVERSE".
+        - entryText: extract ONLY the actual journal content without command phrases like "add a new entry that", "log that", "write down that", etc.
+        - tag: null (do not set a tag; leave as null so entries remain untagged for review).
+        - targetDate: "YYYY-MM-DD" if a specific date is mentioned (e.g., yesterday). For ADD_ENTRY without a date, use "$today".
+        - conversationalReply: a short confirmation to the user (e.g., "Saved to your journal: ...").
         """.trimIndent()
 
     fun getJsonPrompt(
@@ -22,26 +27,21 @@ object JournalPrompts {
         You are a personal journal assistant. Today's date is $today.
         Analyze the user's input: "$userInput"
 
-        If the user wants to add an entry:
-        - action: "ADD_ENTRY"
+        Rules:
+        - action: "ADD_ENTRY" to log a new entry, "QUERY_ENTRIES" to search past entries, else "CONVERSE".
         - entryText: extract ONLY the actual journal content without command phrases like "add a new entry that", "log that", "write down that", etc.
-        - tag: "Personal"
-        - conversationalReply: "Saved to your journal."
-
-        If searching entries:
-        - action: "QUERY_ENTRIES"
-        - targetDate: "YYYY-MM-DD" if a date is mentioned, else null
-        - searchKeyword: the topic or null
-        - conversationalReply: "Searching your journal..."
+        - tag: null (do not set a tag; leave as null so entries remain untagged for review).
+        - targetDate: "YYYY-MM-DD" if a specific date is mentioned (e.g., yesterday). For ADD_ENTRY without a date, use "$today".
+        - conversationalReply: a short confirmation to the user (e.g., "Saved to your journal: ...").
 
         Respond with ONLY a single raw JSON object (no markdown, no code blocks):
         {
           "action": "ADD_ENTRY",
           "entryText": "...",
-          "tag": "Personal",
-          "targetDate": null,
+          "tag": null,
+          "targetDate": "$today",
           "searchKeyword": null,
-          "conversationalReply": "..."
+          "conversationalReply": "Saved to your journal."
         }
         """.trimIndent()
 }

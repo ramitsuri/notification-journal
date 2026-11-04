@@ -70,7 +70,13 @@ class NanoJournalIntentExtractor(
                     Log.d(TAG, "Attempting Structured Output extraction...")
                     val prompt = JournalPrompts.getStructuredOutputPrompt(userInput, today)
 
-                    val baseRequest = GenerateContentRequest.Builder(TextPart(prompt)).build()
+                    val baseRequest =
+                        GenerateContentRequest
+                            .Builder(TextPart(prompt))
+                            .apply {
+                                maxOutputTokens = 1024
+                                temperature = 0.0f
+                            }.build()
                     val typedRequest =
                         generateTypedContentRequest(
                             generateContentRequest = baseRequest,
@@ -98,7 +104,15 @@ class NanoJournalIntentExtractor(
                 Log.d(TAG, "Attempting JSON prompt extraction...")
                 val jsonPrompt = JournalPrompts.getJsonPrompt(userInput, today)
 
-                val textResponse = generativeModel.generateContent(jsonPrompt)
+                val jsonRequest =
+                    GenerateContentRequest
+                        .Builder(TextPart(jsonPrompt))
+                        .apply {
+                            maxOutputTokens = 1024
+                            temperature = 0.0f
+                        }.build()
+
+                val textResponse = generativeModel.generateContent(jsonRequest)
                 val responseText = textResponse.candidates.firstOrNull()?.text
                 Log.d(TAG, "Gemini Nano text response: $responseText")
                 if (!responseText.isNullOrBlank()) {

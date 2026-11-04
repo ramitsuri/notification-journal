@@ -19,6 +19,8 @@ class VoiceInputManager(
     private val context: Context,
     private val onResult: (String) -> Unit,
     private val onError: (String) -> Unit,
+    private val onSpeechStarted: () -> Unit = {},
+    private val onPartialResult: (String) -> Unit = {},
 ) {
     private var recognizer: SpeechRecognizer? = null
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -43,7 +45,9 @@ class VoiceInputManager(
                 object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {}
 
-                    override fun onBeginningOfSpeech() {}
+                    override fun onBeginningOfSpeech() {
+                        onSpeechStarted()
+                    }
 
                     override fun onRmsChanged(rmsdB: Float) {}
 
@@ -80,7 +84,15 @@ class VoiceInputManager(
                         }
                     }
 
-                    override fun onPartialResults(partialResults: Bundle?) {}
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val text =
+                            partialResults
+                                ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                                ?.firstOrNull()
+                        if (!text.isNullOrBlank()) {
+                            onPartialResult(text)
+                        }
+                    }
 
                     override fun onEvent(
                         eventType: Int,

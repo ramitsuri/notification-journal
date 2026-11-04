@@ -106,7 +106,7 @@ fun JournalEntryDaysScreen(
     // False when shown next to the day screen, which then owns keyboard shortcuts
     ownsKeyboardShortcuts: Boolean,
     onAddClicked: () -> Unit,
-    onAddLongClicked: (() -> Unit)? = null,
+    onAssistantClicked: (() -> Unit)? = null,
     onDateSelected: (LocalDate) -> Unit,
     onSettingsClicked: () -> Unit,
     onSearchClicked: () -> Unit,
@@ -155,13 +155,8 @@ fun JournalEntryDaysScreen(
                 JournalFab(
                     modifier = Modifier.padding(bottom = 32.dp),
                     onClick = onAddClicked,
-                    onLongClick = onAddLongClicked,
-                ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        stringResource(Res.string.add_entry_content_description),
-                    )
-                }
+                    onAssistantClick = onAssistantClicked,
+                )
             }
         },
     ) { paddingValues ->

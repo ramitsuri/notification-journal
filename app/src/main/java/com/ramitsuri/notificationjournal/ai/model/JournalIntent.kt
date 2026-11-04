@@ -14,16 +14,18 @@ data class JournalIntent(
     val action: String = "CONVERSE",
     @Guide(description = "The narrative text content of the journal entry if action is ADD_ENTRY")
     val entryText: String? = null,
-    @Guide(description = "Optional tag or category (e.g. Work, Personal, Idea) if action is ADD_ENTRY")
+    @Guide(
+        description =
+            "Tag or category. Do not set a tag for new entries (leave as null) so they remain untagged for user review.",
+    )
     val tag: String? = null,
     @Guide(
         description =
-            "Target date in ISO format YYYY-MM-DD if mentioned " +
-                "(e.g., 'yesterday', 'October 24th', 'last Monday')",
+            "Target date in ISO format YYYY-MM-DD (e.g., 'yesterday', 'October 24th', or today's date).",
     )
     val targetDate: String? = null,
     @Guide(description = "Search keyword or topic if action is QUERY_ENTRIES")
     val searchKeyword: String? = null,
-    @Guide(description = "Conversational reply to show to the user")
+    @Guide(description = "A friendly conversational reply confirming the action to the user.")
     val conversationalReply: String? = null,
 )

@@ -183,7 +183,13 @@ class AiDiagnosticsViewModel(
                         logs.add("Attempting Tier 1: Structured Output...")
                         try {
                             val prompt = JournalPrompts.getStructuredOutputPrompt(input)
-                            val baseRequest = GenerateContentRequest.Builder(TextPart(prompt)).build()
+                            val baseRequest =
+                                GenerateContentRequest
+                                    .Builder(TextPart(prompt))
+                                    .apply {
+                                        maxOutputTokens = 1024
+                                        temperature = 0.0f
+                                    }.build()
                             val typedRequest =
                                 generateTypedContentRequest(
                                     generateContentRequest = baseRequest,
@@ -205,7 +211,14 @@ class AiDiagnosticsViewModel(
                     logs.add("Attempting Tier 2: Raw JSON Prompt generation...")
                     try {
                         val jsonPrompt = JournalPrompts.getJsonPrompt(input)
-                        val textResponse = generativeModel.generateContent(jsonPrompt)
+                        val jsonRequest =
+                            GenerateContentRequest
+                                .Builder(TextPart(jsonPrompt))
+                                .apply {
+                                    maxOutputTokens = 1024
+                                    temperature = 0.0f
+                                }.build()
+                        val textResponse = generativeModel.generateContent(jsonRequest)
                         rawText = textResponse.candidates.firstOrNull()?.text ?: "(Empty response from Nano)"
                         logs.add("Raw text generated (${rawText.length} chars).")
                     } catch (e: Exception) {

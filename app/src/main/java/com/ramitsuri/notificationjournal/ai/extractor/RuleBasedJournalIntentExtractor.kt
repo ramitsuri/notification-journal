@@ -37,7 +37,7 @@ class RuleBasedJournalIntentExtractor : JournalIntentExtractor {
                     JournalIntent(
                         action = "ADD_ENTRY",
                         entryText = entryText,
-                        tag = "Personal",
+                        tag = null,
                         conversationalReply = "Added new journal entry.",
                     )
                 }

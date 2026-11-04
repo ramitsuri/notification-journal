@@ -215,13 +215,8 @@ fun JournalEntryScreen(
             JournalFab(
                 modifier = Modifier.padding(bottom = 32.dp),
                 onClick = { onEntryScreenAction(EntryScreenAction.AddWithDate()) },
-                onLongClick = onAssistantRequested,
-            ) {
-                Icon(
-                    Icons.Filled.Add,
-                    stringResource(Res.string.add_entry_content_description),
-                )
-            }
+                onAssistantClick = onAssistantRequested,
+            )
         },
     ) { paddingValues ->
         Column(

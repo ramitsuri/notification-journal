@@ -22,7 +22,10 @@ import kotlinx.datetime.LocalTime
 sealed interface AssistantUiState {
     data object Idle : AssistantUiState
 
-    data object Listening : AssistantUiState
+    data class Listening(
+        val partialText: String = "",
+        val hasSpeechStarted: Boolean = false,
+    ) : AssistantUiState
 
     data class Processing(
         val transcription: String,
@@ -47,7 +50,20 @@ class JournalAssistantViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun onListeningStarted() {
-        _uiState.value = AssistantUiState.Listening
+        _uiState.value = AssistantUiState.Listening()
+    }
+
+    fun onSpeechStarted() {
+        val current = _uiState.value
+        if (current is AssistantUiState.Listening) {
+            _uiState.value = current.copy(hasSpeechStarted = true)
+        } else {
+            _uiState.value = AssistantUiState.Listening(hasSpeechStarted = true)
+        }
+    }
+
+    fun onPartialTranscription(text: String) {
+        _uiState.value = AssistantUiState.Listening(partialText = text, hasSpeechStarted = true)
     }
 
     fun onError(message: String) {
@@ -101,10 +117,12 @@ class JournalAssistantViewModel(
                                 null
                             }
                         }
+                    // Leave tag as null during testing so new entries remain untagged and appear at the top for review
+                    val tagToUse: String? = null
                     if (targetTime != null) {
-                        repository.insert(text = text, tag = intent.tag, time = targetTime)
+                        repository.insert(text = text, tag = tagToUse, time = targetTime)
                     } else {
-                        repository.insert(text = text, tag = intent.tag)
+                        repository.insert(text = text, tag = tagToUse)
                     }
                     val reply = intent.conversationalReply ?: "Saved to journal: \"$text\""
                     _uiState.value = AssistantUiState.Success(reply, engine = engine)

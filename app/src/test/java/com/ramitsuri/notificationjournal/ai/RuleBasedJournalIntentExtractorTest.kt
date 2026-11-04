@@ -18,7 +18,7 @@ class RuleBasedJournalIntentExtractorTest {
             assertNotNull(result)
             assertEquals("ADD_ENTRY", result.intent.action)
             assertEquals("Went for a 5k run this morning", result.intent.entryText)
-            assertEquals("Personal", result.intent.tag)
+            org.junit.Assert.assertNull(result.intent.tag)
             assertEquals("Rule-based fallback", result.engine)
         }
 

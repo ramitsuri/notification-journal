@@ -117,7 +117,7 @@ fun NavGraph(
                     onAddClicked = {
                         navigator.navigate(Route.AddEntry.fromDate(null))
                     },
-                    onAddLongClicked = onAssistantRequested,
+                    onAssistantClicked = onAssistantRequested,
                 )
             }
 

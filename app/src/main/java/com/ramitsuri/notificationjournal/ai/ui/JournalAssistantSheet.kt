@@ -2,6 +2,8 @@ package com.ramitsuri.notificationjournal.ai.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,22 +11,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +45,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,7 +57,7 @@ import com.ramitsuri.notificationjournal.ai.voice.VoiceInputManager
 
 @Composable
 fun JournalAssistantSheet(
-    viewModel: JournalAssistantViewModel = viewModel(),
+    viewModel: JournalAssistantViewModel = viewModel(factory = JournalAssistantViewModel.factory()),
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -56,12 +71,23 @@ fun JournalAssistantSheet(
                 onError = { error ->
                     viewModel.onError(error)
                 },
+                onSpeechStarted = {
+                    viewModel.onSpeechStarted()
+                },
+                onPartialResult = { partial ->
+                    viewModel.onPartialTranscription(partial)
+                },
             )
         }
 
+    val stopVoice = {
+        voiceInputManager.stopListening()
+        viewModel.resetState()
+    }
+
     DisposableEffect(voiceInputManager) {
         onDispose {
-            voiceInputManager.stopListening()
+            stopVoice()
         }
     }
 
@@ -92,103 +118,276 @@ fun JournalAssistantSheet(
         }
     }
 
-    JournalAssistantSheet(
+    // Immediately start listening to mic audio when the sheet opens on long press
+    LaunchedEffect(Unit) {
+        startVoice()
+    }
+
+    JournalAssistantContent(
         viewModel = viewModel,
         onStartVoice = startVoice,
-        onDismiss = onDismiss,
+        onStopVoice = stopVoice,
+        onDismiss = {
+            stopVoice()
+            onDismiss()
+        },
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JournalAssistantSheet(
+private fun JournalAssistantContent(
     viewModel: JournalAssistantViewModel,
     onStartVoice: () -> Unit,
+    onStopVoice: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
-    var textInput by remember { mutableStateOf("") }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    val hasInput =
+        when (val current = state) {
+            is AssistantUiState.Listening -> current.hasSpeechStarted || current.partialText.isNotBlank()
+            is AssistantUiState.Processing -> true
+            else -> false
+        }
+
+    val sheetState =
+        rememberModalBottomSheetState(
+            confirmValueChange = { targetValue ->
+                if (targetValue == SheetValue.Hidden && hasInput) {
+                    showConfirmDialog = true
+                    false
+                } else {
+                    true
+                }
+            },
+        )
+
+    val handleDismissRequest = {
+        if (hasInput) {
+            showConfirmDialog = true
+        } else {
+            onDismiss()
+        }
+    }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text("Discard recording?") },
+            text = { Text("Whatever was said will be lost. Are you sure?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmDialog = false
+                        onDismiss()
+                    },
+                ) {
+                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text("Keep Speaking")
+                }
+            },
+        )
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = handleDismissRequest,
+        sheetState = sheetState,
+    ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 8.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = "Journal Assistant",
-                style = MaterialTheme.typography.titleLarge,
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
             when (val current = state) {
                 is AssistantUiState.Idle -> {
-                    Text("Ask to search past entries or dictate a new entry.")
+                    IconButton(
+                        onClick = onStartVoice,
+                        modifier =
+                            Modifier
+                                .size(72.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    shape = CircleShape,
+                                ),
+                    ) {
+                        Icon(
+                            Icons.Default.Mic,
+                            contentDescription = "Start Listening",
+                            modifier = Modifier.size(36.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Tap microphone to speak",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
+
                 is AssistantUiState.Listening -> {
-                    Text("Listening...", color = MaterialTheme.colorScheme.primary)
+                    IconButton(
+                        onClick = onStopVoice,
+                        modifier =
+                            Modifier
+                                .size(72.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    shape = CircleShape,
+                                ),
+                    ) {
+                        Icon(
+                            Icons.Default.Mic,
+                            contentDescription = "Stop Listening",
+                            modifier = Modifier.size(36.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Listening...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    if (current.partialText.isNotBlank()) {
+                        Text(
+                            text = "\"${current.partialText}\"",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    } else {
+                        Text(
+                            text = "Speak your entry or search query",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
+
                 is AssistantUiState.Processing -> {
-                    Text("Processing: \"${current.transcription}\"")
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(56.dp),
+                        strokeWidth = 4.dp,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Processing on device...",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "\"${current.transcription}\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
                 }
+
                 is AssistantUiState.Success -> {
-                    Text(current.message, style = MaterialTheme.typography.bodyLarge)
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp),
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = current.message,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                    )
                     if (current.engine.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "Processed via ${current.engine}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         )
                     }
+
                     if (current.matchedEntries.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
                             items(current.matchedEntries) { entry ->
-                                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                                    Column(modifier = Modifier.padding(8.dp)) {
+                                Card(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
                                         Text(entry.text, style = MaterialTheme.typography.bodyMedium)
-                                        Text(entry.entryTime.toString(), style = MaterialTheme.typography.labelSmall)
+                                        Text(
+                                            entry.entryTime.toString(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     }
                                 }
                             }
                         }
                     }
-                }
-                is AssistantUiState.Error -> {
-                    Text(current.error, color = MaterialTheme.colorScheme.error)
-                }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedTextField(
-                    value = textInput,
-                    onValueChange = { textInput = it },
-                    placeholder = { Text("Type or tap mic...") },
-                    modifier = Modifier.weight(1f),
-                )
-
-                IconButton(
-                    onClick = {
-                        if (textInput.isNotBlank()) {
-                            viewModel.processQuery(textInput)
-                            textInput = ""
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    ) {
+                        OutlinedButton(onClick = onStartVoice) {
+                            Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Speak Again")
                         }
-                    },
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Text")
+                        Button(onClick = onDismiss) {
+                            Text("Done")
+                        }
+                    }
                 }
 
-                IconButton(onClick = onStartVoice) {
-                    Icon(Icons.Default.Mic, contentDescription = "Voice Input")
+                is AssistantUiState.Error -> {
+                    Icon(
+                        Icons.Default.ErrorOutline,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(48.dp),
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = current.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    ) {
+                        Button(onClick = onStartVoice) {
+                            Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Try Again")
+                        }
+                        OutlinedButton(onClick = onDismiss) {
+                            Text("Cancel")
+                        }
+                    }
                 }
             }
         }
