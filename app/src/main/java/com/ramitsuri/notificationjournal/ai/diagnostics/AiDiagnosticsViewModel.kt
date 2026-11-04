@@ -81,13 +81,14 @@ class AiDiagnosticsViewModel(
                 SpeechRecognizerOptions
                     .builder()
                     .apply {
-                        preferredMode = SpeechRecognizerOptions.Mode.MODE_ADVANCED
+                        preferredMode = SpeechRecognizerOptions.Mode.MODE_BASIC
                         locale = Locale.getDefault()
                     }.build()
             SpeechRecognition.getClient(options).also {
                 speechRecognizer = it
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            android.util.Log.e("AiDiagnostics", "Failed to create SpeechRecognizer", e)
             null
         }
     }
@@ -165,8 +166,11 @@ class AiDiagnosticsViewModel(
 
                     val speechStat =
                         try {
-                            getSpeechRecognizer()?.checkStatus() ?: -1
+                            val stat = getSpeechRecognizer()?.checkStatus() ?: -1
+                            android.util.Log.d("AiDiagnostics", "SpeechRecognizer checkStatus returned: $stat")
+                            stat
                         } catch (e: Exception) {
+                            android.util.Log.e("AiDiagnostics", "SpeechRecognizer checkStatus threw exception", e)
                             -1
                         }
 

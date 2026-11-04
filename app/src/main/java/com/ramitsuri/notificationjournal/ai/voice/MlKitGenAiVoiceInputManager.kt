@@ -21,7 +21,7 @@ private const val TAG = "MlKitGenAiSpeech"
 
 /**
  * Manages on-device voice transcription using ML Kit's GenAI Speech Recognition API.
- * Uses AICore on-device Gemini speech models.
+ * Uses Google Speech Services via MODE_BASIC for broad on-device device compatibility.
  */
 @RequiresApi(Build.VERSION_CODES.S)
 class MlKitGenAiVoiceInputManager : VoiceInputManager {
@@ -31,7 +31,7 @@ class MlKitGenAiVoiceInputManager : VoiceInputManager {
                 SpeechRecognizerOptions
                     .builder()
                     .apply {
-                        preferredMode = SpeechRecognizerOptions.Mode.MODE_ADVANCED
+                        preferredMode = SpeechRecognizerOptions.Mode.MODE_BASIC
                         locale = Locale.getDefault()
                     }.build()
 
