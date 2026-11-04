@@ -9,12 +9,18 @@ import com.google.mlkit.genai.prompt.Generation
 import com.google.mlkit.genai.prompt.GenerativeModel
 import com.google.mlkit.genai.prompt.TextPart
 import com.google.mlkit.genai.prompt.generateTypedContentRequest
+import com.google.mlkit.genai.speechrecognition.SpeechRecognition
+import com.google.mlkit.genai.speechrecognition.SpeechRecognizer
 import com.ramitsuri.notificationjournal.ai.extractor.NanoJournalIntentExtractor
 import com.ramitsuri.notificationjournal.ai.model.JournalIntent
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
+import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
+import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,6 +43,8 @@ data class DiagnosticsUiState(
     val isRefreshing: Boolean = false,
     val testInput: String = "add a new entry that I slept well",
     val isTesting: Boolean = false,
+    val isListeningToSpeech: Boolean = false,
+    val autoRunExtractionAfterSpeech: Boolean = true,
     val structuredOutputAttempt: String? = null,
     val rawModelResponse: String? = null,
     val parsedIntent: JournalIntent? = null,
@@ -44,11 +52,17 @@ data class DiagnosticsUiState(
     val executionLog: List<String> = emptyList(),
     val isDownloading: Boolean = false,
     val downloadStatus: String? = null,
+    val selectedSpeechEngine: SpeechEngine = SpeechEngine.PLATFORM,
+    val mlKitSpeechStatus: Int = -1,
+    val isDownloadingSpeech: Boolean = false,
+    val speechDownloadStatus: String? = null,
 )
 
 class AiDiagnosticsViewModel(
     private val generativeModel: GenerativeModel = Generation.getClient(),
     private val nanoExtractor: NanoJournalIntentExtractor = NanoJournalIntentExtractor(),
+    private val prefManager: PrefManager = ServiceLocator.prefManager,
+    private val speechRecognizer: SpeechRecognizer = SpeechRecognition.getClient(),
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DiagnosticsUiState())
     val uiState = _uiState.asStateFlow()
@@ -61,10 +75,17 @@ class AiDiagnosticsViewModel(
         _uiState.update { it.copy(testInput = input) }
     }
 
+    fun onSpeechEngineSelected(engine: SpeechEngine) {
+        viewModelScope.launch {
+            prefManager.setSpeechEngine(engine.id)
+            _uiState.update { it.copy(selectedSpeechEngine = engine) }
+        }
+    }
+
     fun refreshModelInfo() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
-            val info =
+            val (info, speechStatus, currentEngine) =
                 withContext(Dispatchers.IO) {
                     val status =
                         try {
@@ -103,21 +124,41 @@ class AiDiagnosticsViewModel(
                             emptyList()
                         }
 
-                    AiModelInfo(
-                        modelName = name,
-                        statusCode = status,
-                        statusText = statusText,
-                        tokenLimit = tokenLimit,
-                        structuredOutputSupported = features.contains(Feature.STRUCTURED_OUTPUT),
-                        systemPromptSupported = features.contains(Feature.SYSTEM_PROMPT),
-                        thinkingModeSupported = features.contains(Feature.THINKING_MODE),
-                        prefixCachingSupported = features.contains(Feature.PREFIX_CACHING),
-                        functionCallingSupported = features.contains(Feature.FUNCTION_CALLING),
-                        rawFeatures = features,
-                    )
+                    val modelInfo =
+                        AiModelInfo(
+                            modelName = name,
+                            statusCode = status,
+                            statusText = statusText,
+                            tokenLimit = tokenLimit,
+                            structuredOutputSupported = features.contains(Feature.STRUCTURED_OUTPUT),
+                            systemPromptSupported = features.contains(Feature.SYSTEM_PROMPT),
+                            thinkingModeSupported = features.contains(Feature.THINKING_MODE),
+                            prefixCachingSupported = features.contains(Feature.PREFIX_CACHING),
+                            functionCallingSupported = features.contains(Feature.FUNCTION_CALLING),
+                            rawFeatures = features,
+                        )
+
+                    val speechStat =
+                        try {
+                            speechRecognizer.checkStatus()
+                        } catch (e: Exception) {
+                            -1
+                        }
+
+                    val savedEngineId = prefManager.getSpeechEngineFlow().first()
+                    val activeEngine = SpeechEngine.fromId(savedEngineId)
+
+                    Triple(modelInfo, speechStat, activeEngine)
                 }
 
-            _uiState.update { it.copy(modelInfo = info, isRefreshing = false) }
+            _uiState.update {
+                it.copy(
+                    modelInfo = info,
+                    mlKitSpeechStatus = speechStatus,
+                    selectedSpeechEngine = currentEngine,
+                    isRefreshing = false,
+                )
+            }
         }
     }
 
@@ -137,27 +178,97 @@ class AiDiagnosticsViewModel(
         }
     }
 
-    fun runLiveTest() {
-        val input = _uiState.value.testInput
-        if (input.isBlank()) return
-
+    fun triggerSpeechModelDownload() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
+                    isDownloadingSpeech = true,
+                    speechDownloadStatus = "Initiating speech model download...",
+                )
+            }
+            try {
+                speechRecognizer.download().collect { status ->
+                    _uiState.update { it.copy(speechDownloadStatus = status.toString()) }
+                }
+                refreshModelInfo()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(speechDownloadStatus = "Download error: ${e.message}") }
+            } finally {
+                _uiState.update { it.copy(isDownloadingSpeech = false) }
+            }
+        }
+    }
+
+    fun onSpeechListeningStarted() {
+        _uiState.update {
+            it.copy(
+                isListeningToSpeech = true,
+                testInput = "",
+                executionLog = listOf("Listening on mic (${it.selectedSpeechEngine.displayName})..."),
+            )
+        }
+    }
+
+    fun onSpeechListeningStopped() {
+        _uiState.update { it.copy(isListeningToSpeech = false) }
+    }
+
+    fun onSpeechError(errorMessage: String) {
+        _uiState.update {
+            it.copy(
+                isListeningToSpeech = false,
+                executionLog = it.executionLog + "Speech recognition error: $errorMessage",
+            )
+        }
+    }
+
+    fun onSpeechFinalResult(
+        text: String,
+        engineName: String,
+        durationMs: Long,
+    ) {
+        val autoRun = _uiState.value.autoRunExtractionAfterSpeech
+        _uiState.update {
+            it.copy(
+                isListeningToSpeech = false,
+                testInput = text,
+                executionLog = it.executionLog + "Transcribed in ${durationMs}ms via $engineName: \"$text\"",
+            )
+        }
+        if (autoRun && text.isNotBlank()) {
+            runLiveTest(inputOverride = text)
+        }
+    }
+
+    fun toggleAutoRunExtraction(enabled: Boolean) {
+        _uiState.update { it.copy(autoRunExtractionAfterSpeech = enabled) }
+    }
+
+    fun runLiveTest(inputOverride: String? = null) {
+        val input = inputOverride ?: _uiState.value.testInput
+        if (input.isBlank()) return
+
+        viewModelScope.launch {
+            val existingLogs = if (inputOverride != null) _uiState.value.executionLog else emptyList()
+            _uiState.update {
+                it.copy(
+                    testInput = input,
                     isTesting = true,
                     structuredOutputAttempt = null,
                     rawModelResponse = null,
                     parsedIntent = null,
                     engineUsed = null,
-                    executionLog = emptyList(),
+                    executionLog = existingLogs,
                 )
             }
 
-            val logs = mutableListOf<String>()
+            val logs = existingLogs.toMutableList()
             var structuredResult: String? = null
             var rawText: String? = null
 
             withContext(Dispatchers.IO) {
+                val nluStartTime = System.currentTimeMillis()
+
                 // Step 1: Check status
                 val status =
                     try {
@@ -239,6 +350,9 @@ class AiDiagnosticsViewModel(
                         null
                     }
 
+                val nluDuration = System.currentTimeMillis() - nluStartTime
+                logs.add("NLU intent extraction finished in ${nluDuration}ms.")
+
                 _uiState.update {
                     it.copy(
                         isTesting = false,
@@ -256,5 +370,6 @@ class AiDiagnosticsViewModel(
     override fun onCleared() {
         generativeModel.close()
         nanoExtractor.release()
+        speechRecognizer.close()
     }
 }

@@ -74,6 +74,7 @@ dependencies {
     implementation(project(":core"))
 
     implementation(libs.mlkit.genai.prompt)
+    implementation(libs.mlkit.genai.speech)
     ksp(libs.mlkit.genai.schema.compiler)
 
     implementation(libs.androidx.ktx)

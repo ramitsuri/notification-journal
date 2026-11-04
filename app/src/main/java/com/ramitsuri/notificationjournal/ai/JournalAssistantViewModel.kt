@@ -6,13 +6,19 @@ import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.ai.extractor.IntentExtractorFactory
 import com.ramitsuri.notificationjournal.ai.extractor.JournalIntentExtractor
 import com.ramitsuri.notificationjournal.ai.model.JournalIntent
+import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
@@ -35,6 +41,7 @@ sealed interface AssistantUiState {
         val message: String,
         val matchedEntries: List<JournalEntry> = emptyList(),
         val engine: String = "",
+        val speechEngine: String = "",
     ) : AssistantUiState
 
     data class Error(
@@ -45,9 +52,20 @@ sealed interface AssistantUiState {
 class JournalAssistantViewModel(
     private val repository: JournalRepository = ServiceLocator.repository,
     private val extractor: JournalIntentExtractor = IntentExtractorFactory.create(),
+    prefManager: PrefManager = ServiceLocator.prefManager,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<AssistantUiState>(AssistantUiState.Idle)
     val uiState = _uiState.asStateFlow()
+
+    val speechEngine: StateFlow<SpeechEngine> =
+        prefManager
+            .getSpeechEngineFlow()
+            .map { SpeechEngine.fromId(it) }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = SpeechEngine.PLATFORM,
+            )
 
     fun onListeningStarted() {
         _uiState.value = AssistantUiState.Listening()
@@ -74,7 +92,10 @@ class JournalAssistantViewModel(
         _uiState.value = AssistantUiState.Idle
     }
 
-    fun processQuery(input: String) {
+    fun processQuery(
+        input: String,
+        speechEngineName: String = "",
+    ) {
         if (input.isBlank()) return
         viewModelScope.launch {
             _uiState.value = AssistantUiState.Processing(input)
@@ -89,7 +110,7 @@ class JournalAssistantViewModel(
                     return@launch
                 }
 
-                handleIntent(result.intent, result.engine)
+                handleIntent(result.intent, result.engine, speechEngineName)
             } catch (e: Exception) {
                 _uiState.value = AssistantUiState.Error("Error processing request: ${e.message}")
             }
@@ -99,6 +120,7 @@ class JournalAssistantViewModel(
     private suspend fun handleIntent(
         intent: JournalIntent,
         engine: String,
+        speechEngine: String,
     ) {
         withContext(Dispatchers.IO) {
             when (intent.action) {
@@ -125,24 +147,41 @@ class JournalAssistantViewModel(
                         repository.insert(text = text, tag = tagToUse)
                     }
                     val reply = intent.conversationalReply ?: "Saved to journal: \"$text\""
-                    _uiState.value = AssistantUiState.Success(reply, engine = engine)
+                    _uiState.value =
+                        AssistantUiState.Success(
+                            message = reply,
+                            engine = engine,
+                            speechEngine = speechEngine,
+                        )
                 }
 
                 "QUERY_ENTRIES" -> {
                     val entries = queryDatabase(intent.targetDate, intent.searchKeyword)
                     if (entries.isEmpty()) {
-                        _uiState.value = AssistantUiState.Success("No matching entries found.", engine = engine)
+                        _uiState.value =
+                            AssistantUiState.Success(
+                                message = "No matching entries found.",
+                                engine = engine,
+                                speechEngine = speechEngine,
+                            )
                     } else {
                         val reply = intent.conversationalReply ?: "Found ${entries.size} matching entry/entries."
-                        _uiState.value = AssistantUiState.Success(reply, matchedEntries = entries, engine = engine)
+                        _uiState.value =
+                            AssistantUiState.Success(
+                                message = reply,
+                                matchedEntries = entries,
+                                engine = engine,
+                                speechEngine = speechEngine,
+                            )
                     }
                 }
 
                 else -> {
                     _uiState.value =
                         AssistantUiState.Success(
-                            intent.conversationalReply ?: "I didn't detect an entry to add or query.",
+                            message = intent.conversationalReply ?: "I didn't detect an entry to add or query.",
                             engine = engine,
+                            speechEngine = speechEngine,
                         )
                 }
             }

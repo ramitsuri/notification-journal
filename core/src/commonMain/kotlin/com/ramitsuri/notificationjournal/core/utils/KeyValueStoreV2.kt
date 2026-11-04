@@ -55,7 +55,9 @@ interface KeyValueStoreV2 {
     )
 }
 
-enum class Key(val value: String) {
+enum class Key(
+    val value: String,
+) {
     SHOW_EMPTY_TAGS("show_empty_tags"),
     COPY_WITH_EMPTY_TAGS("copy_with_empty_tags"),
     CONFLICT_DIFF_INLINE("show_conflict_diff_inline"),
@@ -69,4 +71,5 @@ enum class Key(val value: String) {
     ADD_EDIT_FONT_SIZE("add_edit_font_size"),
     ENCRYPTION_PASSWORD("encryption_password"),
     ENCRYPTION_SALT("encryption_salt"),
+    SPEECH_RECOGNITION_ENGINE("speech_recognition_engine"),
 }

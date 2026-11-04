@@ -14,32 +14,26 @@ class PrefManager(
     private val json: Json,
     private val keyValueStore: KeyValueStoreV2,
 ) {
-    fun showEmptyTags(): Flow<Boolean> {
-        return keyValueStore.getBooleanFlow(Key.SHOW_EMPTY_TAGS, false)
-    }
+    fun showEmptyTags(): Flow<Boolean> = keyValueStore.getBooleanFlow(Key.SHOW_EMPTY_TAGS, false)
 
     suspend fun setShowEmptyTags(showEmptyTags: Boolean) {
         keyValueStore.putBoolean(Key.SHOW_EMPTY_TAGS, showEmptyTags)
     }
 
-    fun copyWithEmptyTags(): Flow<Boolean> {
-        return keyValueStore.getBooleanFlow(Key.COPY_WITH_EMPTY_TAGS, false)
-    }
+    fun copyWithEmptyTags(): Flow<Boolean> = keyValueStore.getBooleanFlow(Key.COPY_WITH_EMPTY_TAGS, false)
 
     suspend fun setCopyWithEmptyTags(copyWithEmptyTags: Boolean) {
         keyValueStore.putBoolean(Key.COPY_WITH_EMPTY_TAGS, copyWithEmptyTags)
     }
 
-    fun showConflictDiffInline(): Flow<Boolean> {
-        return keyValueStore.getBooleanFlow(Key.CONFLICT_DIFF_INLINE, true)
-    }
+    fun showConflictDiffInline(): Flow<Boolean> = keyValueStore.getBooleanFlow(Key.CONFLICT_DIFF_INLINE, true)
 
     suspend fun setShowConflictDiffInline(showConflictDiffInline: Boolean) {
         keyValueStore.putBoolean(Key.CONFLICT_DIFF_INLINE, showConflictDiffInline)
     }
 
-    fun getLastImportDate(): Flow<Instant?> {
-        return keyValueStore
+    fun getLastImportDate(): Flow<Instant?> =
+        keyValueStore
             .getStringFlow(Key.LAST_IMPORT_DATE, "")
             .map { timeString ->
                 timeString
@@ -47,31 +41,26 @@ class PrefManager(
                         runCatching { Instant.parse(it) }.getOrNull()
                     }
             }
-    }
 
     suspend fun setLastImportDate(time: Instant) {
         keyValueStore.putString(Key.LAST_IMPORT_DATE, time.toString())
     }
 
-    fun getLastImportDir(): Flow<String> {
-        return keyValueStore
+    fun getLastImportDir(): Flow<String> =
+        keyValueStore
             .getStringFlow(Key.LAST_IMPORT_DIRECTORY, "")
             .map { it ?: "" }
-    }
 
     suspend fun setLastImportDir(dir: String) {
         keyValueStore.putString(Key.LAST_IMPORT_DIRECTORY, dir)
     }
 
-    suspend fun getDefaultTag(): String {
-        return keyValueStore.getString(Key.DEFAULT_TAG, Tag.NO_TAG.value)
-    }
+    suspend fun getDefaultTag(): String = keyValueStore.getString(Key.DEFAULT_TAG, Tag.NO_TAG.value)
 
-    fun getDefaultTagFlow(): Flow<String> {
-        return keyValueStore.getStringFlow(Key.DEFAULT_TAG, Tag.NO_TAG.value).map {
+    fun getDefaultTagFlow(): Flow<String> =
+        keyValueStore.getStringFlow(Key.DEFAULT_TAG, Tag.NO_TAG.value).map {
             it ?: Tag.NO_TAG.value
         }
-    }
 
     suspend fun setDefaultTag(tag: String) {
         keyValueStore.putString(Key.DEFAULT_TAG, tag)
@@ -85,18 +74,17 @@ class PrefManager(
         keyValueStore.removeLegacy(stringPrefs = stringPrefs, booleanPrefs = booleanPrefs, intPrefs = intPrefs)
     }
 
-    fun getExportDirectory(): Flow<String> {
-        return keyValueStore
+    fun getExportDirectory(): Flow<String> =
+        keyValueStore
             .getStringFlow(Key.EXPORT_DIRECTORY, "")
             .map { it ?: "" }
-    }
 
     suspend fun setExportDirectory(directory: String) {
         keyValueStore.putString(Key.EXPORT_DIRECTORY, directory)
     }
 
-    fun getDataHostProperties(): Flow<DataHostProperties> {
-        return keyValueStore
+    fun getDataHostProperties(): Flow<DataHostProperties> =
+        keyValueStore
             .getStringFlow(Key.DATA_HOST_PROPERTIES, "")
             .map { string ->
                 runCatching {
@@ -105,43 +93,46 @@ class PrefManager(
                     )
                 }.getOrDefault(DataHostProperties())
             }
-    }
 
     suspend fun setDataHostProperties(dataHostProperties: DataHostProperties) {
         keyValueStore.putString(Key.DATA_HOST_PROPERTIES, json.encodeToString(dataHostProperties))
     }
 
-    suspend fun getWindowSize(): WindowSize? {
-        return keyValueStore
+    suspend fun getWindowSize(): WindowSize? =
+        keyValueStore
             .getStringFlow(Key.WINDOW_SIZE, "")
             .map { string ->
                 runCatching { json.decodeFromString<WindowSize>(string ?: "") }.getOrNull()
-            }
-            .first()
-    }
+            }.first()
 
     suspend fun setWindowSize(windowSize: WindowSize) {
         keyValueStore.putString(Key.WINDOW_SIZE, json.encodeToString(windowSize))
     }
 
-    suspend fun getWindowPosition(): WindowPosition? {
-        return keyValueStore
+    suspend fun getWindowPosition(): WindowPosition? =
+        keyValueStore
             .getStringFlow(Key.WINDOW_POSITION, "")
             .map { string ->
                 runCatching { json.decodeFromString<WindowPosition>(string ?: "") }.getOrNull()
-            }
-            .first()
-    }
+            }.first()
 
     suspend fun setWindowPosition(windowPosition: WindowPosition) {
         keyValueStore.putString(Key.WINDOW_POSITION, json.encodeToString(windowPosition))
     }
 
-    fun getAddEditFontSize(): Flow<Int> {
-        return keyValueStore.getIntFlow(Key.ADD_EDIT_FONT_SIZE, Constants.DEFAULT_ADD_EDIT_FONT_SIZE)
-    }
+    fun getAddEditFontSize(): Flow<Int> =
+        keyValueStore.getIntFlow(Key.ADD_EDIT_FONT_SIZE, Constants.DEFAULT_ADD_EDIT_FONT_SIZE)
 
     suspend fun setAddEditFontSize(fontSize: Int) {
         keyValueStore.putInt(Key.ADD_EDIT_FONT_SIZE, fontSize)
+    }
+
+    fun getSpeechEngineFlow(): Flow<String> =
+        keyValueStore.getStringFlow(Key.SPEECH_RECOGNITION_ENGINE, "platform").map {
+            it ?: "platform"
+        }
+
+    suspend fun setSpeechEngine(engineId: String) {
+        keyValueStore.putString(Key.SPEECH_RECOGNITION_ENGINE, engineId)
     }
 }

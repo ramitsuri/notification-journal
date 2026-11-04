@@ -1,6 +1,8 @@
 package com.ramitsuri.notificationjournal.ai.diagnostics
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,6 +26,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
@@ -37,30 +42,42 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.genai.common.FeatureStatus
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
+import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
+import com.ramitsuri.notificationjournal.ai.voice.VoiceInputEvent
+import com.ramitsuri.notificationjournal.ai.voice.VoiceInputManagerFactory
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +88,82 @@ fun AiDiagnosticsScreen(
     val state by viewModel.uiState.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var selectedPromptTab by remember { mutableIntStateOf(0) }
+    var listeningJob by remember { mutableStateOf<Job?>(null) }
+    val isListening = listeningJob != null || state.isListeningToSpeech
+
+    DisposableEffect(Unit) {
+        onDispose {
+            listeningJob?.cancel()
+            listeningJob = null
+        }
+    }
+
+    val startListening = {
+        listeningJob?.cancel()
+        val engine = state.selectedSpeechEngine
+        val manager = VoiceInputManagerFactory.create(context, engine)
+        viewModel.onSpeechListeningStarted()
+        val startTime = System.currentTimeMillis()
+        listeningJob =
+            coroutineScope.launch {
+                manager.startListening().collect { event ->
+                    when (event) {
+                        VoiceInputEvent.SpeechStarted -> {}
+                        is VoiceInputEvent.PartialResult -> {
+                            viewModel.onTestInputChange(event.text)
+                        }
+
+                        is VoiceInputEvent.FinalResult -> {
+                            val duration = System.currentTimeMillis() - startTime
+                            viewModel.onSpeechFinalResult(
+                                text = event.text,
+                                engineName = engine.displayName,
+                                durationMs = duration,
+                            )
+                            listeningJob = null
+                        }
+
+                        is VoiceInputEvent.Error -> {
+                            viewModel.onSpeechError(event.message)
+                            listeningJob = null
+                        }
+                    }
+                }
+            }
+    }
+
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            if (isGranted) {
+                startListening()
+            } else {
+                Toast.makeText(context, "Microphone permission required for speech input.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    val requestListeningWithPermission = {
+        val hasPermission =
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.RECORD_AUDIO,
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            startListening()
+        } else {
+            permissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    val stopListening = {
+        listeningJob?.cancel()
+        listeningJob = null
+        viewModel.onSpeechListeningStopped()
+    }
 
     Scaffold(
         topBar = {
@@ -177,7 +269,122 @@ fun AiDiagnosticsScreen(
                 }
             }
 
-            // Section 2: Copyable System Prompts
+            // Section 2: Speech Recognition Engine
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Speech Recognition Engine",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Choose which on-device engine processes voice input from the assistant mic button.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        SpeechEngine.entries.forEach { engine ->
+                            val isSelected = state.selectedSpeechEngine == engine
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .selectable(
+                                            selected = isSelected,
+                                            role = Role.RadioButton,
+                                            onClick = { viewModel.onSpeechEngineSelected(engine) },
+                                        ).padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.Top,
+                            ) {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = null,
+                                    modifier = Modifier.padding(top = 2.dp),
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        Text(
+                                            text = engine.displayName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                        if (engine == SpeechEngine.MLKIT_GENAI) {
+                                            val (statusText, code) =
+                                                when (state.mlKitSpeechStatus) {
+                                                    FeatureStatus.AVAILABLE -> "Ready" to FeatureStatus.AVAILABLE
+                                                    FeatureStatus.DOWNLOADABLE ->
+                                                        "Downloadable" to
+                                                            FeatureStatus.DOWNLOADABLE
+                                                    FeatureStatus.DOWNLOADING ->
+                                                        "Downloading" to
+                                                            FeatureStatus.DOWNLOADING
+                                                    FeatureStatus.UNAVAILABLE ->
+                                                        "Unavailable" to
+                                                            FeatureStatus.UNAVAILABLE
+                                                    else -> "Checking..." to -1
+                                                }
+                                            StatusBadge(statusCode = code, text = statusText)
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = engine.description,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+
+                                    if (engine == SpeechEngine.MLKIT_GENAI &&
+                                        (
+                                            state.mlKitSpeechStatus == FeatureStatus.DOWNLOADABLE ||
+                                                state.mlKitSpeechStatus == FeatureStatus.DOWNLOADING
+                                        )
+                                    ) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Button(
+                                            onClick = viewModel::triggerSpeechModelDownload,
+                                            enabled = !state.isDownloadingSpeech,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        ) {
+                                            Icon(Icons.Default.Download, contentDescription = null)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                if (state.isDownloadingSpeech) {
+                                                    "Downloading Speech Model..."
+                                                } else {
+                                                    "Download Speech Model"
+                                                },
+                                            )
+                                        }
+                                        state.speechDownloadStatus?.let {
+                                            Text(
+                                                text = it,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                modifier = Modifier.padding(top = 4.dp),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 3: Copyable System Prompts
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -258,8 +465,57 @@ fun AiDiagnosticsScreen(
                             value = state.testInput,
                             onValueChange = viewModel::onTestInputChange,
                             label = { Text("Test Input") },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = {
+                                        if (isListening) {
+                                            stopListening()
+                                        } else {
+                                            requestListeningWithPermission()
+                                        }
+                                    },
+                                ) {
+                                    Icon(
+                                        imageVector = if (isListening) Icons.Default.MicOff else Icons.Default.Mic,
+                                        contentDescription = if (isListening) "Stop listening" else "Speak input",
+                                        tint =
+                                            if (isListening) {
+                                                MaterialTheme.colorScheme.error
+                                            } else {
+                                                MaterialTheme.colorScheme.primary
+                                            },
+                                    )
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                         )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "Auto-run extraction on speech completion",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            Switch(
+                                checked = state.autoRunExtractionAfterSpeech,
+                                onCheckedChange = viewModel::toggleAutoRunExtraction,
+                            )
+                        }
+
+                        if (isListening) {
+                            Text(
+                                text = "Listening via ${state.selectedSpeechEngine.displayName}...",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(vertical = 4.dp),
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(10.dp))
                         Button(
