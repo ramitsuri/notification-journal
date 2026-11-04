@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.ai.diagnostics
 
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.mlkit.genai.common.FeatureStatus
@@ -11,6 +12,7 @@ import com.google.mlkit.genai.prompt.TextPart
 import com.google.mlkit.genai.prompt.generateTypedContentRequest
 import com.google.mlkit.genai.speechrecognition.SpeechRecognition
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizer
+import com.google.mlkit.genai.speechrecognition.SpeechRecognizerOptions
 import com.ramitsuri.notificationjournal.ai.extractor.NanoJournalIntentExtractor
 import com.ramitsuri.notificationjournal.ai.model.JournalIntent
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 data class AiModelInfo(
     val modelName: String = "",
@@ -62,10 +65,32 @@ class AiDiagnosticsViewModel(
     private val generativeModel: GenerativeModel = Generation.getClient(),
     private val nanoExtractor: NanoJournalIntentExtractor = NanoJournalIntentExtractor(),
     private val prefManager: PrefManager = ServiceLocator.prefManager,
-    private val speechRecognizer: SpeechRecognizer = SpeechRecognition.getClient(),
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DiagnosticsUiState())
     val uiState = _uiState.asStateFlow()
+
+    private var speechRecognizer: SpeechRecognizer? = null
+
+    private fun getSpeechRecognizer(): SpeechRecognizer? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return null
+        }
+        speechRecognizer?.let { return it }
+        return try {
+            val options =
+                SpeechRecognizerOptions
+                    .builder()
+                    .apply {
+                        preferredMode = SpeechRecognizerOptions.Mode.MODE_ADVANCED
+                        locale = Locale.getDefault()
+                    }.build()
+            SpeechRecognition.getClient(options).also {
+                speechRecognizer = it
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     init {
         refreshModelInfo()
@@ -90,7 +115,7 @@ class AiDiagnosticsViewModel(
                     val status =
                         try {
                             generativeModel.checkStatus()
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             -1
                         }
 
@@ -140,7 +165,7 @@ class AiDiagnosticsViewModel(
 
                     val speechStat =
                         try {
-                            speechRecognizer.checkStatus()
+                            getSpeechRecognizer()?.checkStatus() ?: -1
                         } catch (e: Exception) {
                             -1
                         }
@@ -187,7 +212,14 @@ class AiDiagnosticsViewModel(
                 )
             }
             try {
-                speechRecognizer.download().collect { status ->
+                val recognizer = getSpeechRecognizer()
+                if (recognizer == null) {
+                    _uiState.update {
+                        it.copy(speechDownloadStatus = "ML Kit GenAI Speech is not available on this device")
+                    }
+                    return@launch
+                }
+                recognizer.download().collect { status ->
                     _uiState.update { it.copy(speechDownloadStatus = status.toString()) }
                 }
                 refreshModelInfo()
@@ -370,6 +402,9 @@ class AiDiagnosticsViewModel(
     override fun onCleared() {
         generativeModel.close()
         nanoExtractor.release()
-        speechRecognizer.close()
+        try {
+            speechRecognizer?.close()
+        } catch (_: Exception) {
+        }
     }
 }
