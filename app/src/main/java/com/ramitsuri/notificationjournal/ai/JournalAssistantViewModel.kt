@@ -1,17 +1,19 @@
 package com.ramitsuri.notificationjournal.ai
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.ramitsuri.notificationjournal.ai.extractor.IntentExtractorFactory
-import com.ramitsuri.notificationjournal.ai.extractor.JournalIntentExtractor
 import com.ramitsuri.notificationjournal.ai.model.JournalIntent
+import com.ramitsuri.notificationjournal.ai.pipeline.VoiceAssistantPipeline
+import com.ramitsuri.notificationjournal.ai.pipeline.VoiceAssistantState
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -51,11 +53,13 @@ sealed interface AssistantUiState {
 
 class JournalAssistantViewModel(
     private val repository: JournalRepository = ServiceLocator.repository,
-    private val extractor: JournalIntentExtractor = IntentExtractorFactory.create(),
+    private val pipeline: VoiceAssistantPipeline = VoiceAssistantPipeline(),
     prefManager: PrefManager = ServiceLocator.prefManager,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<AssistantUiState>(AssistantUiState.Idle)
     val uiState = _uiState.asStateFlow()
+
+    private var voiceSessionJob: Job? = null
 
     val speechEngine: StateFlow<SpeechEngine> =
         prefManager
@@ -67,28 +71,56 @@ class JournalAssistantViewModel(
                 initialValue = SpeechEngine.PLATFORM,
             )
 
-    fun onListeningStarted() {
-        _uiState.value = AssistantUiState.Listening()
+    fun startVoiceSession(context: Context) {
+        stopVoiceSession()
+        voiceSessionJob =
+            viewModelScope.launch {
+                val engine = speechEngine.value
+                pipeline.startSession(context, engine).collect { state ->
+                    when (state) {
+                        VoiceAssistantState.Idle -> {
+                            _uiState.value = AssistantUiState.Idle
+                        }
+
+                        is VoiceAssistantState.Listening -> {
+                            _uiState.value =
+                                AssistantUiState.Listening(
+                                    partialText = state.partialText,
+                                    hasSpeechStarted = state.hasSpeechStarted,
+                                )
+                        }
+
+                        is VoiceAssistantState.Extracting -> {
+                            _uiState.value =
+                                AssistantUiState.Processing(
+                                    transcription = state.transcription,
+                                )
+                        }
+
+                        is VoiceAssistantState.Completed -> {
+                            val extraction = state.extractionResult
+                            if (extraction == null) {
+                                _uiState.value = AssistantUiState.Error("Could not understand your request.")
+                            } else {
+                                handleIntent(
+                                    intent = extraction.intent,
+                                    engine = extraction.engine,
+                                    speechEngine = state.speechEngine.displayName,
+                                )
+                            }
+                        }
+
+                        is VoiceAssistantState.Error -> {
+                            _uiState.value = AssistantUiState.Error(state.message)
+                        }
+                    }
+                }
+            }
     }
 
-    fun onSpeechStarted() {
-        val current = _uiState.value
-        if (current is AssistantUiState.Listening) {
-            _uiState.value = current.copy(hasSpeechStarted = true)
-        } else {
-            _uiState.value = AssistantUiState.Listening(hasSpeechStarted = true)
-        }
-    }
-
-    fun onPartialTranscription(text: String) {
-        _uiState.value = AssistantUiState.Listening(partialText = text, hasSpeechStarted = true)
-    }
-
-    fun onError(message: String) {
-        _uiState.value = AssistantUiState.Error(message)
-    }
-
-    fun resetState() {
+    fun stopVoiceSession() {
+        voiceSessionJob?.cancel()
+        voiceSessionJob = null
         _uiState.value = AssistantUiState.Idle
     }
 
@@ -102,7 +134,7 @@ class JournalAssistantViewModel(
             try {
                 val result =
                     withContext(Dispatchers.Default) {
-                        extractor.extractIntent(input)
+                        pipeline.processText(input)
                     }
 
                 if (result == null) {
@@ -213,18 +245,18 @@ class JournalAssistantViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        extractor.release()
+        pipeline.release()
     }
 
     companion object {
         fun factory(
             repository: JournalRepository = ServiceLocator.repository,
-            extractor: JournalIntentExtractor = IntentExtractorFactory.create(),
+            pipeline: VoiceAssistantPipeline = VoiceAssistantPipeline(),
         ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    JournalAssistantViewModel(repository, extractor) as T
+                    JournalAssistantViewModel(repository, pipeline) as T
             }
     }
 }

@@ -41,7 +41,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,10 +53,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramitsuri.notificationjournal.ai.AssistantUiState
 import com.ramitsuri.notificationjournal.ai.JournalAssistantViewModel
-import com.ramitsuri.notificationjournal.ai.voice.VoiceInputEvent
-import com.ramitsuri.notificationjournal.ai.voice.VoiceInputManagerFactory
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 @Composable
 fun JournalAssistantSheet(
@@ -65,59 +60,19 @@ fun JournalAssistantSheet(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val selectedEngine by viewModel.speechEngine.collectAsState()
-    var listeningJob by remember { mutableStateOf<Job?>(null) }
-
-    val voiceInputManager =
-        remember(context, selectedEngine) {
-            VoiceInputManagerFactory.create(
-                context = context,
-                engine = selectedEngine,
-            )
-        }
 
     val stopVoice = {
-        listeningJob?.cancel()
-        listeningJob = null
-        viewModel.resetState()
+        viewModel.stopVoiceSession()
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            listeningJob?.cancel()
-            listeningJob = null
-            viewModel.resetState()
+            stopVoice()
         }
     }
 
     val startVoice = {
-        val hasPermission =
-            ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.RECORD_AUDIO,
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
-        if (hasPermission) {
-            listeningJob?.cancel()
-            viewModel.onListeningStarted()
-            listeningJob =
-                coroutineScope.launch {
-                    voiceInputManager.startListening().collect { event ->
-                        when (event) {
-                            VoiceInputEvent.SpeechStarted -> viewModel.onSpeechStarted()
-                            is VoiceInputEvent.PartialResult -> viewModel.onPartialTranscription(event.text)
-                            is VoiceInputEvent.FinalResult -> {
-                                viewModel.processQuery(event.text, speechEngineName = selectedEngine.displayName)
-                            }
-
-                            is VoiceInputEvent.Error -> viewModel.onError(event.message)
-                        }
-                    }
-                }
-        } else {
-            // Permission requested below
-        }
+        viewModel.startVoiceSession(context)
     }
 
     val permissionLauncher =
@@ -126,8 +81,6 @@ fun JournalAssistantSheet(
         ) { isGranted ->
             if (isGranted) {
                 startVoice()
-            } else {
-                viewModel.onError("Microphone permission required for voice input.")
             }
         }
 
