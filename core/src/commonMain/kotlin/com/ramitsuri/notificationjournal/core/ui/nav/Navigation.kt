@@ -22,6 +22,7 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
 import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
@@ -53,6 +54,7 @@ fun NavGraph(
     navigator: Navigator,
     onAssistantRequested: (() -> Unit)? = null,
     onAiDiagnosticsRequested: (() -> Unit)? = null,
+    onReviewVoiceNote: ((VoiceNote) -> Unit)? = null,
 ) {
     val listDetailStrategy = rememberListDetailSceneStrategy<Route>()
     var showContent by remember { mutableStateOf(false) }
@@ -153,6 +155,7 @@ fun NavGraph(
                     showContent = showContent,
                     pagerScrollEnabled = !ServiceLocator.isDesktop,
                     onAssistantRequested = onAssistantRequested,
+                    onReviewVoiceNote = onReviewVoiceNote,
                     onEntryScreenAction = { action ->
                         when (action) {
                             is EntryScreenAction.AddWithDate -> {

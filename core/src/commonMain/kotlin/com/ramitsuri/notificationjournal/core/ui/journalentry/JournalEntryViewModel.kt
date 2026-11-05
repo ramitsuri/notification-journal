@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.TagsDao
+import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
@@ -13,6 +14,8 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.toDayGroups
+import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
+import com.ramitsuri.notificationjournal.core.model.voice.VoiceNoteStatus
 import com.ramitsuri.notificationjournal.core.network.WebSocketHelper
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -48,6 +51,7 @@ class JournalEntryViewModel(
     private val prefManager: PrefManager,
     private val allowNotify: Boolean,
     webSocketHelper: WebSocketHelper,
+    private val voiceNoteDao: VoiceNoteDao = ServiceLocator.voiceNoteDao,
 ) : ViewModel() {
     private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
     private val selectedDate: MutableStateFlow<LocalDate> = MutableStateFlow(initialDate)
@@ -63,14 +67,16 @@ class JournalEntryViewModel(
             prefManager.showEmptyTags(),
             prefManager.showConflictDiffInline(),
             webSocketHelper.isConnected,
+            voiceNoteDao.getPendingOrFailedFlow(),
         ) {
-                contentForCopy,
-                (date, entries),
-                forUploadCount,
-                entryConflicts,
-                showEmptyTags,
-                showConflictDiffInline,
-                isConnected,
+            contentForCopy,
+            (date, entries),
+            forUploadCount,
+            entryConflicts,
+            showEmptyTags,
+            showConflictDiffInline,
+            isConnected,
+            voiceNotes,
             ->
             val tags = tagsDao.getAll()
             val entryIds = entries.map { it.id }
@@ -88,6 +94,7 @@ class JournalEntryViewModel(
                 showEmptyTags = showEmptyTags,
                 allowNotify = allowNotify,
                 isConnected = isConnected,
+                voiceNotes = voiceNotes,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -358,6 +365,7 @@ class JournalEntryViewModel(
                         prefManager = ServiceLocator.prefManager,
                         allowNotify = ServiceLocator.allowJournalEntryNotify(),
                         webSocketHelper = ServiceLocator.webSocketHelper,
+                        voiceNoteDao = ServiceLocator.voiceNoteDao,
                     ) as T
                 }
             }
@@ -377,7 +385,14 @@ data class ViewState(
     val showEmptyTags: Boolean = false,
     val allowNotify: Boolean = false,
     val isConnected: Boolean = false,
+    val voiceNotes: List<VoiceNote> = listOf(),
 ) {
+    val pendingVoiceNotesCount: Int
+        get() = voiceNotes.count { it.status == VoiceNoteStatus.PROCESSING }
+
+    val failedVoiceNotes: List<VoiceNote>
+        get() = voiceNotes.filter { it.status == VoiceNoteStatus.FAILED }
+
     private val entryIdsForDayGroup: List<String> =
         dayGroup
             ?.tagGroups

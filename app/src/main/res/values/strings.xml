@@ -3,5 +3,8 @@
     <string name="add_new_journal_content">Add</string>
     <string name="upload">Upload</string>
     <string name="upload_worker_notification_title">Uploading</string>
+    <string name="voice_note_worker_notification_title">Processing voice note</string>
+    <string name="voice_note_failed_notification_title">Voice note could not be transcribed</string>
+    <string name="voice_note_failed_notification_text">Tap to review or manually save your voice note</string>
     <string name="add_entry_qs_tile_label">Add Entry</string>
 </resources>

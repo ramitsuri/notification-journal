@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom10To1
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom11To12
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom12To13
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom13To14
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom14To15
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
@@ -23,6 +24,7 @@ import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
+import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.utils.DatabaseConverters
 import kotlinx.coroutines.Dispatchers
 
@@ -33,8 +35,9 @@ import kotlinx.coroutines.Dispatchers
         Tag::class,
         EntryConflict::class,
         DictionaryItem::class,
+        VoiceNote::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
@@ -48,6 +51,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun entryConflictDao(): EntryConflictDao
 
     abstract fun dictionaryDao(): DictionaryDao
+
+    abstract fun voiceNoteDao(): VoiceNoteDao
 
     companion object {
         fun getDatabase(builder: () -> Builder<AppDatabase>): AppDatabase {
@@ -67,6 +72,7 @@ abstract class AppDatabase : RoomDatabase() {
                 .addMigrations(MigrationFrom11To12())
                 .addMigrations(MigrationFrom12To13())
                 .addMigrations(MigrationFrom13To14())
+                .addMigrations(MigrationFrom14To15())
                 .build()
         }
     }

@@ -11,6 +11,7 @@ import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
+import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
 import com.ramitsuri.notificationjournal.core.data.WearDataSharingClient
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
 import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
@@ -171,6 +172,9 @@ object ServiceLocator {
 
     val templatesDao: JournalEntryTemplateDao
         get() = db.templateDao()
+
+    val voiceNoteDao: VoiceNoteDao
+        get() = db.voiceNoteDao()
 
     private val dictionaryDao: DictionaryDao
         get() = db.dictionaryDao()

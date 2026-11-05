@@ -1,36 +1,41 @@
 package com.ramitsuri.notificationjournal.ai.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,7 +56,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -67,18 +71,18 @@ fun JournalAssistantSheet(
 ) {
     val context = LocalContext.current
 
-    val stopVoice = {
-        viewModel.stopVoiceSession()
+    val stopRecording = {
+        viewModel.discardRecording()
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            stopVoice()
+            stopRecording()
         }
     }
 
-    val startVoice = {
-        viewModel.startVoiceSession(context)
+    val startRecording = {
+        viewModel.startRecording(context)
     }
 
     val permissionLauncher =
@@ -86,36 +90,35 @@ fun JournalAssistantSheet(
             contract = ActivityResultContracts.RequestPermission(),
         ) { isGranted ->
             if (isGranted) {
-                startVoice()
+                startRecording()
             }
         }
 
-    val requestVoiceWithPermission = {
+    val requestPermissionAndStart = {
         val hasPermission =
             ContextCompat.checkSelfPermission(
                 context,
-                android.Manifest.permission.RECORD_AUDIO,
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                Manifest.permission.RECORD_AUDIO,
+            ) == PackageManager.PERMISSION_GRANTED
 
         if (hasPermission) {
-            startVoice()
+            startRecording()
         } else {
-            permissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
-    // Immediately start listening to mic audio when the sheet opens on long press
     LaunchedEffect(Unit) {
-        requestVoiceWithPermission()
+        requestPermissionAndStart()
     }
 
     JournalAssistantContent(
         viewModel = viewModel,
-        onStartVoice = requestVoiceWithPermission,
-        onStopVoice = stopVoice,
-        onCommitVoice = viewModel::commitVoiceSession,
-        onDismiss = {
-            stopVoice()
+        onStartRecording = requestPermissionAndStart,
+        onNextEntry = { viewModel.nextEntry(context) },
+        onCommit = { viewModel.commitRecording(context, onDismiss) },
+        onDiscard = {
+            stopRecording()
             onDismiss()
         },
     )
@@ -125,26 +128,23 @@ fun JournalAssistantSheet(
 @Composable
 private fun JournalAssistantContent(
     viewModel: JournalAssistantViewModel,
-    onStartVoice: () -> Unit,
-    onStopVoice: () -> Unit,
-    onCommitVoice: () -> Unit,
-    onDismiss: () -> Unit,
+    onStartRecording: () -> Unit,
+    onNextEntry: () -> Unit,
+    onCommit: () -> Unit,
+    onDiscard: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
-    var showConfirmDialog by remember { mutableStateOf(false) }
+    val amplitude by viewModel.amplitudeFlow.collectAsState()
+    var showConfirmDiscardDialog by remember { mutableStateOf(false) }
 
-    val hasInput =
-        when (val current = state) {
-            is AssistantUiState.Listening -> current.hasSpeechStarted || current.partialText.isNotBlank()
-            else -> false
-        }
+    val isRecording = state is AssistantUiState.Recording
 
     val sheetState =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
             confirmValueChange = { targetValue ->
-                if (targetValue == SheetValue.Hidden && hasInput) {
-                    showConfirmDialog = true
+                if (targetValue == SheetValue.Hidden && isRecording) {
+                    showConfirmDiscardDialog = true
                     false
                 } else {
                     true
@@ -153,31 +153,31 @@ private fun JournalAssistantContent(
         )
 
     val handleDismissRequest = {
-        if (hasInput) {
-            showConfirmDialog = true
+        if (isRecording) {
+            showConfirmDiscardDialog = true
         } else {
-            onDismiss()
+            onDiscard()
         }
     }
 
-    if (showConfirmDialog) {
+    if (showConfirmDiscardDialog) {
         AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
+            onDismissRequest = { showConfirmDiscardDialog = false },
             title = { Text("Discard recording?") },
-            text = { Text("Whatever was said will be lost. Are you sure?") },
+            text = { Text("Whatever was recorded in this session will be lost. Are you sure?") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        showConfirmDialog = false
-                        onDismiss()
+                        showConfirmDiscardDialog = false
+                        onDiscard()
                     },
                 ) {
                     Text("Discard", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirmDialog = false }) {
-                    Text("Keep Speaking")
+                TextButton(onClick = { showConfirmDiscardDialog = false }) {
+                    Text("Keep Recording")
                 }
             },
         )
@@ -196,175 +196,186 @@ private fun JournalAssistantContent(
                     .padding(top = 8.dp, bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            AnimatedContent(
-                targetState = state,
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(180)) togetherWith
-                        fadeOut(animationSpec = tween(120))
-                },
-                label = "AssistantContentTransition",
-            ) { targetState ->
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 180.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    when (val current = targetState) {
+            when (val current = state) {
                 is AssistantUiState.Idle -> {
-                    IconButton(
-                        onClick = onStartVoice,
-                        modifier =
-                            Modifier
-                                .size(72.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    shape = CircleShape,
-                                ),
+                    Box(
+                        modifier = Modifier.size(180.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            Icons.Default.Mic,
-                            contentDescription = "Start Listening",
-                            modifier = Modifier.size(36.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
+                        IconButton(
+                            onClick = onStartRecording,
+                            modifier =
+                                Modifier
+                                    .size(72.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primaryContainer,
+                                        shape = CircleShape,
+                                    ),
+                        ) {
+                            Icon(
+                                Icons.Default.Mic,
+                                contentDescription = "Start Recording",
+                                modifier = Modifier.size(36.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Tap microphone to speak",
+                        text = "Tap microphone to record",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
-                is AssistantUiState.Listening -> {
-                    IconButton(
-                        onClick = onCommitVoice,
-                        modifier =
-                            Modifier
-                                .size(72.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.primary,
-                                    shape = CircleShape,
-                                ),
+                is AssistantUiState.Recording -> {
+                    // Pulsating live amplitude concentric rings
+                    val outerPulseSize by animateDpAsState(
+                        targetValue = 100.dp + (60.dp * amplitude.coerceIn(0f, 1f)),
+                        animationSpec =
+                            spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow,
+                            ),
+                        label = "OuterPulseSize",
+                    )
+                    val middlePulseSize by animateDpAsState(
+                        targetValue = 84.dp + (34.dp * amplitude.coerceIn(0f, 1f)),
+                        animationSpec =
+                            spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow,
+                            ),
+                        label = "MiddlePulseSize",
+                    )
+
+                    Box(
+                        modifier = Modifier.size(180.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            Icons.Default.Mic,
-                            contentDescription = "Stop Listening",
-                            modifier = Modifier.size(36.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                        // Outer pulse ring
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(outerPulseSize)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                        shape = CircleShape,
+                                    ),
                         )
+                        // Middle pulse ring
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(middlePulseSize)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                                        shape = CircleShape,
+                                    ),
+                        )
+                        // Inner mic button
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(68.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary,
+                                        shape = CircleShape,
+                                    ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Default.Mic,
+                                contentDescription = "Recording active",
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
                     }
+
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    val minutes = current.durationSeconds / 60
+                    val seconds = current.durationSeconds % 60
+                    val timeFormatted = "%02d:%02d".format(minutes, seconds)
+
                     Text(
-                        text = "Listening...",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = "Entry ${current.segmentIndex} • $timeFormatted",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    if (current.partialText.isNotBlank()) {
-                        Text(
-                            text = "\"${current.partialText}\"",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontStyle = FontStyle.Italic,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        )
-                    } else {
-                        Text(
-                            text = "Speak your entry or search query",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
 
-                is AssistantUiState.Processing -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(56.dp),
-                        strokeWidth = 4.dp,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Processing on device...",
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "\"${current.transcription}\"",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-                }
-
-                is AssistantUiState.Success -> {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(48.dp),
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = current.message,
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                    if (current.engine.isNotBlank() || current.speechEngine.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        val details =
-                            buildList {
-                                if (current.speechEngine.isNotBlank()) add("Speech: ${current.speechEngine}")
-                                if (current.engine.isNotBlank()) add("NLU: ${current.engine}")
-                            }.joinToString(" • ")
-                        Text(
-                            text = details,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        )
-                    }
-
-                    if (current.matchedEntries.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                            items(current.matchedEntries) { entry ->
-                                Card(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
-                                ) {
-                                    Column(modifier = Modifier.padding(12.dp)) {
-                                        Text(entry.text, style = MaterialTheme.typography.bodyMedium)
-                                        Text(
-                                            entry.entryTime.toString(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                }
+                    AnimatedVisibility(
+                        visible = current.silentMicWarning,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Column {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .background(
+                                            MaterialTheme.colorScheme.errorContainer,
+                                            shape = RoundedCornerShape(8.dp),
+                                        ).padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    Icons.Default.WarningAmber,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Microphone is not receiving audio",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    // Action buttons: Discard, Next Entry, Done
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        OutlinedButton(onClick = onStartVoice) {
-                            Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Speak Again")
+                        TextButton(
+                            onClick = {
+                                if (current.durationSeconds > 1 || current.segmentIndex > 1) {
+                                    showConfirmDiscardDialog = true
+                                } else {
+                                    onDiscard()
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.DeleteOutline,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Discard", color = MaterialTheme.colorScheme.error)
                         }
-                        Button(onClick = onDismiss) {
+
+                        FilledTonalButton(onClick = onNextEntry) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Next Entry")
+                        }
+
+                        Button(
+                            onClick = onCommit,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text("Done")
                         }
                     }
@@ -389,12 +400,12 @@ private fun JournalAssistantContent(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                     ) {
-                        Button(onClick = onStartVoice) {
+                        Button(onClick = onStartRecording) {
                             Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Try Again")
                         }
-                        OutlinedButton(onClick = onDismiss) {
+                        OutlinedButton(onClick = onDiscard) {
                             Text("Cancel")
                         }
                     }
@@ -402,6 +413,4 @@ private fun JournalAssistantContent(
             }
         }
     }
-}
-}
 }

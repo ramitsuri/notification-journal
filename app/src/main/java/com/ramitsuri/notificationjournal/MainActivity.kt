@@ -21,12 +21,14 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.coroutineScope
 import com.ramitsuri.notificationjournal.ai.diagnostics.AiDiagnosticsScreen
 import com.ramitsuri.notificationjournal.ai.ui.JournalAssistantSheet
+import com.ramitsuri.notificationjournal.ai.ui.VoiceNoteReviewDialog
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkMatcher
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkPattern
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkRequest
 import com.ramitsuri.notificationjournal.core.deeplink.KeyDecoder
 import com.ramitsuri.notificationjournal.core.deeplink.deepLinksWithArgNames
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var navigator: Navigator
     private var showAssistantSheet by mutableStateOf(false)
     private var showAiDiagnostics by mutableStateOf(false)
+    private var reviewVoiceNote: VoiceNote? by mutableStateOf(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -91,6 +94,7 @@ class MainActivity : ComponentActivity() {
                     navigator = navigator,
                     onAssistantRequested = { showAssistantSheet = true },
                     onAiDiagnosticsRequested = { showAiDiagnostics = true },
+                    onReviewVoiceNote = { note -> reviewVoiceNote = note },
                 )
                 if (showAssistantSheet) {
                     JournalAssistantSheet(
@@ -100,6 +104,12 @@ class MainActivity : ComponentActivity() {
                 if (showAiDiagnostics) {
                     AiDiagnosticsScreen(
                         onBack = { showAiDiagnostics = false },
+                    )
+                }
+                reviewVoiceNote?.let { note ->
+                    VoiceNoteReviewDialog(
+                        voiceNote = note,
+                        onDismiss = { reviewVoiceNote = null },
                     )
                 }
                 LaunchedEffect(navigator) {
