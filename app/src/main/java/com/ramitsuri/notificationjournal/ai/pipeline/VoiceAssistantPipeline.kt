@@ -7,10 +7,12 @@ import com.ramitsuri.notificationjournal.ai.model.ExtractionResult
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
 import com.ramitsuri.notificationjournal.ai.voice.VoiceInputEvent
 import com.ramitsuri.notificationjournal.ai.voice.VoiceInputManagerFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.transformWhile
+import kotlinx.coroutines.withContext
 
 sealed interface VoiceAssistantState {
     data object Idle : VoiceAssistantState
@@ -125,7 +127,9 @@ class VoiceAssistantPipeline(
             val nluStartTime = System.currentTimeMillis()
             val intentResult =
                 try {
-                    extractor.extractIntent(text)
+                    withContext(Dispatchers.Default) {
+                        extractor.extractIntent(text)
+                    }
                 } catch (e: Exception) {
                     emit(
                         VoiceAssistantState.Error(

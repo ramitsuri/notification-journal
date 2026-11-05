@@ -86,9 +86,18 @@ class NanoJournalIntentExtractor(
                     val response = generativeModel.generateContent(typedRequest)
                     val typedResponse = response.candidates.firstOrNull()?.response
                     if (typedResponse != null) {
-                        Log.d(TAG, "Structured output succeeded: $typedResponse")
+                        val normalizedIntent =
+                            if (typedResponse.action != "QUERY_ENTRIES") {
+                                typedResponse.copy(
+                                    action = "ADD_ENTRY",
+                                    entryText = typedResponse.entryText ?: userInput,
+                                )
+                            } else {
+                                typedResponse
+                            }
+                        Log.d(TAG, "Structured output succeeded: $normalizedIntent")
                         return ExtractionResult(
-                            intent = typedResponse,
+                            intent = normalizedIntent,
                             engine = "Gemini Nano (Structured Output)",
                         )
                     }
@@ -116,7 +125,7 @@ class NanoJournalIntentExtractor(
                 val responseText = textResponse.candidates.firstOrNull()?.text
                 Log.d(TAG, "Gemini Nano text response: $responseText")
                 if (!responseText.isNullOrBlank()) {
-                    val parsed = parseJson(responseText)
+                    val parsed = parseJson(responseText, userInput)
                     if (parsed != null) {
                         Log.d(TAG, "JSON prompt parsing succeeded: $parsed")
                         return ExtractionResult(
@@ -139,16 +148,27 @@ class NanoJournalIntentExtractor(
         return fallbackExtractor.extractIntent(userInput)
     }
 
-    private fun parseJson(raw: String): JournalIntent? =
+    private fun parseJson(
+        raw: String,
+        originalInput: String,
+    ): JournalIntent? =
         try {
             val start = raw.indexOf('{')
             val end = raw.lastIndexOf('}')
             if ((start != -1) && (end != -1) && (end > start)) {
                 val jsonStr = raw.substring(start, end + 1)
                 val jsonObject = JSONObject(jsonStr)
+                val action =
+                    if (jsonObject.optString("action") == "QUERY_ENTRIES") {
+                        "QUERY_ENTRIES"
+                    } else {
+                        "ADD_ENTRY"
+                    }
+                val rawText = jsonObject.optString("entryText").takeIf { it.isNotBlank() && it != "null" }
+                val entryText = if (action == "ADD_ENTRY") (rawText ?: originalInput) else rawText
                 JournalIntent(
-                    action = jsonObject.optString("action", "CONVERSE"),
-                    entryText = jsonObject.optString("entryText").takeIf { it.isNotBlank() && it != "null" },
+                    action = action,
+                    entryText = entryText,
                     tag = jsonObject.optString("tag").takeIf { it.isNotBlank() && it != "null" },
                     targetDate = jsonObject.optString("targetDate").takeIf { it.isNotBlank() && it != "null" },
                     searchKeyword = jsonObject.optString("searchKeyword").takeIf { it.isNotBlank() && it != "null" },

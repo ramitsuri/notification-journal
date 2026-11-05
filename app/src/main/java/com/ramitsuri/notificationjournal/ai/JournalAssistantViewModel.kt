@@ -11,6 +11,7 @@ import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
 import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
+import kotlin.time.Clock
 
 sealed interface AssistantUiState {
     data object Idle : AssistantUiState
@@ -168,37 +169,6 @@ class JournalAssistantViewModel(
     ) {
         withContext(Dispatchers.IO) {
             when (intent.action) {
-                "ADD_ENTRY" -> {
-                    val text = intent.entryText
-                    if (text.isNullOrBlank()) {
-                        _uiState.value = AssistantUiState.Error("No entry content was recognized.")
-                        return@withContext
-                    }
-                    val targetTime =
-                        intent.targetDate?.let { dateStr ->
-                            try {
-                                val parsedDate = LocalDate.parse(dateStr)
-                                LocalDateTime(parsedDate, LocalTime(12, 0))
-                            } catch (e: Exception) {
-                                null
-                            }
-                        }
-                    // Leave tag as null during testing so new entries remain untagged and appear at the top for review
-                    val tagToUse: String? = null
-                    if (targetTime != null) {
-                        repository.insert(text = text, tag = tagToUse, time = targetTime)
-                    } else {
-                        repository.insert(text = text, tag = tagToUse)
-                    }
-                    val reply = intent.conversationalReply ?: "Saved to journal: \"$text\""
-                    _uiState.value =
-                        AssistantUiState.Success(
-                            message = reply,
-                            engine = engine,
-                            speechEngine = speechEngine,
-                        )
-                }
-
                 "QUERY_ENTRIES" -> {
                     val entries = queryDatabase(intent.targetDate, intent.searchKeyword)
                     if (entries.isEmpty()) {
@@ -221,9 +191,28 @@ class JournalAssistantViewModel(
                 }
 
                 else -> {
+                    val text = intent.entryText
+                    if (text.isNullOrBlank()) {
+                        _uiState.value = AssistantUiState.Error("No entry content was recognized.")
+                        return@withContext
+                    }
+                    val now = Clock.System.nowLocal()
+                    val targetTime =
+                        intent.targetDate?.let { dateStr ->
+                            try {
+                                val parsedDate = LocalDate.parse(dateStr)
+                                LocalDateTime(parsedDate, now.time)
+                            } catch (e: Exception) {
+                                now
+                            }
+                        } ?: now
+                    // Leave tag as null during testing so new entries remain untagged and appear at the top for review
+                    val tagToUse: String? = null
+                    repository.insert(text = text, tag = tagToUse, time = targetTime)
+                    val reply = intent.conversationalReply ?: "Saved to journal: \"$text\""
                     _uiState.value =
                         AssistantUiState.Success(
-                            message = intent.conversationalReply ?: "I didn't detect an entry to add or query.",
+                            message = reply,
                             engine = engine,
                             speechEngine = speechEngine,
                         )

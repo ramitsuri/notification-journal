@@ -8,10 +8,10 @@ data class JournalIntent(
     @Guide(
         description =
             "Action to take. ADD_ENTRY to write a new entry, " +
-                "QUERY_ENTRIES to search past entries, or CONVERSE for general chit-chat",
-        enumValues = ["ADD_ENTRY", "QUERY_ENTRIES", "CONVERSE"],
+                "or QUERY_ENTRIES to search past entries.",
+        enumValues = ["ADD_ENTRY", "QUERY_ENTRIES"],
     )
-    val action: String = "CONVERSE",
+    val action: String = "ADD_ENTRY",
     @Guide(description = "The narrative text content of the journal entry if action is ADD_ENTRY")
     val entryText: String? = null,
     @Guide(

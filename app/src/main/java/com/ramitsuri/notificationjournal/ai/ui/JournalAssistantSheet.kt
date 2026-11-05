@@ -2,6 +2,12 @@ package com.ramitsuri.notificationjournal.ai.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -130,12 +136,12 @@ private fun JournalAssistantContent(
     val hasInput =
         when (val current = state) {
             is AssistantUiState.Listening -> current.hasSpeechStarted || current.partialText.isNotBlank()
-            is AssistantUiState.Processing -> true
             else -> false
         }
 
     val sheetState =
         rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
             confirmValueChange = { targetValue ->
                 if (targetValue == SheetValue.Hidden && hasInput) {
                     showConfirmDialog = true
@@ -185,11 +191,28 @@ private fun JournalAssistantContent(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .animateContentSize()
                     .padding(horizontal = 24.dp)
                     .padding(top = 8.dp, bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            when (val current = state) {
+            AnimatedContent(
+                targetState = state,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(180)) togetherWith
+                        fadeOut(animationSpec = tween(120))
+                },
+                label = "AssistantContentTransition",
+            ) { targetState ->
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 180.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    when (val current = targetState) {
                 is AssistantUiState.Idle -> {
                     IconButton(
                         onClick = onStartVoice,
@@ -379,4 +402,6 @@ private fun JournalAssistantContent(
             }
         }
     }
+}
+}
 }
