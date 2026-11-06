@@ -26,6 +26,7 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
@@ -45,6 +46,7 @@ class VoiceNoteProcessWorker
         private val voiceNoteDao: VoiceNoteDao,
         private val repository: JournalRepository,
         private val notificationHandler: NotificationHandler,
+        private val prefManager: PrefManager,
     ) : CoroutineWorker(context, params) {
         @AssistedFactory
         interface Factory {
@@ -77,7 +79,7 @@ class VoiceNoteProcessWorker
                 return
             }
 
-            val transcribedText =
+            val rawTranscribedText =
                 try {
                     transcribeFile(file)
                 } catch (e: Exception) {
@@ -85,28 +87,39 @@ class VoiceNoteProcessWorker
                     null
                 }
 
-            if (transcribedText.isNullOrBlank()) {
+            if (rawTranscribedText.isNullOrBlank()) {
                 Log.e(TAG, "Transcription returned empty text for note ${note.id}")
                 voiceNoteDao.updateStatus(note.id, VoiceNoteStatus.FAILED, "No speech recognized in audio")
                 postFailureNotification()
                 return
             }
 
-            val extractor = IntentExtractorFactory.create()
-            val entryText =
+            val transcribedText = rawTranscribedText.trim().removeSuffix(".")
+
+            val extractor = IntentExtractorFactory.create(prefManager)
+            val intent =
                 try {
                     val result = extractor.extractIntent(transcribedText)
-                    result?.intent?.entryText?.ifBlank { transcribedText } ?: transcribedText
+                    result?.intent
                 } catch (e: Exception) {
                     Log.w(TAG, "Intent extraction failed; using raw transcription", e)
-                    transcribedText
+                    null
                 }
+
+            val entryText = intent?.entryText?.ifBlank { transcribedText } ?: transcribedText
+
+            val entryTime =
+                com.ramitsuri.notificationjournal.core.utils.resolveEntryTime(
+                    targetDateStr = intent?.targetDate,
+                    targetTimeStr = intent?.targetTime,
+                    fallback = note.recordedAt,
+                )
 
             try {
                 repository.insert(
                     text = entryText,
                     tag = null,
-                    time = note.recordedAt,
+                    time = entryTime,
                 )
                 file.delete()
                 voiceNoteDao.delete(note.id)

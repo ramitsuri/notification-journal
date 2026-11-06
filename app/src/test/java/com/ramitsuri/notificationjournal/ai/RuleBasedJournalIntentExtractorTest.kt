@@ -16,7 +16,6 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("Went for a 5k run this morning")
             assertNotNull(result)
-            assertEquals("ADD_ENTRY", result.intent.action)
             assertEquals("Went for a 5k run this morning", result.intent.entryText)
             org.junit.Assert.assertNull(result.intent.tag)
             assertEquals("Rule-based fallback", result.engine)
@@ -27,7 +26,6 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("log Went for a 5k run this morning")
             assertNotNull(result)
-            assertEquals("ADD_ENTRY", result.intent.action)
             assertEquals("Went for a 5k run this morning", result.intent.entryText)
         }
 
@@ -36,7 +34,6 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("add a new entry that I slept well")
             assertNotNull(result)
-            assertEquals("ADD_ENTRY", result.intent.action)
             assertEquals("I slept well", result.intent.entryText)
         }
 
@@ -45,26 +42,40 @@ class RuleBasedJournalIntentExtractorTest {
         runTest {
             val result = extractor.extractIntent("write down that we had tacos for dinner")
             assertNotNull(result)
-            assertEquals("ADD_ENTRY", result.intent.action)
             assertEquals("we had tacos for dinner", result.intent.entryText)
         }
 
     @Test
-    fun testQueryEntriesKeyword() =
+    fun testAddEntryYesterday() =
         runTest {
-            val result = extractor.extractIntent("Find run")
+            val result = extractor.extractIntent("Ran 5 miles yesterday")
             assertNotNull(result)
-            assertEquals("QUERY_ENTRIES", result.intent.action)
-            assertEquals("run", result.intent.searchKeyword)
+            assertEquals("Ran 5 miles yesterday", result.intent.entryText)
+            assertEquals(LocalDate.now().minusDays(1).toString(), result.intent.targetDate)
         }
 
     @Test
-    fun testQueryEntriesYesterday() =
+    fun testAddEntryDinnerAtTime() =
         runTest {
-            val result = extractor.extractIntent("What did I write yesterday?")
+            val result = extractor.extractIntent("dinner at time")
             assertNotNull(result)
-            assertEquals("QUERY_ENTRIES", result.intent.action)
-            assertEquals(LocalDate.now().minusDays(1).toString(), result.intent.targetDate)
+            assertEquals("dinner at {{time}}", result.intent.entryText)
+        }
+
+    @Test
+    fun testAddEntryWithTargetTime() =
+        runTest {
+            val result = extractor.extractIntent("Had dinner at 8pm")
+            assertNotNull(result)
+            assertEquals("20:00", result.intent.targetTime)
+        }
+
+    @Test
+    fun testAddEntryWithTargetTimeMinutes() =
+        runTest {
+            val result = extractor.extractIntent("woke up at 7:30 am")
+            assertNotNull(result)
+            assertEquals("07:30", result.intent.targetTime)
         }
 
     @Test

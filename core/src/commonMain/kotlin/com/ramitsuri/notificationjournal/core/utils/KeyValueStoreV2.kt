@@ -72,4 +72,5 @@ enum class Key(
     ENCRYPTION_PASSWORD("encryption_password"),
     ENCRYPTION_SALT("encryption_salt"),
     SPEECH_RECOGNITION_ENGINE("speech_recognition_engine"),
+    CUSTOM_PROMPT_RULES("custom_prompt_rules"),
 }

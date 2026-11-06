@@ -256,3 +256,29 @@ private fun dayMonthDateWithYearInternal(
             char(' ')
             year()
         }.format(toFormat)
+
+fun parseLocalTime(input: String): LocalTime? =
+    runCatching {
+        val trimmed = input.trim()
+        val formatted = if (trimmed.length == 4 && trimmed[1] == ':') "0$trimmed" else trimmed
+        LocalTime.parse(formatted)
+    }.getOrNull()
+
+fun resolveEntryTime(
+    targetDateStr: String?,
+    targetTimeStr: String?,
+    fallback: LocalDateTime,
+): LocalDateTime {
+    val date =
+        targetDateStr?.let {
+            runCatching { LocalDate.parse(it) }.getOrNull()
+        } ?: fallback.date
+
+    val time =
+        targetTimeStr?.let {
+            parseLocalTime(it)
+        } ?: fallback.time
+
+    return date.atTime(time)
+}
+

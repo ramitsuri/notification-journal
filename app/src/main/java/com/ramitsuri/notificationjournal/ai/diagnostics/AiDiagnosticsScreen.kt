@@ -393,6 +393,53 @@ fun AiDiagnosticsScreen(
                 }
             }
 
+            // Section 2.5: Custom Prompt Rules
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Custom Prompt Rules",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Add custom instructions for the LLM when extracting journal entries (e.g., abbreviations, custom formatting). One rule per line. These are included automatically in the prompt.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = state.customPromptRules,
+                            onValueChange = viewModel::onCustomPromptRulesChange,
+                            placeholder = { Text("e.g.\nWhen I say workout, tag as #fitness\nReplace gym with fitness") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            maxLines = 6,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (state.customRulesSavedMessage) {
+                                Text(
+                                    text = "Rules saved!",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.width(1.dp))
+                            }
+                            Button(onClick = viewModel::saveCustomPromptRules) {
+                                Text("Save Rules")
+                            }
+                        }
+                    }
+                }
+            }
+
             // Section 3: Copyable System Prompts
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
@@ -425,9 +472,9 @@ fun AiDiagnosticsScreen(
 
                         val currentPrompt =
                             if (selectedPromptTab == 0) {
-                                JournalPrompts.getJsonPrompt(state.testInput)
+                                JournalPrompts.getJsonPrompt(state.testInput, customRules = state.customPromptRules)
                             } else {
-                                JournalPrompts.getStructuredOutputPrompt(state.testInput)
+                                JournalPrompts.getStructuredOutputPrompt(state.testInput, customRules = state.customPromptRules)
                             }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -615,7 +662,6 @@ fun AiDiagnosticsScreen(
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 Column(modifier = Modifier.padding(8.dp)) {
-                                    Text("Action: ${intent.action}", style = MaterialTheme.typography.bodySmall)
                                     Text(
                                         "Entry Text: \"${intent.entryText}\"",
                                         style = MaterialTheme.typography.bodySmall,
@@ -626,7 +672,7 @@ fun AiDiagnosticsScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                     )
                                     Text(
-                                        "Search Keyword: ${intent.searchKeyword}",
+                                        "Target Time: ${intent.targetTime}",
                                         style = MaterialTheme.typography.bodySmall,
                                     )
                                     Text(

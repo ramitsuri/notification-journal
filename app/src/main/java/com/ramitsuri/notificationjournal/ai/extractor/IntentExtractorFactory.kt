@@ -1,9 +1,10 @@
 package com.ramitsuri.notificationjournal.ai.extractor
 
 import android.os.Build
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 
 object IntentExtractorFactory {
-    fun create(): JournalIntentExtractor {
+    fun create(prefManager: PrefManager? = null): JournalIntentExtractor {
         val isEmulator =
             Build.FINGERPRINT.startsWith("generic") ||
                 Build.MODEL.contains("google_sdk") ||
@@ -13,7 +14,7 @@ object IntentExtractorFactory {
         return if (isEmulator) {
             RuleBasedJournalIntentExtractor()
         } else {
-            NanoJournalIntentExtractor()
+            NanoJournalIntentExtractor(prefManager = prefManager)
         }
     }
 }

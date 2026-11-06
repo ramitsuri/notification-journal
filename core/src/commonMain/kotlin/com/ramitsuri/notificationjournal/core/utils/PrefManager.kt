@@ -135,4 +135,15 @@ class PrefManager(
     suspend fun setSpeechEngine(engineId: String) {
         keyValueStore.putString(Key.SPEECH_RECOGNITION_ENGINE, engineId)
     }
+
+    fun getCustomPromptRulesFlow(): Flow<String> =
+        keyValueStore.getStringFlow(Key.CUSTOM_PROMPT_RULES, "").map {
+            it ?: ""
+        }
+
+    suspend fun getCustomPromptRules(): String = keyValueStore.getString(Key.CUSTOM_PROMPT_RULES, "")
+
+    suspend fun setCustomPromptRules(rules: String) {
+        keyValueStore.putString(Key.CUSTOM_PROMPT_RULES, rules)
+    }
 }

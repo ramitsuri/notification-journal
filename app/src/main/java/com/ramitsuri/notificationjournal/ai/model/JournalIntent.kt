@@ -3,16 +3,9 @@ package com.ramitsuri.notificationjournal.ai.model
 import com.google.mlkit.genai.schema.annotations.Generable
 import com.google.mlkit.genai.schema.annotations.Guide
 
-@Generable("Represents user intent when adding or querying journal entries")
+@Generable("Represents user intent when adding a journal entry")
 data class JournalIntent(
-    @Guide(
-        description =
-            "Action to take. ADD_ENTRY to write a new entry, " +
-                "or QUERY_ENTRIES to search past entries.",
-        enumValues = ["ADD_ENTRY", "QUERY_ENTRIES"],
-    )
-    val action: String = "ADD_ENTRY",
-    @Guide(description = "The narrative text content of the journal entry if action is ADD_ENTRY")
+    @Guide(description = "The narrative text content of the journal entry.")
     val entryText: String? = null,
     @Guide(
         description =
@@ -24,8 +17,11 @@ data class JournalIntent(
             "Target date in ISO format YYYY-MM-DD (e.g., 'yesterday', 'October 24th', or today's date).",
     )
     val targetDate: String? = null,
-    @Guide(description = "Search keyword or topic if action is QUERY_ENTRIES")
-    val searchKeyword: String? = null,
+    @Guide(
+        description =
+            "Target time in 24-hour format HH:mm (e.g., '18:30', '08:00') if a specific time of day is mentioned. null if no specific time of day is mentioned.",
+    )
+    val targetTime: String? = null,
     @Guide(description = "A friendly conversational reply confirming the action to the user.")
     val conversationalReply: String? = null,
 )

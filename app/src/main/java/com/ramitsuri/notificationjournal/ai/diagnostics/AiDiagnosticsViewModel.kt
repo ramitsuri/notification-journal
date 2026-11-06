@@ -59,6 +59,8 @@ data class DiagnosticsUiState(
     val mlKitSpeechStatus: Int = -1,
     val isDownloadingSpeech: Boolean = false,
     val speechDownloadStatus: String? = null,
+    val customPromptRules: String = "",
+    val customRulesSavedMessage: Boolean = false,
 )
 
 class AiDiagnosticsViewModel
@@ -66,7 +68,7 @@ class AiDiagnosticsViewModel
     constructor(
         private val prefManager: PrefManager,
         private val generativeModel: GenerativeModel = Generation.getClient(),
-        private val nanoExtractor: NanoJournalIntentExtractor = NanoJournalIntentExtractor(),
+        private val nanoExtractor: NanoJournalIntentExtractor = NanoJournalIntentExtractor(prefManager = prefManager),
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(DiagnosticsUiState())
         val uiState = _uiState.asStateFlow()
@@ -97,10 +99,27 @@ class AiDiagnosticsViewModel
 
         init {
             refreshModelInfo()
+            viewModelScope.launch {
+                prefManager.getCustomPromptRulesFlow().collect { rules ->
+                    _uiState.update { it.copy(customPromptRules = rules) }
+                }
+            }
         }
 
         fun onTestInputChange(input: String) {
             _uiState.update { it.copy(testInput = input) }
+        }
+
+        fun onCustomPromptRulesChange(rules: String) {
+            _uiState.update { it.copy(customPromptRules = rules, customRulesSavedMessage = false) }
+        }
+
+        fun saveCustomPromptRules() {
+            val rules = _uiState.value.customPromptRules
+            viewModelScope.launch {
+                prefManager.setCustomPromptRules(rules)
+                _uiState.update { it.copy(customRulesSavedMessage = true) }
+            }
         }
 
         fun onSpeechEngineSelected(engine: SpeechEngine) {
@@ -265,16 +284,17 @@ class AiDiagnosticsViewModel
             engineName: String,
             durationMs: Long,
         ) {
+            val cleanedText = text.trim().removeSuffix(".")
             val autoRun = _uiState.value.autoRunExtractionAfterSpeech
             _uiState.update {
                 it.copy(
                     isListeningToSpeech = false,
-                    testInput = text,
-                    executionLog = it.executionLog + "Transcribed in ${durationMs}ms via $engineName: \"$text\"",
+                    testInput = cleanedText,
+                    executionLog = it.executionLog + "Transcribed in ${durationMs}ms via $engineName: \"$cleanedText\"",
                 )
             }
-            if (autoRun && text.isNotBlank()) {
-                runLiveTest(inputOverride = text)
+            if (autoRun && cleanedText.isNotBlank()) {
+                runLiveTest(inputOverride = cleanedText)
             }
         }
 
@@ -327,11 +347,13 @@ class AiDiagnosticsViewModel
                         val hasStructured = features.contains(Feature.STRUCTURED_OUTPUT)
                         logs.add("Features: $features (STRUCTURED_OUTPUT=$hasStructured)")
 
+                        val customRules = _uiState.value.customPromptRules
+
                         // Attempt Tier 1: Structured Output
                         if (hasStructured) {
                             logs.add("Attempting Tier 1: Structured Output...")
                             try {
-                                val prompt = JournalPrompts.getStructuredOutputPrompt(input)
+                                val prompt = JournalPrompts.getStructuredOutputPrompt(input, customRules = customRules)
                                 val baseRequest =
                                     GenerateContentRequest
                                         .Builder(TextPart(prompt))
@@ -359,7 +381,7 @@ class AiDiagnosticsViewModel
                         // Attempt Tier 2: Raw Text / JSON Prompt
                         logs.add("Attempting Tier 2: Raw JSON Prompt generation...")
                         try {
-                            val jsonPrompt = JournalPrompts.getJsonPrompt(input)
+                            val jsonPrompt = JournalPrompts.getJsonPrompt(input, customRules = customRules)
                             val jsonRequest =
                                 GenerateContentRequest
                                     .Builder(TextPart(jsonPrompt))

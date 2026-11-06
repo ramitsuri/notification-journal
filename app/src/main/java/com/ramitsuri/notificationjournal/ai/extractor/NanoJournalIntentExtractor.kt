@@ -11,12 +11,14 @@ import com.google.mlkit.genai.prompt.generateTypedContentRequest
 import com.ramitsuri.notificationjournal.ai.model.ExtractionResult
 import com.ramitsuri.notificationjournal.ai.model.JournalIntent
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import org.json.JSONObject
 import java.time.LocalDate
 
 private const val TAG = "JournalAI"
 
 class NanoJournalIntentExtractor(
+    private val prefManager: PrefManager? = null,
     private val fallbackExtractor: JournalIntentExtractor = RuleBasedJournalIntentExtractor(),
 ) : JournalIntentExtractor {
     private val generativeModel: GenerativeModel = Generation.getClient()
@@ -41,6 +43,7 @@ class NanoJournalIntentExtractor(
 
     override suspend fun extractIntent(userInput: String): ExtractionResult? {
         val today = LocalDate.now().toString()
+        val customRules = prefManager?.getCustomPromptRules()
 
         val status =
             try {
@@ -68,7 +71,7 @@ class NanoJournalIntentExtractor(
             if (isStructuredOutputSupported()) {
                 try {
                     Log.d(TAG, "Attempting Structured Output extraction...")
-                    val prompt = JournalPrompts.getStructuredOutputPrompt(userInput, today)
+                    val prompt = JournalPrompts.getStructuredOutputPrompt(userInput, today, customRules)
 
                     val baseRequest =
                         GenerateContentRequest
@@ -87,14 +90,9 @@ class NanoJournalIntentExtractor(
                     val typedResponse = response.candidates.firstOrNull()?.response
                     if (typedResponse != null) {
                         val normalizedIntent =
-                            if (typedResponse.action != "QUERY_ENTRIES") {
-                                typedResponse.copy(
-                                    action = "ADD_ENTRY",
-                                    entryText = typedResponse.entryText ?: userInput,
-                                )
-                            } else {
-                                typedResponse
-                            }
+                            typedResponse.copy(
+                                entryText = typedResponse.entryText?.ifBlank { userInput } ?: userInput,
+                            )
                         Log.d(TAG, "Structured output succeeded: $normalizedIntent")
                         return ExtractionResult(
                             intent = normalizedIntent,
@@ -111,7 +109,7 @@ class NanoJournalIntentExtractor(
             // 2. Unstructured JSON prompt with Gemini Nano
             try {
                 Log.d(TAG, "Attempting JSON prompt extraction...")
-                val jsonPrompt = JournalPrompts.getJsonPrompt(userInput, today)
+                val jsonPrompt = JournalPrompts.getJsonPrompt(userInput, today, customRules)
 
                 val jsonRequest =
                     GenerateContentRequest
@@ -158,20 +156,13 @@ class NanoJournalIntentExtractor(
             if ((start != -1) && (end != -1) && (end > start)) {
                 val jsonStr = raw.substring(start, end + 1)
                 val jsonObject = JSONObject(jsonStr)
-                val action =
-                    if (jsonObject.optString("action") == "QUERY_ENTRIES") {
-                        "QUERY_ENTRIES"
-                    } else {
-                        "ADD_ENTRY"
-                    }
                 val rawText = jsonObject.optString("entryText").takeIf { it.isNotBlank() && it != "null" }
-                val entryText = if (action == "ADD_ENTRY") (rawText ?: originalInput) else rawText
+                val entryText = rawText ?: originalInput
                 JournalIntent(
-                    action = action,
                     entryText = entryText,
                     tag = jsonObject.optString("tag").takeIf { it.isNotBlank() && it != "null" },
                     targetDate = jsonObject.optString("targetDate").takeIf { it.isNotBlank() && it != "null" },
-                    searchKeyword = jsonObject.optString("searchKeyword").takeIf { it.isNotBlank() && it != "null" },
+                    targetTime = jsonObject.optString("targetTime").takeIf { it.isNotBlank() && it != "null" },
                     conversationalReply =
                         jsonObject.optString("conversationalReply").takeIf {
                             it.isNotBlank() && it != "null"
