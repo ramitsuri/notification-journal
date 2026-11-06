@@ -3,7 +3,9 @@ package com.ramitsuri.notificationjournal.ai.diagnostics
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +24,8 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -58,6 +62,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,9 +94,15 @@ fun AiDiagnosticsScreen(
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var selectedPromptTab by remember { mutableIntStateOf(0) }
+    var selectedPromptTab by rememberSaveable { mutableIntStateOf(0) }
     var listeningJob by remember { mutableStateOf<Job?>(null) }
     val isListening = listeningJob != null || state.isListeningToSpeech
+
+    var isLiveTestExpanded by rememberSaveable { mutableStateOf(true) }
+    var isModelCapabilitiesExpanded by rememberSaveable { mutableStateOf(false) }
+    var isSpeechEngineExpanded by rememberSaveable { mutableStateOf(false) }
+    var isCustomRulesExpanded by rememberSaveable { mutableStateOf(false) }
+    var isPromptsExpanded by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -204,7 +215,222 @@ fun AiDiagnosticsScreen(
                     .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Section 1: Model Capabilities & AICore Status
+            // Section 1: Live Test & Output Inspector
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isLiveTestExpanded = !isLiveTestExpanded },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "Live Test & Output Inspector",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Icon(
+                                imageVector =
+                                    if (isLiveTestExpanded) {
+                                        Icons.Default.ArrowDropUp
+                                    } else {
+                                        Icons.Default.ArrowDropDown
+                                    },
+                                contentDescription = if (isLiveTestExpanded) "Collapse" else "Expand",
+                            )
+                        }
+
+                        AnimatedVisibility(visible = isLiveTestExpanded) {
+                            Column {
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                OutlinedTextField(
+                                    value = state.testInput,
+                                    onValueChange = viewModel::onTestInputChange,
+                                    label = { Text("Test Input") },
+                                    trailingIcon = {
+                                        IconButton(
+                                            onClick = {
+                                                if (isListening) {
+                                                    stopListening()
+                                                } else {
+                                                    requestListeningWithPermission()
+                                                }
+                                            },
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isListening) Icons.Default.MicOff else Icons.Default.Mic,
+                                                contentDescription = if (isListening) "Stop listening" else "Speak input",
+                                                tint =
+                                                    if (isListening) {
+                                                        MaterialTheme.colorScheme.error
+                                                    } else {
+                                                        MaterialTheme.colorScheme.primary
+                                                    },
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    Text(
+                                        text = "Auto-run extraction on speech completion",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Switch(
+                                        checked = state.autoRunExtractionAfterSpeech,
+                                        onCheckedChange = viewModel::toggleAutoRunExtraction,
+                                    )
+                                }
+
+                                if (isListening) {
+                                    Text(
+                                        text = "Listening via ${state.selectedSpeechEngine.displayName}...",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.padding(vertical = 4.dp),
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Button(
+                                    onClick = viewModel::runLiveTest,
+                                    enabled = !state.isTesting,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    if (state.isTesting) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Running Inference...")
+                                    } else {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Run Test Extraction")
+                                    }
+                                }
+
+                                if (state.isTesting) {
+                                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+                                }
+
+                                state.engineUsed?.let { engine ->
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    HorizontalDivider()
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Text(
+                                        text = "Final Engine Used:",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Text(
+                                        text = engine,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
+
+                                state.structuredOutputAttempt?.let {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Structured Output Log:",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                    )
+                                }
+
+                                state.rawModelResponse?.let {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Raw Text from Gemini Nano:",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                            modifier = Modifier.padding(8.dp),
+                                        )
+                                    }
+                                }
+
+                                state.parsedIntent?.let { intent ->
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Parsed Result (AddEntryIntent):",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Column(modifier = Modifier.padding(8.dp)) {
+                                            Text(
+                                                "Entry Text: \"${intent.entryText}\"",
+                                                style = MaterialTheme.typography.bodySmall,
+                                            )
+                                            Text("Tag: ${intent.tag}", style = MaterialTheme.typography.bodySmall)
+                                            Text(
+                                                "Target Date: ${intent.targetDate}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                            )
+                                            Text(
+                                                "Target Time: ${intent.targetTime}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                            )
+                                            Text(
+                                                "Reply: \"${intent.conversationalReply}\"",
+                                                style = MaterialTheme.typography.bodySmall,
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (state.executionLog.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Execution Trace:",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    state.executionLog.forEach { logLine ->
+                                        Text("• $logLine", style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 2: Model Capabilities & AICore Status
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -215,7 +441,10 @@ fun AiDiagnosticsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isModelCapabilitiesExpanded = !isModelCapabilitiesExpanded },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -224,61 +453,79 @@ fun AiDiagnosticsScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                             )
-                            StatusBadge(statusCode = state.modelInfo.statusCode, text = state.modelInfo.statusText)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                StatusBadge(statusCode = state.modelInfo.statusCode, text = state.modelInfo.statusText)
+                                Icon(
+                                    imageVector =
+                                        if (isModelCapabilitiesExpanded) {
+                                            Icons.Default.ArrowDropUp
+                                        } else {
+                                            Icons.Default.ArrowDropDown
+                                        },
+                                    contentDescription = if (isModelCapabilitiesExpanded) "Collapse" else "Expand",
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Model: ${state.modelInfo.modelName.ifBlank { "Not loaded / Standard AICore" }}",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        Text(
-                            text = "Token Limit: ${state.modelInfo.tokenLimit}",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Feature Support:",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        FeatureRow("Structured Output (Constrained)", state.modelInfo.structuredOutputSupported)
-                        FeatureRow("System Prompt", state.modelInfo.systemPromptSupported)
-                        FeatureRow("Thinking Mode", state.modelInfo.thinkingModeSupported)
-                        FeatureRow("Prefix Caching", state.modelInfo.prefixCachingSupported)
-                        FeatureRow("Function Calling", state.modelInfo.functionCallingSupported)
-
-                        if (state.modelInfo.statusCode == FeatureStatus.DOWNLOADABLE ||
-                            state.modelInfo.statusCode == FeatureStatus.DOWNLOADING
-                        ) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(
-                                onClick = viewModel::triggerModelDownload,
-                                enabled = !state.isDownloading,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Icon(Icons.Default.Download, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(if (state.isDownloading) "Downloading..." else "Download Model Weights")
-                            }
-                            state.downloadStatus?.let {
+                        AnimatedVisibility(visible = isModelCapabilitiesExpanded) {
+                            Column {
+                                Spacer(modifier = Modifier.height(10.dp))
                                 Text(
-                                    text = it,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(top = 4.dp),
+                                    text = "Model: ${state.modelInfo.modelName.ifBlank { "Not loaded / Standard AICore" }}",
+                                    style = MaterialTheme.typography.bodyMedium,
                                 )
+                                Text(
+                                    text = "Token Limit: ${state.modelInfo.tokenLimit}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+                                HorizontalDivider()
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Text(
+                                    text = "Feature Support:",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                FeatureRow("Structured Output (Constrained)", state.modelInfo.structuredOutputSupported)
+                                FeatureRow("System Prompt", state.modelInfo.systemPromptSupported)
+                                FeatureRow("Thinking Mode", state.modelInfo.thinkingModeSupported)
+                                FeatureRow("Prefix Caching", state.modelInfo.prefixCachingSupported)
+                                FeatureRow("Function Calling", state.modelInfo.functionCallingSupported)
+
+                                if (state.modelInfo.statusCode == FeatureStatus.DOWNLOADABLE ||
+                                    state.modelInfo.statusCode == FeatureStatus.DOWNLOADING
+                                ) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Button(
+                                        onClick = viewModel::triggerModelDownload,
+                                        enabled = !state.isDownloading,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Icon(Icons.Default.Download, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (state.isDownloading) "Downloading..." else "Download Model Weights")
+                                    }
+                                    state.downloadStatus?.let {
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            modifier = Modifier.padding(top = 4.dp),
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // Section 2: Speech Recognition Engine
+            // Section 3: Speech Recognition Engine
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -288,102 +535,134 @@ fun AiDiagnosticsScreen(
                         ),
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Speech Recognition Engine",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Choose which on-device engine processes voice input from the assistant mic button.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        SpeechEngine.entries.forEach { engine ->
-                            val isSelected = state.selectedSpeechEngine == engine
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .selectable(
-                                            selected = isSelected,
-                                            role = Role.RadioButton,
-                                            onClick = { viewModel.onSpeechEngineSelected(engine) },
-                                        ).padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.Top,
-                            ) {
-                                RadioButton(
-                                    selected = isSelected,
-                                    onClick = null,
-                                    modifier = Modifier.padding(top = 2.dp),
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isSpeechEngineExpanded = !isSpeechEngineExpanded },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                Text(
+                                    text = "Speech Recognition Engine",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
                                 )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    ) {
-                                        Text(
-                                            text = engine.displayName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                        if (engine == SpeechEngine.MLKIT_GENAI) {
-                                            val (statusText, code) =
-                                                when (state.mlKitSpeechStatus) {
-                                                    FeatureStatus.AVAILABLE -> "Ready" to FeatureStatus.AVAILABLE
-                                                    FeatureStatus.DOWNLOADABLE ->
-                                                        "Downloadable" to
-                                                            FeatureStatus.DOWNLOADABLE
-                                                    FeatureStatus.DOWNLOADING ->
-                                                        "Downloading" to
-                                                            FeatureStatus.DOWNLOADING
-                                                    FeatureStatus.UNAVAILABLE ->
-                                                        "Unavailable" to
-                                                            FeatureStatus.UNAVAILABLE
-                                                    else -> "Checking..." to -1
-                                                }
-                                            StatusBadge(statusCode = code, text = statusText)
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height(2.dp))
+                                if (!isSpeechEngineExpanded) {
                                     Text(
-                                        text = engine.description,
+                                        text = state.selectedSpeechEngine.displayName,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = MaterialTheme.colorScheme.primary,
                                     )
+                                }
+                            }
+                            Icon(
+                                imageVector =
+                                    if (isSpeechEngineExpanded) {
+                                        Icons.Default.ArrowDropUp
+                                    } else {
+                                        Icons.Default.ArrowDropDown
+                                    },
+                                contentDescription = if (isSpeechEngineExpanded) "Collapse" else "Expand",
+                            )
+                        }
 
-                                    if (engine == SpeechEngine.MLKIT_GENAI &&
-                                        (
-                                            state.mlKitSpeechStatus == FeatureStatus.DOWNLOADABLE ||
-                                                state.mlKitSpeechStatus == FeatureStatus.DOWNLOADING
-                                        )
+                        AnimatedVisibility(visible = isSpeechEngineExpanded) {
+                            Column {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Choose which on-device engine processes voice input from the assistant mic button.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                SpeechEngine.entries.forEach { engine ->
+                                    val isSelected = state.selectedSpeechEngine == engine
+                                    Row(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .selectable(
+                                                    selected = isSelected,
+                                                    role = Role.RadioButton,
+                                                    onClick = { viewModel.onSpeechEngineSelected(engine) },
+                                                ).padding(vertical = 8.dp),
+                                        verticalAlignment = Alignment.Top,
                                     ) {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Button(
-                                            onClick = viewModel::triggerSpeechModelDownload,
-                                            enabled = !state.isDownloadingSpeech,
-                                            modifier = Modifier.fillMaxWidth(),
-                                        ) {
-                                            Icon(Icons.Default.Download, contentDescription = null)
-                                            Spacer(modifier = Modifier.width(8.dp))
+                                        RadioButton(
+                                            selected = isSelected,
+                                            onClick = null,
+                                            modifier = Modifier.padding(top = 2.dp),
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            ) {
+                                                Text(
+                                                    text = engine.displayName,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                                if (engine == SpeechEngine.MLKIT_GENAI) {
+                                                    val (statusText, code) =
+                                                        when (state.mlKitSpeechStatus) {
+                                                            FeatureStatus.AVAILABLE -> "Ready" to FeatureStatus.AVAILABLE
+                                                            FeatureStatus.DOWNLOADABLE ->
+                                                                "Downloadable" to
+                                                                    FeatureStatus.DOWNLOADABLE
+                                                            FeatureStatus.DOWNLOADING ->
+                                                                "Downloading" to
+                                                                    FeatureStatus.DOWNLOADING
+                                                            FeatureStatus.UNAVAILABLE ->
+                                                                "Unavailable" to
+                                                                    FeatureStatus.UNAVAILABLE
+                                                            else -> "Checking..." to -1
+                                                        }
+                                                    StatusBadge(statusCode = code, text = statusText)
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(2.dp))
                                             Text(
-                                                if (state.isDownloadingSpeech) {
-                                                    "Downloading Speech Model..."
-                                                } else {
-                                                    "Download Speech Model"
-                                                },
+                                                text = engine.description,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
-                                        }
-                                        state.speechDownloadStatus?.let {
-                                            Text(
-                                                text = it,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                modifier = Modifier.padding(top = 4.dp),
-                                            )
+
+                                            if (engine == SpeechEngine.MLKIT_GENAI &&
+                                                (
+                                                    state.mlKitSpeechStatus == FeatureStatus.DOWNLOADABLE ||
+                                                        state.mlKitSpeechStatus == FeatureStatus.DOWNLOADING
+                                                )
+                                            ) {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Button(
+                                                    onClick = viewModel::triggerSpeechModelDownload,
+                                                    enabled = !state.isDownloadingSpeech,
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                ) {
+                                                    Icon(Icons.Default.Download, contentDescription = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        if (state.isDownloadingSpeech) {
+                                                            "Downloading Speech Model..."
+                                                        } else {
+                                                            "Download Speech Model"
+                                                        },
+                                                    )
+                                                }
+                                                state.speechDownloadStatus?.let {
+                                                    Text(
+                                                        text = it,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        modifier = Modifier.padding(top = 4.dp),
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -393,59 +672,85 @@ fun AiDiagnosticsScreen(
                 }
             }
 
-            // Section 2.5: Custom Prompt Rules
+            // Section 4: Custom Prompt Rules
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Custom Prompt Rules",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Add custom instructions for the LLM when extracting journal entries (e.g., abbreviations, custom formatting). One rule per line. These are included automatically in the prompt.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = state.customPromptRules,
-                            onValueChange = viewModel::onCustomPromptRulesChange,
-                            placeholder = { Text("e.g.\nWhen I say workout, tag as #fitness\nReplace gym with fitness") },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 3,
-                            maxLines = 6,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isCustomRulesExpanded = !isCustomRulesExpanded },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            if (state.customRulesSavedMessage) {
+                            Text(
+                                text = "Custom Prompt Rules",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Icon(
+                                imageVector =
+                                    if (isCustomRulesExpanded) {
+                                        Icons.Default.ArrowDropUp
+                                    } else {
+                                        Icons.Default.ArrowDropDown
+                                    },
+                                contentDescription = if (isCustomRulesExpanded) "Collapse" else "Expand",
+                            )
+                        }
+
+                        AnimatedVisibility(visible = isCustomRulesExpanded) {
+                            Column {
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Rules saved!",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    text = "Add custom instructions for the LLM when extracting journal entries (e.g., abbreviations, custom formatting). One rule per line. These are included automatically in the prompt.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                            } else {
-                                Spacer(modifier = Modifier.width(1.dp))
-                            }
-                            Button(onClick = viewModel::saveCustomPromptRules) {
-                                Text("Save Rules")
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = state.customPromptRules,
+                                    onValueChange = viewModel::onCustomPromptRulesChange,
+                                    placeholder = { Text("e.g.\nWhen I say workout, tag as #fitness\nReplace gym with fitness") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    minLines = 3,
+                                    maxLines = 6,
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    if (state.customRulesSavedMessage) {
+                                        Text(
+                                            text = "Rules saved!",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    } else {
+                                        Spacer(modifier = Modifier.width(1.dp))
+                                    }
+                                    Button(onClick = viewModel::saveCustomPromptRules) {
+                                        Text("Save Rules")
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // Section 3: Copyable System Prompts
+            // Section 5: Copyable System Prompts
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isPromptsExpanded = !isPromptsExpanded },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -454,244 +759,65 @@ fun AiDiagnosticsScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                             )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TabRow(selectedTabIndex = selectedPromptTab) {
-                            Tab(
-                                selected = selectedPromptTab == 0,
-                                onClick = { selectedPromptTab = 0 },
-                                text = { Text("JSON Prompt") },
-                            )
-                            Tab(
-                                selected = selectedPromptTab == 1,
-                                onClick = { selectedPromptTab = 1 },
-                                text = { Text("Structured Prompt") },
-                            )
-                        }
-
-                        val currentPrompt =
-                            if (selectedPromptTab == 0) {
-                                JournalPrompts.getAddEntryJsonPrompt(state.testInput, customRules = state.customPromptRules)
-                            } else {
-                                JournalPrompts.getAddEntryStructuredOutputPrompt(state.testInput, customRules = state.customPromptRules)
-                            }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = {
-                                clipboardManager.setText(AnnotatedString(currentPrompt))
-                                Toast.makeText(context, "Prompt copied to clipboard!", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Copy Prompt to Clipboard")
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                text = currentPrompt,
-                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                                modifier = Modifier.padding(12.dp),
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Section 3: Live Test & Output Inspector
-            item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Live Test & Output Inspector",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedTextField(
-                            value = state.testInput,
-                            onValueChange = viewModel::onTestInputChange,
-                            label = { Text("Test Input") },
-                            trailingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        if (isListening) {
-                                            stopListening()
-                                        } else {
-                                            requestListeningWithPermission()
-                                        }
+                            Icon(
+                                imageVector =
+                                    if (isPromptsExpanded) {
+                                        Icons.Default.ArrowDropUp
+                                    } else {
+                                        Icons.Default.ArrowDropDown
                                     },
+                                contentDescription = if (isPromptsExpanded) "Collapse" else "Expand",
+                            )
+                        }
+
+                        AnimatedVisibility(visible = isPromptsExpanded) {
+                            Column {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TabRow(selectedTabIndex = selectedPromptTab) {
+                                    Tab(
+                                        selected = selectedPromptTab == 0,
+                                        onClick = { selectedPromptTab = 0 },
+                                        text = { Text("JSON Prompt") },
+                                    )
+                                    Tab(
+                                        selected = selectedPromptTab == 1,
+                                        onClick = { selectedPromptTab = 1 },
+                                        text = { Text("Structured Prompt") },
+                                    )
+                                }
+
+                                val currentPrompt =
+                                    if (selectedPromptTab == 0) {
+                                        JournalPrompts.getAddEntryJsonPrompt(state.testInput, customRules = state.customPromptRules)
+                                    } else {
+                                        JournalPrompts.getAddEntryStructuredOutputPrompt(state.testInput, customRules = state.customPromptRules)
+                                    }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        clipboardManager.setText(AnnotatedString(currentPrompt))
+                                        Toast.makeText(context, "Prompt copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
                                 ) {
-                                    Icon(
-                                        imageVector = if (isListening) Icons.Default.MicOff else Icons.Default.Mic,
-                                        contentDescription = if (isListening) "Stop listening" else "Speak input",
-                                        tint =
-                                            if (isListening) {
-                                                MaterialTheme.colorScheme.error
-                                            } else {
-                                                MaterialTheme.colorScheme.primary
-                                            },
+                                    Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Copy Prompt to Clipboard")
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = currentPrompt,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                        modifier = Modifier.padding(12.dp),
                                     )
                                 }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                text = "Auto-run extraction on speech completion",
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            Switch(
-                                checked = state.autoRunExtractionAfterSpeech,
-                                onCheckedChange = viewModel::toggleAutoRunExtraction,
-                            )
-                        }
-
-                        if (isListening) {
-                            Text(
-                                text = "Listening via ${state.selectedSpeechEngine.displayName}...",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(vertical = 4.dp),
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(
-                            onClick = viewModel::runLiveTest,
-                            enabled = !state.isTesting,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            if (state.isTesting) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Running Inference...")
-                            } else {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Run Test Extraction")
-                            }
-                        }
-
-                        if (state.isTesting) {
-                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
-                        }
-
-                        state.engineUsed?.let { engine ->
-                            Spacer(modifier = Modifier.height(12.dp))
-                            HorizontalDivider()
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text(
-                                text = "Final Engine Used:",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = engine,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-
-                        state.structuredOutputAttempt?.let {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Structured Output Log:",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                            )
-                        }
-
-                        state.rawModelResponse?.let {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Raw Text from Gemini Nano:",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(
-                                    text = it,
-                                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                                    modifier = Modifier.padding(8.dp),
-                                )
-                            }
-                        }
-
-                        state.parsedIntent?.let { intent ->
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Parsed Result (AddEntryIntent):",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Column(modifier = Modifier.padding(8.dp)) {
-                                    Text(
-                                        "Entry Text: \"${intent.entryText}\"",
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                    Text("Tag: ${intent.tag}", style = MaterialTheme.typography.bodySmall)
-                                    Text(
-                                        "Target Date: ${intent.targetDate}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                    Text(
-                                        "Target Time: ${intent.targetTime}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                    Text(
-                                        "Reply: \"${intent.conversationalReply}\"",
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                }
-                            }
-                        }
-
-                        if (state.executionLog.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Execution Trace:",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            state.executionLog.forEach { logLine ->
-                                Text("• $logLine", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
