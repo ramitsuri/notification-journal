@@ -472,9 +472,9 @@ fun AiDiagnosticsScreen(
 
                         val currentPrompt =
                             if (selectedPromptTab == 0) {
-                                JournalPrompts.getJsonPrompt(state.testInput, customRules = state.customPromptRules)
+                                JournalPrompts.getAddEntryJsonPrompt(state.testInput, customRules = state.customPromptRules)
                             } else {
-                                JournalPrompts.getStructuredOutputPrompt(state.testInput, customRules = state.customPromptRules)
+                                JournalPrompts.getAddEntryStructuredOutputPrompt(state.testInput, customRules = state.customPromptRules)
                             }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -652,7 +652,7 @@ fun AiDiagnosticsScreen(
                         state.parsedIntent?.let { intent ->
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Parsed Result (JournalIntent):",
+                                text = "Parsed Result (AddEntryIntent):",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                             )

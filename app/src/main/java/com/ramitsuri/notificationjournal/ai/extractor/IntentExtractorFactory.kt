@@ -4,7 +4,7 @@ import android.os.Build
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 
 object IntentExtractorFactory {
-    fun create(prefManager: PrefManager? = null): JournalIntentExtractor {
+    fun createAddEntryExtractor(prefManager: PrefManager? = null): AddEntryIntentExtractor {
         val isEmulator =
             Build.FINGERPRINT.startsWith("generic") ||
                 Build.MODEL.contains("google_sdk") ||
@@ -12,9 +12,9 @@ object IntentExtractorFactory {
                 Build.HARDWARE.contains("ranchu")
 
         return if (isEmulator) {
-            RuleBasedJournalIntentExtractor()
+            RuleBasedAddEntryIntentExtractor()
         } else {
-            NanoJournalIntentExtractor(prefManager = prefManager)
+            NanoAddEntryIntentExtractor(prefManager = prefManager)
         }
     }
 }

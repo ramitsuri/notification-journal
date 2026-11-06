@@ -3,31 +3,31 @@ package com.ramitsuri.notificationjournal.ai.prompt
 import java.time.LocalDate
 
 object JournalPrompts {
-    fun getStructuredOutputPrompt(
+    fun getAddEntryStructuredOutputPrompt(
         userInput: String,
         today: String = LocalDate.now().toString(),
         customRules: String? = null,
     ): String =
-        buildPrompt(
+        buildAddEntryPrompt(
             userInput = userInput,
             today = today,
             customRules = customRules,
             isJsonMode = false,
         )
 
-    fun getJsonPrompt(
+    fun getAddEntryJsonPrompt(
         userInput: String,
         today: String = LocalDate.now().toString(),
         customRules: String? = null,
     ): String =
-        buildPrompt(
+        buildAddEntryPrompt(
             userInput = userInput,
             today = today,
             customRules = customRules,
             isJsonMode = true,
         )
 
-    private fun buildPrompt(
+    private fun buildAddEntryPrompt(
         userInput: String,
         today: String,
         customRules: String?,

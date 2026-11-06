@@ -1,17 +1,17 @@
 package com.ramitsuri.notificationjournal.ai.extractor
 
+import com.ramitsuri.notificationjournal.ai.model.AddEntryIntent
 import com.ramitsuri.notificationjournal.ai.model.ExtractionResult
-import com.ramitsuri.notificationjournal.ai.model.JournalIntent
 import java.time.LocalDate
 
 /**
- * A deterministic, rule-based intent extractor using pattern matching.
+ * A deterministic, rule-based intent extractor using pattern matching for adding entries.
  * Used on emulators without AICore/Gemini Nano and as a reliable offline fallback.
  */
-class RuleBasedJournalIntentExtractor : JournalIntentExtractor {
+class RuleBasedAddEntryIntentExtractor : AddEntryIntentExtractor {
     override suspend fun isAvailable(): Boolean = true
 
-    override suspend fun extractIntent(userInput: String): ExtractionResult {
+    override suspend fun extractIntent(userInput: String): ExtractionResult<AddEntryIntent> {
         val trimmed = userInput.trim()
         val lower = trimmed.lowercase()
 
@@ -23,7 +23,7 @@ class RuleBasedJournalIntentExtractor : JournalIntentExtractor {
         cleanedText = cleanedText.replace(AT_TIME_REGEX, "at {{time}}")
 
         val intent =
-            JournalIntent(
+            AddEntryIntent(
                 entryText = cleanedText,
                 tag = null,
                 targetDate = targetDate,
@@ -63,16 +63,16 @@ class RuleBasedJournalIntentExtractor : JournalIntentExtractor {
                 var hour = colonMatch.groupValues[1].toInt()
                 val minute = colonMatch.groupValues[2].toInt()
                 val amPm = colonMatch.groupValues[3].lowercase()
-                if (amPm == "pm" && hour < 12) hour += 12
-                if (amPm == "am" && hour == 12) hour = 0
+                if ((amPm == "pm") && (hour < 12)) hour += 12
+                if ((amPm == "am") && (hour == 12)) hour = 0
                 return String.format(java.util.Locale.US, "%02d:%02d", hour, minute)
             }
             val hourOnlyMatch = Regex("""^(\d{1,2})\s*(am|pm)$""", RegexOption.IGNORE_CASE).matchEntire(trimmed)
             if (hourOnlyMatch != null) {
                 var hour = hourOnlyMatch.groupValues[1].toInt()
                 val amPm = hourOnlyMatch.groupValues[2].lowercase()
-                if (amPm == "pm" && hour < 12) hour += 12
-                if (amPm == "am" && hour == 12) hour = 0
+                if ((amPm == "pm") && (hour < 12)) hour += 12
+                if ((amPm == "am") && (hour == 12)) hour = 0
                 return String.format(java.util.Locale.US, "%02d:00", hour)
             }
             return null

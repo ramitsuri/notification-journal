@@ -96,7 +96,7 @@ class VoiceNoteProcessWorker
 
             val transcribedText = rawTranscribedText.trim().removeSuffix(".")
 
-            val extractor = IntentExtractorFactory.create(prefManager)
+            val extractor = IntentExtractorFactory.createAddEntryExtractor(prefManager)
             val intent =
                 try {
                     val result = extractor.extractIntent(transcribedText)

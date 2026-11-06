@@ -4,7 +4,7 @@ import com.google.mlkit.genai.schema.annotations.Generable
 import com.google.mlkit.genai.schema.annotations.Guide
 
 @Generable("Represents user intent when adding a journal entry")
-data class JournalIntent(
+data class AddEntryIntent(
     @Guide(description = "The narrative text content of the journal entry.")
     val entryText: String? = null,
     @Guide(

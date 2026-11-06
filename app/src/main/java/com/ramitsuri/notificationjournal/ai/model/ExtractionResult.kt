@@ -1,6 +1,6 @@
 package com.ramitsuri.notificationjournal.ai.model
 
-data class ExtractionResult(
-    val intent: JournalIntent,
+data class ExtractionResult<T>(
+    val intent: T,
     val engine: String,
 )

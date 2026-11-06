@@ -13,8 +13,8 @@ import com.google.mlkit.genai.prompt.generateTypedContentRequest
 import com.google.mlkit.genai.speechrecognition.SpeechRecognition
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizer
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizerOptions
-import com.ramitsuri.notificationjournal.ai.extractor.NanoJournalIntentExtractor
-import com.ramitsuri.notificationjournal.ai.model.JournalIntent
+import com.ramitsuri.notificationjournal.ai.extractor.NanoAddEntryIntentExtractor
+import com.ramitsuri.notificationjournal.ai.model.AddEntryIntent
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
@@ -50,7 +50,7 @@ data class DiagnosticsUiState(
     val autoRunExtractionAfterSpeech: Boolean = true,
     val structuredOutputAttempt: String? = null,
     val rawModelResponse: String? = null,
-    val parsedIntent: JournalIntent? = null,
+    val parsedIntent: AddEntryIntent? = null,
     val engineUsed: String? = null,
     val executionLog: List<String> = emptyList(),
     val isDownloading: Boolean = false,
@@ -68,7 +68,7 @@ class AiDiagnosticsViewModel
     constructor(
         private val prefManager: PrefManager,
         private val generativeModel: GenerativeModel = Generation.getClient(),
-        private val nanoExtractor: NanoJournalIntentExtractor = NanoJournalIntentExtractor(prefManager = prefManager),
+        private val nanoExtractor: NanoAddEntryIntentExtractor = NanoAddEntryIntentExtractor(prefManager = prefManager),
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(DiagnosticsUiState())
         val uiState = _uiState.asStateFlow()
@@ -353,7 +353,7 @@ class AiDiagnosticsViewModel
                         if (hasStructured) {
                             logs.add("Attempting Tier 1: Structured Output...")
                             try {
-                                val prompt = JournalPrompts.getStructuredOutputPrompt(input, customRules = customRules)
+                                val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt(input, customRules = customRules)
                                 val baseRequest =
                                     GenerateContentRequest
                                         .Builder(TextPart(prompt))
@@ -364,7 +364,7 @@ class AiDiagnosticsViewModel
                                 val typedRequest =
                                     generateTypedContentRequest(
                                         generateContentRequest = baseRequest,
-                                        outputClass = JournalIntent::class,
+                                        outputClass = AddEntryIntent::class,
                                     )
                                 val response = generativeModel.generateContent(typedRequest)
                                 val typed = response.candidates.firstOrNull()?.response
@@ -381,7 +381,7 @@ class AiDiagnosticsViewModel
                         // Attempt Tier 2: Raw Text / JSON Prompt
                         logs.add("Attempting Tier 2: Raw JSON Prompt generation...")
                         try {
-                            val jsonPrompt = JournalPrompts.getJsonPrompt(input, customRules = customRules)
+                            val jsonPrompt = JournalPrompts.getAddEntryJsonPrompt(input, customRules = customRules)
                             val jsonRequest =
                                 GenerateContentRequest
                                     .Builder(TextPart(jsonPrompt))
@@ -400,13 +400,13 @@ class AiDiagnosticsViewModel
                         logs.add("Model is NOT AVAILABLE. Skipping direct inference.")
                     }
 
-                    // Step 2: Run through the full NanoJournalIntentExtractor pipeline
-                    logs.add("Running end-to-end NanoJournalIntentExtractor...")
+                    // Step 2: Run through the full NanoAddEntryIntentExtractor pipeline
+                    logs.add("Running end-to-end NanoAddEntryIntentExtractor...")
                     val extractionResult =
                         try {
                             nanoExtractor.extractIntent(input)
                         } catch (e: Exception) {
-                            logs.add("NanoJournalIntentExtractor threw: ${e.message}")
+                            logs.add("NanoAddEntryIntentExtractor threw: ${e.message}")
                             null
                         }
 
