@@ -87,8 +87,7 @@ class VerifyEntriesHelper(
                     if (it is TimeoutCancellationException) {
                         log { "canceled from timeout for date $date" }
                     }
-                }
-                .firstOrNull()
+                }.firstOrNull()
         if (response == null) {
             log { "Verify entries response not received for date $date" }
             return null

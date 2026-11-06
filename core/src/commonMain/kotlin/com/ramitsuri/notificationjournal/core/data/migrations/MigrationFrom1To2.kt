@@ -23,20 +23,21 @@ class MigrationFrom1To2 : Migration(1, 2) {
                 ")",
         )
         journalEntriesV1.forEach { journalEntryV1 ->
-            connection.prepare(
-                "INSERT INTO JournalEntry " +
-                    "(id, entry_time, time_zone, text, tag, entry_time_override) " +
-                    "VALUES " +
-                    "(?, ?, ?, ?, ?, ?)",
-            ).use { statement ->
-                statement.bindInt(index = 1, value = journalEntryV1.id)
-                statement.bindLong(index = 2, value = journalEntryV1.entryTimeMillis)
-                statement.bindText(index = 3, value = journalEntryV1.timeZone)
-                statement.bindText(index = 4, value = journalEntryV1.text)
-                statement.bindNull(index = 5)
-                statement.bindNull(index = 6)
-                statement.step()
-            }
+            connection
+                .prepare(
+                    "INSERT INTO JournalEntry " +
+                        "(id, entry_time, time_zone, text, tag, entry_time_override) " +
+                        "VALUES " +
+                        "(?, ?, ?, ?, ?, ?)",
+                ).use { statement ->
+                    statement.bindInt(index = 1, value = journalEntryV1.id)
+                    statement.bindLong(index = 2, value = journalEntryV1.entryTimeMillis)
+                    statement.bindText(index = 3, value = journalEntryV1.timeZone)
+                    statement.bindText(index = 4, value = journalEntryV1.text)
+                    statement.bindNull(index = 5)
+                    statement.bindNull(index = 6)
+                    statement.step()
+                }
         }
     }
 

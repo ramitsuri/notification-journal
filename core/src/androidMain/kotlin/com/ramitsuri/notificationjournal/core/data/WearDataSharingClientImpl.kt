@@ -23,12 +23,13 @@ class WearDataSharingClientImpl(
         value: String,
         time: LocalDateTime,
         tag: String?,
-    ): Boolean {
-        return try {
+    ): Boolean =
+        try {
             val id = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.JOURNAL_ENTRY_ROUTE}/$id"
             val request =
-                PutDataMapRequest.create(path)
+                PutDataMapRequest
+                    .create(path)
                     .apply {
                         dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_VALUE, value)
                         dataMap.putString(
@@ -38,8 +39,7 @@ class WearDataSharingClientImpl(
                         if (tag != null) {
                             dataMap.putString(Constants.WearDataSharing.JOURNAL_ENTRY_TAG, tag)
                         }
-                    }
-                    .asPutDataRequest()
+                    }.asPutDataRequest()
                     .setUrgent()
 
             dataClient.putDataItem(request).await()
@@ -51,7 +51,6 @@ class WearDataSharingClientImpl(
             Log.d(TAG, "Failed to post entry: ${exception.message}")
             false
         }
-    }
 
     @SuppressLint("VisibleForTests")
     override suspend fun requestUpload() {
@@ -62,7 +61,8 @@ class WearDataSharingClientImpl(
             // Receiving client should resolve receiving multiple upload events.
             val path = "${Constants.WearDataSharing.REQUEST_UPLOAD_ROUTE}/$id"
             val request =
-                PutDataMapRequest.create(path)
+                PutDataMapRequest
+                    .create(path)
                     .asPutDataRequest()
                     .setUrgent()
 
@@ -73,12 +73,13 @@ class WearDataSharingClientImpl(
     }
 
     @SuppressLint("VisibleForTests")
-    override suspend fun postTemplate(template: JournalEntryTemplate): Boolean {
-        return try {
+    override suspend fun postTemplate(template: JournalEntryTemplate): Boolean =
+        try {
             val requestId = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.TEMPLATE_ROUTE}/$requestId"
             val request =
-                PutDataMapRequest.create(path)
+                PutDataMapRequest
+                    .create(path)
                     .apply {
                         dataMap.apply {
                             putString(Constants.WearDataSharing.TEMPLATE_ID, template.id)
@@ -93,8 +94,7 @@ class WearDataSharingClientImpl(
                                 template.shortDisplayText,
                             )
                         }
-                    }
-                    .asPutDataRequest()
+                    }.asPutDataRequest()
                     .setUrgent()
 
             dataClient.putDataItem(request).await()
@@ -103,14 +103,14 @@ class WearDataSharingClientImpl(
             Log.d(TAG, "Failed to post template: ${exception.message}")
             false
         }
-    }
 
-    override suspend fun clearTemplates(): Boolean {
-        return try {
+    override suspend fun clearTemplates(): Boolean =
+        try {
             val requestId = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.CLEAR_TEMPLATES_ROUTE}/$requestId"
             val request =
-                PutDataMapRequest.create(path)
+                PutDataMapRequest
+                    .create(path)
                     .asPutDataRequest()
                     .setUrgent()
 
@@ -120,14 +120,14 @@ class WearDataSharingClientImpl(
             Log.d(TAG, "Failed to clear templates: ${exception.message}")
             false
         }
-    }
 
-    override suspend fun updateTile(): Boolean {
-        return try {
+    override suspend fun updateTile(): Boolean =
+        try {
             val requestId = UUID.randomUUID().toString()
             val path = "${Constants.WearDataSharing.UPDATE_TILE_ROUTE}/$requestId"
             val request =
-                PutDataMapRequest.create(path)
+                PutDataMapRequest
+                    .create(path)
                     .asPutDataRequest()
                     .setUrgent()
 
@@ -137,7 +137,6 @@ class WearDataSharingClientImpl(
             Log.d(TAG, "Failed to update tile: ${exception.message}")
             false
         }
-    }
 
     companion object {
         private const val TAG = "DataSharingClient"

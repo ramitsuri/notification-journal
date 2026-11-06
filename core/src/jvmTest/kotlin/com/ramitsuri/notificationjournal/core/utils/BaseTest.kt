@@ -2,8 +2,6 @@ package com.ramitsuri.notificationjournal.core.utils
 
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.getTestDb
-import com.ramitsuri.notificationjournal.core.di.DiFactory
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -41,8 +39,6 @@ abstract class BaseTest {
                     dataSendHelper = dataSendHelper,
                     prefManager = prefManager,
                 )
-
-            ServiceLocator.init(DiFactory())
         }
 
     @After

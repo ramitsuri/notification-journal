@@ -9,6 +9,9 @@ import com.ramitsuri.notificationjournal.core.model.toDayGroups
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.ui.components.EntryDayHighlight
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -18,82 +21,90 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.LocalDate
 
-class ViewJournalEntryDayViewModel(
-    arg: Route.ViewJournalEntryDay,
-    repository: JournalRepository,
-    tagsDao: TagsDao,
-) : ViewModel() {
-    private val selectedDate = MutableStateFlow(arg.date)
-    private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
-
-    val state =
-        selectedDate
-            .filterNotNull()
-            .flatMapLatest { date ->
-                combine(
-                    repository.getForDateFlow(date),
-                    contentForCopy,
-                ) { entries, contentForCopy ->
-                    val dayGroup =
-                        entries.toDayGroups(
-                            tagsForSort = tagsDao.getAll().map { it.value },
-                        ).firstOrNull()
-                    ViewState(
-                        dayGroup = dayGroup,
-                        selectedDate = date,
-                        contentForCopy = contentForCopy,
-                        highlight =
-                            arg.entryId?.let { entryId ->
-                                val index = getEntryIndex(dayGroup, entryId)
-                                if (index != null) {
-                                    EntryDayHighlight(index, entryId)
-                                } else {
-                                    null
-                                }
-                            },
-                    )
-                }
-            }.stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = ViewState(),
-            )
-
-    fun onDateSelected(date: LocalDate) {
-        selectedDate.value = date
-    }
-
-    fun onCopy(entry: JournalEntry) {
-        contentForCopy.update { entry.text }
-    }
-
-    fun onContentCopied() {
-        contentForCopy.update { "" }
-    }
-
-    private fun getEntryIndex(
-        dayGroup: DayGroup?,
-        entryId: String?,
-    ): Int? {
-        if (dayGroup == null) {
-            return null
+class ViewJournalEntryDayViewModel
+    @AssistedInject
+    constructor(
+        @Assisted arg: Route.ViewJournalEntryDay,
+        repository: JournalRepository,
+        tagsDao: TagsDao,
+    ) : ViewModel() {
+        @AssistedFactory
+        interface Factory {
+            fun create(arg: Route.ViewJournalEntryDay): ViewJournalEntryDayViewModel
         }
-        if (entryId == null) {
-            return null
+
+        private val selectedDate = MutableStateFlow(arg.date)
+        private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
+
+        val state =
+            selectedDate
+                .filterNotNull()
+                .flatMapLatest { date ->
+                    combine(
+                        repository.getForDateFlow(date),
+                        contentForCopy,
+                    ) { entries, contentForCopy ->
+                        val dayGroup =
+                            entries
+                                .toDayGroups(
+                                    tagsForSort = tagsDao.getAll().map { it.value },
+                                ).firstOrNull()
+                        ViewState(
+                            dayGroup = dayGroup,
+                            selectedDate = date,
+                            contentForCopy = contentForCopy,
+                            highlight =
+                                arg.entryId?.let { entryId ->
+                                    val index = getEntryIndex(dayGroup, entryId)
+                                    if (index != null) {
+                                        EntryDayHighlight(index, entryId)
+                                    } else {
+                                        null
+                                    }
+                                },
+                        )
+                    }
+                }.stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5_000),
+                    initialValue = ViewState(),
+                )
+
+        fun onDateSelected(date: LocalDate) {
+            selectedDate.value = date
         }
-        var index = -1
-        dayGroup.tagGroups.filter { it.entries.isNotEmpty() }.forEach { tagGroup ->
-            index++
-            tagGroup.entries.forEach { tagGroupEntry ->
+
+        fun onCopy(entry: JournalEntry) {
+            contentForCopy.update { entry.text }
+        }
+
+        fun onContentCopied() {
+            contentForCopy.update { "" }
+        }
+
+        private fun getEntryIndex(
+            dayGroup: DayGroup?,
+            entryId: String?,
+        ): Int? {
+            if (dayGroup == null) {
+                return null
+            }
+            if (entryId == null) {
+                return null
+            }
+            var index = -1
+            dayGroup.tagGroups.filter { it.entries.isNotEmpty() }.forEach { tagGroup ->
                 index++
-                if (tagGroupEntry.id == entryId) {
-                    return index
+                tagGroup.entries.forEach { tagGroupEntry ->
+                    index++
+                    if (tagGroupEntry.id == entryId) {
+                        return index
+                    }
                 }
             }
+            return null
         }
-        return null
     }
-}
 
 data class ViewState(
     val dayGroup: DayGroup? = null,

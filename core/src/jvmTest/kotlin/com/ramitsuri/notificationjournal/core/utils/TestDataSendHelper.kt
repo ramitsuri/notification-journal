@@ -21,34 +21,24 @@ class TestDataSendHelper : DataSendHelper {
         return sendSuccessful
     }
 
-    override suspend fun sendTags(tags: List<Tag>): Boolean {
-        return sendSuccessful
-    }
+    override suspend fun sendTags(tags: List<Tag>): Boolean = sendSuccessful
 
-    override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
-        return sendSuccessful
-    }
+    override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean = sendSuccessful
 
     override suspend fun sendClearDaysAndInsertEntries(
         days: List<LocalDate>,
         entries: List<JournalEntry>,
-    ): Boolean {
-        return sendSuccessful
-    }
+    ): Boolean = sendSuccessful
 
     override suspend fun sendVerifyEntriesRequest(
         date: LocalDate,
         verification: VerifyEntries.Verification,
         time: Instant,
-    ): Boolean {
-        return sendSuccessful
-    }
+    ): Boolean = sendSuccessful
 
     override suspend fun sendVerifyEntriesResponse(
         date: LocalDate,
         verification: VerifyEntries.Verification,
         time: Instant,
-    ): Boolean {
-        return sendSuccessful
-    }
+    ): Boolean = sendSuccessful
 }

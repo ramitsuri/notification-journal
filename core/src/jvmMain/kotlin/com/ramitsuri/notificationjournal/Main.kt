@@ -14,14 +14,15 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import com.ramitsuri.notificationjournal.core.di.DiFactory
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.di.DesktopGraph
 import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import com.ramitsuri.notificationjournal.core.utils.Constants
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.server.module
+import dev.zacsweers.metro.createGraph
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -38,13 +39,12 @@ import java.awt.desktop.AppForegroundListener
 import com.ramitsuri.notificationjournal.core.model.WindowPosition as AppWindowPosition
 
 fun main() {
-    val factory = DiFactory()
-    ServiceLocator.init(factory)
+    val graph = createGraph<DesktopGraph>()
 
     // This is not called automatically when the app first starts
-    ServiceLocator.onAppStart()
+    graph.lifecycleCoordinator.onAppStart()
 
-    ServiceLocator.coroutineScope.launch {
+    graph.coroutineScope.launch {
         embeddedServer(Netty, port = Constants.DATA_HOST_PORT, module = Application::module).start(wait = true)
     }
 
@@ -53,14 +53,14 @@ fun main() {
 
         val windowState =
             rememberWindowState(
-                size = getWindowSize(),
-                position = getWindowPosition(),
+                size = getWindowSize(graph.prefManager),
+                position = getWindowPosition(graph.prefManager),
             )
         val coroutineScope = rememberCoroutineScope()
         val navigator =
             remember {
                 Navigator(
-                    repository = ServiceLocator.repository,
+                    repository = graph.repository,
                     scope = coroutineScope,
                 )
             }
@@ -69,11 +69,11 @@ fun main() {
             Desktop.getDesktop().addAppEventListener(
                 object : AppForegroundListener {
                     override fun appRaisedToForeground(e: AppForegroundEvent?) {
-                        ServiceLocator.onAppStart()
+                        graph.lifecycleCoordinator.onAppStart()
                     }
 
                     override fun appMovedToBackground(e: AppForegroundEvent?) {
-                        ServiceLocator.onAppStop()
+                        graph.lifecycleCoordinator.onAppStop()
                     }
                 },
             )
@@ -90,20 +90,24 @@ fun main() {
                 }
             }
             NotificationJournalTheme {
-                NavGraph(navigator = navigator)
+                NavGraph(
+                    navigator = navigator,
+                    isDesktop = graph.isDesktop,
+                    navFactories = graph,
+                )
             }
             LaunchedEffect(windowState) {
                 snapshotFlow { windowState.size }
                     .distinctUntilChanged()
                     .debounce(300L)
-                    .onEach(::setWindowSize)
+                    .onEach { setWindowSize(graph.prefManager, it) }
                     .launchIn(this)
 
                 snapshotFlow { windowState.position }
                     .filter { it.isSpecified }
                     .distinctUntilChanged()
                     .debounce(300L)
-                    .onEach(::setWindowPosition)
+                    .onEach { setWindowPosition(graph.prefManager, it) }
                     .launchIn(this)
             }
             LifecycleResumeEffect(Unit) {
@@ -122,20 +126,21 @@ fun main() {
     }
 }
 
-private fun getWindowPosition(): WindowPosition {
-    return runBlocking {
-        ServiceLocator
-            .prefManager
+private fun getWindowPosition(prefManager: PrefManager): WindowPosition =
+    runBlocking {
+        prefManager
             .getWindowPosition()
             ?.let {
                 WindowPosition(x = it.x.dp, y = it.y.dp)
             }
             ?: defaultWindowPosition
     }
-}
 
-private suspend fun setWindowPosition(position: WindowPosition) {
-    ServiceLocator.prefManager.setWindowPosition(
+private suspend fun setWindowPosition(
+    prefManager: PrefManager,
+    position: WindowPosition,
+) {
+    prefManager.setWindowPosition(
         AppWindowPosition(
             x = position.x.value,
             y = position.y.value,
@@ -143,22 +148,24 @@ private suspend fun setWindowPosition(position: WindowPosition) {
     )
 }
 
-private fun getWindowSize(): DpSize {
-    return runBlocking {
-        ServiceLocator
-            .prefManager
+private fun getWindowSize(prefManager: PrefManager): DpSize =
+    runBlocking {
+        prefManager
             .getWindowSize()
             ?.let {
                 DpSize(
-                    width = it.width.dp, height = it.height.dp,
+                    width = it.width.dp,
+                    height = it.height.dp,
                 )
             }
             ?: defaultWindowSize
     }
-}
 
-private suspend fun setWindowSize(size: DpSize) {
-    ServiceLocator.prefManager.setWindowSize(
+private suspend fun setWindowSize(
+    prefManager: PrefManager,
+    size: DpSize,
+) {
+    prefManager.setWindowSize(
         WindowSize(
             height = size.height.value,
             width = size.width.value,

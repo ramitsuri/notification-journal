@@ -17,20 +17,17 @@ class DataStoreKeyValueStore(
     override fun getBooleanFlow(
         key: Key,
         defaultValue: Boolean,
-    ): Flow<Boolean> {
-        return dataStore
+    ): Flow<Boolean> =
+        dataStore
             .data
             .mapDistinct {
                 it[booleanPreferencesKey(key.value)] ?: defaultValue
             }
-    }
 
     override suspend fun getBoolean(
         key: Key,
         defaultValue: Boolean,
-    ): Boolean {
-        return getBooleanFlow(key, defaultValue).firstOrNull() ?: defaultValue
-    }
+    ): Boolean = getBooleanFlow(key, defaultValue).firstOrNull() ?: defaultValue
 
     override suspend fun putBoolean(
         key: Key,
@@ -44,20 +41,17 @@ class DataStoreKeyValueStore(
     override fun getStringFlow(
         key: Key,
         fallback: String,
-    ): Flow<String?> {
-        return dataStore
+    ): Flow<String?> =
+        dataStore
             .data
             .mapDistinct {
                 it[stringPreferencesKey(key.value)] ?: fallback
             }
-    }
 
     override suspend fun getString(
         key: Key,
         fallback: String,
-    ): String {
-        return getStringFlow(key, fallback).firstOrNull() ?: fallback
-    }
+    ): String = getStringFlow(key, fallback).firstOrNull() ?: fallback
 
     override suspend fun putString(
         key: Key,
@@ -71,20 +65,17 @@ class DataStoreKeyValueStore(
     override fun getIntFlow(
         key: Key,
         fallback: Int,
-    ): Flow<Int> {
-        return dataStore
+    ): Flow<Int> =
+        dataStore
             .data
             .mapDistinct {
                 it[intPreferencesKey(key.value)] ?: fallback
             }
-    }
 
     override suspend fun getInt(
         key: Key,
         fallback: Int,
-    ): Int {
-        return getIntFlow(key, fallback).firstOrNull() ?: fallback
-    }
+    ): Int = getIntFlow(key, fallback).firstOrNull() ?: fallback
 
     override suspend fun putInt(
         key: Key,

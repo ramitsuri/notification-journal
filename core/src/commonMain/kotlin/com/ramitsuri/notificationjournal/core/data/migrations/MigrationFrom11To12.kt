@@ -39,29 +39,30 @@ class MigrationFrom11To12 : Migration(11, 12) {
                 ")",
         )
         entries.forEach { entry ->
-            connection.prepare(
-                "INSERT INTO JournalEntry " +
-                    "(id, entry_time, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
-                    "VALUES " +
-                    " (?, ?, ?, ?, ?, ?, ?, ?)",
-            ).use { statement ->
-                statement.bindText(index = 1, value = entry.id)
-                statement.bindText(
-                    index = 2,
-                    value = entry.entryTimeMillis.toLocalDateTimeString(entry.timeZone),
-                )
-                statement.bindText(index = 3, value = entry.text)
-                if (entry.tag == null) {
-                    statement.bindNull(index = 4)
-                } else {
-                    statement.bindText(index = 4, value = entry.tag)
+            connection
+                .prepare(
+                    "INSERT INTO JournalEntry " +
+                        "(id, entry_time, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
+                        "VALUES " +
+                        " (?, ?, ?, ?, ?, ?, ?, ?)",
+                ).use { statement ->
+                    statement.bindText(index = 1, value = entry.id)
+                    statement.bindText(
+                        index = 2,
+                        value = entry.entryTimeMillis.toLocalDateTimeString(entry.timeZone),
+                    )
+                    statement.bindText(index = 3, value = entry.text)
+                    if (entry.tag == null) {
+                        statement.bindNull(index = 4)
+                    } else {
+                        statement.bindText(index = 4, value = entry.tag)
+                    }
+                    statement.bindBoolean(index = 5, value = entry.uploaded)
+                    statement.bindBoolean(index = 6, value = entry.autoTagged)
+                    statement.bindBoolean(index = 7, value = entry.deleted)
+                    statement.bindBoolean(index = 8, value = entry.reconciled)
+                    statement.step()
                 }
-                statement.bindBoolean(index = 5, value = entry.uploaded)
-                statement.bindBoolean(index = 6, value = entry.autoTagged)
-                statement.bindBoolean(index = 7, value = entry.deleted)
-                statement.bindBoolean(index = 8, value = entry.reconciled)
-                statement.step()
-            }
         }
     }
 
@@ -146,27 +147,28 @@ class MigrationFrom11To12 : Migration(11, 12) {
                 ")",
         )
         existing.forEach { conflict ->
-            connection.prepare(
-                "INSERT INTO EntryConflict " +
-                    "(id, entry_id, entry_time, text, tag, sender_name) " +
-                    "VALUES " +
-                    " (?, ?, ?, ?, ?, ?)",
-            ).use { statement ->
-                statement.bindText(index = 1, value = conflict.id)
-                statement.bindText(index = 2, value = conflict.entryId)
-                statement.bindText(
-                    index = 3,
-                    value = conflict.entryTimeMillis.toLocalDateTimeString(),
-                )
-                statement.bindText(index = 4, value = conflict.text)
-                if (conflict.tag == null) {
-                    statement.bindNull(index = 5)
-                } else {
-                    statement.bindText(index = 5, value = conflict.tag)
+            connection
+                .prepare(
+                    "INSERT INTO EntryConflict " +
+                        "(id, entry_id, entry_time, text, tag, sender_name) " +
+                        "VALUES " +
+                        " (?, ?, ?, ?, ?, ?)",
+                ).use { statement ->
+                    statement.bindText(index = 1, value = conflict.id)
+                    statement.bindText(index = 2, value = conflict.entryId)
+                    statement.bindText(
+                        index = 3,
+                        value = conflict.entryTimeMillis.toLocalDateTimeString(),
+                    )
+                    statement.bindText(index = 4, value = conflict.text)
+                    if (conflict.tag == null) {
+                        statement.bindNull(index = 5)
+                    } else {
+                        statement.bindText(index = 5, value = conflict.tag)
+                    }
+                    statement.bindText(index = 6, value = conflict.senderName)
+                    statement.step()
                 }
-                statement.bindText(index = 6, value = conflict.senderName)
-                statement.step()
-            }
         }
     }
 

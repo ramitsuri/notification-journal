@@ -175,8 +175,7 @@ fun JournalEntryDay(
                     indication = null,
                     onClick = {},
                     enabled = !showContent,
-                )
-                .alpha(if (showContent) 1f else 0f)
+                ).alpha(if (showContent) 1f else 0f)
                 .nestedScroll(scrollConnection)
                 .fillMaxSize()
                 .padding(horizontal = 4.dp),
@@ -535,12 +534,10 @@ private fun ListItem(
             Modifier
                 .graphicsLayer {
                     scaleX = scaleFactor
-                }
-                .then(modifier)
+                }.then(modifier)
                 .applyIf(highlight) {
                     background(highlightColor)
-                }
-                .clickable(
+                }.clickable(
                     interactionSource = mutableInteractionSource,
                     indication = null,
                     onClick = {
@@ -707,14 +704,14 @@ private fun EntryConflictView(
 ) {
     Column(
         modifier =
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onClick)
                 .border(
                     BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
                     RoundedCornerShape(8.dp),
-                )
-                .padding(8.dp),
+                ).padding(8.dp),
     ) {
         Text(device, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
@@ -843,8 +840,7 @@ private fun DetailsDialog(
                                 Modifier
                                     .clickable {
                                         showDate = !showDate
-                                    }
-                                    .padding(8.dp),
+                                    }.padding(8.dp),
                         )
                         if (allowEdits) {
                             OutlinedIconButton(
@@ -873,8 +869,7 @@ private fun DetailsDialog(
                                         onDismiss()
                                         onEditRequested()
                                     },
-                                )
-                                .padding(vertical = 16.dp),
+                                ).padding(vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Spacer(modifier = Modifier.width(8.dp))

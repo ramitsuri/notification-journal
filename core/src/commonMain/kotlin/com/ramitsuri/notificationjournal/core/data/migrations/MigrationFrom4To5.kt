@@ -28,30 +28,31 @@ class MigrationFrom4To5 : Migration(4, 5) {
         )
 
         entries.forEach { entry ->
-            connection.prepare(
-                "INSERT INTO JournalEntry " +
-                    "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
-                    "VALUES " +
-                    " (?, ?, ?, ?, ?, ?, ?, ?)",
-            ).use { statement ->
-                statement.bindInt(index = 1, value = entry.id)
-                statement.bindLong(index = 2, value = entry.entryTimeMillis)
-                statement.bindText(index = 3, value = entry.timeZone)
-                statement.bindText(index = 4, value = entry.text)
-                if (entry.tag == null) {
-                    statement.bindNull(index = 5)
-                } else {
-                    statement.bindText(index = 5, value = entry.tag)
+            connection
+                .prepare(
+                    "INSERT INTO JournalEntry " +
+                        "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
+                        "VALUES " +
+                        " (?, ?, ?, ?, ?, ?, ?, ?)",
+                ).use { statement ->
+                    statement.bindInt(index = 1, value = entry.id)
+                    statement.bindLong(index = 2, value = entry.entryTimeMillis)
+                    statement.bindText(index = 3, value = entry.timeZone)
+                    statement.bindText(index = 4, value = entry.text)
+                    if (entry.tag == null) {
+                        statement.bindNull(index = 5)
+                    } else {
+                        statement.bindText(index = 5, value = entry.tag)
+                    }
+                    if (entry.entryTimeOverride == null) {
+                        statement.bindNull(index = 6)
+                    } else {
+                        statement.bindLong(index = 6, entry.entryTimeOverride)
+                    }
+                    statement.bindBoolean(index = 7, value = false)
+                    statement.bindBoolean(index = 8, value = false)
+                    statement.step()
                 }
-                if (entry.entryTimeOverride == null) {
-                    statement.bindNull(index = 6)
-                } else {
-                    statement.bindLong(index = 6, entry.entryTimeOverride)
-                }
-                statement.bindBoolean(index = 7, value = false)
-                statement.bindBoolean(index = 8, value = false)
-                statement.step()
-            }
         }
     }
 

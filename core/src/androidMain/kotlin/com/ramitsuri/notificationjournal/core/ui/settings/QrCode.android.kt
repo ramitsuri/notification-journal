@@ -36,7 +36,8 @@ actual fun QrCodeScanner(
             }
         val imageAnalyzer = QrCodeAnalyzer(onQrCodeScanned = onQrCodeScanned)
         val imageAnalysis =
-            ImageAnalysis.Builder()
+            ImageAnalysis
+                .Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {

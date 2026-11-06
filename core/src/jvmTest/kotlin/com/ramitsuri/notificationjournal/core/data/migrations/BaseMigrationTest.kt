@@ -25,14 +25,10 @@ open class BaseMigrationTest {
         Path("test").deleteRecursively()
     }
 
-    fun createDatabase(version: Int): SQLiteConnection {
-        return helper.createDatabase(version)
-    }
+    fun createDatabase(version: Int): SQLiteConnection = helper.createDatabase(version)
 
     fun runMigrationAndValidate(
         version: Int,
         migration: Migration,
-    ): SQLiteConnection {
-        return helper.runMigrationsAndValidate(version, listOf(migration))
-    }
+    ): SQLiteConnection = helper.runMigrationsAndValidate(version, listOf(migration))
 }

@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlin)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.metro)
 }
 
 android {
@@ -16,7 +17,12 @@ android {
         applicationId = "com.ramitsuri.notificationjournal"
         minSdk = 30
         targetSdk = 37
-        versionCode = appVersion.toDouble().times(100).plus(1).toInt()
+        versionCode =
+            appVersion
+                .toDouble()
+                .times(100)
+                .plus(1)
+                .toInt()
         versionName = appVersion
 
         vectorDrawables {
@@ -58,6 +64,9 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    lint {
+        disable += "Instantiatable"
+    }
 }
 
 kotlin {
@@ -68,6 +77,9 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
+    implementation(libs.metro.runtime)
+    implementation(libs.metrox.android)
+    implementation(libs.metrox.viewmodel)
 
     implementation(libs.androidx.ktx)
     implementation(libs.playservices.wearable)

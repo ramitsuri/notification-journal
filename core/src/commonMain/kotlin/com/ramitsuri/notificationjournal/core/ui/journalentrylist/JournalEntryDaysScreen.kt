@@ -26,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LabelOff
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
@@ -40,7 +39,6 @@ import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -83,7 +81,6 @@ import com.ramitsuri.notificationjournal.core.utils.dayOfWeek
 import com.ramitsuri.notificationjournal.core.utils.monthDateYear
 import kotlinx.datetime.LocalDate
 import notificationjournal.core.generated.resources.Res
-import notificationjournal.core.generated.resources.add_entry_content_description
 import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.entry_days_empty
 import notificationjournal.core.generated.resources.not_verified
@@ -271,8 +268,7 @@ private fun DateWithCountItem(
                 .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                 .clickable(
                     onClick = onClick,
-                )
-                .padding(8.dp),
+                ).padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -359,8 +355,8 @@ private fun TooltipContainer(
 }
 
 @Composable
-private fun DateWithCount.Verification.label(): String {
-    return when (this) {
+private fun DateWithCount.Verification.label(): String =
+    when (this) {
         is DateWithCount.Verification.InProgress -> {
             stringResource(Res.string.verifying)
         }
@@ -373,7 +369,6 @@ private fun DateWithCount.Verification.label(): String {
             with
         }
     }
-}
 
 @Composable
 private fun DateWithCount.Verification.Icon() {

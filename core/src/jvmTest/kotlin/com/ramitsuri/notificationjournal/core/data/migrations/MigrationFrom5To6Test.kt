@@ -176,9 +176,7 @@ class MigrationFrom5To6Test : BaseMigrationTest() {
 
     //endregion
 
-    private fun migrateAndGetDbV6(): SQLiteConnection {
-        return runMigrationAndValidate(6, MigrationFrom5To6())
-    }
+    private fun migrateAndGetDbV6(): SQLiteConnection = runMigrationAndValidate(6, MigrationFrom5To6())
 
     //region Tag
 

@@ -13,7 +13,9 @@ enum class SpeechEngine(
     MLKIT_GENAI(
         id = "mlkit_genai",
         displayName = "ML Kit GenAI Speech (Basic)",
-        description = "Uses ML Kit Speech Recognition in Basic mode via Google Speech Services with reactive streaming and word timing.",
+        description =
+            "Uses ML Kit Speech Recognition in Basic mode via Google Speech Services " +
+                "with reactive streaming and word timing.",
     ),
     ;
 

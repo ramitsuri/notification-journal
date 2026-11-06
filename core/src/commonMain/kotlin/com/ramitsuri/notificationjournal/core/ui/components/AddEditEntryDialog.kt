@@ -177,7 +177,8 @@ fun AddEditEntryDialog(
                 .background(MaterialTheme.colorScheme.background)
                 .imePadding()
                 .navigationBarsPadding()
-                .focusable().onKeyEvent {
+                .focusable()
+                .onKeyEvent {
                     showTemplatesKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed
                     showTagsKeyboardShortcutHints = it.isMetaPressed && it.isAltPressed.not()
 
@@ -809,7 +810,8 @@ private fun TextField(
     ) {
         Column(
             modifier =
-                Modifier.fillMaxWidth()
+                Modifier
+                    .fillMaxWidth()
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
         ) {
             Row(
@@ -858,8 +860,7 @@ private fun TextField(
                                             SolidColor(MaterialTheme.colorScheme.outline),
                                         ),
                                         RoundedCornerShape(5.dp),
-                                    )
-                                    .padding(8.dp),
+                                    ).padding(8.dp),
                         ) {
                             innerTextField()
                         }

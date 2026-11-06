@@ -190,7 +190,5 @@ class MigrationFrom6To7Test : BaseMigrationTest() {
 
     //endregion
 
-    private fun migrateAndGetDbV7(): SQLiteConnection {
-        return runMigrationAndValidate(7, MigrationFrom6To7())
-    }
+    private fun migrateAndGetDbV7(): SQLiteConnection = runMigrationAndValidate(7, MigrationFrom6To7())
 }

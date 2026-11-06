@@ -2,8 +2,8 @@ package com.ramitsuri.notificationjournal.core.model
 
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 
-fun List<JournalEntry>.toDayGroups(tagsForSort: List<String> = listOf()): List<DayGroup> {
-    return groupBy {
+fun List<JournalEntry>.toDayGroups(tagsForSort: List<String> = listOf()): List<DayGroup> =
+    groupBy {
         it.entryTime.date
     }.map { (date, entriesByDate) ->
         val tagToEntries =
@@ -12,15 +12,13 @@ fun List<JournalEntry>.toDayGroups(tagsForSort: List<String> = listOf()): List<D
                 .map { (tag, entriesByTag) ->
                     val entries = entriesByTag.sortedBy { it.entryTime }
                     tag to entries
-                }
-                .toMap()
+                }.toMap()
 
         val tagGroupNoTag =
             entriesByDate
                 .filter {
                     Tag.isNoTag(it.tag)
-                }
-                .takeIf { it.isNotEmpty() }
+                }.takeIf { it.isNotEmpty() }
                 ?.sortedBy { it.entryTime }
                 ?.let {
                     TagGroup(Tag.NO_TAG.value, it)
@@ -36,8 +34,7 @@ fun List<JournalEntry>.toDayGroups(tagsForSort: List<String> = listOf()): List<D
             tagToEntries
                 .filter { (tag, _) ->
                     !tagsForSort.contains(tag) && !Tag.isNoTag(tag)
-                }
-                .map { (tag, entries) ->
+                }.map { (tag, entries) ->
                     TagGroup(tag, entries)
                 }
 
@@ -51,4 +48,3 @@ fun List<JournalEntry>.toDayGroups(tagsForSort: List<String> = listOf()): List<D
             }
         DayGroup(date, tagGroups)
     }
-}

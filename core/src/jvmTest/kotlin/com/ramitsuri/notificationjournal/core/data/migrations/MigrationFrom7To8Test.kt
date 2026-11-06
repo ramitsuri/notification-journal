@@ -135,7 +135,5 @@ class MigrationFrom7To8Test : BaseMigrationTest() {
 
     //endregion
 
-    private fun migrateAndGetDbV8(): SQLiteConnection {
-        return runMigrationAndValidate(8, MigrationFrom7To8())
-    }
+    private fun migrateAndGetDbV8(): SQLiteConnection = runMigrationAndValidate(8, MigrationFrom7To8())
 }

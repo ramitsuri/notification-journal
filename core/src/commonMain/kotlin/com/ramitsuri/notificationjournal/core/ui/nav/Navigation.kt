@@ -21,7 +21,6 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryScreen
 import com.ramitsuri.notificationjournal.core.ui.addjournal.AddJournalEntryViewModel
@@ -52,6 +51,8 @@ import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
 fun NavGraph(
     modifier: Modifier = Modifier,
     navigator: Navigator,
+    isDesktop: Boolean = false,
+    navFactories: NavViewModelFactories,
     onAssistantRequested: (() -> Unit)? = null,
     onAiDiagnosticsRequested: (() -> Unit)? = null,
     onReviewVoiceNote: ((VoiceNote) -> Unit)? = null,
@@ -80,7 +81,7 @@ fun NavGraph(
             ) {
                 val isListDetail = LocalIsListDetailScene.current
                 val viewModel: JournalEntryDaysViewModel =
-                    viewModel(factory = JournalEntryDaysViewModel.factory())
+                    viewModel(factory = viewModelFactory { navFactories.journalEntryDaysViewModel })
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 LaunchedEffect(navigator.currentSelectedDate) {
                     viewModel.onDateSelected(navigator.currentSelectedDate)
@@ -130,7 +131,9 @@ fun NavGraph(
                 val selectedDate = navigator.selectedDate ?: arg.selectedDate
                 val dates by navigator.dates.collectAsStateWithLifecycle()
                 val viewModel: JournalEntryViewModel =
-                    viewModel(factory = JournalEntryViewModel.factory(initialDate = selectedDate))
+                    viewModel(
+                        factory = viewModelFactory { navFactories.journalEntryViewModelFactory.create(selectedDate) },
+                    )
                 LaunchedEffect(selectedDate) {
                     viewModel.onDateSelected(selectedDate)
                 }
@@ -153,7 +156,7 @@ fun NavGraph(
                     onDateSettled = navigator::selectDate,
                     showBackButton = !isListDetail,
                     showContent = showContent,
-                    pagerScrollEnabled = !ServiceLocator.isDesktop,
+                    pagerScrollEnabled = !isDesktop,
                     onAssistantRequested = onAssistantRequested,
                     onReviewVoiceNote = onReviewVoiceNote,
                     onEntryScreenAction = { action ->
@@ -305,7 +308,7 @@ fun NavGraph(
 
             entry<Route.AddEntry> { arg ->
                 val viewModel: AddJournalEntryViewModel =
-                    viewModel(factory = ServiceLocator.getAddJournalEntryVMFactory(arg))
+                    viewModel(factory = viewModelFactory { navFactories.addJournalEntryViewModelFactory.create(arg) })
 
                 val savedDate by viewModel.savedDate.collectAsStateWithLifecycle()
                 LaunchedEffect(savedDate) {
@@ -340,7 +343,7 @@ fun NavGraph(
 
             entry<Route.EditEntry> { arg ->
                 val viewModel: EditJournalEntryViewModel =
-                    viewModel(factory = ServiceLocator.getEditJournalEntryVMFactory(arg))
+                    viewModel(factory = viewModelFactory { navFactories.editJournalEntryViewModelFactory.create(arg) })
 
                 val saved by viewModel.saved.collectAsStateWithLifecycle()
                 LaunchedEffect(saved) {
@@ -370,7 +373,8 @@ fun NavGraph(
             }
 
             entry<Route.Settings> {
-                val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory())
+                val viewModel: SettingsViewModel =
+                    viewModel(factory = viewModelFactory { navFactories.settingsViewModel })
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 SettingsScreen(
                     state = viewState,
@@ -405,7 +409,8 @@ fun NavGraph(
             }
 
             entry<Route.Tags> {
-                val viewModel: TagsViewModel = viewModel(factory = TagsViewModel.factory())
+                val viewModel: TagsViewModel =
+                    viewModel(factory = viewModelFactory { navFactories.tagsViewModel })
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 TagsScreen(
                     state = viewState,
@@ -424,7 +429,8 @@ fun NavGraph(
             }
 
             entry<Route.Templates> {
-                val viewModel: TemplatesViewModel = viewModel(factory = TemplatesViewModel.factory())
+                val viewModel: TemplatesViewModel =
+                    viewModel(factory = viewModelFactory { navFactories.templatesViewModel })
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 TemplatesScreen(
                     state = viewState,
@@ -444,7 +450,7 @@ fun NavGraph(
 
             entry<Route.Logs> {
                 val viewModel: LogScreenViewModel =
-                    viewModel(factory = LogScreenViewModel.factory())
+                    viewModel(factory = viewModelFactory { navFactories.logScreenViewModel })
 
                 val viewState by viewModel.viewState.collectAsStateWithLifecycle()
 
@@ -459,7 +465,8 @@ fun NavGraph(
             }
 
             entry<Route.Search> {
-                val viewModel: SearchViewModel = viewModel(factory = SearchViewModel.factory())
+                val viewModel: SearchViewModel =
+                    viewModel(factory = viewModelFactory { navFactories.searchViewModel })
 
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 SearchScreen(
@@ -487,7 +494,8 @@ fun NavGraph(
             }
 
             entry<Route.Import> {
-                val viewModel: ImportViewModel = viewModel(factory = ImportViewModel.factory())
+                val viewModel: ImportViewModel =
+                    viewModel(factory = viewModelFactory { navFactories.importViewModel })
 
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 ImportScreen(
@@ -507,7 +515,9 @@ fun NavGraph(
 
             entry<Route.ViewJournalEntryDay> { arg ->
                 val viewModel: ViewJournalEntryDayViewModel =
-                    viewModel(factory = ServiceLocator.getViewJournalEntryDayVMFactory(arg))
+                    viewModel(
+                        factory = viewModelFactory { navFactories.viewJournalEntryDayViewModelFactory.create(arg) },
+                    )
 
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
                 ViewJournalEntryDayScreen(

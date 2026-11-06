@@ -3,7 +3,9 @@ package com.ramitsuri.notificationjournal.core.ui.journalentry
 import kotlinx.datetime.LocalDate
 
 sealed interface EntryScreenAction {
-    data class AddWithDate(val date: LocalDate? = null) : EntryScreenAction
+    data class AddWithDate(
+        val date: LocalDate? = null,
+    ) : EntryScreenAction
 
     data object NavToSettings : EntryScreenAction
 

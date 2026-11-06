@@ -12,8 +12,8 @@ import kotlin.time.Instant
 sealed interface Payload {
     val sender: Sender
 
-    fun attachSender(sender: Sender): Payload {
-        return when (this) {
+    fun attachSender(sender: Sender): Payload =
+        when (this) {
             is Entity.Tags -> copy(sender = sender)
             is Entity.Entries -> copy(sender = sender)
             is Entity.ClearDaysAndInsertEntries -> copy(sender = sender)
@@ -22,7 +22,6 @@ sealed interface Payload {
             is VerifyEntries.Request -> copy(sender = sender)
             is VerifyEntries.Response -> copy(sender = sender)
         }
-    }
 }
 
 @Serializable

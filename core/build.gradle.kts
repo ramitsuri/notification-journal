@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.buildKonfig)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.metro)
 }
 
 kotlin {
@@ -44,7 +45,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.savedstate)
             implementation(libs.lifecycle.runtime.compose)
 
-            implementation(libs.room.runtime)
+            api(libs.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
 
             implementation(libs.kotlin.datetime)
@@ -54,7 +55,7 @@ kotlin {
 
             implementation(libs.multiplatform.settings)
 
-            implementation(libs.datastore)
+            api(libs.datastore)
             implementation(libs.symspellkt)
             implementation(libs.symspellkt.fdic)
 
@@ -208,15 +209,14 @@ fun getProperty(
     fileName: String,
     key: String,
     defaultValue: String? = null,
-): String? {
-    return if (file(rootProject.file(fileName)).exists()) {
+): String? =
+    if (file(rootProject.file(fileName)).exists()) {
         val properties = Properties()
         properties.load(FileInputStream(file(rootProject.file(fileName))))
         properties.getProperty(key, defaultValue)
     } else {
         defaultValue
     }
-}
 
 ktlint {
     verbose.set(true)

@@ -23,13 +23,12 @@ class EncryptionHelper(
     private val initMutex = Mutex()
     private var cipher: IvAuthenticatedCipher? = null
 
-    fun getPassword(): Flow<String?> {
-        return keyValueStore
+    fun getPassword(): Flow<String?> =
+        keyValueStore
             .getStringFlow(Key.ENCRYPTION_PASSWORD, "")
             .map { value ->
                 value.takeIf { !it.isNullOrEmpty() }
             }
-    }
 
     suspend fun setPassword(password: String) {
         initMutex.withLock {
@@ -38,13 +37,12 @@ class EncryptionHelper(
         }
     }
 
-    fun getSalt(): Flow<String?> {
-        return keyValueStore
+    fun getSalt(): Flow<String?> =
+        keyValueStore
             .getStringFlow(Key.ENCRYPTION_SALT, "")
             .map { value ->
                 value.takeIf { !it.isNullOrEmpty() }
             }
-    }
 
     suspend fun setSalt(salt: String) {
         initMutex.withLock {
@@ -67,12 +65,10 @@ class EncryptionHelper(
         }
     }
 
-    suspend fun encrypt(plainText: String): ByteArray {
-        return getCipher().encrypt(plainText.encodeToByteArray())
-    }
+    suspend fun encrypt(plainText: String): ByteArray = getCipher().encrypt(plainText.encodeToByteArray())
 
-    suspend fun decrypt(cipherText: ByteArray): String {
-        return try {
+    suspend fun decrypt(cipherText: ByteArray): String =
+        try {
             getCipher().decrypt(cipherText).decodeToString()
         } catch (e: Exception) {
             Logger.e(TAG) {
@@ -80,7 +76,6 @@ class EncryptionHelper(
             }
             throw e
         }
-    }
 
     private suspend fun getCipher(): IvAuthenticatedCipher =
         initMutex.withLock {
@@ -89,12 +84,14 @@ class EncryptionHelper(
             val salt = getSalt().first()?.let { Base64.decode(it) } ?: error("Encryption salt not set")
 
             val key =
-                provider.get(PBKDF2).secretDerivation(
-                    digest = SHA256,
-                    iterations = 600_000,
-                    outputSize = 256.bits,
-                    salt = salt,
-                ).deriveSecretToByteArray(password)
+                provider
+                    .get(PBKDF2)
+                    .secretDerivation(
+                        digest = SHA256,
+                        iterations = 600_000,
+                        outputSize = 256.bits,
+                        salt = salt,
+                    ).deriveSecretToByteArray(password)
 
             return provider
                 .get(AES.GCM)

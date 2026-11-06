@@ -40,8 +40,8 @@ class SystemNotificationHandler(
         notificationManager.notify(notificationId, systemNotification)
     }
 
-    override fun getNotificationId(notificationInfo: NotificationInfo): Int {
-        return when (notificationInfo.channel) {
+    override fun getNotificationId(notificationInfo: NotificationInfo): Int =
+        when (notificationInfo.channel) {
             NotificationChannelType.MAIN -> 1
             NotificationChannelType.REMINDERS -> {
                 remindersNotificationId++
@@ -51,7 +51,6 @@ class SystemNotificationHandler(
                 remindersNotificationId
             }
         }
-    }
 
     private fun toSystemNotification(
         notificationInfo: NotificationInfo,
@@ -128,7 +127,8 @@ class SystemNotificationHandler(
             description = notificationChannelInfo.description
             if (notificationChannelInfo.playSound) {
                 val attributes =
-                    AudioAttributes.Builder()
+                    AudioAttributes
+                        .Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                         .build()
@@ -187,11 +187,13 @@ class SystemNotificationHandler(
             } else {
                 null
             }
-        return NotificationCompat.Action.Builder(
-            0,
-            actionInfo.text,
-            pendingIntent,
-        ).addRemoteInput(remoteInput).build()
+        return NotificationCompat.Action
+            .Builder(
+                0,
+                actionInfo.text,
+                pendingIntent,
+            ).addRemoteInput(remoteInput)
+            .build()
     }
 
     private fun toImportance(importance: Importance) = importance.key

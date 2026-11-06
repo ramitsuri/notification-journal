@@ -125,8 +125,7 @@ fun dayMonthDate(
             dayOfWeek(
                 toFormat = toFormat,
                 dayOfWeekNames = dayOfWeekNames,
-            )
-                .plus(", ")
+            ).plus(", ")
                 .plus(
                     monthDateYear(
                         toFormat = toFormat,
@@ -210,13 +209,12 @@ fun dayMonthDateWithYear(
     toFormat: LocalDate,
     monthNames: List<String> = stringArrayResource(Res.array.month_names),
     dayOfWeekNames: List<String> = stringArrayResource(Res.array.day_of_week_names),
-): String {
-    return dayMonthDateWithYearInternal(
+): String =
+    dayMonthDateWithYearInternal(
         toFormat = toFormat,
         monthNames = monthNames,
         dayOfWeekNames = dayOfWeekNames,
     )
-}
 
 fun LocalDateTime.plus(duration: Duration) =
     toInstant(TimeZone.UTC)
@@ -246,15 +244,15 @@ private fun dayMonthDateWithYearInternal(
     toFormat: LocalDate,
     monthNames: List<String>,
     dayOfWeekNames: List<String>,
-): String {
-    return LocalDate.Format {
-        dayOfWeek(DayOfWeekNames(dayOfWeekNames))
-        char(',')
-        char(' ')
-        monthName(MonthNames(monthNames))
-        char(' ')
-        dayOfMonth()
-        char(' ')
-        year()
-    }.format(toFormat)
-}
+): String =
+    LocalDate
+        .Format {
+            dayOfWeek(DayOfWeekNames(dayOfWeekNames))
+            char(',')
+            char(' ')
+            monthName(MonthNames(monthNames))
+            char(' ')
+            dayOfMonth()
+            char(' ')
+            year()
+        }.format(toFormat)

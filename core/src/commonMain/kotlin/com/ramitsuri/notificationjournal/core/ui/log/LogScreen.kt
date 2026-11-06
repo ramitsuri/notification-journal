@@ -150,7 +150,8 @@ private fun LogItem(
 ) {
     Column(
         modifier =
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .fullBorder(1.dp, MaterialTheme.colorScheme.outline, 16.dp)

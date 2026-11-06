@@ -6,12 +6,23 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.RemoteInput
 import com.ramitsuri.notificationjournal.MainApplication
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.di.AppScope
+import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.work.UploadWorker
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.android.BroadcastReceiverKey
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class NotificationActionReceiver : BroadcastReceiver() {
+@Inject
+@ContributesIntoMap(AppScope::class)
+@BroadcastReceiverKey
+class NotificationActionReceiver(
+    private val repository: JournalRepository,
+    private val coroutineScope: CoroutineScope,
+) : BroadcastReceiver() {
     override fun onReceive(
         context: Context,
         intent: Intent,
@@ -46,8 +57,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
 
         val pendingResult = goAsync()
-        val repository = ServiceLocator.repository
-        ServiceLocator.coroutineScope.launch {
+        coroutineScope.launch {
             repository.insert(text = text)
             pendingResult.finish()
         }

@@ -37,7 +37,9 @@ data class NotificationActionInfo(
     val remoteInputKey: String?,
 )
 
-enum class Importance(val key: Int) {
+enum class Importance(
+    val key: Int,
+) {
     NONE(0),
     MIN(1),
     LOW(2),
@@ -46,7 +48,9 @@ enum class Importance(val key: Int) {
     MAX(5),
 }
 
-enum class NotificationChannelType(val id: String) {
+enum class NotificationChannelType(
+    val id: String,
+) {
     MAIN("main"),
     REMINDERS("reminders"),
 }

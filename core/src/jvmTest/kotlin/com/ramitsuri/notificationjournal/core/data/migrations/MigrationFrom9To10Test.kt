@@ -31,9 +31,7 @@ class MigrationFrom9To10Test : BaseMigrationTest() {
         }
     }
 
-    private fun migrateAndDbVersion10(): SQLiteConnection {
-        return runMigrationAndValidate(10, MigrationFrom9To10())
-    }
+    private fun migrateAndDbVersion10(): SQLiteConnection = runMigrationAndValidate(10, MigrationFrom9To10())
 
     private fun createDbVersion9() {
         createDatabase(9)

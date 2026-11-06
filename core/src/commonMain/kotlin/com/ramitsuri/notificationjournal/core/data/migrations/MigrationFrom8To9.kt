@@ -29,30 +29,31 @@ class MigrationFrom8To9 : Migration(8, 9) {
         )
 
         entries.forEach { entry ->
-            connection.prepare(
-                "INSERT INTO JournalEntry " +
-                    "(id, entry_time, time_zone, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
-                    "VALUES " +
-                    " (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ).use { statement ->
-                statement.bindText(index = 1, value = entry.id)
-                statement.bindLong(
-                    index = 2,
-                    value = entry.entryTimeOverrideMillis ?: entry.entryTimeMillis,
-                )
-                statement.bindText(index = 3, value = entry.timeZone)
-                statement.bindText(index = 4, value = entry.text)
-                if (entry.tag == null) {
-                    statement.bindNull(index = 5)
-                } else {
-                    statement.bindText(index = 5, value = entry.tag)
+            connection
+                .prepare(
+                    "INSERT INTO JournalEntry " +
+                        "(id, entry_time, time_zone, text, tag, uploaded, auto_tagged, deleted, reconciled) " +
+                        "VALUES " +
+                        " (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ).use { statement ->
+                    statement.bindText(index = 1, value = entry.id)
+                    statement.bindLong(
+                        index = 2,
+                        value = entry.entryTimeOverrideMillis ?: entry.entryTimeMillis,
+                    )
+                    statement.bindText(index = 3, value = entry.timeZone)
+                    statement.bindText(index = 4, value = entry.text)
+                    if (entry.tag == null) {
+                        statement.bindNull(index = 5)
+                    } else {
+                        statement.bindText(index = 5, value = entry.tag)
+                    }
+                    statement.bindBoolean(index = 6, value = entry.uploaded)
+                    statement.bindBoolean(index = 7, value = entry.autoTagged)
+                    statement.bindBoolean(index = 8, value = entry.deleted)
+                    statement.bindBoolean(index = 9, value = entry.reconciled)
+                    statement.step()
                 }
-                statement.bindBoolean(index = 6, value = entry.uploaded)
-                statement.bindBoolean(index = 7, value = entry.autoTagged)
-                statement.bindBoolean(index = 8, value = entry.deleted)
-                statement.bindBoolean(index = 9, value = entry.reconciled)
-                statement.step()
-            }
         }
     }
 

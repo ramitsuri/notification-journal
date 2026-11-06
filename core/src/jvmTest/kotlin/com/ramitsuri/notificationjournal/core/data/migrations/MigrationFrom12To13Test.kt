@@ -172,9 +172,7 @@ class MigrationFrom12To13Test : BaseMigrationTest() {
         val reconciled: Boolean,
     )
 
-    private fun migrateAndGetDbV13(): SQLiteConnection {
-        return runMigrationAndValidate(13, MigrationFrom12To13())
-    }
+    private fun migrateAndGetDbV13(): SQLiteConnection = runMigrationAndValidate(13, MigrationFrom12To13())
 
     @Test
     fun testMigrateFrom12To13_shouldMigrateConflictNoTags() {

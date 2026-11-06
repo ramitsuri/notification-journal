@@ -11,7 +11,9 @@ data class DateWithCount(
     sealed interface Verification {
         data object InProgress : Verification
 
-        data class Verified(val with: String) : Verification
+        data class Verified(
+            val with: String,
+        ) : Verification
 
         data object NotVerified : Verification
     }

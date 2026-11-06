@@ -27,24 +27,22 @@ abstract class TagsDao {
     }
 
     @Transaction
-    open suspend fun insertIfPossible(tag: Tag): Boolean {
-        return try {
+    open suspend fun insertIfPossible(tag: Tag): Boolean =
+        try {
             insert(tag)
             true
         } catch (e: SQLiteException) {
             false
         }
-    }
 
     @Transaction
-    open suspend fun updateTextIfPossible(tagTextUpdate: TagTextUpdate): Boolean {
-        return try {
+    open suspend fun updateTextIfPossible(tagTextUpdate: TagTextUpdate): Boolean =
+        try {
             updateText(tagTextUpdate)
             true
         } catch (e: SQLiteException) {
             false
         }
-    }
 
     @Transaction
     open suspend fun clearAndInsert(tags: List<Tag>) {

@@ -193,7 +193,5 @@ class MigrationFrom8To9Test : BaseMigrationTest() {
         val reconciled: Boolean,
     )
 
-    private fun migrateAndGetDbV9(): SQLiteConnection {
-        return runMigrationAndValidate(9, MigrationFrom8To9())
-    }
+    private fun migrateAndGetDbV9(): SQLiteConnection = runMigrationAndValidate(9, MigrationFrom8To9())
 }

@@ -6,14 +6,10 @@ import kotlinx.datetime.LocalDateTime
 
 class DatabaseConverters {
     @TypeConverter
-    fun toLocalDateTime(string: String): LocalDateTime {
-        return LocalDateTime.parse(string)
-    }
+    fun toLocalDateTime(string: String): LocalDateTime = LocalDateTime.parse(string)
 
     @TypeConverter
-    fun fromLocalDateTime(localDateTime: LocalDateTime): String {
-        return localDateTime.toString()
-    }
+    fun fromLocalDateTime(localDateTime: LocalDateTime): String = localDateTime.toString()
 
     @TypeConverter
     fun toVoiceNoteStatus(value: String): VoiceNoteStatus =

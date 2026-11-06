@@ -19,6 +19,9 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -34,356 +37,370 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
-class AddJournalEntryViewModel(
-    arg: Route.AddEntry,
-    private val repository: JournalRepository,
-    private val tagsDao: TagsDao,
-    private val templatesDao: JournalEntryTemplateDao,
-    private val spellChecker: SpellChecker,
-    private val clock: Clock = Clock.System,
-    private val prefManager: PrefManager,
-) : ViewModel() {
-    private val receivedText: String? =
-        if (arg.receivedText.isNullOrEmpty()) {
-            null
-        } else {
-            URLDecoder.decode(arg.receivedText, "UTF-8")
+class AddJournalEntryViewModel
+    @AssistedInject
+    constructor(
+        @Assisted arg: Route.AddEntry,
+        private val repository: JournalRepository,
+        private val tagsDao: TagsDao,
+        private val templatesDao: JournalEntryTemplateDao,
+        private val spellChecker: SpellChecker,
+        private val prefManager: PrefManager,
+        private val clock: Clock = Clock.System,
+    ) : ViewModel() {
+        @AssistedFactory
+        interface Factory {
+            fun create(arg: Route.AddEntry): AddJournalEntryViewModel
         }
-    private val duplicateFromEntryId: String? = arg.duplicateFromEntryId
 
-    private val dateTime =
-        arg.date
-            ?.let { date ->
-                val currentDateTime = clock.nowLocal()
-                val time = arg.time ?: currentDateTime.time
-                date.atTime(time)
-            } ?: clock.nowLocal()
-
-    private val _savedDate = MutableStateFlow<LocalDate?>(null)
-    val savedDate: StateFlow<LocalDate?> = _savedDate
-
-    private val _state: MutableStateFlow<AddJournalEntryViewState> =
-        MutableStateFlow(
-            AddJournalEntryViewState(
-                textFieldState = TextFieldState(receivedText ?: ""),
-                dateTime = dateTime,
-                selectedTag = arg.tag,
-            ),
-        )
-    val state: StateFlow<AddJournalEntryViewState> = _state
-    private val enableGettingSuggestions = AtomicBoolean(true)
-
-    init {
-        loadTags()
-        loadTemplates()
-        loadFromDuplicateEntryId()
-        loadCorrections()
-        loadSuggestions()
-        loadFontSize()
-    }
-
-    fun tagClicked(tag: String, clearExisting: Boolean = false) {
-        _state.update {
-            if (it.selectedTag == tag && clearExisting) {
-                it.copy(selectedTag = null)
+        private val receivedText: String? =
+            if (arg.receivedText.isNullOrEmpty()) {
+                null
             } else {
-                it.copy(selectedTag = tag)
+                URLDecoder.decode(arg.receivedText, "UTF-8")
             }
+        private val duplicateFromEntryId: String? = arg.duplicateFromEntryId
+
+        private val dateTime =
+            arg.date
+                ?.let { date ->
+                    val currentDateTime = clock.nowLocal()
+                    val time = arg.time ?: currentDateTime.time
+                    date.atTime(time)
+                } ?: clock.nowLocal()
+
+        private val _savedDate = MutableStateFlow<LocalDate?>(null)
+        val savedDate: StateFlow<LocalDate?> = _savedDate
+
+        private val _state: MutableStateFlow<AddJournalEntryViewState> =
+            MutableStateFlow(
+                AddJournalEntryViewState(
+                    textFieldState = TextFieldState(receivedText ?: ""),
+                    dateTime = dateTime,
+                    selectedTag = arg.tag,
+                ),
+            )
+        val state: StateFlow<AddJournalEntryViewState> = _state
+        private val enableGettingSuggestions = AtomicBoolean(true)
+
+        init {
+            loadTags()
+            loadTemplates()
+            loadFromDuplicateEntryId()
+            loadCorrections()
+            loadSuggestions()
+            loadFontSize()
         }
-        viewModelScope.launch {
-            // If tag clicked, enable suggestions
-            enableGettingSuggestions.set(true)
-            val text = _state.value.textFieldState.text
-            val selectedTag = _state.value.selectedTag
+
+        fun tagClicked(
+            tag: String,
+            clearExisting: Boolean = false,
+        ) {
             _state.update {
-                it.copy(suggestions = getSuggestions(text = text, tag = selectedTag))
-            }
-        }
-    }
-
-    fun templateClicked(template: JournalEntryTemplate) {
-        // When entry is added by tapping the add button at the bottom of a tag, the time is derived
-        // from the last entry in that tag but when adding via template, it's most likely not the
-        // intention to use that time. So reset it.
-        _state.update {
-            it.copy(dateTime = it.dateTime.date.atTime(clock.nowLocal().time))
-        }
-        _state.value.textFieldState.edit {
-            if (template.replacesExistingValues) {
-                tagClicked(tag = template.tag, clearExisting = false)
-                delete(0, length)
-                insert(0, template.text)
-            } else {
-                insert(selection.start, template.text)
-            }
-        }
-    }
-
-    fun save() {
-        save(exitOnSave = true)
-    }
-
-    fun saveAndAddAnother() {
-        save(exitOnSave = false)
-        enableGettingSuggestions.set(true)
-    }
-
-    fun dateSelected(date: LocalDate) {
-        _state.update {
-            it.copy(dateTime = date.atTime(it.dateTime.time))
-        }
-    }
-
-    fun nextDay() {
-        _state.update {
-            it.copy(
-                dateTime = it.dateTime.plus(1.days),
-            )
-        }
-    }
-
-    fun previousDay() {
-        _state.update {
-            it.copy(
-                dateTime = it.dateTime.minus(1.days),
-            )
-        }
-    }
-
-    fun timeSelected(time: LocalTime) {
-        _state.update {
-            it.copy(dateTime = LocalDateTime(it.dateTime.date, time))
-        }
-    }
-
-    fun resetDate() {
-        val currentDateTime = _state.value.dateTime
-        val originalDateTime = dateTime
-        val resetDateTime = LocalDateTime(date = originalDateTime.date, time = currentDateTime.time)
-        _state.update { it.copy(dateTime = resetDateTime) }
-    }
-
-    fun resetDateToToday() {
-        val currentDateTime = _state.value.dateTime
-        val resetDateTime =
-            LocalDateTime(
-                date = clock.nowLocal().date,
-                time = currentDateTime.time,
-            )
-        _state.update { it.copy(dateTime = resetDateTime) }
-    }
-
-    fun resetTime() {
-        val currentDateTime = _state.value.dateTime
-        val originalDateTime = dateTime
-        val resetDateTime = LocalDateTime(date = currentDateTime.date, time = originalDateTime.time)
-        _state.update { it.copy(dateTime = resetDateTime) }
-    }
-
-    fun resetTimeToNow() {
-        val currentDateTime = _state.value.dateTime
-        val resetDateTime =
-            LocalDateTime(
-                date = currentDateTime.date,
-                time = clock.nowLocal().time,
-            )
-        _state.update { it.copy(dateTime = resetDateTime) }
-    }
-
-    fun correctionAccepted(
-        word: String,
-        correction: String,
-    ) {
-        _state.value.textFieldState.apply {
-            var startIndexForSearch = 0
-            var start = text.indexOf(string = word, startIndex = startIndexForSearch)
-            while (start >= 0) {
-                edit {
-                    replace(start, start + word.length, correction)
+                if (it.selectedTag == tag && clearExisting) {
+                    it.copy(selectedTag = null)
+                } else {
+                    it.copy(selectedTag = tag)
                 }
-                startIndexForSearch = start + word.length
-                start = text.indexOf(string = word, startIndex = startIndexForSearch)
+            }
+            viewModelScope.launch {
+                // If tag clicked, enable suggestions
+                enableGettingSuggestions.set(true)
+                val text = _state.value.textFieldState.text
+                val selectedTag = _state.value.selectedTag
+                _state.update {
+                    it.copy(suggestions = getSuggestions(text = text, tag = selectedTag))
+                }
             }
         }
-    }
 
-    fun addDictionaryWord(word: String) {
-        viewModelScope.launch {
-            spellChecker.addWord(word)
-        }
-    }
-
-    fun onSuggestionClicked(suggestion: String?) {
-        if (suggestion != null) {
-            enableGettingSuggestions.set(false)
+        fun templateClicked(template: JournalEntryTemplate) {
+            // When entry is added by tapping the add button at the bottom of a tag, the time is derived
+            // from the last entry in that tag but when adding via template, it's most likely not the
+            // intention to use that time. So reset it.
+            _state.update {
+                it.copy(dateTime = it.dateTime.date.atTime(clock.nowLocal().time))
+            }
             _state.value.textFieldState.edit {
-                // Since new lines in the text block get broken up into separate entries later on, look at the last
-                // line in the whole text block to replace with selected suggestion
-                val startIndexOfTextBeingReplaced = originalText.lastIndexOf("\n") + 1
-                delete(startIndexOfTextBeingReplaced, length)
-                insert(startIndexOfTextBeingReplaced, suggestion)
+                if (template.replacesExistingValues) {
+                    tagClicked(tag = template.tag, clearExisting = false)
+                    delete(0, length)
+                    insert(0, template.text)
+                } else {
+                    insert(selection.start, template.text)
+                }
             }
-        } else {
-            enableGettingSuggestions.set(false)
         }
-        _state.update { it.copy(suggestions = listOf()) }
-    }
 
-    override fun onCleared() {
-        super.onCleared()
-        spellChecker.reset()
-    }
-
-    private fun save(exitOnSave: Boolean) {
-        val currentState = _state.value
-        val text = currentState.textFieldState.text.toString()
-        if (text.isEmpty()) {
-            return
+        fun save() {
+            save(exitOnSave = true)
         }
-        val tag = currentState.tags.firstOrNull { it.value == currentState.selectedTag }?.value
-        viewModelScope.launch {
-            repository.insert(
-                text = text,
-                tag = tag,
-                time = currentState.dateTime,
-            )
-            if (exitOnSave) {
-                _savedDate.update {
-                    currentState.dateTime.date
+
+        fun saveAndAddAnother() {
+            save(exitOnSave = false)
+            enableGettingSuggestions.set(true)
+        }
+
+        fun dateSelected(date: LocalDate) {
+            _state.update {
+                it.copy(dateTime = date.atTime(it.dateTime.time))
+            }
+        }
+
+        fun nextDay() {
+            _state.update {
+                it.copy(
+                    dateTime = it.dateTime.plus(1.days),
+                )
+            }
+        }
+
+        fun previousDay() {
+            _state.update {
+                it.copy(
+                    dateTime = it.dateTime.minus(1.days),
+                )
+            }
+        }
+
+        fun timeSelected(time: LocalTime) {
+            _state.update {
+                it.copy(dateTime = LocalDateTime(it.dateTime.date, time))
+            }
+        }
+
+        fun resetDate() {
+            val currentDateTime = _state.value.dateTime
+            val originalDateTime = dateTime
+            val resetDateTime = LocalDateTime(date = originalDateTime.date, time = currentDateTime.time)
+            _state.update { it.copy(dateTime = resetDateTime) }
+        }
+
+        fun resetDateToToday() {
+            val currentDateTime = _state.value.dateTime
+            val resetDateTime =
+                LocalDateTime(
+                    date = clock.nowLocal().date,
+                    time = currentDateTime.time,
+                )
+            _state.update { it.copy(dateTime = resetDateTime) }
+        }
+
+        fun resetTime() {
+            val currentDateTime = _state.value.dateTime
+            val originalDateTime = dateTime
+            val resetDateTime = LocalDateTime(date = currentDateTime.date, time = originalDateTime.time)
+            _state.update { it.copy(dateTime = resetDateTime) }
+        }
+
+        fun resetTimeToNow() {
+            val currentDateTime = _state.value.dateTime
+            val resetDateTime =
+                LocalDateTime(
+                    date = currentDateTime.date,
+                    time = clock.nowLocal().time,
+                )
+            _state.update { it.copy(dateTime = resetDateTime) }
+        }
+
+        fun correctionAccepted(
+            word: String,
+            correction: String,
+        ) {
+            _state.value.textFieldState.apply {
+                var startIndexForSearch = 0
+                var start = text.indexOf(string = word, startIndex = startIndexForSearch)
+                while (start >= 0) {
+                    edit {
+                        replace(start, start + word.length, correction)
+                    }
+                    startIndexForSearch = start + word.length
+                    start = text.indexOf(string = word, startIndex = startIndexForSearch)
+                }
+            }
+        }
+
+        fun addDictionaryWord(word: String) {
+            viewModelScope.launch {
+                spellChecker.addWord(word)
+            }
+        }
+
+        fun onSuggestionClicked(suggestion: String?) {
+            if (suggestion != null) {
+                enableGettingSuggestions.set(false)
+                _state.value.textFieldState.edit {
+                    // Since new lines in the text block get broken up into separate entries later on, look at the last
+                    // line in the whole text block to replace with selected suggestion
+                    val startIndexOfTextBeingReplaced = originalText.lastIndexOf("\n") + 1
+                    delete(startIndexOfTextBeingReplaced, length)
+                    insert(startIndexOfTextBeingReplaced, suggestion)
                 }
             } else {
+                enableGettingSuggestions.set(false)
+            }
+            _state.update { it.copy(suggestions = listOf()) }
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            spellChecker.reset()
+        }
+
+        private fun save(exitOnSave: Boolean) {
+            val currentState = _state.value
+            val text = currentState.textFieldState.text.toString()
+            if (text.isEmpty()) {
+                return
+            }
+            val tag = currentState.tags.firstOrNull { it.value == currentState.selectedTag }?.value
+            viewModelScope.launch {
+                repository.insert(
+                    text = text,
+                    tag = tag,
+                    time = currentState.dateTime,
+                )
+                if (exitOnSave) {
+                    _savedDate.update {
+                        currentState.dateTime.date
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            textFieldState = TextFieldState(),
+                            selectedTag = null,
+                        )
+                    }
+                }
+            }
+        }
+
+        private fun loadTags() {
+            viewModelScope.launch {
+                _state.update {
+                    it.copy(tags = tagsDao.getAll())
+                }
+            }
+            viewModelScope.launch {
+                _state.update {
+                    val defaultTag = prefManager.getDefaultTag()
+                    if (it.selectedTag == null || Tag.isNoTag(it.selectedTag) && Tag.isNoTag(defaultTag)) {
+                        it.copy(selectedTag = defaultTag)
+                    } else {
+                        it
+                    }
+                }
+            }
+        }
+
+        private fun loadTemplates() {
+            viewModelScope.launch {
                 _state.update {
                     it.copy(
-                        textFieldState = TextFieldState(),
-                        selectedTag = null,
+                        templates =
+                            templatesDao
+                                .getAll()
+                                .plus(JournalEntryTemplate.getShortcutTemplates()),
                     )
                 }
             }
         }
-    }
 
-    private fun loadTags() {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(tags = tagsDao.getAll())
-            }
-        }
-        viewModelScope.launch {
-            _state.update {
-                val defaultTag = prefManager.getDefaultTag()
-                if (it.selectedTag == null || Tag.isNoTag(it.selectedTag) && Tag.isNoTag(defaultTag)) {
-                    it.copy(selectedTag = defaultTag)
-                } else {
-                    it
+        private fun loadFromDuplicateEntryId() {
+            val id = duplicateFromEntryId ?: return
+            viewModelScope.launch {
+                val fromEntry = repository.get(id) ?: return@launch
+                _state.update {
+                    it.copy(
+                        textFieldState = TextFieldState(fromEntry.text),
+                        selectedTag = fromEntry.tag,
+                    )
                 }
             }
         }
-    }
 
-    private fun loadTemplates() {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    templates =
-                        templatesDao.getAll()
-                            .plus(JournalEntryTemplate.getShortcutTemplates()),
-                )
+        private fun loadCorrections() {
+            viewModelScope.launch {
+                snapshotFlow {
+                    _state.value.textFieldState.text
+                }.debounce(300)
+                    .collect { text ->
+                        spellChecker.onTextUpdated(text.toString())
+                    }
+            }
+            viewModelScope.launch {
+                spellChecker
+                    .corrections
+                    .collect { corrections ->
+                        _state.update {
+                            it.copy(corrections = corrections)
+                        }
+                    }
             }
         }
-    }
 
-    private fun loadFromDuplicateEntryId() {
-        val id = duplicateFromEntryId ?: return
-        viewModelScope.launch {
-            val fromEntry = repository.get(id) ?: return@launch
-            _state.update {
-                it.copy(
-                    textFieldState = TextFieldState(fromEntry.text),
-                    selectedTag = fromEntry.tag,
-                )
+        private fun loadSuggestions() {
+            viewModelScope.launch {
+                snapshotFlow {
+                    _state.value.textFieldState.text
+                }.debounce(300)
+                    .collect { text ->
+                        val tag = _state.value.selectedTag
+                        _state.update {
+                            it.copy(suggestions = getSuggestions(text = text, tag = tag))
+                        }
+                    }
+            }
+            viewModelScope.launch {
+                snapshotFlow {
+                    val lastLine =
+                        _state.value.textFieldState.text
+                            .split("\n")
+                            .lastOrNull()
+                    lastLine.isNullOrEmpty()
+                }.distinctUntilChanged()
+                    .collect { isEmpty ->
+                        if (isEmpty) {
+                            enableGettingSuggestions.compareAndSet(false, true)
+                        }
+                    }
             }
         }
-    }
 
-    private fun loadCorrections() {
-        viewModelScope.launch {
-            snapshotFlow {
-                _state.value.textFieldState.text
+        private suspend fun getSuggestions(
+            text: CharSequence,
+            tag: String?,
+        ): List<String> {
+            if (!enableGettingSuggestions.get()) {
+                return listOf()
             }
-                .debounce(300)
-                .collect { text ->
-                    spellChecker.onTextUpdated(text.toString())
-                }
+            if (tag == null || Tag.isNoTag(tag)) {
+                return listOf()
+            }
+            // Since new lines in the text block get broken up into separate entries later on, look at the last
+            // line in the whole text block to get suggestions for
+            val actualLineOfText = text.split("\n").lastOrNull()
+            if (actualLineOfText == null || actualLineOfText.length < 2) {
+                return listOf()
+            }
+            return repository
+                .search(actualLineOfText, listOf(tag))
+                .filter { it.text != actualLineOfText }
+                .map { it.text }
+                .distinctBy { it.lowercase() }
+                .take(10)
         }
-        viewModelScope.launch {
-            spellChecker
-                .corrections
-                .collect { corrections ->
-                    _state.update {
-                        it.copy(corrections = corrections)
+
+        private fun loadFontSize() {
+            viewModelScope.launch {
+                prefManager.getAddEditFontSize().collect { fontSize ->
+                    _state.update { state ->
+                        state.copy(addEditFontSize = fontSize)
                     }
                 }
-        }
-    }
-
-    private fun loadSuggestions() {
-        viewModelScope.launch {
-            snapshotFlow {
-                _state.value.textFieldState.text
-            }.debounce(300)
-                .collect { text ->
-                    val tag = _state.value.selectedTag
-                    _state.update {
-                        it.copy(suggestions = getSuggestions(text = text, tag = tag))
-                    }
-                }
-        }
-        viewModelScope.launch {
-            snapshotFlow {
-                val lastLine = _state.value.textFieldState.text.split("\n").lastOrNull()
-                lastLine.isNullOrEmpty()
-            }.distinctUntilChanged()
-                .collect { isEmpty ->
-                    if (isEmpty) {
-                        enableGettingSuggestions.compareAndSet(false, true)
-                    }
-                }
-        }
-    }
-
-    private suspend fun getSuggestions(
-        text: CharSequence,
-        tag: String?,
-    ): List<String> {
-        if (!enableGettingSuggestions.get()) {
-            return listOf()
-        }
-        if (tag == null || Tag.isNoTag(tag)) {
-            return listOf()
-        }
-        // Since new lines in the text block get broken up into separate entries later on, look at the last
-        // line in the whole text block to get suggestions for
-        val actualLineOfText = text.split("\n").lastOrNull()
-        if (actualLineOfText == null || actualLineOfText.length < 2) {
-            return listOf()
-        }
-        return repository.search(actualLineOfText, listOf(tag))
-            .filter { it.text != actualLineOfText }
-            .map { it.text }
-            .distinctBy { it.lowercase() }
-            .take(10)
-    }
-
-    private fun loadFontSize() {
-        viewModelScope.launch {
-            prefManager.getAddEditFontSize().collect { fontSize ->
-                _state.update { state ->
-                    state.copy(addEditFontSize = fontSize)
-                }
             }
         }
     }
-}
 
 data class AddJournalEntryViewState(
     val textFieldState: TextFieldState = TextFieldState(),

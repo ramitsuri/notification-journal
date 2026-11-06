@@ -7,5 +7,8 @@ data class EntryStats(
     val notUploadedAndNotReconciled: Count,
     val all: Count,
 ) {
-    data class Count(val days: String, val entries: String)
+    data class Count(
+        val days: String,
+        val entries: String,
+    )
 }

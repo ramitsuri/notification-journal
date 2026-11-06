@@ -489,7 +489,8 @@ private fun SearchItem(journalEntry: JournalEntry) {
 
     Column(
         modifier =
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .fullBorder(1.dp, MaterialTheme.colorScheme.outline, 16.dp)
                 .clickable(
@@ -497,8 +498,7 @@ private fun SearchItem(journalEntry: JournalEntry) {
                     indication = null,
                 ) {
                     if (clickable) isExpanded = !isExpanded
-                }
-                .padding(16.dp),
+                }.padding(16.dp),
     ) {
         val collapsedMaxLines = 2
 

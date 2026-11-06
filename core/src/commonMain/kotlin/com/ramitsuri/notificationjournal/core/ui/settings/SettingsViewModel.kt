@@ -1,14 +1,11 @@
 package com.ramitsuri.notificationjournal.core.ui.settings
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
@@ -18,13 +15,13 @@ import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.combine
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.reflect.KClass
 
 class SettingsViewModel(
     private val repository: JournalRepository,
@@ -36,7 +33,33 @@ class SettingsViewModel(
     private val encryptionHelper: EncryptionHelper,
     getIpAddress: () -> String?,
     actsAsServer: Boolean,
+    private val lifecycleCoordinator: com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator? = null,
+    private val showJournalImport: Boolean = false,
 ) : ViewModel() {
+    @Inject
+    constructor(
+        repository: JournalRepository,
+        prefManager: PrefManager,
+        journalEntryDao: JournalEntryDao,
+        conflictDao: EntryConflictDao,
+        encryptionHelper: EncryptionHelper,
+        platformConfig: com.ramitsuri.notificationjournal.core.di.PlatformConfig,
+        lifecycleCoordinator: com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator,
+        exportRepository: com.ramitsuri.notificationjournal.core.repository.ExportRepository?,
+    ) : this(
+        repository = repository,
+        getAppVersion = { "${BuildKonfig.APP_VERSION}${if (BuildKonfig.IS_DEBUG) "_debug" else ""}" },
+        prefManager = prefManager,
+        journalEntryDao = if (BuildKonfig.IS_DEBUG) journalEntryDao else null,
+        conflictDao = if (BuildKonfig.IS_DEBUG) conflictDao else null,
+        enableExport = exportRepository != null,
+        encryptionHelper = encryptionHelper,
+        getIpAddress = { platformConfig.ipAddress },
+        actsAsServer = platformConfig.actsAsServer,
+        lifecycleCoordinator = lifecycleCoordinator,
+        showJournalImport = platformConfig.allowJournalImport,
+    )
+
     private val forceUploadStatus: MutableStateFlow<ForceUploadAllStatus> =
         MutableStateFlow(ForceUploadAllStatus.Initial)
     private val statsRequested: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -54,16 +77,16 @@ class SettingsViewModel(
             encryptionHelper.getSalt(),
             encryptionHelper.getPassword(),
         ) {
-                forceUploadStatus,
-                showEmptyTags,
-                copyWithEmptyTags,
-                showConflictDiffInline,
-                statsRequested,
-                dataHostProperties,
-                exportDirectory,
-                addEditFontSize,
-                encryptionSalt,
-                encryptionPassword,
+            forceUploadStatus,
+            showEmptyTags,
+            copyWithEmptyTags,
+            showConflictDiffInline,
+            statsRequested,
+            dataHostProperties,
+            exportDirectory,
+            addEditFontSize,
+            encryptionSalt,
+            encryptionPassword,
             ->
             SettingsViewState(
                 forceUploadStatus = forceUploadStatus,
@@ -80,6 +103,7 @@ class SettingsViewModel(
                 ipAddress = getIpAddress(),
                 encryptionPassword = encryptionPassword,
                 encryptionSalt = encryptionSalt,
+                showJournalImportButton = showJournalImport,
             )
         }.stateIn(
             viewModelScope,
@@ -183,32 +207,11 @@ class SettingsViewModel(
 
             encryptionHelper.setSalt(encryptionSalt)
             encryptionHelper.setPassword(encryptionPassword)
-            ServiceLocator.resetReceiveHelper(resetWebsocket = true)
+            lifecycleCoordinator?.resetReceiveHelper(resetWebsocket = true)
         }
     }
 
     companion object {
-        fun factory() =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(
-                    modelClass: KClass<T>,
-                    extras: CreationExtras,
-                ): T {
-                    return SettingsViewModel(
-                        repository = ServiceLocator.repository,
-                        getAppVersion = ServiceLocator::getAppVersion,
-                        prefManager = ServiceLocator.prefManager,
-                        journalEntryDao = ServiceLocator.journalEntryDao,
-                        conflictDao = ServiceLocator.conflictDao,
-                        enableExport = ServiceLocator.exportRepository != null,
-                        encryptionHelper = ServiceLocator.encryptionHelper,
-                        getIpAddress = ServiceLocator::getIpAddress,
-                        actsAsServer = ServiceLocator.actsAsServer(),
-                    ) as T
-                }
-            }
-
         internal const val TAG = "SettingsVM"
     }
 }
@@ -220,7 +223,7 @@ data class SettingsViewState(
     val showConflictDiffInline: Boolean = false,
     val showEmptyTags: Boolean = false,
     val copyWithEmptyTags: Boolean = false,
-    val showJournalImportButton: Boolean = ServiceLocator.allowJournalImport,
+    val showJournalImportButton: Boolean = false,
     val allowDelete: Boolean = false,
     val stats: EntryStats? = null,
     // Null means export is not enabled

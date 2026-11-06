@@ -57,6 +57,7 @@ androidx-test-espresso = "3.7.0"
 androidx-test-ext = "1.3.0"
 junit = "4.13.2"
 workRuntime = "2.12.0"
+metro = "1.5.2"
 
 [libraries]
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
@@ -136,6 +137,10 @@ androidx-work-runtime = { group = "androidx.work", name = "work-runtime", versio
 mlkit-genai-prompt = { module = "com.google.mlkit:genai-prompt", version.ref = "mlkit-genai-prompt" }
 mlkit-genai-schema-compiler = { module = "com.google.mlkit:genai-schema-compiler", version.ref = "mlkit-genai-schema" }
 mlkit-genai-speech = { module = "com.google.mlkit:genai-speech-recognition", version.ref = "mlkit-genai-speech" }
+metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
+metrox-android = { module = "dev.zacsweers.metro:metrox-android", version.ref = "metro" }
+metrox-viewmodel = { module = "dev.zacsweers.metro:metrox-viewmodel", version.ref = "metro" }
+metrox-viewmodel-compose = { module = "dev.zacsweers.metro:metrox-viewmodel-compose", version.ref = "metro" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android-gradle" }
@@ -153,3 +158,4 @@ buildKonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildKonfig"
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 shadowJar = { id = "com.gradleup.shadow", version.ref = "shadowJar" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }

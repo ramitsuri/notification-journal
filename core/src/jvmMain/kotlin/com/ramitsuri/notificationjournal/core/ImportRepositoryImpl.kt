@@ -109,8 +109,7 @@ class ImportRepositoryImpl(
                     Logger.i(TAG) { "File not changed since last import, ignoring: $filePath" }
                 }
                 fileModifiedSinceLastImport
-            }
-            ?.readLines()
+            }?.readLines()
             ?.let { lines ->
                 // Add an empty line at the end if not present
                 if (lines.lastOrNull()?.isBlank() == true) {

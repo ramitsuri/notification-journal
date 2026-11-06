@@ -136,7 +136,12 @@ fun JournalEntryScreen(
     // The view needs to be focussed for it to receive keyboard events. Request again when the day
     // changes (the page content is swapped, and in list-detail the list pane had focus) or when
     // entries change (a focused entry may have been removed, which leaves nothing focused).
-    val entryIds = remember(state.dayGroup) { state.dayGroup?.tagGroups?.flatMap { tagGroup -> tagGroup.entries.map { it.id } } }
+    val entryIds =
+        remember(state.dayGroup) {
+            state.dayGroup?.tagGroups?.flatMap { tagGroup ->
+                tagGroup.entries.map { it.id }
+            }
+        }
     val focusRequester = rememberShortcutsFocusRequester(selectedDate, entryIds)
 
     LaunchedEffect(state.contentForCopy) {
@@ -395,8 +400,7 @@ private fun rememberDayPagerState(
                     .firstOrNull { it.index == settledPage }
                     ?.key
             currentDayPages.firstOrNull { it.key == key }
-        }
-            .filterNotNull()
+        }.filterNotNull()
             .distinctUntilChanged()
             .collect { page ->
                 if (page.isCopy) {

@@ -111,8 +111,7 @@ private fun TransformingLazyColumnScope.templateItems(
                 text = it.shortDisplayText,
                 onClick = { onTemplateAddRequested(it.id) },
             )
-        }
-        .chunked(2)
+        }.chunked(2)
         .forEach { templateButtons ->
             item {
                 TemplateButtonRow(templateButtons)
@@ -166,7 +165,10 @@ private fun LargeButton(
     }
 }
 
-private data class TemplateButton(val text: String, val onClick: () -> Unit)
+private data class TemplateButton(
+    val text: String,
+    val onClick: () -> Unit,
+)
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable

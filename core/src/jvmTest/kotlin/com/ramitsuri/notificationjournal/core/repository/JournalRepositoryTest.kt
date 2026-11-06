@@ -45,7 +45,13 @@ class JournalRepositoryTest : BaseTest() {
                 ),
             )
 
-            assertFalse(db.journalEntryDao().getAll().first().replacesLocal)
+            assertFalse(
+                db
+                    .journalEntryDao()
+                    .getAll()
+                    .first()
+                    .replacesLocal,
+            )
         }
 
     @Test

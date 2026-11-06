@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.repository
 import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
+import com.ramitsuri.notificationjournal.core.di.AppScope
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
@@ -19,6 +20,8 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.hourMinute
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -36,6 +39,8 @@ import org.jetbrains.compose.resources.getString
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
+@SingleIn(AppScope::class)
+@Inject
 class JournalRepository(
     private val dao: JournalEntryDao,
     private val conflictDao: EntryConflictDao,
@@ -43,12 +48,10 @@ class JournalRepository(
     private val dataSendHelper: DataSendHelper,
     private val prefManager: PrefManager,
 ) {
-    fun getFlow(): Flow<List<JournalEntry>> {
-        return dao.getAllFlowNotReconciled()
-    }
+    fun getFlow(): Flow<List<JournalEntry>> = dao.getAllFlowNotReconciled()
 
-    fun getNotReconciledDateWithCountsFlow(): Flow<List<DateWithCount>> {
-        return combine(
+    fun getNotReconciledDateWithCountsFlow(): Flow<List<DateWithCount>> =
+        combine(
             // Used so that it refreshes the data
             conflictDao.getFlow(),
             dao.getNotReconciledEntryTimesFlow(),
@@ -62,29 +65,23 @@ class JournalRepository(
                 DateWithCount(date = date, conflictCount = conflictCount, untaggedCount = untaggedCount)
             }
         }
-    }
 
-    fun getNotReconciledDatesFlow(): Flow<List<LocalDate>> {
-        return dao
+    fun getNotReconciledDatesFlow(): Flow<List<LocalDate>> =
+        dao
             .getNotReconciledEntryTimesFlow()
             .map { dateTimes ->
                 dateTimes
                     .map { it.date }
                     .distinct()
             }
-    }
 
-    fun getForDateFlow(date: LocalDate): Flow<List<JournalEntry>> {
-        return dao.getForDateFlow(date.toString())
-    }
+    fun getForDateFlow(date: LocalDate): Flow<List<JournalEntry>> = dao.getForDateFlow(date.toString())
 
     fun getForUploadCountFlow() = dao.getForUploadCountFlow()
 
     suspend fun getAll() = dao.getAll()
 
-    suspend fun get(id: String): JournalEntry? {
-        return dao.get(id)
-    }
+    suspend fun get(id: String): JournalEntry? = dao.get(id)
 
     suspend fun update(journalEntry: JournalEntry) {
         update(listOf(journalEntry))
@@ -144,8 +141,7 @@ class JournalRepository(
                         time = entryTime,
                     ).trim()
                 JournalEntry(entryTime = entryTime, text = entryText, tag = tag ?: defaultTag)
-            }
-            .let {
+            }.let {
                 dao.insert(it)
             }
     }
@@ -248,9 +244,7 @@ class JournalRepository(
         }
     }
 
-    fun getConflicts(): Flow<List<EntryConflict>> {
-        return conflictDao.getFlow()
-    }
+    fun getConflicts(): Flow<List<EntryConflict>> = conflictDao.getFlow()
 
     suspend fun resolveConflict(
         entry: JournalEntry,
@@ -306,9 +300,7 @@ class JournalRepository(
         }
     }
 
-    fun getEntryTags(): Flow<List<String>> {
-        return dao.getEntryTags()
-    }
+    fun getEntryTags(): Flow<List<String>> = dao.getEntryTags()
 
     suspend fun markAllReconciled() {
         dao.markAllReconciled()
@@ -386,19 +378,18 @@ class JournalRepository(
             )
         }
 
-    suspend fun getVerificationForDate(date: LocalDate): VerifyEntries.Verification? {
-        return getForDateFlow(date)
+    suspend fun getVerificationForDate(date: LocalDate): VerifyEntries.Verification? =
+        getForDateFlow(date)
             .firstOrNull()
             ?.let {
                 VerifyEntries.Verification(entries = it)
             }
-    }
 
     private suspend fun replaceWithTimeTemplateIfNecessary(
         originalText: String,
         time: LocalDateTime,
-    ): String {
-        return if (originalText.contains(Constants.TEMPLATED_TIME)) {
+    ): String =
+        if (originalText.contains(Constants.TEMPLATED_TIME)) {
             originalText.replace(
                 Constants.TEMPLATED_TIME,
                 hourMinute(
@@ -410,7 +401,6 @@ class JournalRepository(
         } else {
             originalText
         }
-    }
 
     private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>) {
         val sent = dataSendHelper.sendEntries(entries)

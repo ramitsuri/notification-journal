@@ -63,12 +63,12 @@ class SpellCheckerTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         spellChecker =
             SpellChecker(
-                backgroundScope, dispatcher, dispatcher,
+                backgroundScope,
+                dispatcher,
+                dispatcher,
                 object :
                     DictionaryDao() {
-                    override suspend fun getItems(): List<DictionaryItem> {
-                        return listOf()
-                    }
+                    override suspend fun getItems(): List<DictionaryItem> = listOf()
 
                     override suspend fun insert(item: DictionaryItem) {
                     }

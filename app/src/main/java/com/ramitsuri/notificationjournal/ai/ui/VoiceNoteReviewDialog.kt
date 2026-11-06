@@ -41,7 +41,7 @@ import java.io.File
 fun VoiceNoteReviewDialog(
     voiceNote: VoiceNote,
     onDismiss: () -> Unit,
-    viewModel: VoiceNoteReviewViewModel = viewModel(factory = VoiceNoteReviewViewModel.factory()),
+    viewModel: VoiceNoteReviewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val isPlaying by viewModel.isPlayingFlow.collectAsState()

@@ -16,8 +16,7 @@ data class DayGroup(
             tagGroups
                 .firstOrNull {
                     it.tag == Tag.NO_TAG.value
-                }
-                ?.entries
+                }?.entries
                 ?.size
                 ?: 0
 

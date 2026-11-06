@@ -28,49 +28,72 @@ fun tileLayout(
     context: Context,
     deviceParameters: DeviceParametersBuilders.DeviceParameters,
     state: TileState,
-): LayoutElement {
-    return materialScope(
+): LayoutElement =
+    materialScope(
         context = context,
         deviceConfiguration = deviceParameters,
         allowDynamicTheme = true,
     ) {
-        val (row1, row2) = state.templates.take(5).chunked(3)
+        val templates = state.templates.take(5)
         primaryLayout(
             mainSlot = {
                 column {
                     setWidth(expand())
                     setHeight(expand())
-                    addContent(
-                        buttonGroup {
-                            row1.forEach {
+                    if (templates.size > 2) {
+                        val row1 = templates.take(3)
+                        val row2 = templates.drop(3)
+                        addContent(
+                            buttonGroup {
+                                row1.forEach {
+                                    buttonGroupItem {
+                                        button(
+                                            action = templateAction(context, it),
+                                            text = it.shortDisplayText,
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                        addContent(ButtonGroupDefaults.DEFAULT_SPACER_BETWEEN_BUTTON_GROUPS)
+                        addContent(
+                            buttonGroup {
+                                row2.forEach {
+                                    buttonGroupItem {
+                                        button(
+                                            action = templateAction(context, it),
+                                            text = it.shortDisplayText,
+                                        )
+                                    }
+                                }
                                 buttonGroupItem {
                                     button(
-                                        action = templateAction(context, it),
-                                        text = it.shortDisplayText,
+                                        action = launchActivityAction(context, MainActivity.SHOW_ADDITIONAL_TEMPLATES),
+                                        text = "\uD83D\uDCF2",
                                     )
                                 }
-                            }
-                        },
-                    )
-                    addContent(ButtonGroupDefaults.DEFAULT_SPACER_BETWEEN_BUTTON_GROUPS)
-                    addContent(
-                        buttonGroup {
-                            row2.forEach {
+                            },
+                        )
+                    } else {
+                        addContent(
+                            buttonGroup {
+                                templates.forEach {
+                                    buttonGroupItem {
+                                        button(
+                                            action = templateAction(context, it),
+                                            text = it.shortDisplayText,
+                                        )
+                                    }
+                                }
                                 buttonGroupItem {
                                     button(
-                                        action = templateAction(context, it),
-                                        text = it.shortDisplayText,
+                                        action = launchActivityAction(context, MainActivity.SHOW_ADDITIONAL_TEMPLATES),
+                                        text = "\uD83D\uDCF2",
                                     )
                                 }
-                            }
-                            buttonGroupItem {
-                                button(
-                                    action = launchActivityAction(context, MainActivity.SHOW_ADDITIONAL_TEMPLATES),
-                                    text = "\uD83D\uDCF2",
-                                )
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
             },
             bottomSlot = {
@@ -82,13 +105,12 @@ fun tileLayout(
             },
         )
     }
-}
 
 private fun MaterialScope.button(
     action: AndroidActivity,
     text: String,
-): LayoutElement {
-    return textButton(
+): LayoutElement =
+    textButton(
         onClick = launchActivityClickable(action),
         labelContent = {
             text(text = text.layoutString, maxLines = 2)
@@ -98,49 +120,51 @@ private fun MaterialScope.button(
         style = largeTextButtonStyle(),
         contentPadding = padding(0f),
     )
-}
 
 private fun column(builder: LayoutElementBuilders.Column.Builder.() -> Unit) =
-    LayoutElementBuilders.Column.Builder().apply(builder).build()
+    LayoutElementBuilders.Column
+        .Builder()
+        .apply(builder)
+        .build()
 
 private fun launchActivityAction(
     context: Context,
     action: String = MainActivity.ADD,
 ): AndroidActivity =
-    AndroidActivity.Builder()
+    AndroidActivity
+        .Builder()
         .setPackageName(context.packageName)
         .setClassName(ACTIVITY)
         .addKeyToExtraMapping(
             MainActivity.EXTRA_KEY,
             ActionBuilders.stringExtra(action),
-        )
-        .build()
+        ).build()
 
 private fun templateAction(
     context: Context,
     template: JournalEntryTemplate,
 ): AndroidActivity =
-    AndroidActivity.Builder()
+    AndroidActivity
+        .Builder()
         .setPackageName(context.packageName)
         .setClassName(ACTIVITY)
         .addKeyToExtraMapping(
             MainActivity.EXTRA_KEY,
             ActionBuilders.stringExtra(MainActivity.TEMPLATE),
-        )
-        .addKeyToExtraMapping(
+        ).addKeyToExtraMapping(
             MainActivity.TEMPLATE_ID,
             ActionBuilders.stringExtra(template.id),
-        )
-        .build()
+        ).build()
 
 private fun launchActivityClickable(activity: AndroidActivity): ModifiersBuilders.Clickable =
-    ModifiersBuilders.Clickable.Builder()
+    ModifiersBuilders.Clickable
+        .Builder()
         .setOnClick(
-            ActionBuilders.LaunchAction.Builder()
+            ActionBuilders.LaunchAction
+                .Builder()
                 .setAndroidActivity(activity)
                 .build(),
-        )
-        .build()
+        ).build()
 
 private const val ACTIVITY =
     "com.ramitsuri.notificationjournal.presentation.MainActivity"

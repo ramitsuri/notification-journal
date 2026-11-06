@@ -69,7 +69,9 @@ fun <T : Any> rememberListDetailSceneStrategy(): ListDetailSceneStrategy<T> {
     }
 }
 
-class ListDetailSceneStrategy<T : Any>(val windowSizeClass: WindowSizeClass) : SceneStrategy<T> {
+class ListDetailSceneStrategy<T : Any>(
+    val windowSizeClass: WindowSizeClass,
+) : SceneStrategy<T> {
     override fun SceneStrategyScope<T>.calculateScene(entries: List<NavEntry<T>>): Scene<T>? {
         if (!windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)) {
             return null

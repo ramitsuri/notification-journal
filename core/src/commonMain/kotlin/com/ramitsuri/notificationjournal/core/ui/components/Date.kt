@@ -48,18 +48,16 @@ fun Date(
             ),
     ) {
         Card(modifier = Modifier.padding(16.dp)) {
-            fun Long.toLocalDate(): LocalDate {
-                return Instant
+            fun Long.toLocalDate(): LocalDate =
+                Instant
                     .fromEpochMilliseconds(this)
                     .toLocalDateTime(TimeZone.UTC)
                     .date
-            }
 
-            fun LocalDate.toMillisSinceEpoch(): Long {
-                return this
+            fun LocalDate.toMillisSinceEpoch(): Long =
+                this
                     .atStartOfDayIn(TimeZone.UTC)
                     .toEpochMilliseconds()
-            }
 
             val yearRange =
                 if (allowedSelections == null) {
@@ -108,7 +106,8 @@ fun Date(
 
             Column(
                 modifier =
-                    Modifier.fillMaxWidth()
+                    Modifier
+                        .fillMaxWidth()
                         .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

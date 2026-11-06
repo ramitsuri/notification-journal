@@ -4,51 +4,54 @@ import android.app.Application
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.work.Configuration
 import com.google.android.material.color.DynamicColors
 import com.ramitsuri.notificationjournal.broadcast.NotificationActionReceiver
 import com.ramitsuri.notificationjournal.core.deeplink.homeDeepLink
-import com.ramitsuri.notificationjournal.core.di.DiFactory
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
-import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.utils.Constants
-import com.ramitsuri.notificationjournal.core.utils.JournalEntryNotificationHelper
 import com.ramitsuri.notificationjournal.core.utils.NotificationActionInfo
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
-import com.ramitsuri.notificationjournal.work.ShowNotificationWorker
-import kotlin.time.Duration
+import com.ramitsuri.notificationjournal.di.AppGraph
+import dev.zacsweers.metro.createGraphFactory
+import dev.zacsweers.metrox.android.MetroAppComponentProviders
+import dev.zacsweers.metrox.android.MetroApplication
 
 class MainApplication :
     Application(),
-    DefaultLifecycleObserver {
+    DefaultLifecycleObserver,
+    Configuration.Provider,
+    MetroApplication {
+    lateinit var appGraph: AppGraph
+        private set
+
+    override val appComponentProviders: MetroAppComponentProviders
+        get() = appGraph
+
+    override val workManagerConfiguration: Configuration
+        get() =
+            Configuration
+                .Builder()
+                .setWorkerFactory(appGraph.workerFactory)
+                .build()
+
     override fun onCreate() {
         super<Application>.onCreate()
 
         DynamicColors.applyToActivitiesIfAvailable(this)
-        val factory = DiFactory(this)
-        ServiceLocator.init(
-            factory,
-            object : JournalEntryNotificationHelper {
-                override fun show(
-                    journalEntry: JournalEntry,
-                    showIn: Duration,
-                ) {
-                    ShowNotificationWorker.enqueue(this@MainApplication, journalEntry.id, showIn)
-                }
-            },
-        )
+        appGraph = createGraphFactory<AppGraph.Factory>().create(this)
         showJournalNotification()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }
 
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
-        ServiceLocator.onAppStart()
+        appGraph.lifecycleCoordinator.onAppStart()
     }
 
     override fun onStop(owner: LifecycleOwner) {
         super.onStop(owner)
-        ServiceLocator.onAppStop()
+        appGraph.lifecycleCoordinator.onAppStop()
     }
 
     fun showJournalNotification() {
@@ -74,6 +77,6 @@ class MainApplication :
                     ),
                 actionExtras = mapOf(),
             )
-        ServiceLocator.notificationHandler.showNotification(notificationInfo)
+        appGraph.notificationHandler.showNotification(notificationInfo)
     }
 }

@@ -24,7 +24,8 @@ fun getDiffAsAnnotatedText(
 }
 
 private val diffGenerator by lazy {
-    DiffRowGenerator.create()
+    DiffRowGenerator
+        .create()
         .showInlineDiffs(true)
         .mergeOriginalRevised(true)
         .inlineDiffByWord(true)
@@ -67,8 +68,8 @@ private fun String.splitByType(): DiffText {
 private fun DiffText.annotated(
     leftColor: Color,
     rightColor: Color,
-): AnnotatedString {
-    return buildAnnotatedString {
+): AnnotatedString =
+    buildAnnotatedString {
         texts.forEach { type ->
             when (type.type) {
                 TextType.LEFT -> {
@@ -89,21 +90,27 @@ private fun DiffText.annotated(
             }
         }
     }
-}
 
-private data class DiffText(val texts: List<Text>)
+private data class DiffText(
+    val texts: List<Text>,
+)
 
-private data class Text(val type: TextType, val text: String)
+private data class Text(
+    val type: TextType,
+    val text: String,
+)
 
-private enum class TextType(val char: Char) {
+private enum class TextType(
+    val char: Char,
+) {
     COMMON(' '),
     LEFT('\u00AB'),
     RIGHT('\u00BB'),
     ;
 
     companion object {
-        fun fromChar(char: Char): TextType {
-            return when (char) {
+        fun fromChar(char: Char): TextType =
+            when (char) {
                 LEFT.char -> {
                     LEFT
                 }
@@ -116,6 +123,5 @@ private enum class TextType(val char: Char) {
                     COMMON
                 }
             }
-        }
     }
 }

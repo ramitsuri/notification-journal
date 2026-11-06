@@ -35,15 +35,12 @@ class DateTimeHelperKtTest {
         assertEquals(expected, format())
     }
 
-    private fun String.toLocalDateTime(): LocalDateTime {
-        return LocalDateTime.parse(this)
-    }
+    private fun String.toLocalDateTime(): LocalDateTime = LocalDateTime.parse(this)
 
-    private fun format(): String {
-        return hourMinute(
+    private fun format(): String =
+        hourMinute(
             toFormat = toFormat.toLocalDateTime(),
             amString = "am",
             pmString = "pm",
         )
-    }
 }

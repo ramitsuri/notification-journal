@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramitsuri.notificationjournal.ai.diagnostics.AiDiagnosticsScreen
 import com.ramitsuri.notificationjournal.ai.ui.JournalAssistantSheet
 import com.ramitsuri.notificationjournal.ai.ui.VoiceNoteReviewDialog
@@ -27,11 +28,11 @@ import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkPattern
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkRequest
 import com.ramitsuri.notificationjournal.core.deeplink.KeyDecoder
 import com.ramitsuri.notificationjournal.core.deeplink.deepLinksWithArgNames
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
+import com.ramitsuri.notificationjournal.core.ui.nav.viewModelFactory
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import com.ramitsuri.notificationjournal.core.utils.ReceivedTextProperties
 import com.ramitsuri.notificationjournal.core.utils.hasValues
@@ -48,9 +49,10 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
+        val appGraph = (application as MainApplication).appGraph
         navigator =
             Navigator(
-                repository = ServiceLocator.repository,
+                repository = appGraph.repository,
                 scope = lifecycle.coroutineScope,
             )
 
@@ -92,23 +94,38 @@ class MainActivity : ComponentActivity() {
             ) {
                 NavGraph(
                     navigator = navigator,
+                    isDesktop = appGraph.isDesktop,
+                    navFactories = appGraph,
                     onAssistantRequested = { showAssistantSheet = true },
                     onAiDiagnosticsRequested = { showAiDiagnostics = true },
                     onReviewVoiceNote = { note -> reviewVoiceNote = note },
                 )
                 if (showAssistantSheet) {
                     JournalAssistantSheet(
+                        viewModel =
+                            viewModel(
+                                factory = viewModelFactory { appGraph.journalAssistantViewModel },
+                            ),
                         onDismiss = { showAssistantSheet = false },
                     )
                 }
                 if (showAiDiagnostics) {
                     AiDiagnosticsScreen(
+                        viewModel =
+                            viewModel(
+                                factory = viewModelFactory { appGraph.aiDiagnosticsViewModel },
+                            ),
                         onBack = { showAiDiagnostics = false },
                     )
                 }
                 reviewVoiceNote?.let { note ->
                     VoiceNoteReviewDialog(
                         voiceNote = note,
+                        viewModel =
+                            viewModel(
+                                key = note.id,
+                                factory = viewModelFactory { appGraph.voiceNoteReviewViewModel },
+                            ),
                         onDismiss = { reviewVoiceNote = null },
                     )
                 }

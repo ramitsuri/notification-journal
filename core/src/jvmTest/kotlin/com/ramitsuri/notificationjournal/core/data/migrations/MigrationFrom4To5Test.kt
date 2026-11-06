@@ -55,9 +55,7 @@ class MigrationFrom4To5Test : BaseMigrationTest() {
         }
     }
 
-    private fun migrateAndGetDbV5(): SQLiteConnection {
-        return runMigrationAndValidate(5, MigrationFrom4To5())
-    }
+    private fun migrateAndGetDbV5(): SQLiteConnection = runMigrationAndValidate(5, MigrationFrom4To5())
 
     private fun migrateAndGetDataFromV5(): List<JournalEntryV5> {
         val data = mutableListOf<JournalEntryV5>()

@@ -13,12 +13,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.HapticFeedbackConstantsCompat
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.R
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels {
-        (applicationContext as MainApplication).getViewModelFactory()
+        viewModelFactory {
+            initializer {
+                (application as MainApplication).wearGraph.mainViewModel
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,11 +38,12 @@ class MainActivity : ComponentActivity() {
                         viewState.status is Status.Success
                 val finish = viewState.status is Status.SuccessExit
                 if (showToast) {
-                    Toast.makeText(
-                        this@MainActivity,
-                        viewState.status.exitText ?: getString(R.string.add_success),
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                    Toast
+                        .makeText(
+                            this@MainActivity,
+                            viewState.status.exitText ?: getString(R.string.add_success),
+                            Toast.LENGTH_SHORT,
+                        ).show()
                     viewModel.addStatusAcknowledged()
                     view.performHapticFeedback(HapticFeedbackConstantsCompat.LONG_PRESS)
                 }
@@ -63,11 +70,12 @@ class MainActivity : ComponentActivity() {
                 intent.extras?.getString(TEMPLATE_ID)?.let { templateId ->
                     viewModel.addFromTemplate(templateId)
                 } ?: run {
-                    Toast.makeText(
-                        this,
-                        getString(R.string.template_id_not_found),
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            this,
+                            getString(R.string.template_id_not_found),
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
             }
 

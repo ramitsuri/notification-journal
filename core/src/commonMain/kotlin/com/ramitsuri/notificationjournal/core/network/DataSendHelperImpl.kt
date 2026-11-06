@@ -16,57 +16,57 @@ internal class DataSendHelperImpl(
     private val getDataHostProperties: suspend () -> DataHostProperties,
     private val webSocketHelper: WebSocketHelper,
 ) : DataSendHelper {
-    override suspend fun sendEntries(entries: List<JournalEntry>): Boolean {
-        return Entity.Entries(
-            data = entries,
-        ).send()
-    }
+    override suspend fun sendEntries(entries: List<JournalEntry>): Boolean =
+        Entity
+            .Entries(
+                data = entries,
+            ).send()
 
-    override suspend fun sendTags(tags: List<Tag>): Boolean {
-        return Entity.Tags(
-            data = tags,
-        ).send()
-    }
+    override suspend fun sendTags(tags: List<Tag>): Boolean =
+        Entity
+            .Tags(
+                data = tags,
+            ).send()
 
-    override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean {
-        return Entity.Templates(
-            data = templates,
-        ).send()
-    }
+    override suspend fun sendTemplates(templates: List<JournalEntryTemplate>): Boolean =
+        Entity
+            .Templates(
+                data = templates,
+            ).send()
 
     override suspend fun sendClearDaysAndInsertEntries(
         days: List<LocalDate>,
         entries: List<JournalEntry>,
-    ): Boolean {
-        return Entity.ClearDaysAndInsertEntries(
-            days = days,
-            entries = entries,
-        ).send()
-    }
+    ): Boolean =
+        Entity
+            .ClearDaysAndInsertEntries(
+                days = days,
+                entries = entries,
+            ).send()
 
     override suspend fun sendVerifyEntriesRequest(
         date: LocalDate,
         verification: VerifyEntries.Verification,
         time: Instant,
-    ): Boolean {
-        return VerifyEntries.Request(
-            date = date,
-            verification = verification,
-            time = time,
-        ).send()
-    }
+    ): Boolean =
+        VerifyEntries
+            .Request(
+                date = date,
+                verification = verification,
+                time = time,
+            ).send()
 
     override suspend fun sendVerifyEntriesResponse(
         date: LocalDate,
         verification: VerifyEntries.Verification,
         time: Instant,
-    ): Boolean {
-        return VerifyEntries.Response(
-            date = date,
-            verification = verification,
-            time = time,
-        ).send()
-    }
+    ): Boolean =
+        VerifyEntries
+            .Response(
+                date = date,
+                verification = verification,
+                time = time,
+            ).send()
 
     private suspend fun Payload.send(): Boolean {
         val dataHostProperties = getDataHostProperties()

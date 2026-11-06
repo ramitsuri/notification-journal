@@ -59,9 +59,7 @@ class MigrationFrom1To2Test : BaseMigrationTest() {
         }
     }
 
-    private fun migrateAndGetDbVersionTwo(): SQLiteConnection {
-        return runMigrationAndValidate(2, MigrationFrom1To2())
-    }
+    private fun migrateAndGetDbVersionTwo(): SQLiteConnection = runMigrationAndValidate(2, MigrationFrom1To2())
 
     private fun migrateAndGetDataFromV2(): List<JournalEntryV2> {
         val data = mutableListOf<JournalEntryV2>()

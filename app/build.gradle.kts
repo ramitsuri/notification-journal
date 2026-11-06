@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.metro)
 }
 
 android {
@@ -62,6 +63,9 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    lint {
+        disable += "Instantiatable"
+    }
 }
 
 kotlin {
@@ -72,6 +76,10 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
+    implementation(libs.metro.runtime)
+    implementation(libs.metrox.android)
+    implementation(libs.metrox.viewmodel)
+    implementation(libs.metrox.viewmodel.compose)
 
     implementation(libs.mlkit.genai.prompt)
     implementation(libs.mlkit.genai.speech)

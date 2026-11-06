@@ -10,52 +10,68 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.ramitsuri.notificationjournal.R
-import com.ramitsuri.notificationjournal.core.di.ServiceLocator
+import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 
-class UploadWorker(
-    context: Context,
-    params: WorkerParameters,
-) : CoroutineWorker(context, params) {
-    override suspend fun doWork(): Result {
-        ServiceLocator.repository.uploadAll()
-        ServiceLocator.onAppStop()
-        return Result.success()
+class UploadWorker
+    @AssistedInject
+    constructor(
+        @Assisted context: Context,
+        @Assisted params: WorkerParameters,
+        private val repository: JournalRepository,
+        private val lifecycleCoordinator: AppLifecycleCoordinator,
+    ) : CoroutineWorker(context, params) {
+        @AssistedFactory
+        interface Factory {
+            fun create(
+                context: Context,
+                params: WorkerParameters,
+            ): UploadWorker
+        }
+
+        override suspend fun doWork(): Result {
+            repository.uploadAll()
+            lifecycleCoordinator.onAppStop()
+            return Result.success()
+        }
+
+        override suspend fun getForegroundInfo(): ForegroundInfo {
+            val notification =
+                NotificationCompat
+                    .Builder(
+                        applicationContext,
+                        NotificationChannelType.MAIN.id,
+                    ).apply {
+                        setSmallIcon(R.drawable.ic_notification)
+                        setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                        setContentTitle(
+                            applicationContext.getString(R.string.upload_worker_notification_title),
+                        )
+                    }.build()
+            return ForegroundInfo(2, notification)
+        }
+
+        companion object {
+            private const val WORK_TAG = "TAG-UploadWorker"
+
+            fun enqueueImmediate(context: Context) =
+                OneTimeWorkRequest
+                    .Builder(UploadWorker::class)
+                    .addTag(WORK_TAG)
+                    .setConstraints(
+                        Constraints
+                            .Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build(),
+                    ).build()
+                    .let { request ->
+                        WorkManager
+                            .getInstance(context)
+                            .enqueue(request)
+                    }
+        }
     }
-
-    override suspend fun getForegroundInfo(): ForegroundInfo {
-        val notification =
-            NotificationCompat
-                .Builder(
-                    applicationContext,
-                    NotificationChannelType.MAIN.id,
-                ).apply {
-                    setSmallIcon(R.drawable.ic_notification)
-                    setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                    setContentTitle(
-                        applicationContext.getString(R.string.upload_worker_notification_title),
-                    )
-                }.build()
-        return ForegroundInfo(2, notification)
-    }
-
-    companion object {
-        private const val WORK_TAG = "TAG-UploadWorker"
-
-        fun enqueueImmediate(context: Context) =
-            OneTimeWorkRequest
-                .Builder(UploadWorker::class)
-                .addTag(WORK_TAG)
-                .setConstraints(
-                    Constraints
-                        .Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build(),
-                ).build()
-                .let { request ->
-                    WorkManager
-                        .getInstance(context)
-                        .enqueue(request)
-                }
-    }
-}

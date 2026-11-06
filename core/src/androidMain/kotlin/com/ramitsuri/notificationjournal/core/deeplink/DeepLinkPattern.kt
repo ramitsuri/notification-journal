@@ -100,8 +100,8 @@ class DeepLinkPattern<T : Route>(
  */
 private typealias TypeParser = (String) -> Serializable
 
-private fun getTypeParser(kind: SerialKind): TypeParser {
-    return when (kind) {
+private fun getTypeParser(kind: SerialKind): TypeParser =
+    when (kind) {
         PrimitiveKind.STRING -> Any::toString
         PrimitiveKind.INT -> String::toInt
         PrimitiveKind.BOOLEAN -> String::toBoolean
@@ -115,4 +115,3 @@ private fun getTypeParser(kind: SerialKind): TypeParser {
             "Unsupported argument type of SerialKind:$kind. The argument type must be a Primitive.",
         )
     }
-}

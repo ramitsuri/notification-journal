@@ -6,7 +6,5 @@ import kotlin.time.Instant
 class TestClock : Clock {
     var now: Instant? = null
 
-    override fun now(): Instant {
-        return now!!
-    }
+    override fun now(): Instant = now!!
 }

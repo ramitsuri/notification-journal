@@ -55,8 +55,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun voiceNoteDao(): VoiceNoteDao
 
     companion object {
-        fun getDatabase(builder: () -> Builder<AppDatabase>): AppDatabase {
-            return builder()
+        fun getDatabase(builder: () -> Builder<AppDatabase>): AppDatabase =
+            builder()
                 .setDriver(BundledSQLiteDriver())
                 .setQueryCoroutineContext(Dispatchers.IO)
                 .addMigrations(MigrationFrom1To2())
@@ -74,6 +74,5 @@ abstract class AppDatabase : RoomDatabase() {
                 .addMigrations(MigrationFrom13To14())
                 .addMigrations(MigrationFrom14To15())
                 .build()
-        }
     }
 }

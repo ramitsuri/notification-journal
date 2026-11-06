@@ -461,8 +461,7 @@ private fun AddEditTagDialog(
                                             SolidColor(MaterialTheme.colorScheme.outline),
                                         ),
                                         RoundedCornerShape(5.dp),
-                                    )
-                                    .padding(8.dp),
+                                    ).padding(8.dp),
                         ) {
                             innerTextField()
                         }

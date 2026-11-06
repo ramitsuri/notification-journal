@@ -15,14 +15,11 @@ data class DataHostProperties(
     @SerialName("otherHosts")
     val otherHosts: Set<String> = emptySet(),
 ) {
-    fun isValid(): Boolean {
-        return deviceName.isNotBlank() && deviceId.isNotBlank() && dataHost.isNotBlank()
-    }
+    fun isValid(): Boolean = deviceName.isNotBlank() && deviceId.isNotBlank() && dataHost.isNotBlank()
 }
 
-fun DataHostProperties.toSender(): Sender {
-    return Sender(
+fun DataHostProperties.toSender(): Sender =
+    Sender(
         name = deviceName,
         id = deviceId,
     )
-}

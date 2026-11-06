@@ -73,11 +73,12 @@ class SpellChecker(
 
                 var removedWords = setOf<String>()
                 _corrections.update { existing ->
-                    existing.filter {
-                        wordsInText.contains(it.key)
-                    }.also {
-                        removedWords = existing.keys - it.keys
-                    }
+                    existing
+                        .filter {
+                            wordsInText.contains(it.key)
+                        }.also {
+                            removedWords = existing.keys - it.keys
+                        }
                 }
                 removeFromEncounteredWords(removedWords)
             }
@@ -99,20 +100,18 @@ class SpellChecker(
     private suspend fun findCorrections(word: String) =
         coroutineScope {
             withContext(defaultDispatcher) {
-                checker.lookup(
-                    word,
-                    Verbosity.Closest,
-                    2.0,
-                )
-                    .takeIf {
+                checker
+                    .lookup(
+                        word,
+                        Verbosity.Closest,
+                        2.0,
+                    ).takeIf {
                         // Even correct words return a single item suggestion list which has the word itself as the
                         // suggestion. So use the returned list only if there are zero or more than 1 suggestions
                         it.size != 1 || it[0].term.lowercase() != word.lowercase()
-                    }
-                    ?.filter {
+                    }?.filter {
                         it.term.lowercase() != word.lowercase()
-                    }
-                    ?.map { suggestion ->
+                    }?.map { suggestion ->
                         suggestion.term.replaceFirstChar {
                             if (word.first().isUpperCase()) {
                                 it.titlecase(locale)
@@ -122,8 +121,7 @@ class SpellChecker(
                                 it.toString()
                             }
                         }
-                    }
-                    ?.let { suggestions ->
+                    }?.let { suggestions ->
                         _corrections.update { existing ->
                             existing + (word to suggestions)
                         }

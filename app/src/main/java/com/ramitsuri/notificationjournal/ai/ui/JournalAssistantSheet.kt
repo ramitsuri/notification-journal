@@ -66,7 +66,7 @@ import com.ramitsuri.notificationjournal.ai.JournalAssistantViewModel
 
 @Composable
 fun JournalAssistantSheet(
-    viewModel: JournalAssistantViewModel = viewModel(factory = JournalAssistantViewModel.factory()),
+    viewModel: JournalAssistantViewModel = viewModel(),
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current

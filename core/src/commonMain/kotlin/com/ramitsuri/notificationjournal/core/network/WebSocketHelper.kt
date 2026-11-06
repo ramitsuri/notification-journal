@@ -71,8 +71,8 @@ class WebSocketHelper(
         session = null
     }
 
-    suspend fun send(payload: Payload): Boolean {
-        return try {
+    suspend fun send(payload: Payload): Boolean =
+        try {
             session?.let { sess ->
                 val jsonString = json.encodeToString(payload)
                 val encrypted = encryptionHelper.encrypt(jsonString)
@@ -83,7 +83,6 @@ class WebSocketHelper(
             log("Error while sending", e)
             false
         }
-    }
 
     private suspend fun DefaultClientWebSocketSession.startReceiver() {
         try {

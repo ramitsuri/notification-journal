@@ -261,7 +261,8 @@ private fun ImportStatus(
         Card {
             Column(
                 modifier =
-                    Modifier.fillMaxWidth()
+                    Modifier
+                        .fillMaxWidth()
                         .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

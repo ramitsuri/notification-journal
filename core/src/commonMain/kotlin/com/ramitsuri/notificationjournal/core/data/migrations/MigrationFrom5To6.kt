@@ -29,30 +29,31 @@ class MigrationFrom5To6 : Migration(5, 6) {
                 ")",
         )
         entries.forEach { entry ->
-            connection.prepare(
-                "INSERT INTO JournalEntry " +
-                    "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
-                    "VALUES " +
-                    " (?, ?, ?, ?, ?, ?, ?, ?)",
-            ).use { statement ->
-                statement.bindText(index = 1, value = UUID.randomUUID().toString())
-                statement.bindLong(index = 2, value = entry.entryTimeMillis)
-                statement.bindText(index = 3, value = entry.timeZone)
-                statement.bindText(index = 4, value = entry.text)
-                if (entry.tag == null) {
-                    statement.bindNull(index = 5)
-                } else {
-                    statement.bindText(index = 5, value = entry.tag)
+            connection
+                .prepare(
+                    "INSERT INTO JournalEntry " +
+                        "(id, entry_time, time_zone, text, tag, entry_time_override, uploaded, auto_tagged) " +
+                        "VALUES " +
+                        " (?, ?, ?, ?, ?, ?, ?, ?)",
+                ).use { statement ->
+                    statement.bindText(index = 1, value = UUID.randomUUID().toString())
+                    statement.bindLong(index = 2, value = entry.entryTimeMillis)
+                    statement.bindText(index = 3, value = entry.timeZone)
+                    statement.bindText(index = 4, value = entry.text)
+                    if (entry.tag == null) {
+                        statement.bindNull(index = 5)
+                    } else {
+                        statement.bindText(index = 5, value = entry.tag)
+                    }
+                    if (entry.entryTimeOverride == null) {
+                        statement.bindNull(index = 6)
+                    } else {
+                        statement.bindLong(index = 6, entry.entryTimeOverride)
+                    }
+                    statement.bindBoolean(index = 7, value = entry.uploaded)
+                    statement.bindBoolean(index = 8, value = entry.autoTagged)
+                    statement.step()
                 }
-                if (entry.entryTimeOverride == null) {
-                    statement.bindNull(index = 6)
-                } else {
-                    statement.bindLong(index = 6, entry.entryTimeOverride)
-                }
-                statement.bindBoolean(index = 7, value = entry.uploaded)
-                statement.bindBoolean(index = 8, value = entry.autoTagged)
-                statement.step()
-            }
         }
 
         val tags = getExistingTags(connection)
@@ -70,17 +71,18 @@ class MigrationFrom5To6 : Migration(5, 6) {
             "CREATE UNIQUE INDEX IF NOT EXISTS `index_Tags_value` ON `Tags` (`value`)",
         )
         tags.forEach { tag ->
-            connection.prepare(
-                "INSERT INTO Tags " +
-                    "(id, 'order', value) " +
-                    "VALUES " +
-                    " (?, ?, ?)",
-            ).use { statement ->
-                statement.bindText(index = 1, value = UUID.randomUUID().toString())
-                statement.bindInt(index = 2, value = tag.order)
-                statement.bindText(index = 3, value = tag.value)
-                statement.step()
-            }
+            connection
+                .prepare(
+                    "INSERT INTO Tags " +
+                        "(id, 'order', value) " +
+                        "VALUES " +
+                        " (?, ?, ?)",
+                ).use { statement ->
+                    statement.bindText(index = 1, value = UUID.randomUUID().toString())
+                    statement.bindInt(index = 2, value = tag.order)
+                    statement.bindText(index = 3, value = tag.value)
+                    statement.step()
+                }
         }
 
         val templates = getExistingTemplates(connection)
@@ -95,17 +97,18 @@ class MigrationFrom5To6 : Migration(5, 6) {
                 ")",
         )
         templates.forEach { template ->
-            connection.prepare(
-                "INSERT INTO JournalEntryTemplate " +
-                    "(id, text, tag) " +
-                    "VALUES " +
-                    " (?, ?, ?)",
-            ).use { statement ->
-                statement.bindText(index = 1, value = UUID.randomUUID().toString())
-                statement.bindText(index = 2, value = template.text)
-                statement.bindText(index = 3, value = template.tag)
-                statement.step()
-            }
+            connection
+                .prepare(
+                    "INSERT INTO JournalEntryTemplate " +
+                        "(id, text, tag) " +
+                        "VALUES " +
+                        " (?, ?, ?)",
+                ).use { statement ->
+                    statement.bindText(index = 1, value = UUID.randomUUID().toString())
+                    statement.bindText(index = 2, value = template.text)
+                    statement.bindText(index = 3, value = template.tag)
+                    statement.step()
+                }
         }
     }
 
