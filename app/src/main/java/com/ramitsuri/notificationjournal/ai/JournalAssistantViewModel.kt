@@ -1,14 +1,15 @@
 package com.ramitsuri.notificationjournal.ai
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.ai.voice.PcmAudioRecorder
 import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNoteStatus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
-import com.ramitsuri.notificationjournal.work.VoiceNoteProcessWorker
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -129,7 +130,8 @@ class JournalAssistantViewModel
 
                 voiceNoteDao.insertAll(notes)
 
-                VoiceNoteProcessWorker.enqueue(context)
+                Toast.makeText(context, R.string.voice_note_saved_toast, Toast.LENGTH_SHORT).show()
+                _uiState.value = AssistantUiState.Idle
                 onDismiss()
             }
         }

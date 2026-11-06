@@ -75,6 +75,9 @@
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <receiver
@@ -125,6 +128,26 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <activity
+            android:name=".ai.ui.VoiceAssistantActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Journal.Translucent"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="com.ramitsuri.notificationjournal.action.VOICE_ASSISTANT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:host="voice-assistant"
+                    android:scheme="notification-journal" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

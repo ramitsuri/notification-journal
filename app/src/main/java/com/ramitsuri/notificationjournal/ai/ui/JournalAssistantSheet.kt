@@ -52,7 +52,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -116,11 +118,13 @@ fun JournalAssistantSheet(
         viewModel = viewModel,
         onStartRecording = requestPermissionAndStart,
         onNextEntry = { viewModel.nextEntry(context) },
-        onCommit = { viewModel.commitRecording(context, onDismiss) },
+        onCommit = { onComplete ->
+            viewModel.commitRecording(context, onComplete)
+        },
         onDiscard = {
             stopRecording()
-            onDismiss()
         },
+        onDismiss = onDismiss,
     )
 }
 
@@ -130,11 +134,13 @@ private fun JournalAssistantContent(
     viewModel: JournalAssistantViewModel,
     onStartRecording: () -> Unit,
     onNextEntry: () -> Unit,
-    onCommit: () -> Unit,
+    onCommit: (onComplete: () -> Unit) -> Unit,
     onDiscard: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val amplitude by viewModel.amplitudeFlow.collectAsState()
+    val scope = rememberCoroutineScope()
     var showConfirmDiscardDialog by remember { mutableStateOf(false) }
 
     val isRecording = state is AssistantUiState.Recording
@@ -152,11 +158,22 @@ private fun JournalAssistantContent(
             },
         )
 
+    val hideAndDismiss: (() -> Unit) -> Unit = { callback ->
+        scope.launch {
+            try {
+                sheetState.hide()
+            } finally {
+                callback()
+            }
+        }
+    }
+
     val handleDismissRequest = {
         if (isRecording) {
             showConfirmDiscardDialog = true
         } else {
             onDiscard()
+            onDismiss()
         }
     }
 
@@ -170,6 +187,7 @@ private fun JournalAssistantContent(
                     onClick = {
                         showConfirmDiscardDialog = false
                         onDiscard()
+                        hideAndDismiss(onDismiss)
                     },
                 ) {
                     Text("Discard", color = MaterialTheme.colorScheme.error)
@@ -187,15 +205,45 @@ private fun JournalAssistantContent(
         onDismissRequest = handleDismissRequest,
         sheetState = sheetState,
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .animateContentSize()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 8.dp, bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        JournalAssistantBody(
+            state = state,
+            amplitude = amplitude,
+            onStartRecording = onStartRecording,
+            onNextEntry = onNextEntry,
+            onCommit = {
+                onCommit {
+                    hideAndDismiss(onDismiss)
+                }
+            },
+            onDiscard = {
+                onDiscard()
+                hideAndDismiss(onDismiss)
+            },
+            onRequestConfirmDiscard = { showConfirmDiscardDialog = true },
+        )
+    }
+}
+
+@Composable
+fun JournalAssistantBody(
+    state: AssistantUiState,
+    amplitude: Float,
+    onStartRecording: () -> Unit,
+    onNextEntry: () -> Unit,
+    onCommit: () -> Unit,
+    onDiscard: () -> Unit,
+    onRequestConfirmDiscard: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .animateContentSize()
+                .padding(horizontal = 24.dp)
+                .padding(top = 8.dp, bottom = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
             when (val current = state) {
                 is AssistantUiState.Idle -> {
                     Box(
@@ -349,7 +397,7 @@ private fun JournalAssistantContent(
                         TextButton(
                             onClick = {
                                 if (current.durationSeconds > 1 || current.segmentIndex > 1) {
-                                    showConfirmDiscardDialog = true
+                                    onRequestConfirmDiscard()
                                 } else {
                                     onDiscard()
                                 }
@@ -412,5 +460,4 @@ private fun JournalAssistantContent(
                 }
             }
         }
-    }
 }

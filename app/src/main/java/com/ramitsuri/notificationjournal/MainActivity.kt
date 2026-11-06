@@ -36,6 +36,7 @@ import com.ramitsuri.notificationjournal.core.ui.nav.viewModelFactory
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import com.ramitsuri.notificationjournal.core.utils.ReceivedTextProperties
 import com.ramitsuri.notificationjournal.core.utils.hasValues
+import com.ramitsuri.notificationjournal.work.VoiceNoteProcessWorker
 import java.net.URLEncoder
 
 class MainActivity : ComponentActivity() {
@@ -106,7 +107,10 @@ class MainActivity : ComponentActivity() {
                             viewModel(
                                 factory = viewModelFactory { appGraph.journalAssistantViewModel },
                             ),
-                        onDismiss = { showAssistantSheet = false },
+                        onDismiss = {
+                            showAssistantSheet = false
+                            VoiceNoteProcessWorker.enqueue(this@MainActivity)
+                        },
                     )
                 }
                 if (showAiDiagnostics) {
@@ -134,6 +138,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        VoiceNoteProcessWorker.enqueue(this)
     }
 
     override fun onNewIntent(intent: Intent) {

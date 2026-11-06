@@ -7,4 +7,7 @@
     <string name="voice_note_failed_notification_title">Voice note could not be transcribed</string>
     <string name="voice_note_failed_notification_text">Tap to review or manually save your voice note</string>
     <string name="add_entry_qs_tile_label">Add Entry</string>
+    <string name="shortcut_voice_assistant_short">Dictate</string>
+    <string name="shortcut_voice_assistant_long">Voice Dictation</string>
+    <string name="voice_note_saved_toast">Voice note saved</string>
 </resources>
