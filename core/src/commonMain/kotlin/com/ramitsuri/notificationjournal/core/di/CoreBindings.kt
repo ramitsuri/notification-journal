@@ -1,6 +1,8 @@
 package com.ramitsuri.notificationjournal.core.di
 
 import androidx.room.RoomDatabase
+import co.touchlab.kermit.Logger
+import co.touchlab.kermit.platformLogWriter
 import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
@@ -168,5 +170,8 @@ object CoreBindings {
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideInMemoryLogWriter(): InMemoryLogWriter = InMemoryLogWriter()
+    fun provideInMemoryLogWriter(): InMemoryLogWriter =
+        InMemoryLogWriter().also {
+            Logger.setLogWriters(it, platformLogWriter())
+        }
 }

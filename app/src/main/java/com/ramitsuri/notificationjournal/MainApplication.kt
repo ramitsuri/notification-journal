@@ -40,6 +40,7 @@ class MainApplication :
 
         DynamicColors.applyToActivitiesIfAvailable(this)
         appGraph = createGraphFactory<AppGraph.Factory>().create(this)
+        appGraph.initLogger()
         showJournalNotification()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }

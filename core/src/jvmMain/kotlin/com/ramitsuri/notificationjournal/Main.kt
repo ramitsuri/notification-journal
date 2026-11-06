@@ -40,6 +40,7 @@ import com.ramitsuri.notificationjournal.core.model.WindowPosition as AppWindowP
 
 fun main() {
     val graph = createGraph<DesktopGraph>()
+    graph.initLogger()
 
     // This is not called automatically when the app first starts
     graph.lifecycleCoordinator.onAppStart()

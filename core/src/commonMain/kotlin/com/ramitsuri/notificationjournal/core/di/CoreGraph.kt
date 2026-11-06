@@ -1,5 +1,8 @@
 package com.ramitsuri.notificationjournal.core.di
 
+import co.touchlab.kermit.Logger
+import co.touchlab.kermit.platformLogWriter
+import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator
 import com.ramitsuri.notificationjournal.core.ui.nav.NavViewModelFactories
@@ -15,4 +18,9 @@ interface CoreGraph : NavViewModelFactories {
     val notificationHandler: NotificationHandler
     val platformConfig: PlatformConfig
     val isDesktop: Boolean get() = platformConfig.isDesktop
+    val inMemoryLogWriter: InMemoryLogWriter
+
+    fun initLogger() {
+        Logger.setLogWriters(inMemoryLogWriter, platformLogWriter())
+    }
 }

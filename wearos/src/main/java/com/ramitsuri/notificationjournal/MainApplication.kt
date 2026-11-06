@@ -18,5 +18,6 @@ class MainApplication :
     override fun onCreate() {
         super.onCreate()
         wearGraph = createGraphFactory<WearGraph.Factory>().create(this)
+        wearGraph.initLogger()
     }
 }
