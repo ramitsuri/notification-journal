@@ -1,6 +1,8 @@
 # Make not debug
 sed -i '' "s/isDebug=true/isDebug=false/g" ./local.properties
 
+export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
+
 ./gradlew clean
 ./gradlew packageDistributionForCurrentOS
 
