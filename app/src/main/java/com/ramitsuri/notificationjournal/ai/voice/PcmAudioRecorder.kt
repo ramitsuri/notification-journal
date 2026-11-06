@@ -13,6 +13,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -221,7 +222,11 @@ class PcmAudioRecorder(
                                 }
 
                                 val dataCopy = readBuffer.copyOf(bytesRead)
-                                channel.send(Command.WriteData(dataCopy))
+                                try {
+                                    channel.send(Command.WriteData(dataCopy))
+                                } catch (_: ClosedSendChannelException) {
+                                    break
+                                }
                             } else if (bytesRead < 0) {
                                 Log.e(TAG, "AudioRecord.read returned error code: $bytesRead")
                                 break
@@ -276,9 +281,7 @@ class PcmAudioRecorder(
                 if (channel != null) {
                     val deferred = CompletableDeferred<List<File>>()
                     channel.send(Command.Stop(deferred))
-                    val files = deferred.await()
-                    channel.close()
-                    files
+                    deferred.await()
                 } else {
                     completedFiles.toList()
                 }
@@ -298,7 +301,6 @@ class PcmAudioRecorder(
                 val deferred = CompletableDeferred<Unit>()
                 channel.send(Command.Cancel(deferred))
                 deferred.await()
-                channel.close()
             }
             commandChannel = null
         }
