@@ -14,6 +14,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramitsuri.notificationjournal.MainApplication
+import com.ramitsuri.notificationjournal.core.model.VoiceAssistantMode
 import com.ramitsuri.notificationjournal.core.ui.nav.viewModelFactory
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 
@@ -66,12 +67,13 @@ class VoiceAssistantActivity : ComponentActivity() {
                         null
                     },
             ) {
-                JournalAssistantSheet(
+                VoiceAssistantCapsule(
                     viewModel =
                         viewModel(
                             factory = viewModelFactory { appGraph.journalAssistantViewModel },
                         ),
-                    onDismiss = { finish() },
+                    mode = VoiceAssistantMode.ACTIVITY,
+                    onClose = { finish() },
                 )
             }
         }

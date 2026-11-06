@@ -21,13 +21,14 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramitsuri.notificationjournal.ai.diagnostics.AiDiagnosticsScreen
-import com.ramitsuri.notificationjournal.ai.ui.JournalAssistantSheet
+import com.ramitsuri.notificationjournal.ai.ui.VoiceAssistantCapsule
 import com.ramitsuri.notificationjournal.ai.ui.VoiceNoteReviewDialog
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkMatcher
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkPattern
 import com.ramitsuri.notificationjournal.core.deeplink.DeepLinkRequest
 import com.ramitsuri.notificationjournal.core.deeplink.KeyDecoder
 import com.ramitsuri.notificationjournal.core.deeplink.deepLinksWithArgNames
+import com.ramitsuri.notificationjournal.core.model.VoiceAssistantMode
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
 import com.ramitsuri.notificationjournal.core.ui.nav.Navigator
@@ -102,12 +103,13 @@ class MainActivity : ComponentActivity() {
                     onReviewVoiceNote = { note -> reviewVoiceNote = note },
                 )
                 if (showAssistantSheet) {
-                    JournalAssistantSheet(
+                    VoiceAssistantCapsule(
                         viewModel =
                             viewModel(
                                 factory = viewModelFactory { appGraph.journalAssistantViewModel },
                             ),
-                        onDismiss = {
+                        mode = VoiceAssistantMode.IN_APP,
+                        onClose = {
                             showAssistantSheet = false
                             VoiceNoteProcessWorker.enqueue(this@MainActivity)
                         },

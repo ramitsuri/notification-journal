@@ -7,15 +7,20 @@ import androidx.lifecycle.viewModelScope
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.ai.voice.PcmAudioRecorder
 import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
+import com.ramitsuri.notificationjournal.core.model.VoiceAssistantMode
+import com.ramitsuri.notificationjournal.core.model.WindowPosition
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNoteStatus
+import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
@@ -38,6 +43,7 @@ class JournalAssistantViewModel
     @Inject
     constructor(
         private val voiceNoteDao: VoiceNoteDao,
+        private val prefManager: PrefManager,
         private val recorder: PcmAudioRecorder = PcmAudioRecorder(),
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<AssistantUiState>(AssistantUiState.Idle)
@@ -164,6 +170,24 @@ class JournalAssistantViewModel
         private fun stopTimer() {
             timerJob?.cancel()
             timerJob = null
+        }
+
+        fun getCapsulePosition(mode: VoiceAssistantMode): Flow<WindowPosition> =
+            prefManager.getVoiceCapsulePositionFlow(mode).map {
+                it ?: WindowPosition(x = 1f, y = 1f)
+            }
+
+        fun saveCapsulePosition(
+            mode: VoiceAssistantMode,
+            xPercent: Float,
+            yPercent: Float,
+        ) {
+            viewModelScope.launch {
+                prefManager.setVoiceCapsulePosition(
+                    mode = mode,
+                    position = WindowPosition(x = xPercent, y = yPercent),
+                )
+            }
         }
 
         override fun onCleared() {

@@ -2,6 +2,7 @@ package com.ramitsuri.notificationjournal.core.utils
 
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.Tag
+import com.ramitsuri.notificationjournal.core.model.VoiceAssistantMode
 import com.ramitsuri.notificationjournal.core.model.WindowPosition
 import com.ramitsuri.notificationjournal.core.model.WindowSize
 import kotlinx.coroutines.flow.Flow
@@ -145,5 +146,31 @@ class PrefManager(
 
     suspend fun setCustomPromptRules(rules: String) {
         keyValueStore.putString(Key.CUSTOM_PROMPT_RULES, rules)
+    }
+
+    fun getVoiceCapsulePositionFlow(mode: VoiceAssistantMode): Flow<WindowPosition?> =
+        keyValueStore
+            .getStringFlow(
+                when (mode) {
+                    VoiceAssistantMode.IN_APP -> Key.VOICE_CAPSULE_POSITION_IN_APP
+                    VoiceAssistantMode.ACTIVITY -> Key.VOICE_CAPSULE_POSITION_ACTIVITY
+                },
+                "",
+            )
+            .map { string ->
+                runCatching { json.decodeFromString<WindowPosition>(string ?: "") }.getOrNull()
+            }
+
+    suspend fun setVoiceCapsulePosition(
+        mode: VoiceAssistantMode,
+        position: WindowPosition,
+    ) {
+        keyValueStore.putString(
+            when (mode) {
+                VoiceAssistantMode.IN_APP -> Key.VOICE_CAPSULE_POSITION_IN_APP
+                VoiceAssistantMode.ACTIVITY -> Key.VOICE_CAPSULE_POSITION_ACTIVITY
+            },
+            json.encodeToString(position),
+        )
     }
 }

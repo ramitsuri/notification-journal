@@ -73,4 +73,6 @@ enum class Key(
     ENCRYPTION_SALT("encryption_salt"),
     SPEECH_RECOGNITION_ENGINE("speech_recognition_engine"),
     CUSTOM_PROMPT_RULES("custom_prompt_rules"),
+    VOICE_CAPSULE_POSITION_IN_APP("voice_capsule_position_in_app"),
+    VOICE_CAPSULE_POSITION_ACTIVITY("voice_capsule_position_activity"),
 }
