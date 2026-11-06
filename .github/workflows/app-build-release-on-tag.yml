@@ -21,7 +21,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: |
+            17
+            21
 
       - name: Generate Release bundles
         run: ./gradlew bundleRelease
@@ -75,7 +77,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: |
+            17
+            21
 
       - name: Generate package
         run: ./gradlew packageDistributionForCurrentOS
@@ -97,7 +101,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: |
+            17
+            21
 
       - name: Generate package
         run: ./gradlew packageDistributionForCurrentOS
@@ -119,7 +125,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: |
+            17
+            21
 
       - name: Generate package
         run: ./gradlew packageDistributionForCurrentOS
