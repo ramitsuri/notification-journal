@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
@@ -81,8 +82,11 @@ import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
 import com.ramitsuri.notificationjournal.ai.voice.VoiceInputEvent
 import com.ramitsuri.notificationjournal.ai.voice.VoiceInputManagerFactory
+import com.ramitsuri.notificationjournal.core.log.LogData
+import com.ramitsuri.notificationjournal.core.utils.formatTimeForLogs
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,6 +103,7 @@ fun AiDiagnosticsScreen(
     val isListening = listeningJob != null || state.isListeningToSpeech
 
     var isLiveTestExpanded by rememberSaveable { mutableStateOf(true) }
+    var isFallbackLogsExpanded by rememberSaveable { mutableStateOf(false) }
     var isModelCapabilitiesExpanded by rememberSaveable { mutableStateOf(false) }
     var isSpeechEngineExpanded by rememberSaveable { mutableStateOf(false) }
     var isCustomRulesExpanded by rememberSaveable { mutableStateOf(false) }
@@ -262,8 +267,18 @@ fun AiDiagnosticsScreen(
                                             },
                                         ) {
                                             Icon(
-                                                imageVector = if (isListening) Icons.Default.MicOff else Icons.Default.Mic,
-                                                contentDescription = if (isListening) "Stop listening" else "Speak input",
+                                                imageVector =
+                                                    if (isListening) {
+                                                        Icons.Default.MicOff
+                                                    } else {
+                                                        Icons.Default.Mic
+                                                    },
+                                                contentDescription =
+                                                    if (isListening) {
+                                                        "Stop listening"
+                                                    } else {
+                                                        "Speak input"
+                                                    },
                                                 tint =
                                                     if (isListening) {
                                                         MaterialTheme.colorScheme.error
@@ -355,7 +370,10 @@ fun AiDiagnosticsScreen(
                                     )
                                     Text(
                                         text = it,
-                                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                        style =
+                                            MaterialTheme.typography.bodySmall.copy(
+                                                fontFamily = FontFamily.Monospace,
+                                            ),
                                     )
                                 }
 
@@ -373,7 +391,10 @@ fun AiDiagnosticsScreen(
                                     ) {
                                         Text(
                                             text = it,
-                                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                            style =
+                                                MaterialTheme.typography.bodySmall.copy(
+                                                    fontFamily = FontFamily.Monospace,
+                                                ),
                                             modifier = Modifier.padding(8.dp),
                                         )
                                     }
@@ -430,7 +451,123 @@ fun AiDiagnosticsScreen(
                 }
             }
 
-            // Section 2: Model Capabilities & AICore Status
+            // Section 2: Rule-Based Fallbacks
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isFallbackLogsExpanded = !isFallbackLogsExpanded },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Text(
+                                    text = "Rule-Based Fallbacks",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                if (state.fallbackLogs.isNotEmpty()) {
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .background(
+                                                    MaterialTheme.colorScheme.error,
+                                                    shape = RoundedCornerShape(12.dp),
+                                                ).padding(horizontal = 8.dp, vertical = 2.dp),
+                                    ) {
+                                        Text(
+                                            text = state.fallbackLogs.size.toString(),
+                                            color = MaterialTheme.colorScheme.onError,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                }
+                            }
+                            Icon(
+                                imageVector =
+                                    if (isFallbackLogsExpanded) {
+                                        Icons.Default.ArrowDropUp
+                                    } else {
+                                        Icons.Default.ArrowDropDown
+                                    },
+                                contentDescription = if (isFallbackLogsExpanded) "Collapse" else "Expand",
+                            )
+                        }
+
+                        AnimatedVisibility(visible = isFallbackLogsExpanded) {
+                            Column {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text =
+                                        "Logs recorded whenever Gemini Nano is unavailable, fails generation, " +
+                                            "or produces unparseable output, falling back to rule-based extraction.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                if (state.fallbackLogs.isEmpty()) {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(
+                                            text = "No rule-based fallbacks recorded in this session.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(12.dp),
+                                        )
+                                    }
+                                } else {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End,
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = viewModel::clearFallbackLogs,
+                                        ) {
+                                            Icon(
+                                                Icons.Default.DeleteOutline,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("Clear Fallback Logs")
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        state.fallbackLogs.forEach { logData ->
+                                            FallbackLogItem(
+                                                logData = logData,
+                                                onCopy = { textToCopy ->
+                                                    clipboardManager.setText(AnnotatedString(textToCopy))
+                                                    Toast
+                                                        .makeText(
+                                                            context,
+                                                            "Log copied to clipboard",
+                                                            Toast.LENGTH_SHORT,
+                                                        ).show()
+                                                },
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 3: Model Capabilities & AICore Status
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -474,7 +611,9 @@ fun AiDiagnosticsScreen(
                             Column {
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Text(
-                                    text = "Model: ${state.modelInfo.modelName.ifBlank { "Not loaded / Standard AICore" }}",
+                                    text = "Model: ${state.modelInfo.modelName.ifBlank {
+                                        "Not loaded / Standard AICore"
+                                    }}",
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                                 Text(
@@ -572,7 +711,9 @@ fun AiDiagnosticsScreen(
                             Column {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Choose which on-device engine processes voice input from the assistant mic button.",
+                                    text =
+                                        "Choose which on-device engine processes voice input " +
+                                            "from the assistant mic button.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -611,7 +752,9 @@ fun AiDiagnosticsScreen(
                                                 if (engine == SpeechEngine.MLKIT_GENAI) {
                                                     val (statusText, code) =
                                                         when (state.mlKitSpeechStatus) {
-                                                            FeatureStatus.AVAILABLE -> "Ready" to FeatureStatus.AVAILABLE
+                                                            FeatureStatus.AVAILABLE ->
+                                                                "Ready" to
+                                                                    FeatureStatus.AVAILABLE
                                                             FeatureStatus.DOWNLOADABLE ->
                                                                 "Downloadable" to
                                                                     FeatureStatus.DOWNLOADABLE
@@ -704,7 +847,10 @@ fun AiDiagnosticsScreen(
                             Column {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Add custom instructions for the LLM when extracting journal entries (e.g., abbreviations, custom formatting). One rule per line. These are included automatically in the prompt.",
+                                    text =
+                                        "Add custom instructions for the LLM when extracting journal entries " +
+                                            "(e.g., abbreviations, custom formatting). One rule per line. " +
+                                            "These are included automatically in the prompt.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -712,7 +858,11 @@ fun AiDiagnosticsScreen(
                                 OutlinedTextField(
                                     value = state.customPromptRules,
                                     onValueChange = viewModel::onCustomPromptRulesChange,
-                                    placeholder = { Text("e.g.\nWhen I say workout, tag as #fitness\nReplace gym with fitness") },
+                                    placeholder = {
+                                        Text(
+                                            "e.g.\nWhen I say workout, tag as #fitness\nReplace gym with fitness",
+                                        )
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
                                     minLines = 3,
                                     maxLines = 6,
@@ -788,20 +938,35 @@ fun AiDiagnosticsScreen(
 
                                 val currentPrompt =
                                     if (selectedPromptTab == 0) {
-                                        JournalPrompts.getAddEntryJsonPrompt(state.testInput, customRules = state.customPromptRules)
+                                        JournalPrompts.getAddEntryJsonPrompt(
+                                            state.testInput,
+                                            customRules = state.customPromptRules,
+                                        )
                                     } else {
-                                        JournalPrompts.getAddEntryStructuredOutputPrompt(state.testInput, customRules = state.customPromptRules)
+                                        JournalPrompts.getAddEntryStructuredOutputPrompt(
+                                            state.testInput,
+                                            customRules = state.customPromptRules,
+                                        )
                                     }
 
                                 Spacer(modifier = Modifier.height(8.dp))
                                 OutlinedButton(
                                     onClick = {
                                         clipboardManager.setText(AnnotatedString(currentPrompt))
-                                        Toast.makeText(context, "Prompt copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                        Toast
+                                            .makeText(
+                                                context,
+                                                "Prompt copied to clipboard!",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(
+                                        Icons.Default.ContentCopy,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                    )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("Copy Prompt to Clipboard")
                                 }
@@ -814,7 +979,10 @@ fun AiDiagnosticsScreen(
                                 ) {
                                     Text(
                                         text = currentPrompt,
-                                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                        style =
+                                            MaterialTheme.typography.bodySmall.copy(
+                                                fontFamily = FontFamily.Monospace,
+                                            ),
                                         modifier = Modifier.padding(12.dp),
                                     )
                                 }
@@ -890,6 +1058,109 @@ private fun FeatureRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FallbackLogItem(
+    logData: LogData,
+    onCopy: (String) -> Unit,
+) {
+    var showStackTrace by remember { mutableStateOf(false) }
+
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text =
+                        formatTimeForLogs(
+                            toFormat = logData.time,
+                            timeZone = TimeZone.currentSystemDefault(),
+                            amString = "AM",
+                            pmString = "PM",
+                        ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = {
+                            val fullLog =
+                                buildString {
+                                    append(logData.message)
+                                    if (!logData.errorMessage.isNullOrBlank()) {
+                                        append("\nError: ").append(logData.errorMessage)
+                                    }
+                                    if (!logData.stackTrace.isNullOrBlank()) {
+                                        append("\nStacktrace:\n").append(logData.stackTrace)
+                                    }
+                                }
+                            onCopy(fullLog)
+                        },
+                        modifier = Modifier.size(24.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy log",
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                    if (logData.errorMessage != null || logData.stackTrace != null) {
+                        IconButton(
+                            onClick = { showStackTrace = !showStackTrace },
+                            modifier = Modifier.size(24.dp),
+                        ) {
+                            Icon(
+                                imageVector =
+                                    if (showStackTrace) {
+                                        Icons.Default.ArrowDropUp
+                                    } else {
+                                        Icons.Default.ArrowDropDown
+                                    },
+                                contentDescription = if (showStackTrace) "Hide details" else "Show details",
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = logData.message,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+            )
+
+            AnimatedVisibility(visible = showStackTrace) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    logData.errorMessage?.let {
+                        Text(
+                            text = "Error: $it",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                    logData.stackTrace?.let {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -15,7 +16,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -269,8 +269,7 @@ fun VoiceAssistantCapsule(
                                         yPercent = (yPercent + dragAmount.y / availableHeight).coerceIn(0f, 1f)
                                     },
                                 )
-                            }
-                            .clickable(
+                            }.clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                             ) {
@@ -282,110 +281,34 @@ fun VoiceAssistantCapsule(
                     tonalElevation = elevation,
                     shadowElevation = elevation,
                 ) {
-                Column(
-                    modifier =
-                        Modifier
-                            .width(IntrinsicSize.Max)
-                            .defaultMinSize(minWidth = 200.dp)
-                            .animateContentSize()
-                            .padding(horizontal = 24.dp, vertical = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    when (val current = state) {
-                        is AssistantUiState.Recording -> {
-                            val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                            val pulseAlpha by infiniteTransition.animateFloat(
-                                initialValue = 0.35f,
-                                targetValue = 1f,
-                                animationSpec =
-                                    infiniteRepeatable(
-                                        animation = tween(700),
-                                        repeatMode = RepeatMode.Reverse,
-                                    ),
-                                label = "dotAlpha",
-                            )
-
-                            if (showConfirmDiscardDialog) {
-                                // LINE 1: Red pulsing dot + "Discard?"
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .size(10.dp)
-                                                .background(
-                                                    MaterialTheme.colorScheme.error.copy(alpha = pulseAlpha),
-                                                    shape = CircleShape,
-                                                ),
-                                    )
-                                    Text(
-                                        text = "Discard?",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontSize = 17.sp,
-                                    )
-                                }
-
-                                // Subtle divider
-                                Box(
-                                    modifier =
-                                        Modifier
-                                        .fillMaxWidth()
-                                        .height(1.dp)
-                                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                    Column(
+                        modifier =
+                            Modifier
+                                .width(IntrinsicSize.Max)
+                                .defaultMinSize(minWidth = 200.dp)
+                                .animateContentSize()
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        when (val current = state) {
+                            is AssistantUiState.Recording -> {
+                                val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                                val pulseAlpha by infiniteTransition.animateFloat(
+                                    initialValue = 0.35f,
+                                    targetValue = 1f,
+                                    animationSpec =
+                                        infiniteRepeatable(
+                                            animation = tween(700),
+                                            repeatMode = RepeatMode.Reverse,
+                                        ),
+                                    label = "dotAlpha",
                                 )
 
-                                // LINE 2: No | Yes
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    TextButton(
-                                        onClick = { showConfirmDiscardDialog = false },
-                                        modifier = Modifier.weight(1f),
-                                    ) {
-                                        Text(
-                                            text = "No",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                        )
-                                    }
-
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .width(1.dp)
-                                                .height(24.dp)
-                                                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                                    )
-
-                                    TextButton(
-                                        onClick = { stopAndClose() },
-                                        modifier = Modifier.weight(1f),
-                                    ) {
-                                        Text(
-                                            text = "Yes",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.error,
-                                        )
-                                    }
-                                }
-                            } else {
-                                // LINE 1: Recording status, timer, and waveform
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                ) {
+                                if (showConfirmDiscardDialog) {
+                                    // LINE 1: Red pulsing dot + "Discard?"
                                     Row(
+                                        modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
@@ -398,22 +321,8 @@ fun VoiceAssistantCapsule(
                                                         shape = CircleShape,
                                                     ),
                                         )
-
-                                        val minutes = current.durationSeconds / 60
-                                        val seconds = current.durationSeconds % 60
-                                        val timeFormatted = "%02d:%02d".format(minutes, seconds)
-
-                                        if (current.segmentIndex > 1) {
-                                            Text(
-                                                text = "#${current.segmentIndex} • ",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp,
-                                            )
-                                        }
                                         Text(
-                                            text = timeFormatted,
+                                            text = "Discard?",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface,
@@ -421,146 +330,243 @@ fun VoiceAssistantCapsule(
                                         )
                                     }
 
+                                    // Subtle divider
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .height(1.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                                ),
+                                    )
+
+                                    // LINE 2: No | Yes
                                     Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly,
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     ) {
-                                        if (current.silentMicWarning) {
-                                            Icon(
-                                                Icons.Default.WarningAmber,
-                                                contentDescription = "Silent mic warning",
-                                                tint = MaterialTheme.colorScheme.error,
-                                                modifier = Modifier.size(18.dp),
+                                        TextButton(
+                                            onClick = { showConfirmDiscardDialog = false },
+                                            modifier = Modifier.weight(1f),
+                                        ) {
+                                            Text(
+                                                text = "No",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                             )
                                         }
-                                        MiniWaveform(amplitude = amplitude)
+
+                                        Box(
+                                            modifier =
+                                                Modifier
+                                                    .width(1.dp)
+                                                    .height(24.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                                    ),
+                                        )
+
+                                        TextButton(
+                                            onClick = { stopAndClose() },
+                                            modifier = Modifier.weight(1f),
+                                        ) {
+                                            Text(
+                                                text = "Yes",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    // LINE 1: Recording status, timer, and waveform
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            Box(
+                                                modifier =
+                                                    Modifier
+                                                        .size(10.dp)
+                                                        .background(
+                                                            MaterialTheme.colorScheme.error.copy(alpha = pulseAlpha),
+                                                            shape = CircleShape,
+                                                        ),
+                                            )
+
+                                            val minutes = current.durationSeconds / 60
+                                            val seconds = current.durationSeconds % 60
+                                            val timeFormatted = "%02d:%02d".format(minutes, seconds)
+
+                                            if (current.segmentIndex > 1) {
+                                                Text(
+                                                    text = "#${current.segmentIndex} • ",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 15.sp,
+                                                )
+                                            }
+                                            Text(
+                                                text = timeFormatted,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                fontSize = 17.sp,
+                                            )
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        ) {
+                                            if (current.silentMicWarning) {
+                                                Icon(
+                                                    Icons.Default.WarningAmber,
+                                                    contentDescription = "Silent mic warning",
+                                                    tint = MaterialTheme.colorScheme.error,
+                                                    modifier = Modifier.size(18.dp),
+                                                )
+                                            }
+                                            MiniWaveform(amplitude = amplitude)
+                                        }
+                                    }
+
+                                    // Subtle divider
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .height(1.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                                ),
+                                    )
+
+                                    // LINE 2: Action buttons (Discard, Next Entry, Done)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(28.dp),
+                                    ) {
+                                        // Discard button
+                                        IconButton(
+                                            onClick = {
+                                                if (current.durationSeconds > 1 || current.segmentIndex > 1) {
+                                                    showConfirmDiscardDialog = true
+                                                } else {
+                                                    stopAndClose()
+                                                }
+                                            },
+                                            modifier =
+                                                Modifier
+                                                    .size(44.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                        CircleShape,
+                                                    ),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = "Discard",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(22.dp),
+                                            )
+                                        }
+
+                                        // Next entry button
+                                        IconButton(
+                                            onClick = { viewModel.nextEntry(context) },
+                                            modifier =
+                                                Modifier
+                                                    .size(44.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.secondaryContainer,
+                                                        CircleShape,
+                                                    ),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Add,
+                                                contentDescription = "Next entry",
+                                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                modifier = Modifier.size(24.dp),
+                                            )
+                                        }
+
+                                        // Done button (prominent primary circle)
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.commitRecording(context) {
+                                                    closeWithAnimation()
+                                                }
+                                            },
+                                            modifier =
+                                                Modifier
+                                                    .size(48.dp)
+                                                    .background(MaterialTheme.colorScheme.primary, CircleShape),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = "Save",
+                                                tint = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.size(26.dp),
+                                            )
+                                        }
                                     }
                                 }
+                            }
 
-                                // Subtle divider
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .height(1.dp)
-                                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-                                )
-
-                                // LINE 2: Action buttons (Discard, Next Entry, Done)
+                            is AssistantUiState.Idle -> {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(28.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    // Discard button
                                     IconButton(
-                                        onClick = {
-                                            if (current.durationSeconds > 1 || current.segmentIndex > 1) {
-                                                showConfirmDiscardDialog = true
-                                            } else {
-                                                stopAndClose()
-                                            }
-                                        },
+                                        onClick = requestPermissionAndStart,
                                         modifier =
                                             Modifier
-                                                .size(44.dp)
-                                                .background(
-                                                    MaterialTheme.colorScheme.surfaceContainerHighest,
-                                                    CircleShape,
-                                                ),
+                                                .size(46.dp)
+                                                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
                                     ) {
                                         Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = "Discard",
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(22.dp),
-                                        )
-                                    }
-
-                                    // Next entry button
-                                    IconButton(
-                                        onClick = { viewModel.nextEntry(context) },
-                                        modifier =
-                                            Modifier
-                                                .size(44.dp)
-                                                .background(
-                                                    MaterialTheme.colorScheme.secondaryContainer,
-                                                    CircleShape,
-                                                ),
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Add,
-                                            contentDescription = "Next entry",
-                                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                    }
-
-                                    // Done button (prominent primary circle)
-                                    IconButton(
-                                        onClick = {
-                                            viewModel.commitRecording(context) {
-                                                closeWithAnimation()
-                                            }
-                                        },
-                                        modifier =
-                                            Modifier
-                                                .size(48.dp)
-                                                .background(MaterialTheme.colorScheme.primary, CircleShape),
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = "Save",
-                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            Icons.Default.Mic,
+                                            contentDescription = "Record",
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                             modifier = Modifier.size(26.dp),
                                         )
                                     }
-                                }
-                            }
-                        }
-
-                        is AssistantUiState.Idle -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                IconButton(
-                                    onClick = requestPermissionAndStart,
-                                    modifier =
-                                        Modifier
-                                            .size(46.dp)
-                                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                                ) {
-                                    Icon(
-                                        Icons.Default.Mic,
-                                        contentDescription = "Record",
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(26.dp),
+                                    Text(
+                                        text = "Tap to record",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
-                                Text(
-                                    text = "Tap to record",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
                             }
-                        }
 
-                        is AssistantUiState.Error -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Text(
-                                    text = current.error,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                                IconButton(
-                                    onClick = stopAndClose,
-                                    modifier = Modifier.size(40.dp),
+                            is AssistantUiState.Error -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
-                                    Icon(Icons.Default.Close, contentDescription = "Close")
+                                    Text(
+                                        text = current.error,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    IconButton(
+                                        onClick = stopAndClose,
+                                        modifier = Modifier.size(40.dp),
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = "Close")
+                                    }
                                 }
                             }
                         }
@@ -569,7 +575,6 @@ fun VoiceAssistantCapsule(
             }
         }
     }
-}
 }
 
 @Composable

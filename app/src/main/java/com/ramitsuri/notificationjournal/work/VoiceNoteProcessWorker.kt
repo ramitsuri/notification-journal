@@ -2,7 +2,6 @@ package com.ramitsuri.notificationjournal.work
 
 import android.content.Context
 import android.util.Log
-
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -11,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import co.touchlab.kermit.Logger
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.common.audio.AudioSource
 import com.google.mlkit.genai.speechrecognition.SpeechRecognition
@@ -24,6 +24,7 @@ import com.ramitsuri.notificationjournal.core.deeplink.homeDeepLink
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNoteStatus
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.NotificationInfo
@@ -103,6 +104,9 @@ class VoiceNoteProcessWorker
                     val result = extractor.extractIntent(transcribedText)
                     result?.intent
                 } catch (e: Exception) {
+                    Logger.withTag(Constants.TAG_AI_FALLBACK).w(e) {
+                        "Intent extraction failed with unhandled exception for: \"$transcribedText\""
+                    }
                     Log.w(TAG, "Intent extraction failed; using raw transcription", e)
                     null
                 }

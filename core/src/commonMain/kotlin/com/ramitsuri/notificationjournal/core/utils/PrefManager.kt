@@ -156,8 +156,7 @@ class PrefManager(
                     VoiceAssistantMode.ACTIVITY -> Key.VOICE_CAPSULE_POSITION_ACTIVITY
                 },
                 "",
-            )
-            .map { string ->
+            ).map { string ->
                 runCatching { json.decodeFromString<WindowPosition>(string ?: "") }.getOrNull()
             }
 

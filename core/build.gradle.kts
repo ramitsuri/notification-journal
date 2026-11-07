@@ -59,7 +59,7 @@ kotlin {
             implementation(libs.symspellkt)
             implementation(libs.symspellkt.fdic)
 
-            implementation(libs.kermit)
+            api(libs.kermit)
 
             implementation(libs.ktor.client)
             implementation(libs.ktor.ws.client)

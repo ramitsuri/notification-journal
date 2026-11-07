@@ -17,6 +17,9 @@ import com.ramitsuri.notificationjournal.ai.extractor.NanoAddEntryIntentExtracto
 import com.ramitsuri.notificationjournal.ai.model.AddEntryIntent
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
+import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
+import com.ramitsuri.notificationjournal.core.log.LogData
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
@@ -61,12 +64,14 @@ data class DiagnosticsUiState(
     val speechDownloadStatus: String? = null,
     val customPromptRules: String = "",
     val customRulesSavedMessage: Boolean = false,
+    val fallbackLogs: List<LogData> = emptyList(),
 )
 
 class AiDiagnosticsViewModel
     @Inject
     constructor(
         private val prefManager: PrefManager,
+        private val inMemoryLogWriter: InMemoryLogWriter,
         private val generativeModel: GenerativeModel = Generation.getClient(),
         private val nanoExtractor: NanoAddEntryIntentExtractor = NanoAddEntryIntentExtractor(prefManager = prefManager),
     ) : ViewModel() {
@@ -104,6 +109,19 @@ class AiDiagnosticsViewModel
                     _uiState.update { it.copy(customPromptRules = rules) }
                 }
             }
+            viewModelScope.launch {
+                inMemoryLogWriter.logs.collect { logs ->
+                    val fallbackLogs =
+                        logs
+                            .filter { it.tag == Constants.TAG_AI_FALLBACK }
+                            .sortedByDescending { it.time }
+                    _uiState.update { it.copy(fallbackLogs = fallbackLogs) }
+                }
+            }
+        }
+
+        fun clearFallbackLogs() {
+            inMemoryLogWriter.clear()
         }
 
         fun onTestInputChange(input: String) {
@@ -353,7 +371,11 @@ class AiDiagnosticsViewModel
                         if (hasStructured) {
                             logs.add("Attempting Tier 1: Structured Output...")
                             try {
-                                val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt(input, customRules = customRules)
+                                val prompt =
+                                    JournalPrompts.getAddEntryStructuredOutputPrompt(
+                                        input,
+                                        customRules = customRules,
+                                    )
                                 val baseRequest =
                                     GenerateContentRequest
                                         .Builder(TextPart(prompt))

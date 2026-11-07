@@ -118,6 +118,7 @@ dependencies {
     implementation(libs.playservices.coroutines)
 
     implementation(libs.kotlin.datetime)
+    implementation(libs.kermit)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

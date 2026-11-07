@@ -1,6 +1,7 @@
 package com.ramitsuri.notificationjournal.ai.extractor
 
 import android.util.Log
+import co.touchlab.kermit.Logger
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Feature
 import com.google.mlkit.genai.prompt.GenerateContentRequest
@@ -11,6 +12,7 @@ import com.google.mlkit.genai.prompt.generateTypedContentRequest
 import com.ramitsuri.notificationjournal.ai.model.AddEntryIntent
 import com.ramitsuri.notificationjournal.ai.model.ExtractionResult
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
+import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import org.json.JSONObject
 import java.time.LocalDate
@@ -45,11 +47,13 @@ class NanoAddEntryIntentExtractor(
         val today = LocalDate.now().toString()
         val customRules = prefManager?.getCustomPromptRules()
 
+        var statusCheckError: Exception? = null
         val status =
             try {
                 generativeModel.checkStatus()
             } catch (e: Exception) {
                 Log.e(TAG, "Error checking Gemini Nano status", e)
+                statusCheckError = e
                 FeatureStatus.UNAVAILABLE
             }
 
@@ -65,6 +69,10 @@ class NanoAddEntryIntentExtractor(
                 Log.e(TAG, "Failed to initiate model download", e)
             }
         }
+
+        var fallbackReason = "Unknown"
+        var fallbackThrowable: Throwable? = null
+        var fallbackRawResponse: String? = null
 
         if (status == FeatureStatus.AVAILABLE) {
             // 1. Try structured output if supported by AICore
@@ -132,16 +140,39 @@ class NanoAddEntryIntentExtractor(
                         )
                     } else {
                         Log.w(TAG, "Could not parse JSON from: $responseText")
+                        fallbackReason = "Could not parse JSON from Gemini Nano response"
+                        fallbackRawResponse = responseText
                     }
+                } else {
+                    fallbackReason = "Gemini Nano returned empty or blank response"
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "JSON prompt generation failed", e)
+                fallbackReason = "JSON prompt generation failed: ${e.message}"
+                fallbackThrowable = e
             }
         } else {
             Log.w(TAG, "Gemini Nano status ($status) is not AVAILABLE. Using fallback extractor.")
+            fallbackReason =
+                if (statusCheckError != null) {
+                    "Error checking Gemini Nano status: ${statusCheckError.message}"
+                } else {
+                    "Gemini Nano status ($status) is not AVAILABLE"
+                }
+            fallbackThrowable = statusCheckError
         }
 
         // 3. Fallback to rule-based extractor
+        val logMessage =
+            buildString {
+                append("Reason: ").append(fallbackReason)
+                append("\nInput: \"").append(userInput).append("\"")
+                if (fallbackRawResponse != null) {
+                    append("\nRaw Response: ").append(fallbackRawResponse)
+                }
+            }
+        Logger.withTag(Constants.TAG_AI_FALLBACK).w(fallbackThrowable) { logMessage }
+
         Log.d(TAG, "Using RuleBasedAddEntryIntentExtractor for: $userInput")
         return fallbackExtractor.extractIntent(userInput)
     }

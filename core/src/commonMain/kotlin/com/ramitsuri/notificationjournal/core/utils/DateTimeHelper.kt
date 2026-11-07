@@ -281,4 +281,3 @@ fun resolveEntryTime(
 
     return date.atTime(time)
 }
-

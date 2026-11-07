@@ -19,7 +19,6 @@ import com.ramitsuri.notificationjournal.core.ui.nav.viewModelFactory
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 
 class VoiceAssistantActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

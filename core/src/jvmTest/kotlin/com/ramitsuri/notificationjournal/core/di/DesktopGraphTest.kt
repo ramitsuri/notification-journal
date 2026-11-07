@@ -66,7 +66,11 @@ class DesktopGraphTest {
             assertNotNull(graph.importViewModel)
             assertNotNull(graph.settingsViewModel)
 
-            val deviceId = graph.prefManager.getDataHostProperties().first { it.deviceId.isNotEmpty() }.deviceId
+            val deviceId =
+                graph.prefManager
+                    .getDataHostProperties()
+                    .first { it.deviceId.isNotEmpty() }
+                    .deviceId
             assertTrue(deviceId.isNotEmpty())
             val password = graph.encryptionHelper.getPassword().first { !it.isNullOrEmpty() }
             assertTrue(!password.isNullOrEmpty())

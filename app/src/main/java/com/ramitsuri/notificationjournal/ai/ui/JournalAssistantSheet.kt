@@ -54,7 +54,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -65,6 +64,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramitsuri.notificationjournal.ai.AssistantUiState
 import com.ramitsuri.notificationjournal.ai.JournalAssistantViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun JournalAssistantSheet(
@@ -244,220 +244,220 @@ fun JournalAssistantBody(
                 .padding(top = 8.dp, bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-            when (val current = state) {
-                is AssistantUiState.Idle -> {
+        when (val current = state) {
+            is AssistantUiState.Idle -> {
+                Box(
+                    modifier = Modifier.size(180.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    IconButton(
+                        onClick = onStartRecording,
+                        modifier =
+                            Modifier
+                                .size(72.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    shape = CircleShape,
+                                ),
+                    ) {
+                        Icon(
+                            Icons.Default.Mic,
+                            contentDescription = "Start Recording",
+                            modifier = Modifier.size(36.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Tap microphone to record",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            is AssistantUiState.Recording -> {
+                // Pulsating live amplitude concentric rings
+                val outerPulseSize by animateDpAsState(
+                    targetValue = 100.dp + (60.dp * amplitude.coerceIn(0f, 1f)),
+                    animationSpec =
+                        spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow,
+                        ),
+                    label = "OuterPulseSize",
+                )
+                val middlePulseSize by animateDpAsState(
+                    targetValue = 84.dp + (34.dp * amplitude.coerceIn(0f, 1f)),
+                    animationSpec =
+                        spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow,
+                        ),
+                    label = "MiddlePulseSize",
+                )
+
+                Box(
+                    modifier = Modifier.size(180.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    // Outer pulse ring
                     Box(
-                        modifier = Modifier.size(180.dp),
+                        modifier =
+                            Modifier
+                                .size(outerPulseSize)
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                    shape = CircleShape,
+                                ),
+                    )
+                    // Middle pulse ring
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(middlePulseSize)
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                                    shape = CircleShape,
+                                ),
+                    )
+                    // Inner mic button
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(68.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    shape = CircleShape,
+                                ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        IconButton(
-                            onClick = onStartRecording,
-                            modifier =
-                                Modifier
-                                    .size(72.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.primaryContainer,
-                                        shape = CircleShape,
-                                    ),
-                        ) {
-                            Icon(
-                                Icons.Default.Mic,
-                                contentDescription = "Start Recording",
-                                modifier = Modifier.size(36.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            )
-                        }
+                        Icon(
+                            Icons.Default.Mic,
+                            contentDescription = "Recording active",
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                        )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Tap microphone to record",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
 
-                is AssistantUiState.Recording -> {
-                    // Pulsating live amplitude concentric rings
-                    val outerPulseSize by animateDpAsState(
-                        targetValue = 100.dp + (60.dp * amplitude.coerceIn(0f, 1f)),
-                        animationSpec =
-                            spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow,
-                            ),
-                        label = "OuterPulseSize",
-                    )
-                    val middlePulseSize by animateDpAsState(
-                        targetValue = 84.dp + (34.dp * amplitude.coerceIn(0f, 1f)),
-                        animationSpec =
-                            spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow,
-                            ),
-                        label = "MiddlePulseSize",
-                    )
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    Box(
-                        modifier = Modifier.size(180.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        // Outer pulse ring
-                        Box(
+                val minutes = current.durationSeconds / 60
+                val seconds = current.durationSeconds % 60
+                val timeFormatted = "%02d:%02d".format(minutes, seconds)
+
+                Text(
+                    text = "Entry ${current.segmentIndex} • $timeFormatted",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+
+                AnimatedVisibility(
+                    visible = current.silentMicWarning,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
                             modifier =
                                 Modifier
-                                    .size(outerPulseSize)
                                     .background(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                        shape = CircleShape,
-                                    ),
-                        )
-                        // Middle pulse ring
-                        Box(
-                            modifier =
-                                Modifier
-                                    .size(middlePulseSize)
-                                    .background(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-                                        shape = CircleShape,
-                                    ),
-                        )
-                        // Inner mic button
-                        Box(
-                            modifier =
-                                Modifier
-                                    .size(68.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.primary,
-                                        shape = CircleShape,
-                                    ),
-                            contentAlignment = Alignment.Center,
+                                        MaterialTheme.colorScheme.errorContainer,
+                                        shape = RoundedCornerShape(8.dp),
+                                    ).padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                Icons.Default.Mic,
-                                contentDescription = "Recording active",
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    val minutes = current.durationSeconds / 60
-                    val seconds = current.durationSeconds % 60
-                    val timeFormatted = "%02d:%02d".format(minutes, seconds)
-
-                    Text(
-                        text = "Entry ${current.segmentIndex} • $timeFormatted",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-
-                    AnimatedVisibility(
-                        visible = current.silentMicWarning,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                    ) {
-                        Column {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .background(
-                                            MaterialTheme.colorScheme.errorContainer,
-                                            shape = RoundedCornerShape(8.dp),
-                                        ).padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    Icons.Default.WarningAmber,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Microphone is not receiving audio",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(28.dp))
-
-                    // Action buttons: Discard, Next Entry, Done
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        TextButton(
-                            onClick = {
-                                if (current.durationSeconds > 1 || current.segmentIndex > 1) {
-                                    onRequestConfirmDiscard()
-                                } else {
-                                    onDiscard()
-                                }
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.DeleteOutline,
+                                Icons.Default.WarningAmber,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.size(16.dp),
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Discard", color = MaterialTheme.colorScheme.error)
-                        }
-
-                        FilledTonalButton(onClick = onNextEntry) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Next Entry")
-                        }
-
-                        Button(
-                            onClick = onCommit,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        ) {
-                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Done")
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Microphone is not receiving audio",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
                         }
                     }
                 }
 
-                is AssistantUiState.Error -> {
-                    Icon(
-                        Icons.Default.ErrorOutline,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(48.dp),
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = current.error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Action buttons: Discard, Next Entry, Done
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(
+                        onClick = {
+                            if (current.durationSeconds > 1 || current.segmentIndex > 1) {
+                                onRequestConfirmDiscard()
+                            } else {
+                                onDiscard()
+                            }
+                        },
                     ) {
-                        Button(onClick = onStartRecording) {
-                            Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Try Again")
-                        }
-                        OutlinedButton(onClick = onDiscard) {
-                            Text("Cancel")
-                        }
+                        Icon(
+                            Icons.Default.DeleteOutline,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Discard", color = MaterialTheme.colorScheme.error)
+                    }
+
+                    FilledTonalButton(onClick = onNextEntry) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Next Entry")
+                    }
+
+                    Button(
+                        onClick = onCommit,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Done")
+                    }
+                }
+            }
+
+            is AssistantUiState.Error -> {
+                Icon(
+                    Icons.Default.ErrorOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(48.dp),
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = current.error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                ) {
+                    Button(onClick = onStartRecording) {
+                        Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Try Again")
+                    }
+                    OutlinedButton(onClick = onDiscard) {
+                        Text("Cancel")
                     }
                 }
             }
         }
+    }
 }

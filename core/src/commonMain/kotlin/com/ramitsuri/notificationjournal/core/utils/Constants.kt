@@ -11,6 +11,7 @@ object Constants {
     const val DEFAULT_ADD_EDIT_FONT_SIZE = 14
     const val DATA_HOST_EXCHANGE = "Exchange"
     const val DATA_HOST_PORT = 8000
+    const val TAG_AI_FALLBACK = "AiFallback"
 
     object WearDataSharing {
         const val JOURNAL_ENTRY_ROUTE = "/journal"
