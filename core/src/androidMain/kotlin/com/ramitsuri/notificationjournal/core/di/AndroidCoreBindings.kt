@@ -12,7 +12,10 @@ import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.repository.ExportRepository
 import com.ramitsuri.notificationjournal.core.repository.ImportRepository
 import com.ramitsuri.notificationjournal.core.utils.DataStoreKeyValueStore
+import com.ramitsuri.notificationjournal.core.utils.Importance
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStoreV2
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelInfo
+import com.ramitsuri.notificationjournal.core.utils.NotificationChannelType
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.SystemNotificationHandler
 import dev.zacsweers.metro.BindingContainer
@@ -56,7 +59,26 @@ object AndroidCoreBindings {
     @Provides
     @SingleIn(AppScope::class)
     fun provideNotificationHandler(application: Application): NotificationHandler =
-        SystemNotificationHandler(application)
+        SystemNotificationHandler(application).also { handler ->
+            handler.init(
+                listOf(
+                    NotificationChannelInfo(
+                        channelType = NotificationChannelType.MAIN,
+                        name = NotificationChannelType.MAIN.id,
+                        description = "For main notification",
+                    ),
+                    NotificationChannelInfo(
+                        channelType = NotificationChannelType.REMINDERS,
+                        name = NotificationChannelType.REMINDERS.id,
+                        description = "For reminder notification",
+                        importance = Importance.HIGH,
+                        playSound = true,
+                        vibrate = true,
+                        showBadge = true,
+                    ),
+                ),
+            )
+        }
 
     @Provides
     @SingleIn(AppScope::class)

@@ -2,10 +2,12 @@ package com.ramitsuri.notificationjournal.core.di
 
 import dev.zacsweers.metro.createGraph
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.nio.file.Files
@@ -58,10 +60,18 @@ class DesktopGraphTest {
             assertNotNull(graph.templatesViewModel)
             assertNotNull(graph.logScreenViewModel)
             assertNotNull(graph.inMemoryLogWriter)
+            assertNotNull(graph.encryptionHelper)
             graph.initLogger()
             assertNotNull(graph.searchViewModel)
             assertNotNull(graph.importViewModel)
             assertNotNull(graph.settingsViewModel)
+
+            val deviceId = graph.prefManager.getDataHostProperties().first { it.deviceId.isNotEmpty() }.deviceId
+            assertTrue(deviceId.isNotEmpty())
+            val password = graph.encryptionHelper.getPassword().first { !it.isNullOrEmpty() }
+            assertTrue(!password.isNullOrEmpty())
+            val salt = graph.encryptionHelper.getSalt().first { !it.isNullOrEmpty() }
+            assertTrue(!salt.isNullOrEmpty())
 
             graph.coroutineScope.cancel()
         }

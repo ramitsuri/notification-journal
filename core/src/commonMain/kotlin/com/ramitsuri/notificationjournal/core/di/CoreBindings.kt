@@ -34,6 +34,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlin.uuid.Uuid
 
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -90,7 +91,15 @@ object CoreBindings {
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideEncryptionHelper(keyValueStore: KeyValueStoreV2): EncryptionHelper = EncryptionHelper(keyValueStore)
+    fun provideEncryptionHelper(
+        keyValueStore: KeyValueStoreV2,
+        scope: CoroutineScope,
+    ): EncryptionHelper =
+        EncryptionHelper(keyValueStore).also { helper ->
+            scope.launch {
+                helper.resetValues(overwrite = false)
+            }
+        }
 
     @Provides
     @SingleIn(AppScope::class)
@@ -99,9 +108,16 @@ object CoreBindings {
         json: Json,
         scope: CoroutineScope,
     ): PrefManager =
-        PrefManager(json = json, keyValueStore = keyValueStore).also {
+        PrefManager(json = json, keyValueStore = keyValueStore).also { prefManager ->
             scope.launch {
-                it.removeLegacy(listOf("show_logs_button", "show_reconciled", "show_suggestions"))
+                prefManager.removeLegacy(listOf("show_logs_button", "show_reconciled", "show_suggestions"))
+                prefManager.getDataHostProperties().first().let { dataHostProperties ->
+                    if (dataHostProperties.deviceId.isEmpty()) {
+                        prefManager.setDataHostProperties(
+                            dataHostProperties.copy(deviceId = Uuid.random().toString()),
+                        )
+                    }
+                }
             }
         }
 
