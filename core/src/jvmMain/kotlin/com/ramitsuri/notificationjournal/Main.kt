@@ -14,6 +14,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.di.DesktopGraph
 import com.ramitsuri.notificationjournal.core.model.WindowSize
 import com.ramitsuri.notificationjournal.core.ui.nav.NavGraph
@@ -46,7 +47,11 @@ fun main() {
     graph.lifecycleCoordinator.onAppStart()
 
     graph.coroutineScope.launch {
-        embeddedServer(Netty, port = Constants.DATA_HOST_PORT, module = Application::module).start(wait = true)
+        try {
+            embeddedServer(Netty, port = Constants.DATA_HOST_PORT, module = Application::module).start(wait = true)
+        } catch (e: Exception) {
+            Logger.withTag("DesktopMain").e(e) { "Failed to start Netty server" }
+        }
     }
 
     application {

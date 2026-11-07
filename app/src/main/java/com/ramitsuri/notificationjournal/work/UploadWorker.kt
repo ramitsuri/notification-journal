@@ -9,6 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator
@@ -34,8 +35,10 @@ class UploadWorker
         }
 
         override suspend fun doWork(): Result {
+            Logger.withTag(WORK_TAG).i { "UploadWorker started" }
             repository.uploadAll()
             lifecycleCoordinator.onAppStop()
+            Logger.withTag(WORK_TAG).i { "UploadWorker completed" }
             return Result.success()
         }
 

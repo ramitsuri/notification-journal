@@ -1,7 +1,6 @@
 package com.ramitsuri.notificationjournal.work
 
 import android.content.Context
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -75,7 +74,7 @@ class VoiceNoteProcessWorker
             val file = File(note.filePath)
 
             if (!file.exists() || file.length() < MIN_AUDIO_BYTES) {
-                Log.e(TAG, "Audio file missing or too small for note ${note.id}: length=${file.length()}")
+                Logger.withTag(TAG).e { "Audio file missing or too small for note ${note.id}: length=${file.length()}" }
                 voiceNoteDao.updateStatus(note.id, VoiceNoteStatus.FAILED, "Audio file is empty or missing")
                 postFailureNotification()
                 return
@@ -85,12 +84,12 @@ class VoiceNoteProcessWorker
                 try {
                     transcribeFile(file)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Transcription failed for note ${note.id}", e)
+                    Logger.withTag(TAG).e(e) { "Transcription failed for note ${note.id}" }
                     null
                 }
 
             if (rawTranscribedText.isNullOrBlank()) {
-                Log.e(TAG, "Transcription returned empty text for note ${note.id}")
+                Logger.withTag(TAG).e { "Transcription returned empty text for note ${note.id}" }
                 voiceNoteDao.updateStatus(note.id, VoiceNoteStatus.FAILED, "No speech recognized in audio")
                 postFailureNotification()
                 return
@@ -107,7 +106,7 @@ class VoiceNoteProcessWorker
                     Logger.withTag(Constants.TAG_AI_FALLBACK).w(e) {
                         "Intent extraction failed with unhandled exception for: \"$transcribedText\""
                     }
-                    Log.w(TAG, "Intent extraction failed; using raw transcription", e)
+                    Logger.withTag(TAG).w(e) { "Intent extraction failed; using raw transcription" }
                     null
                 }
 
@@ -128,9 +127,9 @@ class VoiceNoteProcessWorker
                 )
                 file.delete()
                 voiceNoteDao.delete(note.id)
-                Log.d(TAG, "Successfully processed and saved voice note ${note.id}")
+                Logger.withTag(TAG).i { "Successfully processed and saved voice note ${note.id}" }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed inserting journal entry for note ${note.id}", e)
+                Logger.withTag(TAG).e(e) { "Failed inserting journal entry for note ${note.id}" }
                 voiceNoteDao.updateStatus(note.id, VoiceNoteStatus.FAILED, "Failed to save journal entry: ${e.message}")
                 postFailureNotification()
             }
@@ -151,7 +150,7 @@ class VoiceNoteProcessWorker
                 try {
                     recognizer.checkStatus()
                 } catch (e: Exception) {
-                    Log.e(TAG, "checkStatus failed in worker", e)
+                    Logger.withTag(TAG).e(e) { "checkStatus failed in worker" }
                     FeatureStatus.UNAVAILABLE
                 }
 
@@ -159,12 +158,12 @@ class VoiceNoteProcessWorker
                 try {
                     recognizer.download().collect()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Model download failed in worker", e)
+                    Logger.withTag(TAG).e(e) { "Model download failed in worker" }
                     recognizer.close()
                     return null
                 }
             } else if (status != FeatureStatus.AVAILABLE) {
-                Log.e(TAG, "ML Kit Speech not available: status=$status")
+                Logger.withTag(TAG).e { "ML Kit Speech not available: status=$status" }
                 recognizer.close()
                 return null
             }
@@ -173,7 +172,7 @@ class VoiceNoteProcessWorker
                 try {
                     AudioSource.fromFile(file)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to create AudioSource from file", e)
+                    Logger.withTag(TAG).e(e) { "Failed to create AudioSource from file" }
                     recognizer.close()
                     return null
                 }
@@ -205,14 +204,14 @@ class VoiceNoteProcessWorker
 
                         is SpeechRecognizerResponse.ErrorResponse -> {
                             errorEncountered = response.e.message ?: "Recognition error"
-                            Log.e(TAG, "Recognition error response: $errorEncountered")
+                            Logger.withTag(TAG).e { "Recognition error response: $errorEncountered" }
                         }
 
                         else -> {}
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "startRecognition failed in worker", e)
+                Logger.withTag(TAG).e(e) { "startRecognition failed in worker" }
             } finally {
                 try {
                     audioSource.close()

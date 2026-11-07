@@ -71,17 +71,21 @@ internal class DataSendHelperImpl(
     private suspend fun Payload.send(): Boolean {
         val dataHostProperties = getDataHostProperties()
         val actualPayload = this.attachSender(dataHostProperties.toSender())
-        log("Sending payload: ${this::class.qualifiedName?.split(".")?.takeLast(2)?.joinToString(".")}")
-        return webSocketHelper.send(
-            payload = actualPayload,
-        )
-    }
-
-    private fun log(
-        message: String,
-        throwable: Throwable? = null,
-    ) {
-        Logger.i(TAG, throwable) { message }
+        val payloadName =
+            this::class
+                .qualifiedName
+                ?.split(".")
+                ?.takeLast(2)
+                ?.joinToString(".")
+        Logger.withTag(TAG).d { "Sending payload: $payloadName" }
+        val sent =
+            webSocketHelper.send(
+                payload = actualPayload,
+            )
+        if (!sent) {
+            Logger.withTag(TAG).w { "Failed to send payload: $payloadName" }
+        }
+        return sent
     }
 
     companion object {

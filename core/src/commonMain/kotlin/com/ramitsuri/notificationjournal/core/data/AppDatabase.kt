@@ -11,6 +11,7 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom11To1
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom12To13
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom13To14
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom14To15
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom15To16
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
@@ -20,6 +21,7 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom6To7
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom7To8
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom8To9
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom9To10
+import com.ramitsuri.notificationjournal.core.log.LogData
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -36,8 +38,9 @@ import kotlinx.coroutines.Dispatchers
         EntryConflict::class,
         DictionaryItem::class,
         VoiceNote::class,
+        LogData::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
@@ -53,6 +56,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dictionaryDao(): DictionaryDao
 
     abstract fun voiceNoteDao(): VoiceNoteDao
+
+    abstract fun logDao(): LogDao
 
     companion object {
         fun getDatabase(builder: () -> Builder<AppDatabase>): AppDatabase =
@@ -73,6 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                 .addMigrations(MigrationFrom12To13())
                 .addMigrations(MigrationFrom13To14())
                 .addMigrations(MigrationFrom14To15())
+                .addMigrations(MigrationFrom15To16())
                 .build()
     }
 }

@@ -2,7 +2,7 @@ package com.ramitsuri.notificationjournal.service
 
 import android.annotation.SuppressLint
 import android.app.Service
-import android.util.Log
+import co.touchlab.kermit.Logger
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -93,6 +93,6 @@ class WearDataLayerListenerService(
     }
 
     private fun log(message: String) {
-        Log.d("WearDataLayerListenerService", message)
+        Logger.withTag("WearDataLayerListenerService").d { message }
     }
 }

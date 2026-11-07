@@ -17,16 +17,22 @@ class ExportRepositoryImpl(
         content: String,
     ) {
         if (baseDir.isBlank()) {
-            Logger.i(TAG) { "Export base directory is blank" }
+            Logger.withTag(TAG).w { "Export base directory is blank" }
             return
         }
         val year = forDate.year.toString()
         val month = forDate.monthNumber.toString().padStart(2, '0')
         val day = forDate.dayOfMonth.toString().padStart(2, '0')
         withContext(ioDispatcher) {
-            val file = Paths.get(baseDir, year, month, "$day.md")
-            Files.createDirectories(file.parent)
-            Files.writeString(file, content)
+            try {
+                val file = Paths.get(baseDir, year, month, "$day.md")
+                Files.createDirectories(file.parent)
+                Files.writeString(file, content)
+                Logger.withTag(TAG).i { "Exported entries for $forDate to $file" }
+            } catch (e: Exception) {
+                Logger.withTag(TAG).e(e) { "Failed to export entries for $forDate" }
+                throw e
+            }
         }
     }
 

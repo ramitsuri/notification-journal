@@ -3,8 +3,8 @@ package com.ramitsuri.notificationjournal.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.RemoteInput
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.core.di.AppScope
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
@@ -46,16 +46,17 @@ class NotificationActionReceiver(
     ) {
         val remoteInputBundle = RemoteInput.getResultsFromIntent(intent)
         if (remoteInputBundle == null) {
-            Log.d(TAG, "RemoteInputBundle is null")
+            Logger.withTag(TAG).d { "RemoteInputBundle is null" }
             return
         }
 
         val text = remoteInputBundle.getCharSequence(Constants.REMOTE_INPUT_JOURNAL_KEY)?.toString()
         if (text == null) {
-            Log.d(TAG, "Text in RemoteInputBundle is null")
+            Logger.withTag(TAG).d { "Text in RemoteInputBundle is null" }
             return
         }
 
+        Logger.withTag(TAG).i { "Added journal entry from notification" }
         val pendingResult = goAsync()
         coroutineScope.launch {
             repository.insert(text = text)

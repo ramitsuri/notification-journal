@@ -2,7 +2,7 @@ package com.ramitsuri.notificationjournal.core.data
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.util.Log
+import co.touchlab.kermit.Logger
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
@@ -45,10 +45,10 @@ class WearDataSharingClientImpl(
             dataClient.putDataItem(request).await()
             true
         } catch (cancellationException: CancellationException) {
-            Log.d(TAG, "Failed to post entry: ${cancellationException.message}")
+            Logger.withTag(TAG).d { "Post entry cancelled: ${cancellationException.message}" }
             false
         } catch (exception: Exception) {
-            Log.d(TAG, "Failed to post entry: ${exception.message}")
+            Logger.withTag(TAG).e(exception) { "Failed to post entry" }
             false
         }
 
@@ -68,7 +68,7 @@ class WearDataSharingClientImpl(
 
             dataClient.putDataItem(request).await()
         } catch (exception: Exception) {
-            Log.d(TAG, "Failed to request upload: ${exception.message}")
+            Logger.withTag(TAG).e(exception) { "Failed to request upload" }
         }
     }
 
@@ -100,7 +100,7 @@ class WearDataSharingClientImpl(
             dataClient.putDataItem(request).await()
             true
         } catch (exception: Exception) {
-            Log.d(TAG, "Failed to post template: ${exception.message}")
+            Logger.withTag(TAG).e(exception) { "Failed to post template" }
             false
         }
 
@@ -117,7 +117,7 @@ class WearDataSharingClientImpl(
             dataClient.putDataItem(request).await()
             true
         } catch (exception: Exception) {
-            Log.d(TAG, "Failed to clear templates: ${exception.message}")
+            Logger.withTag(TAG).e(exception) { "Failed to clear templates" }
             false
         }
 
@@ -134,7 +134,7 @@ class WearDataSharingClientImpl(
             dataClient.putDataItem(request).await()
             true
         } catch (exception: Exception) {
-            Log.d(TAG, "Failed to update tile: ${exception.message}")
+            Logger.withTag(TAG).e(exception) { "Failed to update tile" }
             false
         }
 

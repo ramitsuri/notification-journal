@@ -7,12 +7,15 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import java.util.Locale
+
+private const val TAG = "PlatformVoiceInput"
 
 /**
  * Manages 100% on-device, private voice transcription using Android's platform SpeechRecognizer.
@@ -114,6 +117,7 @@ class PlatformVoiceInputManager(
             try {
                 speechRecognizer.startListening(intent)
             } catch (e: Exception) {
+                Logger.withTag(TAG).e(e) { "Failed to start speech recognition" }
                 trySend(VoiceInputEvent.Error("Failed to start speech recognition: ${e.message}"))
                 close()
                 return@callbackFlow

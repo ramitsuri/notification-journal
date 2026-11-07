@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.server
 
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -36,9 +37,9 @@ private fun Route.startWebSocket(exchange: String) {
                 }
             }
         } catch (e: Exception) {
-            println(e.localizedMessage)
+            Logger.withTag("Server").e(e) { "Server websocket error" }
         } finally {
-            println("Removing $thisClient!")
+            Logger.withTag("Server").d { "Removing client: $thisClient" }
             clients -= thisClient
         }
     }

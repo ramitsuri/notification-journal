@@ -38,13 +38,13 @@ class WebSocketHelper(
 
     suspend fun start(getDataHostProperties: suspend () -> DataHostProperties) {
         if (session != null) {
-            log("Already connected")
+            Logger.withTag(TAG).d { "Already connected" }
             return
         }
-        log("Starting")
+        Logger.withTag(TAG).d { "Starting" }
         val dataHostProperties = getDataHostProperties()
         if (!dataHostProperties.isValid()) {
-            log("Cannot send, invalid data host properties")
+            Logger.withTag(TAG).w { "Cannot start websocket, invalid data host properties" }
             return
         }
         try {
@@ -55,18 +55,18 @@ class WebSocketHelper(
                 path = "/${Constants.DATA_HOST_EXCHANGE}",
             ) {
                 session = this
-                log("Connected to websocket: $session")
+                Logger.withTag(TAG).i { "Connected to websocket: $session" }
                 startReceiver()
             }
             session = null
         } catch (e: Exception) {
-            log("Error while starting websocket", e)
+            Logger.withTag(TAG).e(e) { "Error while starting websocket" }
             session = null
         }
     }
 
     suspend fun stop() {
-        log("Stopping")
+        Logger.withTag(TAG).d { "Stopping websocket" }
         session?.close()
         session = null
     }
@@ -80,7 +80,7 @@ class WebSocketHelper(
                 true
             } ?: false
         } catch (e: Exception) {
-            log("Error while sending", e)
+            Logger.withTag(TAG).e(e) { "Error while sending" }
             false
         }
 
@@ -93,21 +93,11 @@ class WebSocketHelper(
                 _messages.emit(payload)
             }
         } catch (e: Exception) {
-            log("Error while receiving", e)
+            Logger.withTag(TAG).e(e) { "Error while receiving" }
         }
     }
 
-    private fun log(
-        message: String,
-        throwable: Throwable? = null,
-    ) {
-        Logger.i("WebSocketHelper") {
-            val exceptionMessage = throwable?.localizedMessage
-            if (exceptionMessage.isNullOrEmpty()) {
-                message
-            } else {
-                "$message , $exceptionMessage"
-            }
-        }
+    companion object {
+        private const val TAG = "WebSocketHelper"
     }
 }

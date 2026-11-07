@@ -6,9 +6,9 @@ import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -73,7 +73,7 @@ class PcmAudioRecorder(
     suspend fun record(context: Context): Boolean =
         withContext(ioDispatcher) {
             if (_isRecordingFlow.value) {
-                Log.w(TAG, "Recording already in progress")
+                Logger.withTag(TAG).w { "Recording already in progress" }
                 return@withContext true
             }
 
@@ -82,13 +82,13 @@ class PcmAudioRecorder(
                     Manifest.permission.RECORD_AUDIO,
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                Log.e(TAG, "RECORD_AUDIO permission not granted")
+                Logger.withTag(TAG).e { "RECORD_AUDIO permission not granted" }
                 return@withContext false
             }
 
             val minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_ENCODING)
             if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
-                Log.e(TAG, "Invalid buffer size for AudioRecord")
+                Logger.withTag(TAG).e { "Invalid buffer size for AudioRecord" }
                 return@withContext false
             }
 
@@ -104,12 +104,12 @@ class PcmAudioRecorder(
                         bufferSize,
                     )
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to instantiate AudioRecord", e)
+                    Logger.withTag(TAG).e(e) { "Failed to instantiate AudioRecord" }
                     return@withContext false
                 }
 
             if (record.state != AudioRecord.STATE_INITIALIZED) {
-                Log.e(TAG, "AudioRecord state is not STATE_INITIALIZED")
+                Logger.withTag(TAG).e { "AudioRecord state is not STATE_INITIALIZED" }
                 record.release()
                 return@withContext false
             }
@@ -129,10 +129,11 @@ class PcmAudioRecorder(
             try {
                 record.startRecording()
             } catch (e: Exception) {
-                Log.e(TAG, "AudioRecord.startRecording failed", e)
+                Logger.withTag(TAG).e(e) { "AudioRecord.startRecording failed" }
                 record.release()
                 return@withContext false
             }
+
             audioRecord = record
             _isRecordingFlow.value = true
 
@@ -149,7 +150,7 @@ class PcmAudioRecorder(
                                     try {
                                         currentOutputStream.write(command.bytes)
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Failed writing PCM bytes to file", e)
+                                        Logger.withTag(TAG).e(e) { "Failed writing PCM bytes to file" }
                                     }
                                 }
 
@@ -158,7 +159,7 @@ class PcmAudioRecorder(
                                         currentOutputStream.flush()
                                         currentOutputStream.close()
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Error closing previous file on rotate", e)
+                                        Logger.withTag(TAG).e(e) { "Error closing previous file on rotate" }
                                     }
                                     completedFiles.add(currentFile)
                                     currentFile = command.newFile
@@ -172,7 +173,7 @@ class PcmAudioRecorder(
                                         currentOutputStream.flush()
                                         currentOutputStream.close()
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Error closing file on stop", e)
+                                        Logger.withTag(TAG).e(e) { "Error closing file on stop" }
                                     }
                                     completedFiles.add(currentFile)
                                     currentActiveFile = null
@@ -185,7 +186,7 @@ class PcmAudioRecorder(
                                         currentOutputStream.flush()
                                         currentOutputStream.close()
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Error closing file on cancel", e)
+                                        Logger.withTag(TAG).e(e) { "Error closing file on cancel" }
                                     }
                                     completedFiles.add(currentFile)
                                     currentActiveFile = null
@@ -228,7 +229,7 @@ class PcmAudioRecorder(
                                     break
                                 }
                             } else if (bytesRead < 0) {
-                                Log.e(TAG, "AudioRecord.read returned error code: $bytesRead")
+                                Logger.withTag(TAG).e { "AudioRecord.read returned error code: $bytesRead" }
                                 break
                             }
                         }

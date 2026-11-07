@@ -3,7 +3,7 @@ package com.ramitsuri.notificationjournal.ai.voice
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
-import android.util.Log
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +28,7 @@ class PcmAudioPlayer(
         withContext(ioDispatcher) {
             stop()
             if (!file.exists()) {
-                Log.e(TAG, "File does not exist: ${file.absolutePath}")
+                Logger.withTag(TAG).e { "File does not exist: ${file.absolutePath}" }
                 return@withContext
             }
 
@@ -61,7 +61,7 @@ class PcmAudioPlayer(
                         .setTransferMode(AudioTrack.MODE_STREAM)
                         .build()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to create AudioTrack", e)
+                    Logger.withTag(TAG).e(e) { "Failed to create AudioTrack" }
                     return@withContext
                 }
 
@@ -78,7 +78,7 @@ class PcmAudioPlayer(
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error during AudioTrack playback", e)
+                Logger.withTag(TAG).e(e) { "Error during AudioTrack playback" }
             } finally {
                 _isPlayingFlow.value = false
                 try {

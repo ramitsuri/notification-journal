@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.ai.diagnostics
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Feature
 import com.google.mlkit.genai.prompt.GenerateContentRequest
@@ -17,7 +18,7 @@ import com.ramitsuri.notificationjournal.ai.extractor.NanoAddEntryIntentExtracto
 import com.ramitsuri.notificationjournal.ai.model.AddEntryIntent
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
-import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
+import com.ramitsuri.notificationjournal.core.log.DatabaseLogWriter
 import com.ramitsuri.notificationjournal.core.log.LogData
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
@@ -71,7 +72,7 @@ class AiDiagnosticsViewModel
     @Inject
     constructor(
         private val prefManager: PrefManager,
-        private val inMemoryLogWriter: InMemoryLogWriter,
+        private val logWriter: DatabaseLogWriter,
         private val generativeModel: GenerativeModel = Generation.getClient(),
         private val nanoExtractor: NanoAddEntryIntentExtractor = NanoAddEntryIntentExtractor(prefManager = prefManager),
     ) : ViewModel() {
@@ -97,7 +98,7 @@ class AiDiagnosticsViewModel
                     speechRecognizer = it
                 }
             } catch (e: Exception) {
-                android.util.Log.e("AiDiagnostics", "Failed to create SpeechRecognizer", e)
+                Logger.e("AiDiagnostics", e) { "Failed to create SpeechRecognizer" }
                 null
             }
         }
@@ -110,7 +111,7 @@ class AiDiagnosticsViewModel
                 }
             }
             viewModelScope.launch {
-                inMemoryLogWriter.logs.collect { logs ->
+                logWriter.logs.collect { logs ->
                     val fallbackLogs =
                         logs
                             .filter { it.tag == Constants.TAG_AI_FALLBACK }
@@ -121,7 +122,7 @@ class AiDiagnosticsViewModel
         }
 
         fun clearFallbackLogs() {
-            inMemoryLogWriter.clear()
+            logWriter.clear()
         }
 
         fun onTestInputChange(input: String) {
@@ -206,10 +207,10 @@ class AiDiagnosticsViewModel
                         val speechStat =
                             try {
                                 val stat = getSpeechRecognizer()?.checkStatus() ?: -1
-                                android.util.Log.d("AiDiagnostics", "SpeechRecognizer checkStatus returned: $stat")
+                                Logger.d("AiDiagnostics") { "SpeechRecognizer checkStatus returned: $stat" }
                                 stat
                             } catch (e: Exception) {
-                                android.util.Log.e("AiDiagnostics", "SpeechRecognizer checkStatus threw exception", e)
+                                Logger.e("AiDiagnostics", e) { "SpeechRecognizer checkStatus threw exception" }
                                 -1
                             }
 

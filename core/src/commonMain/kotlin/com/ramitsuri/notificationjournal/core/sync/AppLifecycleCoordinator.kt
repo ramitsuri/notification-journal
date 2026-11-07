@@ -76,32 +76,37 @@ class AppLifecycleCoordinator(
 
     private suspend fun startReceiving() =
         supervisorScope {
-            Logger.i(TAG) { "Start receiving" }
+            Logger.withTag(TAG).i { "Start receiving" }
             receiveJob?.cancel()
             receiveJob =
                 launch {
                     dataReceiveHelper.payloadFlow.filterIsInstance<Entity>().collect { entity ->
-                        when (entity) {
-                            is Entity.Entries -> {
-                                coroutineScope.launch { repository.handlePayload(entity) }
-                            }
+                        Logger.withTag(TAG).i { "Received entity: ${entity::class.simpleName}" }
+                        coroutineScope.launch {
+                            try {
+                                when (entity) {
+                                    is Entity.Entries -> {
+                                        repository.handlePayload(entity)
+                                    }
 
-                            is Entity.Tags -> {
-                                coroutineScope.launch { tagsDao.clearAndInsert(entity.data) }
-                            }
+                                    is Entity.Tags -> {
+                                        tagsDao.clearAndInsert(entity.data)
+                                    }
 
-                            is Entity.Templates -> {
-                                coroutineScope.launch { templatesDao.clearAndInsert(entity.data) }
-                            }
+                                    is Entity.Templates -> {
+                                        templatesDao.clearAndInsert(entity.data)
+                                    }
 
-                            is Entity.ClearDaysAndInsertEntries -> {
-                                coroutineScope.launch {
-                                    repository.clearDaysAndInsert(
-                                        days = entity.days,
-                                        entries = entity.entries,
-                                        uploadEntries = false,
-                                    )
+                                    is Entity.ClearDaysAndInsertEntries -> {
+                                        repository.clearDaysAndInsert(
+                                            days = entity.days,
+                                            entries = entity.entries,
+                                            uploadEntries = false,
+                                        )
+                                    }
                                 }
+                            } catch (e: Exception) {
+                                Logger.withTag(TAG).e(e) { "Failed to handle entity: ${entity::class.simpleName}" }
                             }
                         }
                     }

@@ -36,13 +36,13 @@ class VerifyEntriesHelper(
                         .filterIsInstance<VerifyEntries.Request>()
                         .collect { request ->
                             if (clock.now() - request.time > REQUEST_RESPONSE_STALE_SECONDS.seconds) {
-                                log { "Request is too old for ${request.date}" }
+                                Logger.withTag(TAG).w { "Request is too old for ${request.date}" }
                                 return@collect
                             }
-                            log { "Request for ${request.date} from ${request.sender.name}" }
+                            Logger.withTag(TAG).d { "Request for ${request.date} from ${request.sender.name}" }
                             val verification = repository.getVerificationForDate(request.date)
                             if (verification == null) {
-                                log { "Unable to compute verification for ${request.date}" }
+                                Logger.withTag(TAG).w { "Unable to compute verification for ${request.date}" }
                                 return@collect
                             }
                             dataSendHelper.sendVerifyEntriesResponse(
@@ -61,10 +61,10 @@ class VerifyEntriesHelper(
 
     // Returns name of the peer with which entries hash matches otherwise null
     suspend fun requestVerifyEntries(date: LocalDate): String? {
-        log { "Verifying for date $date" }
+        Logger.withTag(TAG).d { "Verifying for date $date" }
         val verification = repository.getVerificationForDate(date)
         if (verification == null) {
-            log { "Unable to compute verification for date $date" }
+            Logger.withTag(TAG).w { "Unable to compute verification for date $date" }
             return null
         }
         val sent =
@@ -74,7 +74,7 @@ class VerifyEntriesHelper(
                 date = date,
             )
         if (!sent) {
-            log { "Verify entries request unable to send for date $date" }
+            Logger.withTag(TAG).w { "Verify entries request unable to send for date $date" }
             return null
         }
         val response =
@@ -85,20 +85,20 @@ class VerifyEntriesHelper(
                 .timeout(REQUEST_RESPONSE_STALE_SECONDS.seconds)
                 .catch {
                     if (it is TimeoutCancellationException) {
-                        log { "canceled from timeout for date $date" }
+                        Logger.withTag(TAG).w { "Canceled from timeout for date $date" }
                     }
                 }.firstOrNull()
         if (response == null) {
-            log { "Verify entries response not received for date $date" }
+            Logger.withTag(TAG).w { "Verify entries response not received for date $date" }
             return null
         }
         if (clock.now() - response.time > REQUEST_RESPONSE_STALE_SECONDS.seconds) {
-            log { "Verify entries response is too old for date $date" }
+            Logger.withTag(TAG).w { "Verify entries response is too old for date $date" }
             return null
         }
         val unmatchedEntries = verification.unmatchedEntries(response.verification)
         if (unmatchedEntries.isNotEmpty()) {
-            log {
+            Logger.withTag(TAG).w {
                 "Verify entries response doesn't match for date $date\n" +
                     "Unmatched entries: ${
                         unmatchedEntries.joinToString(
@@ -109,12 +109,8 @@ class VerifyEntriesHelper(
             }
             return null
         }
-        log { "Matches with ${response.sender.name} for date $date" }
+        Logger.withTag(TAG).i { "Matches with ${response.sender.name} for date $date" }
         return response.sender.name
-    }
-
-    private fun log(message: () -> String) {
-        Logger.i(TAG, message = message)
     }
 
     companion object {

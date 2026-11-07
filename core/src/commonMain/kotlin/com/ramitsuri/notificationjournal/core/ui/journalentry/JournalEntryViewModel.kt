@@ -258,7 +258,7 @@ class JournalEntryViewModel
         }
 
         fun sync() {
-            Logger.i(TAG) { "Attempting to sync" }
+            Logger.withTag(TAG).d { "Attempting to sync" }
             viewModelScope.launch {
                 repository.uploadAll()
             }
@@ -289,16 +289,16 @@ class JournalEntryViewModel
             viewModelScope.launch(Dispatchers.Default) {
                 val dayGroup = currentDayGroup ?: return@launch
                 if (dayGroup.untaggedCount > 0) {
-                    Logger.i(TAG) { "Cannot export day group with untagged entries" }
+                    Logger.withTag(TAG).w { "Cannot export day group with untagged entries" }
                     return@launch
                 }
                 val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }
                 if (dayGroupEntryIds.isEmpty()) {
-                    Logger.i(TAG) { "Cannot export empty day group" }
+                    Logger.withTag(TAG).w { "Cannot export empty day group" }
                     return@launch
                 }
                 if (state.value.entryConflicts.any { dayGroupEntryIds.contains(it.id) }) {
-                    Logger.i(TAG) { "Cannot export day group with conflicting entries" }
+                    Logger.withTag(TAG).w { "Cannot export day group with conflicting entries" }
                     return@launch
                 }
                 reconcile(dayGroup)

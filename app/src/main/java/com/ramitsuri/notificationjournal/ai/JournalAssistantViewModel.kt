@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.ai.voice.PcmAudioRecorder
 import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
@@ -118,6 +119,7 @@ class JournalAssistantViewModel
                 val validFiles = files.filter { it.exists() && it.length() >= 10_000L }
 
                 if (validFiles.isEmpty()) {
+                    Logger.withTag(TAG).w { "Recording was too short or empty: ${files.size} files" }
                     files.forEach { it.delete() }
                     _uiState.value = AssistantUiState.Error("Recording was too short or empty. Please try again.")
                     return@launch
@@ -134,6 +136,7 @@ class JournalAssistantViewModel
                         )
                     }
 
+                Logger.withTag(TAG).i { "Saved ${notes.size} voice notes for processing" }
                 voiceNoteDao.insertAll(notes)
 
                 Toast.makeText(context, R.string.voice_note_saved_toast, Toast.LENGTH_SHORT).show()
@@ -195,5 +198,9 @@ class JournalAssistantViewModel
             stopTimer()
             recordingJob?.cancel()
             recordingJob = null
+        }
+
+        companion object {
+            private const val TAG = "JournalAssistant"
         }
     }

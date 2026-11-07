@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Severity
 import com.ramitsuri.notificationjournal.core.log.LogData
 import com.ramitsuri.notificationjournal.core.model.logs.LogsViewState
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
@@ -171,6 +172,22 @@ private fun LogItem(
                                 amString = stringResource(Res.string.am),
                                 pmString = stringResource(Res.string.pm),
                             ),
+                    )
+                    Text(
+                        text = "\u2022",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                    )
+                    Text(
+                        text = logData.severity.name.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color =
+                            when (logData.severity) {
+                                Severity.Error, Severity.Assert -> MaterialTheme.colorScheme.error
+                                Severity.Warn -> MaterialTheme.colorScheme.tertiary
+                                Severity.Debug, Severity.Verbose -> MaterialTheme.colorScheme.outline
+                                Severity.Info -> MaterialTheme.colorScheme.primary
+                            },
                     )
                     if (logData.tag.isNotEmpty()) {
                         Text(

@@ -22,7 +22,7 @@ class QrCodeAnalyzer(
                     barcode.rawValue?.let { onQrCodeScanned(it) }
                 }
             }.addOnFailureListener {
-                Logger.i("QRScanner") { "Error scanning QR code: $it" }
+                Logger.withTag("QRScanner").e(it) { "Error scanning QR code" }
             }.addOnCompleteListener { imageProxy.close() }
     }
 }

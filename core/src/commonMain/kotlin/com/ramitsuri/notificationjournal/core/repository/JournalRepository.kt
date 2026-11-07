@@ -240,6 +240,11 @@ class JournalRepository(
             }
 
             // Conflict between local and received entries, leave saved entry alone, save conflict
+            Logger.withTag(TAG).w {
+                "Conflict detected for entry ${entryConflict.entryId} from ${payload.sender.name.ifEmpty {
+                    payload.sender.id
+                }}"
+            }
             conflictDao.insert(entryConflict)
         }
     }
@@ -265,6 +270,7 @@ class JournalRepository(
             update(newEntry)
         }
 
+        Logger.withTag(TAG).i { "Resolved conflict for entry ${newEntry.id}" }
         conflictDao.deleteForEntryId(newEntry.id)
         sendAndMarkUploaded(listOf(newEntry.copy(replacesLocal = true)))
     }
@@ -405,10 +411,12 @@ class JournalRepository(
     private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>) {
         val sent = dataSendHelper.sendEntries(entries)
         if (sent) {
+            Logger.withTag(TAG).d { "Successfully uploaded ${entries.size} entries" }
             // Once sent, mark as not "replaces_local" because that was just for this upload, further
             // changes should go through the conflict resolution flow
             dao.updateUploaded(entries = entries.map { it.copy(replacesLocal = false) }, uploaded = true)
         } else {
+            Logger.withTag(TAG).w { "Failed to upload ${entries.size} entries" }
             dao.updateUploaded(entries = entries, uploaded = false)
         }
     }

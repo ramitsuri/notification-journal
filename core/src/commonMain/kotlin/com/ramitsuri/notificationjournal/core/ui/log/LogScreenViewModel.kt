@@ -2,7 +2,7 @@ package com.ramitsuri.notificationjournal.core.ui.log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
+import com.ramitsuri.notificationjournal.core.log.DatabaseLogWriter
 import com.ramitsuri.notificationjournal.core.model.logs.LogsViewState
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,16 +15,16 @@ import kotlinx.datetime.TimeZone
 class LogScreenViewModel
     @Inject
     constructor(
-        private val inMemoryLogWriter: InMemoryLogWriter,
+        private val logWriter: DatabaseLogWriter,
         private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
     ) : ViewModel() {
         private val tagSelections: MutableStateFlow<List<String>> = MutableStateFlow(listOf())
         private var initialSelectionForTags = true
         val viewState =
             combine(
-                inMemoryLogWriter.getTags(),
+                logWriter.getTags(),
                 tagSelections,
-                inMemoryLogWriter.logs,
+                logWriter.logs,
             ) { tags, selections, logs ->
                 if (initialSelectionForTags && selections.isEmpty()) {
                     tagSelections.update { tags }
@@ -67,6 +67,6 @@ class LogScreenViewModel
         }
 
         fun clearLogsClicked() {
-            inMemoryLogWriter.clear()
+            logWriter.clear()
         }
     }

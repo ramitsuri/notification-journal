@@ -83,7 +83,7 @@ class JournalEntryDaysViewModel
                         it.conflictCount > 0
                 }
             if (anyConflictsOrUntagged) {
-                Logger.i(TAG) { "Entries have conflicts or untagged entries, cannot reconcile" }
+                Logger.withTag(TAG).w { "Entries have conflicts or untagged entries, cannot reconcile" }
                 return
             }
             viewModelScope.launch {
@@ -96,7 +96,7 @@ class JournalEntryDaysViewModel
         }
 
         fun sync() {
-            Logger.i(TAG) { "Attempting to sync" }
+            Logger.withTag(TAG).d { "Attempting to sync" }
             viewModelScope.launch {
                 repository.uploadAll()
             }

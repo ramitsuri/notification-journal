@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.core.spellcheck
 
+import co.touchlab.kermit.Logger
 import com.darkrockstudios.symspell.fdic.loadFdicFile
 import com.darkrockstudios.symspellkt.common.Verbosity
 import com.darkrockstudios.symspellkt.impl.SymSpell
@@ -46,14 +47,18 @@ class SpellChecker(
     }
 
     private suspend fun loadDictionary() {
-        checker.dictionary.loadFdicFile(Res.readBytes("files/en-80k.fdic"))
-        checker.dictionary.loadFdicFile(Res.readBytes("files/frequency_bigramdictionary_en_243_342.fdic"))
+        try {
+            checker.dictionary.loadFdicFile(Res.readBytes("files/en-80k.fdic"))
+            checker.dictionary.loadFdicFile(Res.readBytes("files/frequency_bigramdictionary_en_243_342.fdic"))
 
-        dictionaryDao
-            .getItems()
-            .forEach { dictionaryItem ->
-                checker.createDictionaryEntry(dictionaryItem.word, 1)
-            }
+            dictionaryDao
+                .getItems()
+                .forEach { dictionaryItem ->
+                    checker.createDictionaryEntry(dictionaryItem.word, 1)
+                }
+        } catch (e: Exception) {
+            Logger.withTag(TAG).e(e) { "Failed to load dictionary" }
+        }
     }
 
     suspend fun onTextUpdated(text: String) =
@@ -150,5 +155,9 @@ class SpellChecker(
         mutex.withLock {
             encounteredWords.removeAll(words)
         }
+    }
+
+    companion object {
+        private const val TAG = "SpellChecker"
     }
 }

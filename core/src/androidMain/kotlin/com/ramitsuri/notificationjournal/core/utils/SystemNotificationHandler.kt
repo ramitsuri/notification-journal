@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.app.TaskStackBuilder
 import androidx.core.net.toUri
+import co.touchlab.kermit.Logger
 
 class SystemNotificationHandler(
     context: Context,
@@ -35,6 +36,7 @@ class SystemNotificationHandler(
                 Manifest.permission.POST_NOTIFICATIONS,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            Logger.withTag(TAG).w { "Cannot show notification: POST_NOTIFICATIONS permission not granted" }
             return
         }
         notificationManager.notify(notificationId, systemNotification)
@@ -199,6 +201,7 @@ class SystemNotificationHandler(
     private fun toImportance(importance: Importance) = importance.key
 
     companion object {
+        private const val TAG = "SystemNotificationHandler"
         private const val REMINDERS_NOTIFICATION_ID_MAX = 1000
     }
 }

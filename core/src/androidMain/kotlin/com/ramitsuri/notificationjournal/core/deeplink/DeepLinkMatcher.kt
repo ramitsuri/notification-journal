@@ -1,6 +1,6 @@
 package com.ramitsuri.notificationjournal.core.deeplink
 
-import android.util.Log
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.ui.nav.Route
 import kotlinx.serialization.KSerializer
 
@@ -38,7 +38,7 @@ class DeepLinkMatcher<T : Route>(
                         try {
                             candidateSegment.typeParser.invoke(requestedSegment)
                         } catch (e: IllegalArgumentException) {
-                            Log.e(TAG_LOG_ERROR, "Failed to parse path value:[$requestedSegment].", e)
+                            Logger.withTag(TAG_LOG_ERROR).e(e) { "Failed to parse path value:[$requestedSegment]." }
                             return null
                         }
                     args[candidateSegment.stringValue] = parsedValue
@@ -55,7 +55,7 @@ class DeepLinkMatcher<T : Route>(
                 try {
                     queryStringParser!!.invoke(query.value)
                 } catch (e: IllegalArgumentException) {
-                    Log.e(TAG_LOG_ERROR, "Failed to parse query name:[$name] value:[${query.value}].", e)
+                    Logger.withTag(TAG_LOG_ERROR).e(e) { "Failed to parse query name:[$name] value:[${query.value}]." }
                     return null
                 }
             args[name] = queryParsedValue

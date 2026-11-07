@@ -7,10 +7,11 @@ import com.ramitsuri.notificationjournal.core.data.AppDatabase
 import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
+import com.ramitsuri.notificationjournal.core.data.LogDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
-import com.ramitsuri.notificationjournal.core.log.InMemoryLogWriter
+import com.ramitsuri.notificationjournal.core.log.DatabaseLogWriter
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelper
 import com.ramitsuri.notificationjournal.core.network.DataReceiveHelperImpl
 import com.ramitsuri.notificationjournal.core.network.DataSendHelper
@@ -185,9 +186,18 @@ object CoreBindings {
         )
 
     @Provides
+    fun provideLogDao(db: AppDatabase): LogDao = db.logDao()
+
+    @Provides
     @SingleIn(AppScope::class)
-    fun provideInMemoryLogWriter(): InMemoryLogWriter =
-        InMemoryLogWriter().also {
+    fun provideDatabaseLogWriter(
+        logDao: LogDao,
+        scope: CoroutineScope,
+    ): DatabaseLogWriter =
+        DatabaseLogWriter(
+            logDao = logDao,
+            coroutineScope = scope,
+        ).also {
             Logger.setLogWriters(it, platformLogWriter())
         }
 }

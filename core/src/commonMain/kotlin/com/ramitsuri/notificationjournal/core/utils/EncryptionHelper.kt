@@ -71,9 +71,7 @@ class EncryptionHelper(
         try {
             getCipher().decrypt(cipherText).decodeToString()
         } catch (e: Exception) {
-            Logger.e(TAG) {
-                "Error decrypting: ${e.stackTraceToString()}"
-            }
+            Logger.withTag(TAG).e(e) { "Error decrypting" }
             throw e
         }
 

@@ -1,6 +1,5 @@
 package com.ramitsuri.notificationjournal.ai.extractor
 
-import android.util.Log
 import co.touchlab.kermit.Logger
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Feature
@@ -29,17 +28,17 @@ class NanoAddEntryIntentExtractor(
         try {
             generativeModel.checkStatus() == FeatureStatus.AVAILABLE
         } catch (e: Exception) {
-            Log.w(TAG, "checkStatus failed in isAvailable", e)
+            Logger.withTag(TAG).w(e) { "checkStatus failed in isAvailable" }
             false
         }
 
     private suspend fun isStructuredOutputSupported(): Boolean =
         try {
             val features = generativeModel.getAvailableFeatures()
-            Log.d(TAG, "AICore available features: $features")
+            Logger.withTag(TAG).d { "AICore available features: $features" }
             features.contains(Feature.STRUCTURED_OUTPUT)
         } catch (e: Exception) {
-            Log.w(TAG, "getAvailableFeatures failed", e)
+            Logger.withTag(TAG).w(e) { "getAvailableFeatures failed" }
             false
         }
 
@@ -52,21 +51,21 @@ class NanoAddEntryIntentExtractor(
             try {
                 generativeModel.checkStatus()
             } catch (e: Exception) {
-                Log.e(TAG, "Error checking Gemini Nano status", e)
+                Logger.withTag(TAG).e(e) { "Error checking Gemini Nano status" }
                 statusCheckError = e
                 FeatureStatus.UNAVAILABLE
             }
 
-        Log.d(TAG, "Gemini Nano status: $status (AVAILABLE=${FeatureStatus.AVAILABLE})")
+        Logger.withTag(TAG).d { "Gemini Nano status: $status (AVAILABLE=${FeatureStatus.AVAILABLE})" }
 
         if (status == FeatureStatus.DOWNLOADABLE) {
-            Log.i(TAG, "Gemini Nano is DOWNLOADABLE. Initiating model download...")
+            Logger.withTag(TAG).i { "Gemini Nano is DOWNLOADABLE. Initiating model download..." }
             try {
                 generativeModel.download().collect { downloadStatus ->
-                    Log.d(TAG, "Download progress: $downloadStatus")
+                    Logger.withTag(TAG).d { "Download progress: $downloadStatus" }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to initiate model download", e)
+                Logger.withTag(TAG).e(e) { "Failed to initiate model download" }
             }
         }
 
@@ -78,7 +77,7 @@ class NanoAddEntryIntentExtractor(
             // 1. Try structured output if supported by AICore
             if (isStructuredOutputSupported()) {
                 try {
-                    Log.d(TAG, "Attempting Structured Output extraction...")
+                    Logger.withTag(TAG).d { "Attempting Structured Output extraction..." }
                     val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt(userInput, today, customRules)
 
                     val baseRequest =
@@ -101,22 +100,22 @@ class NanoAddEntryIntentExtractor(
                             typedResponse.copy(
                                 entryText = typedResponse.entryText?.ifBlank { userInput } ?: userInput,
                             )
-                        Log.d(TAG, "Structured output succeeded: $normalizedIntent")
+                        Logger.withTag(TAG).d { "Structured output succeeded: $normalizedIntent" }
                         return ExtractionResult(
                             intent = normalizedIntent,
                             engine = "Gemini Nano (Structured Output)",
                         )
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "Structured output failed; falling back to JSON prompt", e)
+                    Logger.withTag(TAG).w(e) { "Structured output failed; falling back to JSON prompt" }
                 }
             } else {
-                Log.d(TAG, "Structured output not supported on this model build. Using JSON prompt...")
+                Logger.withTag(TAG).d { "Structured output not supported on this model build. Using JSON prompt..." }
             }
 
             // 2. Unstructured JSON prompt with Gemini Nano
             try {
-                Log.d(TAG, "Attempting JSON prompt extraction...")
+                Logger.withTag(TAG).d { "Attempting JSON prompt extraction..." }
                 val jsonPrompt = JournalPrompts.getAddEntryJsonPrompt(userInput, today, customRules)
 
                 val jsonRequest =
@@ -129,17 +128,17 @@ class NanoAddEntryIntentExtractor(
 
                 val textResponse = generativeModel.generateContent(jsonRequest)
                 val responseText = textResponse.candidates.firstOrNull()?.text
-                Log.d(TAG, "Gemini Nano text response: $responseText")
+                Logger.withTag(TAG).d { "Gemini Nano text response: $responseText" }
                 if (!responseText.isNullOrBlank()) {
                     val parsed = parseJson(responseText, userInput)
                     if (parsed != null) {
-                        Log.d(TAG, "JSON prompt parsing succeeded: $parsed")
+                        Logger.withTag(TAG).d { "JSON prompt parsing succeeded: $parsed" }
                         return ExtractionResult(
                             intent = parsed,
                             engine = "Gemini Nano (Prompted)",
                         )
                     } else {
-                        Log.w(TAG, "Could not parse JSON from: $responseText")
+                        Logger.withTag(TAG).w { "Could not parse JSON from: $responseText" }
                         fallbackReason = "Could not parse JSON from Gemini Nano response"
                         fallbackRawResponse = responseText
                     }
@@ -147,12 +146,12 @@ class NanoAddEntryIntentExtractor(
                     fallbackReason = "Gemini Nano returned empty or blank response"
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "JSON prompt generation failed", e)
+                Logger.withTag(TAG).w(e) { "JSON prompt generation failed" }
                 fallbackReason = "JSON prompt generation failed: ${e.message}"
                 fallbackThrowable = e
             }
         } else {
-            Log.w(TAG, "Gemini Nano status ($status) is not AVAILABLE. Using fallback extractor.")
+            Logger.withTag(TAG).w { "Gemini Nano status ($status) is not AVAILABLE. Using fallback extractor." }
             fallbackReason =
                 if (statusCheckError != null) {
                     "Error checking Gemini Nano status: ${statusCheckError.message}"
@@ -173,7 +172,7 @@ class NanoAddEntryIntentExtractor(
             }
         Logger.withTag(Constants.TAG_AI_FALLBACK).w(fallbackThrowable) { logMessage }
 
-        Log.d(TAG, "Using RuleBasedAddEntryIntentExtractor for: $userInput")
+        Logger.withTag(TAG).d { "Using RuleBasedAddEntryIntentExtractor for: $userInput" }
         return fallbackExtractor.extractIntent(userInput)
     }
 
@@ -210,7 +209,7 @@ class NanoAddEntryIntentExtractor(
         try {
             generativeModel.close()
         } catch (e: Exception) {
-            Log.w(TAG, "Error closing generative model", e)
+            Logger.withTag(TAG).w(e) { "Error closing generative model" }
         }
         fallbackExtractor.release()
     }

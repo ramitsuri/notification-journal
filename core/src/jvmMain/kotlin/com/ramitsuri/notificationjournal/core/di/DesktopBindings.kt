@@ -3,6 +3,7 @@ package com.ramitsuri.notificationjournal.core.di
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.ExportRepositoryImpl
 import com.ramitsuri.notificationjournal.core.ImportRepositoryImpl
@@ -150,6 +151,7 @@ object DesktopBindings {
                 socket.localAddress.hostAddress
             }
         } catch (e: Exception) {
+            Logger.withTag("DesktopBindings").w(e) { "Failed to determine IP address" }
             null
         }
 }

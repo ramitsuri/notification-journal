@@ -1,8 +1,8 @@
 package com.ramitsuri.notificationjournal.ai.voice
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
+import co.touchlab.kermit.Logger
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.common.audio.AudioSource
 import com.google.mlkit.genai.speechrecognition.SpeechRecognition
@@ -44,19 +44,19 @@ class MlKitGenAiVoiceInputManager : VoiceInputManager {
                 try {
                     recognizer.checkStatus()
                 } catch (e: Exception) {
-                    Log.e(TAG, "checkStatus failed", e)
+                    Logger.withTag(TAG).e(e) { "checkStatus failed" }
                     FeatureStatus.UNAVAILABLE
                 }
 
-            Log.d(TAG, "ML Kit GenAI Speech status: $status")
+            Logger.withTag(TAG).d { "ML Kit GenAI Speech status: $status" }
 
             if (status == FeatureStatus.DOWNLOADABLE) {
                 try {
                     recognizer.download().collect { downloadStatus ->
-                        Log.d(TAG, "Download progress: $downloadStatus")
+                        Logger.withTag(TAG).d { "Download progress: $downloadStatus" }
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Speech model download failed", e)
+                    Logger.withTag(TAG).e(e) { "Speech model download failed" }
                     trySend(VoiceInputEvent.Error("ML Kit speech model needs download: ${e.message}"))
                     recognizer.close()
                     close()
@@ -115,7 +115,10 @@ class MlKitGenAiVoiceInputManager : VoiceInputManager {
                                         silenceJob =
                                             this@channelFlow.launch {
                                                 delay(SILENCE_TIMEOUT)
-                                                Log.d(TAG, "Silence detected, finalizing: $lastRecognizedText")
+                                                Logger
+                                                    .withTag(
+                                                        TAG,
+                                                    ).d { "Silence detected, finalizing: $lastRecognizedText" }
                                                 trySend(VoiceInputEvent.FinalResult(lastRecognizedText))
                                                 close()
                                             }
@@ -137,7 +140,7 @@ class MlKitGenAiVoiceInputManager : VoiceInputManager {
                                 is SpeechRecognizerResponse.ErrorResponse -> {
                                     initialTimeoutJob.cancel()
                                     silenceJob?.cancel()
-                                    Log.e(TAG, "ErrorResponse: ${response.e.message}")
+                                    Logger.withTag(TAG).e { "ErrorResponse: ${response.e.message}" }
                                     trySend(VoiceInputEvent.Error(response.e.message ?: "GenAI Speech error"))
                                     close()
                                 }
@@ -146,7 +149,7 @@ class MlKitGenAiVoiceInputManager : VoiceInputManager {
                             }
                         }
                     } catch (e: Exception) {
-                        Log.e(TAG, "startRecognition failed", e)
+                        Logger.withTag(TAG).e(e) { "startRecognition failed" }
                         trySend(VoiceInputEvent.Error("Speech recognition error: ${e.message}"))
                         close()
                     }

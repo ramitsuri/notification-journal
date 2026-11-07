@@ -59,7 +59,7 @@ class DesktopGraphTest {
             assertNotNull(graph.tagsViewModel)
             assertNotNull(graph.templatesViewModel)
             assertNotNull(graph.logScreenViewModel)
-            assertNotNull(graph.inMemoryLogWriter)
+            assertNotNull(graph.logWriter)
             assertNotNull(graph.encryptionHelper)
             graph.initLogger()
             assertNotNull(graph.searchViewModel)

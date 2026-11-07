@@ -1,7 +1,6 @@
 package com.ramitsuri.notificationjournal.work
 
 import android.content.Context
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -11,6 +10,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import co.touchlab.kermit.Logger
 import com.ramitsuri.notificationjournal.R
 import com.ramitsuri.notificationjournal.core.deeplink.reminderDeepLink
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -47,14 +47,15 @@ class ShowNotificationWorker
         override suspend fun doWork(): Result {
             val assignmentId = inputData.getString(JOURNAL_ENTRY_ID_KEY)
             if (assignmentId == null) {
-                Log.v(TAG, "journal entry id null. Cannot show notification")
+                Logger.withTag(TAG).w { "Journal entry id is null. Cannot show notification" }
                 return failure()
             }
             val journalEntry =
                 repository.get(assignmentId) ?: run {
-                    Log.v(TAG, "journal entry not found. Cannot show notification")
+                    Logger.withTag(TAG).w { "Journal entry not found for id $assignmentId. Cannot show notification" }
                     return failure()
                 }
+            Logger.withTag(TAG).i { "Showing notification for entry: ${journalEntry.id}" }
             showNotification(journalEntry)
             lifecycleCoordinator.onAppStop()
             return Result.success()
