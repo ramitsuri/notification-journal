@@ -14,7 +14,7 @@ data class AddEntryIntent(
     val tag: String? = null,
     @Guide(
         description =
-            "Target date in ISO format YYYY-MM-DD (e.g., 'yesterday', 'October 24th', or today's date).",
+            "Target date in ISO format YYYY-MM-DD if a specific date is mentioned (e.g., 'yesterday', 'October 24th'). null if no specific date is mentioned.",
     )
     val targetDate: String? = null,
     @Guide(

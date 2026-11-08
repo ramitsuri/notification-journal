@@ -30,9 +30,17 @@ class JournalPromptsTest {
     }
 
     @Test
-    fun testJsonPromptIncludesTargetTime() {
+    fun testPromptIncludesTargetDateNullRule() {
+        val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt("dinner at time", "2026-11-06")
+        assertTrue(prompt.contains("targetDate"))
+        assertTrue(prompt.contains("null if no specific date is mentioned"))
+    }
+
+    @Test
+    fun testJsonPromptIncludesTargetTimeAndDateNull() {
         val jsonPrompt = JournalPrompts.getAddEntryJsonPrompt("dinner at time", "2026-11-06")
         assertTrue(jsonPrompt.contains("\"targetTime\": null"))
+        assertTrue(jsonPrompt.contains("\"targetDate\": null"))
         assertFalse(jsonPrompt.contains("\"searchKeyword\""))
         assertFalse(jsonPrompt.contains("\"action\""))
     }
