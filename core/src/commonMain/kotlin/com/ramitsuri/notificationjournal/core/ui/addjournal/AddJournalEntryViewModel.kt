@@ -19,6 +19,7 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
+import com.ramitsuri.notificationjournal.core.utils.replaceTimeWithTemplate
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
@@ -228,13 +229,14 @@ class AddJournalEntryViewModel
 
         fun onSuggestionClicked(suggestion: String?) {
             if (suggestion != null) {
+                val formattedSuggestion = replaceTimeWithTemplate(suggestion)
                 enableGettingSuggestions.set(false)
                 _state.value.textFieldState.edit {
                     // Since new lines in the text block get broken up into separate entries later on, look at the last
                     // line in the whole text block to replace with selected suggestion
                     val startIndexOfTextBeingReplaced = originalText.lastIndexOf("\n") + 1
                     delete(startIndexOfTextBeingReplaced, length)
-                    insert(startIndexOfTextBeingReplaced, suggestion)
+                    insert(startIndexOfTextBeingReplaced, formattedSuggestion)
                 }
             } else {
                 enableGettingSuggestions.set(false)
@@ -383,12 +385,7 @@ class AddJournalEntryViewModel
             if (actualLineOfText == null || actualLineOfText.length < 2) {
                 return listOf()
             }
-            return repository
-                .search(actualLineOfText, listOf(tag))
-                .filter { it.text != actualLineOfText }
-                .map { it.text }
-                .distinctBy { it.lowercase() }
-                .take(10)
+            return repository.getSuggestions(text = actualLineOfText, tag = tag)
         }
 
         private fun loadFontSize() {

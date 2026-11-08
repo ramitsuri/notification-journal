@@ -74,6 +74,28 @@ class DateTimeHelperKtTest {
         )
     }
 
+    @Test
+    fun testReplaceTimeWithTemplate() {
+        assertEquals("{{time}}", replaceTimeWithTemplate("12:45pm"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("6:30am"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("7pm"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("12:45PM"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("6:30AM"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("7PM"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("12:45 pm"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("6:30 am"))
+        assertEquals("{{time}}", replaceTimeWithTemplate("7 pm"))
+
+        assertEquals("Lunch at {{time}} today", replaceTimeWithTemplate("Lunch at 12:45pm today"))
+        assertEquals("Woke up at {{time}}", replaceTimeWithTemplate("Woke up at 6:30am"))
+        assertEquals("Dinner at {{time}} with family", replaceTimeWithTemplate("Dinner at 7pm with family"))
+        assertEquals("Walk from {{time}} to {{time}}", replaceTimeWithTemplate("Walk from 6:30am to 7:15am"))
+
+        assertEquals("Took medication", replaceTimeWithTemplate("Took medication"))
+        assertEquals("I am ready for the program", replaceTimeWithTemplate("I am ready for the program"))
+        assertEquals("spam filter", replaceTimeWithTemplate("spam filter"))
+    }
+
     private fun assertFormattedEquals(expected: String) {
         assertEquals(expected, format())
     }

@@ -50,6 +50,11 @@ fun hourMinute(
     return toFormat.format(format)
 }
 
+private val TIME_FORMAT_REGEX =
+    Regex("""\b(1[0-2]|0?[1-9])(?::([0-5]\d))?(?::[0-5]\d)?\s*(am|pm)\b""", RegexOption.IGNORE_CASE)
+
+fun replaceTimeWithTemplate(text: String): String = text.replace(TIME_FORMAT_REGEX, Constants.TEMPLATED_TIME)
+
 fun formatTimeForLogs(
     toFormat: Instant,
     timeZone: TimeZone,

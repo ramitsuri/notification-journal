@@ -173,6 +173,49 @@ class JournalRepositoryTest : BaseTest() {
             }
         }
 
+    @Test
+    fun getSuggestions_matchesAllWordsRegardlessOfOrder() =
+        runTest {
+            val tag = "Health"
+            val entries =
+                listOf(
+                    journalEntry().copy(id = "1", text = "Morning coffee at 7am", tag = tag),
+                    journalEntry().copy(id = "2", text = "Evening coffee decaf", tag = tag),
+                    journalEntry().copy(id = "3", text = "Morning walk in the park", tag = tag),
+                    journalEntry().copy(id = "4", text = "Took vitamins in the morning with coffee", tag = tag),
+                    journalEntry().copy(id = "5", text = "Coffee and morning walk", tag = "Personal"),
+                )
+            db.journalEntryDao().insert(entries)
+
+            // Exact order "morning coffee"
+            val inOrder = repository.getSuggestions("morning coffee", tag)
+            assertEquals(listOf("Morning coffee at 7am", "Took vitamins in the morning with coffee"), inOrder)
+
+            // Reverse order "coffee morning"
+            val reverseOrder = repository.getSuggestions("coffee morning", tag)
+            assertEquals(listOf("Morning coffee at 7am", "Took vitamins in the morning with coffee"), reverseOrder)
+
+            // Multiple spaces between words
+            val multipleSpaces = repository.getSuggestions("coffee   morning", tag)
+            assertEquals(listOf("Morning coffee at 7am", "Took vitamins in the morning with coffee"), multipleSpaces)
+
+            // Single word
+            val singleWord = repository.getSuggestions("decaf", tag)
+            assertEquals(listOf("Evening coffee decaf"), singleWord)
+
+            // Exact entry text typed is excluded
+            val exactMatch = repository.getSuggestions("Evening coffee decaf", tag)
+            assertTrue(exactMatch.isEmpty())
+
+            // No match
+            val noMatch = repository.getSuggestions("tea morning", tag)
+            assertTrue(noMatch.isEmpty())
+
+            // Tag with no entries or NO_TAG
+            val noTag = repository.getSuggestions("coffee", Tag.NO_TAG.value)
+            assertTrue(noTag.isEmpty())
+        }
+
     private fun journalEntry() =
         JournalEntry(
             id = "id",

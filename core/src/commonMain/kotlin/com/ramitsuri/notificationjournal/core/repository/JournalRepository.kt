@@ -306,6 +306,33 @@ class JournalRepository(
         }
     }
 
+    suspend fun getSuggestions(
+        text: String,
+        tag: String,
+    ): List<String> {
+        if (Tag.isNoTag(tag)) {
+            return listOf()
+        }
+        val words = text.split(" ").filter { it.isNotBlank() }
+        if (words.isEmpty()) {
+            return listOf()
+        }
+        // Room queries don't support dynamic LIKE clauses for a list of words, so query for the longest
+        // word in SQL to narrow down results, then check that the rest of the words match here
+        val searchWord = words.maxByOrNull { it.length } ?: return listOf()
+        return search(
+            query = searchWord,
+            tags = listOf(tag),
+        ).filter { entry ->
+            words.all { word ->
+                entry.text.contains(word, ignoreCase = true)
+            }
+        }.filter { it.text.trim() != text.trim() }
+            .map { it.text }
+            .distinctBy { it.lowercase() }
+            .take(10)
+    }
+
     fun getEntryTags(): Flow<List<String>> = dao.getEntryTags()
 
     suspend fun markAllReconciled() {

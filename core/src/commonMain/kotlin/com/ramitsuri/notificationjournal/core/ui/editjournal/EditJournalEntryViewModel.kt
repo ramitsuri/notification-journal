@@ -21,6 +21,7 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.minus
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
 import com.ramitsuri.notificationjournal.core.utils.plus
+import com.ramitsuri.notificationjournal.core.utils.replaceTimeWithTemplate
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
@@ -203,10 +204,11 @@ class EditJournalEntryViewModel
 
         fun onSuggestionClicked(suggestion: String?) {
             if (suggestion != null) {
+                val formattedSuggestion = replaceTimeWithTemplate(suggestion)
                 enableGettingSuggestions.set(false)
                 _state.value.textFieldState.edit {
                     delete(0, length)
-                    insert(0, suggestion)
+                    insert(0, formattedSuggestion)
                 }
             } else {
                 enableGettingSuggestions.set(false)
@@ -302,15 +304,11 @@ class EditJournalEntryViewModel
             if (tag == null || Tag.isNoTag(tag)) {
                 return listOf()
             }
-            if (text.length < 2) {
+            val actualText = text.toString()
+            if (actualText.length < 2) {
                 return listOf()
             }
-            return repository
-                .search(text.toString(), listOf(tag))
-                .filter { it.text != text }
-                .map { it.text }
-                .distinctBy { it.lowercase() }
-                .take(10)
+            return repository.getSuggestions(text = actualText, tag = tag)
         }
 
         private fun loadFontSize() {
