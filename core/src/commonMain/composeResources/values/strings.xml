@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Notification Journal</string>
+    <string name="app_name">Journal</string>
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>

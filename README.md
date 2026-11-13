@@ -1,4 +1,4 @@
-# Notification Journal
+# Journal
 
 Android, macOS and wearOS app for journaling.
 
