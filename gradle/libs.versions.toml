@@ -52,6 +52,7 @@ ksp = "2.3.6"
 mlkit-genai-prompt = "1.0.0-beta5"
 mlkit-genai-schema = "1.0.0-alpha2"
 mlkit-genai-speech = "1.0.0-alpha2"
+litertlm = "0.19.1"
 
 androidx-test-espresso = "3.7.0"
 androidx-test-ext = "1.3.0"
@@ -137,6 +138,7 @@ androidx-work-runtime = { group = "androidx.work", name = "work-runtime", versio
 mlkit-genai-prompt = { module = "com.google.mlkit:genai-prompt", version.ref = "mlkit-genai-prompt" }
 mlkit-genai-schema-compiler = { module = "com.google.mlkit:genai-schema-compiler", version.ref = "mlkit-genai-schema" }
 mlkit-genai-speech = { module = "com.google.mlkit:genai-speech-recognition", version.ref = "mlkit-genai-speech" }
+litertlm-android = { module = "com.google.ai.edge.litertlm:litertlm-android", version.ref = "litertlm" }
 metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
 metrox-android = { module = "dev.zacsweers.metro:metrox-android", version.ref = "metro" }
 metrox-viewmodel = { module = "dev.zacsweers.metro:metrox-viewmodel", version.ref = "metro" }

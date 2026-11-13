@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.genai.common.FeatureStatus
+import com.ramitsuri.notificationjournal.ai.extractor.CustomModelDownloadState
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
 import com.ramitsuri.notificationjournal.ai.voice.VoiceInputEvent
@@ -105,6 +106,7 @@ fun AiDiagnosticsScreen(
     var isLiveTestExpanded by rememberSaveable { mutableStateOf(true) }
     var isFallbackLogsExpanded by rememberSaveable { mutableStateOf(false) }
     var isModelCapabilitiesExpanded by rememberSaveable { mutableStateOf(false) }
+    var isCustomModelExpanded by rememberSaveable { mutableStateOf(false) }
     var isSpeechEngineExpanded by rememberSaveable { mutableStateOf(false) }
     var isCustomRulesExpanded by rememberSaveable { mutableStateOf(false) }
     var isPromptsExpanded by rememberSaveable { mutableStateOf(false) }
@@ -656,6 +658,182 @@ fun AiDiagnosticsScreen(
                                             style = MaterialTheme.typography.labelSmall,
                                             modifier = Modifier.padding(top = 4.dp),
                                         )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Custom On-Device Model (LiteRT-LM)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isCustomModelExpanded = !isCustomModelExpanded },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                Text(
+                                    text = "Custom Model (LiteRT-LM)",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    text =
+                                        if (state.customModelInfo.isPresent) {
+                                            state.customModelInfo.fileName ?: "Detected"
+                                        } else {
+                                            "Not detected (using AICore / Rule fallback)"
+                                        },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color =
+                                        if (state.customModelInfo.isPresent) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                )
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                StatusBadge(
+                                    statusCode =
+                                        if (state.customModelInfo.isPresent) {
+                                            FeatureStatus.AVAILABLE
+                                        } else {
+                                            FeatureStatus.UNAVAILABLE
+                                        },
+                                    text = if (state.customModelInfo.isPresent) "LOADED" else "NOT FOUND",
+                                )
+                                Icon(
+                                    imageVector =
+                                        if (isCustomModelExpanded) {
+                                            Icons.Default.ArrowDropUp
+                                        } else {
+                                            Icons.Default.ArrowDropDown
+                                        },
+                                    contentDescription = if (isCustomModelExpanded) "Collapse" else "Expand",
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(visible = isCustomModelExpanded) {
+                            Column(modifier = Modifier.padding(top = 10.dp)) {
+                                if (state.customModelInfo.isPresent) {
+                                    Text(
+                                        text = "File: ${state.customModelInfo.fileName}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text = "Size: ${state.customModelInfo.fileSizeFormatted}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Text(
+                                        text = "Path: ${state.customModelInfo.filePath}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text =
+                                            "✓ This model is used for intent extraction with unrestricted background " +
+                                                "execution support (no AICore foreground restriction).",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    OutlinedButton(
+                                        onClick = viewModel::deleteCustomModel,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Icon(Icons.Default.DeleteOutline, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Delete Model")
+                                    }
+                                } else {
+                                    val customModel = state.supportedCustomModel
+                                    Text(
+                                        text = "No custom .litertlm model found on device storage.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text =
+                                            "Downloads ${customModel.displayName} " +
+                                                "for on-device intent extraction without AICore background restrictions.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    when (val downloadState = state.customModelDownloadState) {
+                                        is CustomModelDownloadState.Downloading -> {
+                                            val downloadedMb = downloadState.bytesDownloaded / (1024 * 1024)
+                                            val totalMb = downloadState.totalBytes / (1024 * 1024)
+                                            val progressText =
+                                                if (totalMb > 0) {
+                                                    "Downloading: $downloadedMb MB / $totalMb MB " +
+                                                        "(${downloadState.progressPercent}%)"
+                                                } else {
+                                                    "Downloading: $downloadedMb MB..."
+                                                }
+                                            Text(
+                                                text = progressText,
+                                                style = MaterialTheme.typography.labelMedium,
+                                            )
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            LinearProgressIndicator(
+                                                progress = { downloadState.progressPercent / 100f },
+                                                modifier = Modifier.fillMaxWidth(),
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            OutlinedButton(
+                                                onClick = viewModel::cancelCustomModelDownload,
+                                                modifier = Modifier.fillMaxWidth(),
+                                            ) {
+                                                Text("Cancel Download")
+                                            }
+                                        }
+                                        is CustomModelDownloadState.Failed -> {
+                                            Text(
+                                                text = "Download error: ${downloadState.error}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Button(
+                                                onClick = { viewModel.startCustomModelDownload() },
+                                                modifier = Modifier.fillMaxWidth(),
+                                            ) {
+                                                Icon(Icons.Default.Download, contentDescription = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Retry Download ${customModel.displayName}")
+                                            }
+                                        }
+                                        else -> {
+                                            Button(
+                                                onClick = { viewModel.startCustomModelDownload() },
+                                                modifier = Modifier.fillMaxWidth(),
+                                            ) {
+                                                Icon(Icons.Default.Download, contentDescription = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Download ${customModel.displayName}")
+                                            }
+                                        }
                                     }
                                 }
                             }

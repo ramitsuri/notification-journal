@@ -14,7 +14,9 @@ import com.google.mlkit.genai.prompt.generateTypedContentRequest
 import com.google.mlkit.genai.speechrecognition.SpeechRecognition
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizer
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizerOptions
-import com.ramitsuri.notificationjournal.ai.extractor.NanoAddEntryIntentExtractor
+import com.ramitsuri.notificationjournal.ai.extractor.CustomModelDownloadState
+import com.ramitsuri.notificationjournal.ai.extractor.CustomModelDownloader
+import com.ramitsuri.notificationjournal.ai.extractor.SupportedCustomModel
 import com.ramitsuri.notificationjournal.ai.model.AddEntryIntent
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import com.ramitsuri.notificationjournal.ai.voice.SpeechEngine
@@ -30,7 +32,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 data class AiModelInfo(
     val modelName: String = "",
@@ -45,8 +46,23 @@ data class AiModelInfo(
     val rawFeatures: List<Int> = emptyList(),
 )
 
+data class CustomModelInfo(
+    val isPresent: Boolean = false,
+    val fileName: String? = null,
+    val filePath: String? = null,
+    val fileSizeFormatted: String? = null,
+)
+
+private data class RefreshResult(
+    val modelInfo: AiModelInfo,
+    val speechStatus: Int,
+    val currentEngine: SpeechEngine,
+    val customModelInfo: CustomModelInfo,
+)
+
 data class DiagnosticsUiState(
     val modelInfo: AiModelInfo = AiModelInfo(),
+    val customModelInfo: CustomModelInfo = CustomModelInfo(),
     val isRefreshing: Boolean = false,
     val testInput: String = "add a new entry that I slept well",
     val isTesting: Boolean = false,
@@ -63,6 +79,8 @@ data class DiagnosticsUiState(
     val mlKitSpeechStatus: Int = -1,
     val isDownloadingSpeech: Boolean = false,
     val speechDownloadStatus: String? = null,
+    val customModelDownloadState: CustomModelDownloadState = CustomModelDownloadState.Idle,
+    val supportedCustomModel: SupportedCustomModel = SupportedCustomModel.QWEN_2_5_1_5B,
     val customPromptRules: String = "",
     val customRulesSavedMessage: Boolean = false,
     val fallbackLogs: List<LogData> = emptyList(),
@@ -71,10 +89,10 @@ data class DiagnosticsUiState(
 class AiDiagnosticsViewModel
     @Inject
     constructor(
+        private val customModelDownloader: CustomModelDownloader,
         private val prefManager: PrefManager,
         private val logWriter: DatabaseLogWriter,
         private val generativeModel: GenerativeModel = Generation.getClient(),
-        private val nanoExtractor: NanoAddEntryIntentExtractor = NanoAddEntryIntentExtractor(prefManager = prefManager),
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(DiagnosticsUiState())
         val uiState = _uiState.asStateFlow()
@@ -92,7 +110,7 @@ class AiDiagnosticsViewModel
                         .builder()
                         .apply {
                             preferredMode = SpeechRecognizerOptions.Mode.MODE_BASIC
-                            locale = Locale.getDefault()
+                            locale = java.util.Locale.getDefault()
                         }.build()
                 SpeechRecognition.getClient(options).also {
                     speechRecognizer = it
@@ -151,7 +169,7 @@ class AiDiagnosticsViewModel
         fun refreshModelInfo() {
             viewModelScope.launch {
                 _uiState.update { it.copy(isRefreshing = true) }
-                val (info, speechStatus, currentEngine) =
+                val (modelInfo, speechStatus, currentEngine, customModelInfo) =
                     withContext(Dispatchers.IO) {
                         val status =
                             try {
@@ -217,12 +235,27 @@ class AiDiagnosticsViewModel
                         val savedEngineId = prefManager.getSpeechEngineFlow().first()
                         val activeEngine = SpeechEngine.fromId(savedEngineId)
 
-                        Triple(modelInfo, speechStat, activeEngine)
+                        val customModel = customModelDownloader.getModelFile()
+                        val customInfo =
+                            if (customModel != null && customModel.exists()) {
+                                val sizeMb = customModel.length() / (1024 * 1024)
+                                CustomModelInfo(
+                                    isPresent = true,
+                                    fileName = customModel.name,
+                                    filePath = customModel.absolutePath,
+                                    fileSizeFormatted = "$sizeMb MB",
+                                )
+                            } else {
+                                CustomModelInfo()
+                            }
+
+                        RefreshResult(modelInfo, speechStat, activeEngine, customInfo)
                     }
 
                 _uiState.update {
                     it.copy(
-                        modelInfo = info,
+                        modelInfo = modelInfo,
+                        customModelInfo = customModelInfo,
                         mlKitSpeechStatus = speechStatus,
                         selectedSpeechEngine = currentEngine,
                         isRefreshing = false,
@@ -273,6 +306,29 @@ class AiDiagnosticsViewModel
                     _uiState.update { it.copy(isDownloadingSpeech = false) }
                 }
             }
+        }
+
+        fun startCustomModelDownload(model: SupportedCustomModel = _uiState.value.supportedCustomModel) {
+            viewModelScope.launch {
+                val downloadId = customModelDownloader.startDownload(model)
+                customModelDownloader.pollDownloadProgress(downloadId).collect { state ->
+                    _uiState.update { it.copy(customModelDownloadState = state) }
+                    if (state is CustomModelDownloadState.Completed) {
+                        refreshModelInfo()
+                    }
+                }
+            }
+        }
+
+        fun cancelCustomModelDownload() {
+            customModelDownloader.cancelDownload()
+            _uiState.update { it.copy(customModelDownloadState = CustomModelDownloadState.Idle) }
+        }
+
+        fun deleteCustomModel() {
+            customModelDownloader.deleteModel()
+            _uiState.update { it.copy(customModelDownloadState = CustomModelDownloadState.Idle) }
+            refreshModelInfo()
         }
 
         fun onSpeechListeningStarted() {
@@ -423,14 +479,18 @@ class AiDiagnosticsViewModel
                         logs.add("Model is NOT AVAILABLE. Skipping direct inference.")
                     }
 
-                    // Step 2: Run through the full NanoAddEntryIntentExtractor pipeline
-                    logs.add("Running end-to-end NanoAddEntryIntentExtractor...")
+                    // Step 2: Run through the active AddEntryIntentExtractor pipeline
+                    logs.add("Creating active AddEntryIntentExtractor...")
+                    val extractor = customModelDownloader.createExtractor(prefManager = prefManager)
+                    logs.add("Active extractor: ${extractor::class.simpleName}")
                     val extractionResult =
                         try {
-                            nanoExtractor.extractIntent(input)
+                            extractor.extractIntent(input)
                         } catch (e: Exception) {
-                            logs.add("NanoAddEntryIntentExtractor threw: ${e.message}")
+                            logs.add("Extractor threw: ${e.message}")
                             null
+                        } finally {
+                            extractor.release()
                         }
 
                     val nluDuration = System.currentTimeMillis() - nluStartTime
@@ -452,7 +512,6 @@ class AiDiagnosticsViewModel
 
         override fun onCleared() {
             generativeModel.close()
-            nanoExtractor.release()
             try {
                 speechRecognizer?.close()
             } catch (_: Exception) {

@@ -83,6 +83,7 @@ dependencies {
 
     implementation(libs.mlkit.genai.prompt)
     implementation(libs.mlkit.genai.speech)
+    implementation(libs.litertlm.android)
     ksp(libs.mlkit.genai.schema.compiler)
 
     implementation(libs.androidx.ktx)
@@ -118,6 +119,7 @@ dependencies {
     implementation(libs.playservices.coroutines)
 
     implementation(libs.kotlin.datetime)
+    implementation(libs.kotlin.serialization)
     implementation(libs.kermit)
 
     testImplementation(libs.junit)

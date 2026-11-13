@@ -97,7 +97,11 @@ class VoiceNoteProcessWorker
 
             val transcribedText = rawTranscribedText.trim().removeSuffix(".")
 
-            val extractor = IntentExtractorFactory.createAddEntryExtractor(prefManager)
+            val extractor =
+                IntentExtractorFactory.createAddEntryExtractor(
+                    context = applicationContext,
+                    prefManager = prefManager,
+                )
             val intent =
                 try {
                     val result = extractor.extractIntent(transcribedText)
@@ -108,6 +112,8 @@ class VoiceNoteProcessWorker
                     }
                     Logger.withTag(TAG).w(e) { "Intent extraction failed; using raw transcription" }
                     null
+                } finally {
+                    extractor.release()
                 }
 
             val entryText = intent?.entryText?.ifBlank { transcribedText } ?: transcribedText

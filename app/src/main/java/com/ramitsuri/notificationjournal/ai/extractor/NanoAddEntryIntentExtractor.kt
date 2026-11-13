@@ -13,7 +13,6 @@ import com.ramitsuri.notificationjournal.ai.model.ExtractionResult
 import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
-import org.json.JSONObject
 import java.time.LocalDate
 
 private const val TAG = "JournalAI"
@@ -130,7 +129,7 @@ class NanoAddEntryIntentExtractor(
                 val responseText = textResponse.candidates.firstOrNull()?.text
                 Logger.withTag(TAG).d { "Gemini Nano text response: $responseText" }
                 if (!responseText.isNullOrBlank()) {
-                    val parsed = parseJson(responseText, userInput)
+                    val parsed = IntentJsonParser.parseJson(responseText, userInput)
                     if (parsed != null) {
                         Logger.withTag(TAG).d { "JSON prompt parsing succeeded: $parsed" }
                         return ExtractionResult(
@@ -175,35 +174,6 @@ class NanoAddEntryIntentExtractor(
         Logger.withTag(TAG).d { "Using RuleBasedAddEntryIntentExtractor for: $userInput" }
         return fallbackExtractor.extractIntent(userInput)
     }
-
-    private fun parseJson(
-        raw: String,
-        originalInput: String,
-    ): AddEntryIntent? =
-        try {
-            val start = raw.indexOf('{')
-            val end = raw.lastIndexOf('}')
-            if ((start != -1) && (end != -1) && (end > start)) {
-                val jsonStr = raw.substring(start, end + 1)
-                val jsonObject = JSONObject(jsonStr)
-                val rawText = jsonObject.optString("entryText").takeIf { (it.isNotBlank()) && (it != "null") }
-                val entryText = rawText ?: originalInput
-                AddEntryIntent(
-                    entryText = entryText,
-                    tag = jsonObject.optString("tag").takeIf { (it.isNotBlank()) && (it != "null") },
-                    targetDate = jsonObject.optString("targetDate").takeIf { (it.isNotBlank()) && (it != "null") },
-                    targetTime = jsonObject.optString("targetTime").takeIf { (it.isNotBlank()) && (it != "null") },
-                    conversationalReply =
-                        jsonObject.optString("conversationalReply").takeIf {
-                            (it.isNotBlank()) && (it != "null")
-                        },
-                )
-            } else {
-                null
-            }
-        } catch (_: Exception) {
-            null
-        }
 
     override fun release() {
         try {
