@@ -315,12 +315,10 @@ private fun ListItem(
                 Modifier
                     .padding(8.dp),
         ) {
-            if (!item.icon.isNullOrBlank()) {
-                TagIcon(
-                    iconName = item.icon,
-                    modifier = Modifier.padding(start = 8.dp).size(24.dp),
-                )
-            }
+            TagIcon(
+                iconName = item.icon ?: Tag.DEFAULT_ICON,
+                modifier = Modifier.padding(start = 8.dp).size(24.dp),
+            )
             Text(
                 text = item.value,
                 style = MaterialTheme.typography.bodyLarge,

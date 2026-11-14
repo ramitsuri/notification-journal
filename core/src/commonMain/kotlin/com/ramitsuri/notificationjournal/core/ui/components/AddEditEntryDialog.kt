@@ -1136,17 +1136,12 @@ private fun Tags(
                         selected = tag.value == selectedTag,
                         onClick = { onTagClicked(tag.value) },
                         label = { Text(text = tag.value) },
-                        leadingIcon =
-                            if (!tag.icon.isNullOrBlank()) {
-                                {
-                                    TagIcon(
-                                        iconName = tag.icon,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                }
-                            } else {
-                                null
-                            },
+                        leadingIcon = {
+                            TagIcon(
+                                iconName = tag.icon ?: Tag.DEFAULT_ICON,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
                     )
 
                     val hint =

@@ -12,28 +12,26 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun TagIcon(
-    iconName: String?,
+    iconName: String,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current,
 ) {
-    if (!iconName.isNullOrBlank()) {
-        val cleanName = remember(iconName) {
-            val name = iconName.lowercase().trim()
-            if (name.startsWith("ic_")) name else "ic_$name"
-        }
+    val cleanName = remember(iconName) {
+        val name = iconName.lowercase().trim()
+        if (name.startsWith("ic_")) name else "ic_$name"
+    }
 
-        val resource = remember(cleanName) {
-            Res.allDrawableResources[cleanName]
-        }
+    val resource = remember(cleanName) {
+        Res.allDrawableResources[cleanName]
+    }
 
-        if (resource != null) {
-            Icon(
-                painter = painterResource(resource),
-                contentDescription = contentDescription,
-                modifier = modifier,
-                tint = tint,
-            )
-        }
+    if (resource != null) {
+        Icon(
+            painter = painterResource(resource),
+            contentDescription = contentDescription,
+            modifier = modifier,
+            tint = tint,
+        )
     }
 }

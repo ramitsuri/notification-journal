@@ -464,15 +464,13 @@ private fun SubHeaderItem(
         var showMenu by remember { mutableStateOf(false) }
         Spacer(modifier = Modifier.width(12.dp))
         val tagIcon = remember(tagGroup.tag, tags) {
-            tags.firstOrNull { it.value == tagGroup.tag }?.icon
+            tags.firstOrNull { it.value == tagGroup.tag }?.icon ?: Tag.DEFAULT_ICON
         }
-        if (!tagIcon.isNullOrBlank()) {
-            TagIcon(
-                iconName = tagIcon,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-        }
+        TagIcon(
+            iconName = tagIcon,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text =
                 if (tagGroup.tag == Tag.NO_TAG.value) {
@@ -906,17 +904,12 @@ private fun DetailsDialog(
                                     onDismiss()
                                 },
                                 label = { Text(text = it.value) },
-                                leadingIcon =
-                                    if (!it.icon.isNullOrBlank()) {
-                                        {
-                                            TagIcon(
-                                                iconName = it.icon,
-                                                modifier = Modifier.size(18.dp),
-                                            )
-                                        }
-                                    } else {
-                                        null
-                                    },
+                                leadingIcon = {
+                                    TagIcon(
+                                        iconName = it.icon ?: Tag.DEFAULT_ICON,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
                             )
                         }
                     }

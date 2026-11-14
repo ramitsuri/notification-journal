@@ -23,14 +23,17 @@ data class Tag(
     val value: String,
     @ColumnInfo(name = "icon")
     @SerialName("icon")
-    val icon: String? = null,
+    val icon: String? = DEFAULT_ICON,
 ) {
     companion object {
+        const val DEFAULT_ICON = "label"
+
         val NO_TAG =
             Tag(
                 id = "internal_no_tag",
                 order = Int.MIN_VALUE,
                 value = "internal_no_tag_value",
+                icon = DEFAULT_ICON,
             )
 
         fun isNoTag(tag: String) = tag == NO_TAG.value
