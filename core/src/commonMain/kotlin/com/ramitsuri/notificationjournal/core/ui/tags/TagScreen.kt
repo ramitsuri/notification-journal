@@ -584,6 +584,7 @@ private val POPULAR_TAG_ICONS =
         "lunch_dining",
         "directions_walk",
         "check_box",
+        "label",
     )
 
 @Composable
