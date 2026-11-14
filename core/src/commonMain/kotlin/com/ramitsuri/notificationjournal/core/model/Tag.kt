@@ -21,6 +21,9 @@ data class Tag(
     @ColumnInfo(name = "value")
     @SerialName("value")
     val value: String,
+    @ColumnInfo(name = "icon")
+    @SerialName("icon")
+    val icon: String? = null,
 ) {
     companion object {
         val NO_TAG =

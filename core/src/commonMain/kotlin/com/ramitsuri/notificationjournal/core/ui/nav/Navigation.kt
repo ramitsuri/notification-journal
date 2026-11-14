@@ -415,6 +415,7 @@ fun NavGraph(
                 TagsScreen(
                     state = viewState,
                     onTextUpdated = viewModel::textUpdated,
+                    onIconUpdated = viewModel::iconUpdated,
                     onEditOrder = viewModel::editOrder,
                     onAddRequested = viewModel::addClicked,
                     onEditRequested = viewModel::editClicked,

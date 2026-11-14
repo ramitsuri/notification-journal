@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -1135,6 +1136,17 @@ private fun Tags(
                         selected = tag.value == selectedTag,
                         onClick = { onTagClicked(tag.value) },
                         label = { Text(text = tag.value) },
+                        leadingIcon =
+                            if (!tag.icon.isNullOrBlank()) {
+                                {
+                                    TagIcon(
+                                        iconName = tag.icon,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
                     )
 
                     val hint =

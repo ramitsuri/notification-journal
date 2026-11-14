@@ -48,7 +48,7 @@ class TagsViewModel
             idBeingEdited = tag.id
             viewModelScope.launch {
                 _state.update {
-                    it.copy(text = tag.value)
+                    it.copy(text = tag.value, icon = tag.icon)
                 }
             }
         }
@@ -56,13 +56,19 @@ class TagsViewModel
         fun addClicked() {
             idBeingEdited = null
             _state.update {
-                it.copy(text = "")
+                it.copy(text = "", icon = null)
             }
         }
 
         fun textUpdated(text: String) {
             _state.update {
                 it.copy(text = text)
+            }
+        }
+
+        fun iconUpdated(icon: String?) {
+            _state.update {
+                it.copy(icon = icon)
             }
         }
 
@@ -73,19 +79,20 @@ class TagsViewModel
             if (text.isEmpty()) {
                 return
             }
+            val icon = currentState.icon?.trim()?.ifEmpty { null }
 
             viewModelScope.launch {
                 val id = idBeingEdited
                 if (id == null) {
                     val maxOrder = currentState.tags.maxByOrNull { it.order }?.order ?: 0
-                    val success = dao.insertIfPossible(Tag(order = maxOrder + 1, value = text))
+                    val success = dao.insertIfPossible(Tag(order = maxOrder + 1, value = text, icon = icon))
                     if (!success) {
                         _state.update {
                             it.copy(error = TagError.INSERT_FAIL)
                         }
                     }
                 } else {
-                    val success = dao.updateTextIfPossible(TagTextUpdate(id = id, value = text))
+                    val success = dao.updateTextIfPossible(TagTextUpdate(id = id, value = text, icon = icon))
                     if (!success) {
                         _state.update {
                             it.copy(error = TagError.INSERT_FAIL)
@@ -98,7 +105,7 @@ class TagsViewModel
         fun onAddOrEditCanceled() {
             idBeingEdited = null
             _state.update {
-                it.copy(text = "")
+                it.copy(text = "", icon = null)
             }
         }
 
@@ -153,6 +160,7 @@ class TagsViewModel
 
 data class TagsViewState(
     val text: String,
+    val icon: String? = null,
     val tags: List<Tag>,
     val defaultTag: String = Tag.NO_TAG.value,
     val error: TagError? = null,

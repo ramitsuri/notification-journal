@@ -2,7 +2,9 @@ package com.ramitsuri.notificationjournal.core.ui.tags
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -24,6 +27,9 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,6 +78,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.ui.components.DraggableItem
 import com.ramitsuri.notificationjournal.core.ui.components.dragContainer
+import com.ramitsuri.notificationjournal.core.ui.components.TagIcon
 import com.ramitsuri.notificationjournal.core.ui.components.rememberDragDropState
 import kotlinx.coroutines.delay
 import notificationjournal.core.generated.resources.Res
@@ -94,6 +101,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun TagsScreen(
     state: TagsViewState,
     onTextUpdated: (String) -> Unit,
+    onIconUpdated: (String?) -> Unit = {},
     onEditRequested: (Tag) -> Unit,
     onDeleteRequested: (Tag) -> Unit,
     onSetAsDefaultRequested: (Tag?) -> Unit,
@@ -111,7 +119,9 @@ fun TagsScreen(
     if (showDialog) {
         AddEditTagDialog(
             text = state.text,
+            icon = state.icon,
             onTextUpdated = onTextUpdated,
+            onIconUpdated = onIconUpdated,
             onPositiveClick = {
                 onAddOrEditApproved()
                 showDialog = !showDialog
@@ -305,6 +315,12 @@ private fun ListItem(
                 Modifier
                     .padding(8.dp),
         ) {
+            if (!item.icon.isNullOrBlank()) {
+                TagIcon(
+                    iconName = item.icon,
+                    modifier = Modifier.padding(start = 8.dp).size(24.dp),
+                )
+            }
             Text(
                 text = item.value,
                 style = MaterialTheme.typography.bodyLarge,
@@ -399,7 +415,9 @@ private fun ItemMenu(
 @Composable
 private fun AddEditTagDialog(
     text: String,
+    icon: String?,
     onTextUpdated: (String) -> Unit,
+    onIconUpdated: (String?) -> Unit,
     onPositiveClick: () -> Unit,
     onNegativeClick: () -> Unit,
 ) {
@@ -467,6 +485,71 @@ private fun AddEditTagDialog(
                         }
                     },
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Icon",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(6),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 160.dp),
+                ) {
+                    items(POPULAR_TAG_ICONS, key = { it }) { iconName ->
+                        val isSelected =
+                            (icon?.equals(iconName, ignoreCase = true) == true) ||
+                                (icon?.equals("ic_$iconName", ignoreCase = true) == true)
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier =
+                                Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (isSelected) {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceContainer
+                                        },
+                                    )
+                                    .border(
+                                        BorderStroke(
+                                            if (isSelected) 2.dp else 1.dp,
+                                            if (isSelected) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.outlineVariant
+                                            },
+                                        ),
+                                        RoundedCornerShape(8.dp),
+                                    )
+                                    .clickable {
+                                        if (isSelected) {
+                                            onIconUpdated(null)
+                                        } else {
+                                            onIconUpdated(iconName)
+                                        }
+                                    },
+                        ) {
+                            TagIcon(
+                                iconName = iconName,
+                                modifier = Modifier.size(22.dp),
+                                tint =
+                                    if (isSelected) {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     horizontalArrangement = Arrangement.End,
@@ -486,6 +569,22 @@ private fun AddEditTagDialog(
         }
     }
 }
+
+private val POPULAR_TAG_ICONS =
+    listOf(
+        "work",
+        "light_group",
+        "woman",
+        "partner_heart",
+        "mood_heart",
+        "movie",
+        "radio",
+        "groups",
+        "phone_in_talk",
+        "lunch_dining",
+        "directions_walk",
+        "check_box",
+    )
 
 @Composable
 private fun TagError?.string(): String? {

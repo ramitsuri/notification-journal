@@ -12,6 +12,7 @@ import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom12To1
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom13To14
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom14To15
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom15To16
+import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom16To17
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom1To2
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom2To3
 import com.ramitsuri.notificationjournal.core.data.migrations.MigrationFrom3To4
@@ -40,7 +41,7 @@ import kotlinx.coroutines.Dispatchers
         VoiceNote::class,
         LogData::class,
     ],
-    version = 16,
+    version = 17,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
@@ -79,6 +80,7 @@ abstract class AppDatabase : RoomDatabase() {
                 .addMigrations(MigrationFrom13To14())
                 .addMigrations(MigrationFrom14To15())
                 .addMigrations(MigrationFrom15To16())
+                .addMigrations(MigrationFrom16To17())
                 .build()
     }
 }

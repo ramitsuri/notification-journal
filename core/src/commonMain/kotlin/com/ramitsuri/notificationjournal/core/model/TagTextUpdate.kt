@@ -7,4 +7,6 @@ data class TagTextUpdate(
     val id: String,
     @ColumnInfo(name = "value")
     val value: String,
+    @ColumnInfo(name = "icon")
+    val icon: String?,
 )
