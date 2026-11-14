@@ -14,7 +14,6 @@ import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.time.LocalDate
 import java.util.concurrent.Executors
 
 private const val TAG = "JournalAI_LiteRT"
@@ -54,7 +53,6 @@ class LiteRtLmAddEntryIntentExtractor(
 
     override suspend fun extractIntent(userInput: String): ExtractionResult<AddEntryIntent>? =
         withContext(dispatcher) {
-            val today = LocalDate.now().toString()
             val customRules = prefManager?.getCustomPromptRules()
 
             var fallbackReason = "Unknown"
@@ -69,7 +67,7 @@ class LiteRtLmAddEntryIntentExtractor(
                 ensureInitialized()
                 val currentEngine = checkNotNull(engine) { "Engine not initialized" }
 
-                val prompt = JournalPrompts.getAddEntryJsonPrompt(userInput, today, customRules)
+                val prompt = JournalPrompts.getAddEntryPrompt(userInput, customRules = customRules)
                 Logger.withTag(TAG).d { "Running LiteRT-LM inference for: $userInput" }
 
                 val conversationConfig =

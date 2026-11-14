@@ -3,74 +3,60 @@ package com.ramitsuri.notificationjournal.ai.prompt
 import java.time.LocalDate
 
 object JournalPrompts {
-    fun getAddEntryStructuredOutputPrompt(
+    fun getAddEntryPrompt(
         userInput: String,
-        today: String = LocalDate.now().toString(),
+        today: LocalDate = LocalDate.now(),
         customRules: String? = null,
-    ): String =
-        buildAddEntryPrompt(
-            userInput = userInput,
-            today = today,
-            customRules = customRules,
-            isJsonMode = false,
-        )
-
-    fun getAddEntryJsonPrompt(
-        userInput: String,
-        today: String = LocalDate.now().toString(),
-        customRules: String? = null,
-    ): String =
-        buildAddEntryPrompt(
-            userInput = userInput,
-            today = today,
-            customRules = customRules,
-            isJsonMode = true,
-        )
-
-    private fun buildAddEntryPrompt(
-        userInput: String,
-        today: String,
-        customRules: String?,
-        isJsonMode: Boolean,
     ): String {
+        val yesterday = today.minusDays(1)
         val formattedCustomRules = formatCustomRules(customRules)
         val customRulesSection =
             if (formattedCustomRules.isNotBlank()) {
-                "\n\nAdditional User Custom Rules:\n$formattedCustomRules"
+                "\n\nAdditional Rules:\n$formattedCustomRules"
             } else {
                 ""
             }
+        val sanitizedInput = userInput.replace("\"", "'")
 
-        val basePrompt =
+        val prompt =
             """
-            You are a personal journal assistant specialized in adding journal entries. Today's date is $today.
-            Analyze the user's input: "$userInput"
+            Extract journal entry details from the user input and return ONLY valid JSON.
+
+            Context:
+            - Today: $today
+            - Yesterday: $yesterday
+
+            Schema:
+            {
+              "entryText": "string",
+              "targetDate": "YYYY-MM-DD" | null,
+              "targetTime": "HH:mm" | null
+            }
 
             Rules:
-            - entryText: extract ONLY the actual journal content without command phrases like "add a new entry that", "log that", "write down that", "note that", "journal that", "record that", etc. If the user spoke a thought, reflection, activity, or note, that is the entryText.
-            - When the user says "dinner at time" or says "at time" after an activity (e.g., "dinner at time"), parse it as "{{time}}" in entryText (e.g., "dinner at {{time}}").
-            - tag: null (do not set a tag; leave as null so entries remain untagged for review).
-            - targetDate: "YYYY-MM-DD" if a specific date is mentioned (e.g., yesterday, today). null if no specific date is mentioned.
-            - targetTime: "HH:mm" in 24-hour format if a specific time of day is mentioned in the input (e.g., "8pm" -> "20:00", "7:30 am" -> "07:30", "at 9" -> "09:00" or "21:00"). null if no specific time of day is mentioned.
-            - conversationalReply: a short confirmation to the user (e.g., "Saved to your journal: ...").$customRulesSection
-            """.trimIndent()
+            1. entryText: Keep only the core thought or activity. Strip command prefixes ("add a new entry that", "log that", "note that", "write down").
+            2. Literal time placeholder: If the input literally contains the words "at time" (e.g., "dinner at time"), write "{{time}}" in entryText ("dinner at {{time}}") and set targetTime to null.
+            3. targetDate: Convert relative dates using Context (e.g., "today" -> "$today", "yesterday" -> "$yesterday"). Use null if no date is mentioned.
+            4. targetTime: Convert mentioned clock times to 24-hour "HH:mm" (e.g., "8pm" -> "20:00", "7:30 am" -> "07:30"). Use null if no clock time is mentioned.$customRulesSection
 
-        return if (isJsonMode) {
-            """
-            $basePrompt
+            Examples:
 
-            Respond with ONLY a single raw JSON object (no markdown, no code blocks):
-            {
-              "entryText": "...",
-              "tag": null,
-              "targetDate": null,
-              "targetTime": null,
-              "conversationalReply": "Saved to your journal."
-            }
+            Input: "add a new entry that I slept well"
+            Output: {"entryText": "I slept well", "targetDate": null, "targetTime": null}
+
+            Input: "log that I had dinner at 8pm yesterday"
+            Output: {"entryText": "I had dinner at 8pm", "targetDate": "$yesterday", "targetTime": "20:00"}
+
+            Input: "note that I had dinner at time"
+            Output: {"entryText": "I had dinner at {{time}}", "targetDate": null, "targetTime": null}
+
+            Input: "feeling super energized after my morning run"
+            Output: {"entryText": "feeling super energized after my morning run", "targetDate": null, "targetTime": null}
+
+            Input: "$sanitizedInput"
+            Output:
             """.trimIndent()
-        } else {
-            basePrompt
-        }
+        return prompt
     }
 
     private fun formatCustomRules(customRules: String?): String {
@@ -80,11 +66,7 @@ object JournalPrompts {
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .map { line ->
-                if (line.startsWith("-") || line.startsWith("*")) {
-                    line
-                } else {
-                    "- $line"
-                }
+                if (line.startsWith("-") || line.startsWith("*")) line else "- $line"
             }.joinToString("\n")
     }
 }

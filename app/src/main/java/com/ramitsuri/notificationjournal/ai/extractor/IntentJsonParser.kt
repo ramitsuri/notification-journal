@@ -31,11 +31,6 @@ object IntentJsonParser {
                             ?.takeIf { it.isNotBlank() && it != "null" }
                     val entryText = rawText ?: originalInput
 
-                    val tag =
-                        jsonElement["tag"]
-                            ?.jsonPrimitive
-                            ?.contentOrNull
-                            ?.takeIf { it.isNotBlank() && it != "null" }
                     val targetDate =
                         jsonElement["targetDate"]
                             ?.jsonPrimitive
@@ -46,18 +41,11 @@ object IntentJsonParser {
                             ?.jsonPrimitive
                             ?.contentOrNull
                             ?.takeIf { it.isNotBlank() && it != "null" }
-                    val conversationalReply =
-                        jsonElement["conversationalReply"]
-                            ?.jsonPrimitive
-                            ?.contentOrNull
-                            ?.takeIf { it.isNotBlank() && it != "null" }
 
                     AddEntryIntent(
                         entryText = entryText,
-                        tag = tag,
                         targetDate = targetDate,
                         targetTime = targetTime,
-                        conversationalReply = conversationalReply,
                     )
                 } else {
                     null

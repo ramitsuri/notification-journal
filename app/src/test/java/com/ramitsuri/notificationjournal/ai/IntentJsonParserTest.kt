@@ -10,14 +10,12 @@ class IntentJsonParserTest {
     @Test
     fun testParseCleanJson() {
         val raw =
-            """{"entryText":"went for a run","tag":null,"targetDate":"2026-11-13","targetTime":"08:00","conversationalReply":"Saved."}"""
+            """{"entryText":"went for a run","targetDate":"2026-11-13","targetTime":"08:00"}"""
         val result = IntentJsonParser.parseJson(raw, "original input")
         assertNotNull(result)
         assertEquals("went for a run", result?.entryText)
-        assertNull(result?.tag)
         assertEquals("2026-11-13", result?.targetDate)
         assertEquals("08:00", result?.targetTime)
-        assertEquals("Saved.", result?.conversationalReply)
     }
 
     @Test
@@ -28,10 +26,8 @@ class IntentJsonParserTest {
             ```json
             {
               "entryText": "Dinner with friends",
-              "tag": null,
               "targetDate": null,
-              "targetTime": "19:30",
-              "conversationalReply": "Noted."
+              "targetTime": "19:30"
             }
             ```
             Hope this helps!
@@ -40,14 +36,17 @@ class IntentJsonParserTest {
         assertNotNull(result)
         assertEquals("Dinner with friends", result?.entryText)
         assertEquals("19:30", result?.targetTime)
+        assertNull(result?.targetDate)
     }
 
     @Test
     fun testParseEmptyEntryTextFallsBackToOriginalInput() {
-        val raw = """{"entryText":"","tag":null,"targetDate":null,"targetTime":null,"conversationalReply":null}"""
+        val raw = """{"entryText":"","targetDate":null,"targetTime":null}"""
         val result = IntentJsonParser.parseJson(raw, "Spoken voice note")
         assertNotNull(result)
         assertEquals("Spoken voice note", result?.entryText)
+        assertNull(result?.targetDate)
+        assertNull(result?.targetTime)
     }
 
     @Test

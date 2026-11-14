@@ -51,15 +51,12 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -99,7 +96,6 @@ fun AiDiagnosticsScreen(
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var selectedPromptTab by rememberSaveable { mutableIntStateOf(0) }
     var listeningJob by remember { mutableStateOf<Job?>(null) }
     val isListening = listeningJob != null || state.isListeningToSpeech
 
@@ -363,22 +359,6 @@ fun AiDiagnosticsScreen(
                                     )
                                 }
 
-                                state.structuredOutputAttempt?.let {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Structured Output Log:",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    Text(
-                                        text = it,
-                                        style =
-                                            MaterialTheme.typography.bodySmall.copy(
-                                                fontFamily = FontFamily.Monospace,
-                                            ),
-                                    )
-                                }
-
                                 state.rawModelResponse?.let {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
@@ -419,17 +399,12 @@ fun AiDiagnosticsScreen(
                                                 "Entry Text: \"${intent.entryText}\"",
                                                 style = MaterialTheme.typography.bodySmall,
                                             )
-                                            Text("Tag: ${intent.tag}", style = MaterialTheme.typography.bodySmall)
                                             Text(
                                                 "Target Date: ${intent.targetDate}",
                                                 style = MaterialTheme.typography.bodySmall,
                                             )
                                             Text(
                                                 "Target Time: ${intent.targetTime}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                            )
-                                            Text(
-                                                "Reply: \"${intent.conversationalReply}\"",
                                                 style = MaterialTheme.typography.bodySmall,
                                             )
                                         }
@@ -1100,32 +1075,11 @@ fun AiDiagnosticsScreen(
 
                         AnimatedVisibility(visible = isPromptsExpanded) {
                             Column {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                TabRow(selectedTabIndex = selectedPromptTab) {
-                                    Tab(
-                                        selected = selectedPromptTab == 0,
-                                        onClick = { selectedPromptTab = 0 },
-                                        text = { Text("JSON Prompt") },
-                                    )
-                                    Tab(
-                                        selected = selectedPromptTab == 1,
-                                        onClick = { selectedPromptTab = 1 },
-                                        text = { Text("Structured Prompt") },
-                                    )
-                                }
-
                                 val currentPrompt =
-                                    if (selectedPromptTab == 0) {
-                                        JournalPrompts.getAddEntryJsonPrompt(
-                                            state.testInput,
-                                            customRules = state.customPromptRules,
-                                        )
-                                    } else {
-                                        JournalPrompts.getAddEntryStructuredOutputPrompt(
-                                            state.testInput,
-                                            customRules = state.customPromptRules,
-                                        )
-                                    }
+                                    JournalPrompts.getAddEntryPrompt(
+                                        state.testInput,
+                                        customRules = state.customPromptRules,
+                                    )
 
                                 Spacer(modifier = Modifier.height(8.dp))
                                 OutlinedButton(

@@ -25,10 +25,8 @@ class RuleBasedAddEntryIntentExtractor : AddEntryIntentExtractor {
         val intent =
             AddEntryIntent(
                 entryText = cleanedText,
-                tag = null,
                 targetDate = targetDate,
                 targetTime = targetTime,
-                conversationalReply = "Added new journal entry.",
             )
 
         return ExtractionResult(

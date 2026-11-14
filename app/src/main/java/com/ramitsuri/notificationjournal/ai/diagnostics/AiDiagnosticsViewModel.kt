@@ -10,7 +10,6 @@ import com.google.mlkit.genai.prompt.GenerateContentRequest
 import com.google.mlkit.genai.prompt.Generation
 import com.google.mlkit.genai.prompt.GenerativeModel
 import com.google.mlkit.genai.prompt.TextPart
-import com.google.mlkit.genai.prompt.generateTypedContentRequest
 import com.google.mlkit.genai.speechrecognition.SpeechRecognition
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizer
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizerOptions
@@ -68,7 +67,6 @@ data class DiagnosticsUiState(
     val isTesting: Boolean = false,
     val isListeningToSpeech: Boolean = false,
     val autoRunExtractionAfterSpeech: Boolean = true,
-    val structuredOutputAttempt: String? = null,
     val rawModelResponse: String? = null,
     val parsedIntent: AddEntryIntent? = null,
     val engineUsed: String? = null,
@@ -387,7 +385,6 @@ class AiDiagnosticsViewModel
                     it.copy(
                         testInput = input,
                         isTesting = true,
-                        structuredOutputAttempt = null,
                         rawModelResponse = null,
                         parsedIntent = null,
                         engineUsed = null,
@@ -396,7 +393,6 @@ class AiDiagnosticsViewModel
                 }
 
                 val logs = existingLogs.toMutableList()
-                var structuredResult: String? = null
                 var rawText: String? = null
 
                 withContext(Dispatchers.IO) {
@@ -413,62 +409,18 @@ class AiDiagnosticsViewModel
                     logs.add("Status: $status")
 
                     if (status == FeatureStatus.AVAILABLE) {
-                        val features =
-                            try {
-                                generativeModel.getAvailableFeatures()
-                            } catch (e: Exception) {
-                                emptyList()
-                            }
-                        val hasStructured = features.contains(Feature.STRUCTURED_OUTPUT)
-                        logs.add("Features: $features (STRUCTURED_OUTPUT=$hasStructured)")
-
                         val customRules = _uiState.value.customPromptRules
-
-                        // Attempt Tier 1: Structured Output
-                        if (hasStructured) {
-                            logs.add("Attempting Tier 1: Structured Output...")
-                            try {
-                                val prompt =
-                                    JournalPrompts.getAddEntryStructuredOutputPrompt(
-                                        input,
-                                        customRules = customRules,
-                                    )
-                                val baseRequest =
-                                    GenerateContentRequest
-                                        .Builder(TextPart(prompt))
-                                        .apply {
-                                            maxOutputTokens = 1024
-                                            temperature = 0.0f
-                                        }.build()
-                                val typedRequest =
-                                    generateTypedContentRequest(
-                                        generateContentRequest = baseRequest,
-                                        outputClass = AddEntryIntent::class,
-                                    )
-                                val response = generativeModel.generateContent(typedRequest)
-                                val typed = response.candidates.firstOrNull()?.response
-                                structuredResult = typed?.toString() ?: "No candidate response returned."
-                                logs.add("Structured Output succeeded.")
-                            } catch (e: Exception) {
-                                structuredResult = "Failed: ${e.message}"
-                                logs.add("Structured Output failed: ${e.message}")
-                            }
-                        } else {
-                            structuredResult = "Feature.STRUCTURED_OUTPUT not supported on this model."
-                        }
-
-                        // Attempt Tier 2: Raw Text / JSON Prompt
-                        logs.add("Attempting Tier 2: Raw JSON Prompt generation...")
+                        logs.add("Attempting Gemini Nano text generation...")
                         try {
-                            val jsonPrompt = JournalPrompts.getAddEntryJsonPrompt(input, customRules = customRules)
-                            val jsonRequest =
+                            val prompt = JournalPrompts.getAddEntryPrompt(input, customRules = customRules)
+                            val request =
                                 GenerateContentRequest
-                                    .Builder(TextPart(jsonPrompt))
+                                    .Builder(TextPart(prompt))
                                     .apply {
                                         maxOutputTokens = 1024
                                         temperature = 0.0f
                                     }.build()
-                            val textResponse = generativeModel.generateContent(jsonRequest)
+                            val textResponse = generativeModel.generateContent(request)
                             rawText = textResponse.candidates.firstOrNull()?.text ?: "(Empty response from Nano)"
                             logs.add("Raw text generated (${rawText.length} chars).")
                         } catch (e: Exception) {
@@ -476,7 +428,7 @@ class AiDiagnosticsViewModel
                             logs.add("Raw text generation error: ${e.message}")
                         }
                     } else {
-                        logs.add("Model is NOT AVAILABLE. Skipping direct inference.")
+                        logs.add("Gemini Nano is NOT AVAILABLE. Skipping direct inference.")
                     }
 
                     // Step 2: Run through the active AddEntryIntentExtractor pipeline
@@ -499,7 +451,6 @@ class AiDiagnosticsViewModel
                     _uiState.update {
                         it.copy(
                             isTesting = false,
-                            structuredOutputAttempt = structuredResult,
                             rawModelResponse = rawText,
                             parsedIntent = extractionResult?.intent,
                             engineUsed = extractionResult?.engine ?: "None (failed)",

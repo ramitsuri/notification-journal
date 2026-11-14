@@ -17,7 +17,6 @@ class RuleBasedAddEntryIntentExtractorTest {
             val result = extractor.extractIntent("Went for a 5k run this morning")
             assertNotNull(result)
             assertEquals("Went for a 5k run this morning", result.intent.entryText)
-            org.junit.Assert.assertNull(result.intent.tag)
             assertEquals("Rule-based fallback", result.engine)
         }
 

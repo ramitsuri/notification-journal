@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlin)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.ktlint)
@@ -84,7 +83,6 @@ dependencies {
     implementation(libs.mlkit.genai.prompt)
     implementation(libs.mlkit.genai.speech)
     implementation(libs.litertlm.android)
-    ksp(libs.mlkit.genai.schema.compiler)
 
     implementation(libs.androidx.ktx)
     implementation(libs.androidx.activity.compose)

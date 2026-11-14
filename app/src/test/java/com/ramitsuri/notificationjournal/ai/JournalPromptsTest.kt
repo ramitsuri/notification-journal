@@ -4,63 +4,51 @@ import com.ramitsuri.notificationjournal.ai.prompt.JournalPrompts
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
 
 class JournalPromptsTest {
     @Test
-    fun testPromptIsSpecificToAddEntries() {
-        val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt("test input", "2026-11-06")
-        assertTrue(prompt.contains("specialized in adding journal entries"))
-        assertFalse(prompt.contains("QUERY_ENTRIES"))
-        assertFalse(prompt.contains("searchKeyword"))
-        assertFalse(prompt.contains("action"))
-    }
-
-    @Test
-    fun testPromptIncludesTargetTime() {
-        val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt("dinner at 8pm", "2026-11-06")
-        assertTrue(prompt.contains("targetTime"))
-        assertTrue(prompt.contains("24-hour format"))
-    }
-
-    @Test
-    fun testPromptIncludesDinnerAtTimeRule() {
-        val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt("dinner at time", "2026-11-06")
-        assertTrue(prompt.contains("dinner at time"))
-        assertTrue(prompt.contains("{{time}}"))
-    }
-
-    @Test
-    fun testPromptIncludesTargetDateNullRule() {
-        val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt("dinner at time", "2026-11-06")
+    fun testPromptIncludesContextAndRules() {
+        val today = LocalDate.of(2026, 11, 13)
+        val prompt = JournalPrompts.getAddEntryPrompt("test input", today = today)
+        assertTrue(prompt.contains("Today: 2026-11-13"))
+        assertTrue(prompt.contains("Yesterday: 2026-11-12"))
         assertTrue(prompt.contains("targetDate"))
-        assertTrue(prompt.contains("null if no specific date is mentioned"))
+        assertTrue(prompt.contains("targetTime"))
+        assertTrue(prompt.contains("entryText"))
+        assertTrue(prompt.contains("Schema:"))
     }
 
     @Test
-    fun testJsonPromptIncludesTargetTimeAndDateNull() {
-        val jsonPrompt = JournalPrompts.getAddEntryJsonPrompt("dinner at time", "2026-11-06")
-        assertTrue(jsonPrompt.contains("\"targetTime\": null"))
-        assertTrue(jsonPrompt.contains("\"targetDate\": null"))
-        assertFalse(jsonPrompt.contains("\"searchKeyword\""))
-        assertFalse(jsonPrompt.contains("\"action\""))
+    fun testPromptEscapesDoubleQuotes() {
+        val prompt = JournalPrompts.getAddEntryPrompt("said \"hello\" to world")
+        assertTrue(prompt.contains("said 'hello' to world"))
+        assertFalse(prompt.contains("said \"hello\" to world"))
+    }
+
+    @Test
+    fun testPromptIncludesLiteralTimeRule() {
+        val prompt = JournalPrompts.getAddEntryPrompt("dinner at time")
+        assertTrue(prompt.contains("Literal time placeholder"))
+        assertTrue(prompt.contains("{{time}}"))
     }
 
     @Test
     fun testPromptIncludesCustomRules() {
         val prompt =
-            JournalPrompts.getAddEntryStructuredOutputPrompt(
+            JournalPrompts.getAddEntryPrompt(
                 userInput = "went to gym",
-                today = "2026-11-06",
+                today = LocalDate.of(2026, 11, 13),
                 customRules = "When I say gym, tag as #fitness\nReplace coffee with tea",
             )
-        assertTrue(prompt.contains("Additional User Custom Rules:"))
+        assertTrue(prompt.contains("Additional Rules:"))
         assertTrue(prompt.contains("- When I say gym, tag as #fitness"))
         assertTrue(prompt.contains("- Replace coffee with tea"))
     }
 
     @Test
     fun testPromptWithoutCustomRulesHasNoCustomRulesSection() {
-        val prompt = JournalPrompts.getAddEntryStructuredOutputPrompt("just a note", "2026-11-06", customRules = "")
-        assertFalse(prompt.contains("Additional User Custom Rules:"))
+        val prompt = JournalPrompts.getAddEntryPrompt("just a note", customRules = "")
+        assertFalse(prompt.contains("Additional Rules:"))
     }
 }
