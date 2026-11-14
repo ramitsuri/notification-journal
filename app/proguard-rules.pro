@@ -29,3 +29,6 @@
 # Preserve structured output models for ML Kit deserialization
 -keep class com.ramitsuri.notificationjournal.ai.model.** { *; }
 -keepclassmembers class com.ramitsuri.notificationjournal.ai.model.** { *; }
+
+# LiteRT-LM C++ JNI calls into Kotlin classes (e.g. SamplerConfig, ThinkingConfig) via reflection
+-keep class com.google.ai.edge.litertlm.** { *; }
