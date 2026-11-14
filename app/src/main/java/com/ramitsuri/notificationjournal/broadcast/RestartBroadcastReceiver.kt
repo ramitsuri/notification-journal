@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.ramitsuri.notificationjournal.MainApplication
+import com.ramitsuri.notificationjournal.work.VoiceNoteProcessWorker
 
 class RestartBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(
@@ -23,5 +24,6 @@ class RestartBroadcastReceiver : BroadcastReceiver() {
         }
 
         (context.applicationContext as MainApplication).showJournalNotification()
+        VoiceNoteProcessWorker.enqueue(context)
     }
 }

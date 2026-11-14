@@ -14,6 +14,7 @@ import com.ramitsuri.notificationjournal.core.model.voice.VoiceNote
 import com.ramitsuri.notificationjournal.core.model.voice.VoiceNoteStatus
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.nowLocal
+import com.ramitsuri.notificationjournal.work.VoiceNoteProcessWorker
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -138,6 +139,7 @@ class JournalAssistantViewModel
 
                 Logger.withTag(TAG).i { "Saved ${notes.size} voice notes for processing" }
                 voiceNoteDao.insertAll(notes)
+                VoiceNoteProcessWorker.enqueue(context)
 
                 Toast.makeText(context, R.string.voice_note_saved_toast, Toast.LENGTH_SHORT).show()
                 _uiState.value = AssistantUiState.Idle

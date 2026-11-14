@@ -17,6 +17,7 @@ import com.ramitsuri.notificationjournal.MainApplication
 import com.ramitsuri.notificationjournal.core.model.VoiceAssistantMode
 import com.ramitsuri.notificationjournal.core.ui.nav.viewModelFactory
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
+import com.ramitsuri.notificationjournal.work.VoiceNoteProcessWorker
 
 class VoiceAssistantActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +73,10 @@ class VoiceAssistantActivity : ComponentActivity() {
                             factory = viewModelFactory { appGraph.journalAssistantViewModel },
                         ),
                     mode = VoiceAssistantMode.ACTIVITY,
-                    onClose = { finish() },
+                    onClose = {
+                        VoiceNoteProcessWorker.enqueue(this@VoiceAssistantActivity)
+                        finish()
+                    },
                 )
             }
         }
