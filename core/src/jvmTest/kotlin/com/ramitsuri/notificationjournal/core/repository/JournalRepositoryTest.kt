@@ -1,6 +1,7 @@
 package com.ramitsuri.notificationjournal.core.repository
 
 import app.cash.turbine.test
+import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Entity
@@ -214,6 +215,96 @@ class JournalRepositoryTest : BaseTest() {
             // Tag with no entries or NO_TAG
             val noTag = repository.getSuggestions("coffee", Tag.NO_TAG.value)
             assertTrue(noTag.isEmpty())
+        }
+
+    @Test
+    fun upload_abortsRemainingChunksWhenSendFails() =
+        runTest {
+            dataSendHelper.sendSuccessful = false
+            val entries =
+                (1..25).map { index ->
+                    journalEntry().copy(id = "$index", text = "Entry $index")
+                }
+            repository.upload(entries)
+
+            assertEquals(1, dataSendHelper.sendEntriesCallCount)
+        }
+
+    @Test
+    fun forceUploadAll_abortsRemainingDaysWhenSendFails() =
+        runTest {
+            val entries =
+                listOf(
+                    journalEntry().copy(id = "1", entryTime = LocalDateTime.parse("2024-12-01T10:00:00")),
+                    journalEntry().copy(id = "2", entryTime = LocalDateTime.parse("2024-12-02T10:00:00")),
+                    journalEntry().copy(id = "3", entryTime = LocalDateTime.parse("2024-12-03T10:00:00")),
+                )
+            db.journalEntryDao().insert(entries)
+
+            dataSendHelper.sendSuccessful = false
+
+            repository.forceUploadAll().test {
+                assertEquals(ForceUploadAllStatus.Initial, awaitItem())
+                val uploading = awaitItem() as ForceUploadAllStatus.Uploading
+                assertEquals(0, uploading.uploadedDaysCount)
+                assertEquals(3, uploading.failedDaysCount)
+                assertEquals(3, uploading.totalToUploadDaysCount)
+
+                val done = awaitItem() as ForceUploadAllStatus.Done
+                assertEquals(0, done.uploadedDaysCount)
+                assertEquals(3, done.failedDaysCount)
+                assertEquals(3, done.totalToUploadDaysCount)
+                awaitComplete()
+            }
+
+            assertEquals(1, dataSendHelper.clearDaysAndInsertEntriesCalls.size)
+        }
+
+    @Test
+    fun deleteDeleted_onlyDeletesUploadedDeletedEntries() =
+        runTest {
+            val entry1 = journalEntry().copy(id = "1", deleted = true, uploaded = true)
+            val entry2 = journalEntry().copy(id = "2", deleted = true, uploaded = false)
+            val entry3 = journalEntry().copy(id = "3", deleted = false, uploaded = true)
+            val entry4 = journalEntry().copy(id = "4", deleted = false, uploaded = false)
+
+            db.journalEntryDao().insert(listOf(entry1, entry2, entry3, entry4))
+
+            db.journalEntryDao().deleteDeleted()
+
+            org.junit.Assert.assertNull(db.journalEntryDao().get("1"))
+            org.junit.Assert.assertNotNull(db.journalEntryDao().get("2"))
+            org.junit.Assert.assertNotNull(db.journalEntryDao().get("3"))
+            org.junit.Assert.assertNotNull(db.journalEntryDao().get("4"))
+        }
+
+    @Test
+    fun handlePayload_conflictIdempotency() =
+        runTest {
+            db.journalEntryDao().insert(
+                listOf(
+                    journalEntry().copy(id = "1", text = "original"),
+                ),
+            )
+            val conflictPayload =
+                Entity.Entries(
+                    sender = Sender(name = "name", id = "id"),
+                    data =
+                        listOf(
+                            journalEntry().copy(id = "1", text = "conflicting", replacesLocal = false),
+                        ),
+                )
+
+            // Deliver first time
+            repository.handlePayload(conflictPayload)
+            val conflictsFirst = db.entryConflictDao().getFlow().first()
+            assertEquals(1, conflictsFirst.size)
+
+            // Deliver second time (re-delivery)
+            repository.handlePayload(conflictPayload)
+            val conflictsSecond = db.entryConflictDao().getFlow().first()
+            assertEquals(1, conflictsSecond.size)
+            assertEquals("conflicting", conflictsSecond.first().text)
         }
 
     private fun journalEntry() =

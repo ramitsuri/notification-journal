@@ -184,19 +184,20 @@ class JournalRepository(
                     failedDaysCount = 0,
                     totalToUploadDaysCount = dates.size,
                 )
-            dates.forEach { date ->
+            for (date in dates) {
                 val entries = dao.getForDate(date.toString())
                 val sent = dataSendHelper.sendClearDaysAndInsertEntries(listOf(date), entries)
-                uploading =
-                    if (sent) {
+                if (sent) {
+                    uploading = uploading.copy(uploadedDaysCount = uploading.uploadedDaysCount + 1)
+                } else {
+                    uploading =
                         uploading.copy(
-                            uploadedDaysCount = uploading.uploadedDaysCount + 1,
+                            failedDaysCount = uploading.failedDaysCount + (dates.size - uploading.uploadedDaysCount),
                         )
-                    } else {
-                        uploading.copy(
-                            failedDaysCount = uploading.failedDaysCount + 1,
-                        )
-                    }
+                    emit(uploading)
+                    Logger.withTag(TAG).w { "Aborting remaining forceUploadAll days due to unconfirmed send" }
+                    break
+                }
                 emit(uploading)
             }
 
@@ -213,8 +214,12 @@ class JournalRepository(
 
     suspend fun upload(entries: List<JournalEntry>) {
         Logger.i(TAG) { "Syncing ${entries.size} entries" }
-        entries.chunked(10).forEach {
-            sendAndMarkUploaded(it)
+        for (chunk in entries.chunked(10)) {
+            val sent = sendAndMarkUploaded(chunk)
+            if (!sent) {
+                Logger.withTag(TAG).w { "Aborting remaining upload chunks due to unconfirmed send" }
+                return
+            }
         }
     }
 
@@ -245,6 +250,7 @@ class JournalRepository(
                     payload.sender.id
                 }}"
             }
+            conflictDao.deleteForEntryId(entryConflict.entryId)
             conflictDao.insert(entryConflict)
         }
     }
@@ -435,7 +441,7 @@ class JournalRepository(
             originalText
         }
 
-    private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>) {
+    private suspend fun sendAndMarkUploaded(entries: List<JournalEntry>): Boolean {
         val sent = dataSendHelper.sendEntries(entries)
         if (sent) {
             Logger.withTag(TAG).d { "Successfully uploaded ${entries.size} entries" }
@@ -446,6 +452,7 @@ class JournalRepository(
             Logger.withTag(TAG).w { "Failed to upload ${entries.size} entries" }
             dao.updateUploaded(entries = entries, uploaded = false)
         }
+        return sent
     }
 
     private fun JournalEntry.getEntryConflict(

@@ -10,9 +10,12 @@ import kotlin.time.Instant
 
 class TestDataSendHelper : DataSendHelper {
     var sendSuccessful = true
+    var sendEntriesCallCount = 0
     val entriesSent = mutableListOf<JournalEntry>()
+    val clearDaysAndInsertEntriesCalls = mutableListOf<List<LocalDate>>()
 
     override suspend fun sendEntries(entries: List<JournalEntry>): Boolean {
+        sendEntriesCallCount++
         if (sendSuccessful) {
             entriesSent.addAll(entries)
         } else {
@@ -28,7 +31,10 @@ class TestDataSendHelper : DataSendHelper {
     override suspend fun sendClearDaysAndInsertEntries(
         days: List<LocalDate>,
         entries: List<JournalEntry>,
-    ): Boolean = sendSuccessful
+    ): Boolean {
+        clearDaysAndInsertEntriesCalls.add(days)
+        return sendSuccessful
+    }
 
     override suspend fun sendVerifyEntriesRequest(
         date: LocalDate,
@@ -41,4 +47,6 @@ class TestDataSendHelper : DataSendHelper {
         verification: VerifyEntries.Verification,
         time: Instant,
     ): Boolean = sendSuccessful
+
+    override suspend fun sendSyncRequest(): Boolean = sendSuccessful
 }

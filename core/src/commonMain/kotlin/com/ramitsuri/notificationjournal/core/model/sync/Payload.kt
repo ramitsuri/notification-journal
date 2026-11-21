@@ -21,6 +21,7 @@ sealed interface Payload {
 
             is VerifyEntries.Request -> copy(sender = sender)
             is VerifyEntries.Response -> copy(sender = sender)
+            is SyncRequest -> copy(sender = sender)
         }
 }
 
@@ -28,6 +29,13 @@ sealed interface Payload {
 sealed interface Diagnostic : Payload {
     val time: Instant
 }
+
+@Serializable
+@SerialName("sync_request")
+data class SyncRequest(
+    override val time: Instant,
+    override val sender: Sender = Sender(),
+) : Diagnostic
 
 sealed interface VerifyEntries : Diagnostic {
     val date: LocalDate

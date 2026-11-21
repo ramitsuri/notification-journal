@@ -30,4 +30,6 @@ interface DataSendHelper {
         verification: VerifyEntries.Verification,
         time: Instant,
     ): Boolean
+
+    suspend fun sendSyncRequest(): Boolean
 }

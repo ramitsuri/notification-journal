@@ -153,6 +153,6 @@ abstract class JournalEntryDao {
     @Query("DELETE FROM journalentry")
     abstract suspend fun deleteAll()
 
-    @Query("DELETE FROM journalentry WHERE deleted = 1")
+    @Query("DELETE FROM journalentry WHERE deleted = 1 AND uploaded = 1")
     abstract suspend fun deleteDeleted()
 }

@@ -6,10 +6,12 @@ import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
 import com.ramitsuri.notificationjournal.core.model.sync.Entity
 import com.ramitsuri.notificationjournal.core.model.sync.Payload
+import com.ramitsuri.notificationjournal.core.model.sync.SyncRequest
 import com.ramitsuri.notificationjournal.core.model.sync.VerifyEntries
 import com.ramitsuri.notificationjournal.core.model.template.JournalEntryTemplate
 import com.ramitsuri.notificationjournal.core.model.toSender
 import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 internal class DataSendHelperImpl(
@@ -67,6 +69,11 @@ internal class DataSendHelperImpl(
                 verification = verification,
                 time = time,
             ).send()
+
+    override suspend fun sendSyncRequest(): Boolean =
+        SyncRequest(
+            time = Clock.System.now(),
+        ).send()
 
     private suspend fun Payload.send(): Boolean {
         val dataHostProperties = getDataHostProperties()
