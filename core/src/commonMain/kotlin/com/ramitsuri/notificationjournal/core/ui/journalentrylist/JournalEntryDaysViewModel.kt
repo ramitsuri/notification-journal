@@ -7,13 +7,15 @@ import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.network.VerifyEntriesHelper
 import com.ramitsuri.notificationjournal.core.network.WebSocketHelper
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
+import com.ramitsuri.notificationjournal.core.utils.combine
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -32,6 +34,8 @@ class JournalEntryDaysViewModel
     ) : ViewModel() {
         private val selectedDate = MutableStateFlow<LocalDate?>(null)
         private val verificationMap = MutableStateFlow(mapOf<LocalDate, DateWithCount.Verification>())
+        private val isVerifying = MutableStateFlow(false)
+        private var verifyJob: Job? = null
 
         val state: StateFlow<ViewState> =
             combine(
@@ -40,7 +44,8 @@ class JournalEntryDaysViewModel
                 repository.getForUploadCountFlow(),
                 verificationMap,
                 webSocketHelper.isConnected,
-            ) { selectedDate, countAndDates, forUploadCount, verificationMap, isConnected ->
+                isVerifying,
+            ) { selectedDate, countAndDates, forUploadCount, verificationMap, isConnected, isVerifying ->
                 ViewState(
                     selectedDate = selectedDate,
                     dateWithCountList =
@@ -52,6 +57,7 @@ class JournalEntryDaysViewModel
                     isConnected = isConnected,
                     notUploadedCount = forUploadCount,
                     todayDate = clock.now().toLocalDateTime(timeZone).date,
+                    isVerifying = isVerifying,
                 )
             }.stateIn(
                 scope = viewModelScope,
@@ -68,12 +74,27 @@ class JournalEntryDaysViewModel
         }
 
         fun onVerifyEntriesRequested() {
-            val datesForVerification = state.value.dateWithCountList.map { it.date }
-            viewModelScope.launch {
-                datesForVerification.forEach { date ->
-                    launch { verifyForDate(date) }
-                }
+            if (verifyJob?.isActive == true) {
+                Logger.withTag(TAG).d { "Verification already in progress, skipping" }
+                return
             }
+            val datesForVerification = state.value.dateWithCountList.map { it.date }
+            if (datesForVerification.isEmpty()) {
+                return
+            }
+            verifyJob =
+                viewModelScope.launch {
+                    isVerifying.value = true
+                    try {
+                        val jobs =
+                            datesForVerification.map { date ->
+                                launch { verifyForDate(date) }
+                            }
+                        jobs.joinAll()
+                    } finally {
+                        isVerifying.value = false
+                    }
+                }
         }
 
         fun onReconcileAll(upload: Boolean) {
@@ -129,4 +150,5 @@ data class ViewState(
     val todayDate: LocalDate? = null,
     val isConnected: Boolean = false,
     val notUploadedCount: Int = 0,
+    val isVerifying: Boolean = false,
 )

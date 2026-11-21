@@ -86,17 +86,6 @@ fun NavGraph(
                 LaunchedEffect(navigator.currentSelectedDate) {
                     viewModel.onDateSelected(navigator.currentSelectedDate)
                 }
-                LaunchedEffect(Unit) {
-                    // See the LaunchedEffect below if changing
-                    viewModel.onVerifyEntriesRequested()
-                }
-                LaunchedEffect(isListDetail, navigator.currentSelectedDate) {
-                    // When in list detail scene, list detail screen is only started once, so the above request to
-                    // verify entries is only triggered once. This is a workaround to trigger it more frequently.
-                    if (isListDetail && navigator.currentSelectedDate != null) {
-                        viewModel.onVerifyEntriesRequested()
-                    }
-                }
                 JournalEntryDaysScreen(
                     state = viewState,
                     showToolbarActions = !isListDetail,
@@ -121,6 +110,7 @@ fun NavGraph(
                         navigator.navigate(Route.AddEntry.fromDate(null))
                     },
                     onAssistantClicked = onAssistantRequested,
+                    onVerifyClicked = viewModel::onVerifyEntriesRequested,
                 )
             }
 

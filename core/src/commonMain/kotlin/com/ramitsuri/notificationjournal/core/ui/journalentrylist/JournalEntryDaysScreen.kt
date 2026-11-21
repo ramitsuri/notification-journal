@@ -66,6 +66,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
@@ -92,6 +94,7 @@ import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_up
 import notificationjournal.core.generated.resources.verifying
+import notificationjournal.core.generated.resources.verify_all
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
@@ -111,6 +114,7 @@ fun JournalEntryDaysScreen(
     onViewByDate: () -> Unit,
     onSyncClicked: () -> Unit,
     onReconcileAll: (uploadOnSuccess: Boolean) -> Unit,
+    onVerifyClicked: () -> Unit,
 ) {
     var showReconcileAllConfirmation by remember { mutableStateOf(false) }
     // The view needs to be focussed for it to receive keyboard events
@@ -138,10 +142,25 @@ fun JournalEntryDaysScreen(
                     ) {
                         onSettingsClicked()
                         true
-                    } else if (it.key == Key.S &&
+                    } else if (
+                        !it.isMetaPressed &&
+                        !it.isCtrlPressed &&
+                        !it.isAltPressed &&
+                        it.key == Key.S &&
                         it.type == KeyEventType.KeyDown
                     ) {
                         onSyncClicked()
+                        true
+                    } else if (
+                        !it.isMetaPressed &&
+                        !it.isCtrlPressed &&
+                        !it.isAltPressed &&
+                        it.key == Key.V &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        if (!state.isVerifying) {
+                            onVerifyClicked()
+                        }
                         true
                     } else {
                         false
@@ -196,12 +215,28 @@ fun JournalEntryDaysScreen(
                         .weight(1f)
                         .padding(16.dp),
             )
-            TextButton(
-                onClick = {
-                    showReconcileAllConfirmation = true
-                },
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = stringResource(Res.string.reconcile_all))
+                TextButton(
+                    onClick = onVerifyClicked,
+                    enabled = !state.isVerifying && state.dateWithCountList.isNotEmpty(),
+                ) {
+                    Text(
+                        text =
+                            stringResource(
+                                if (state.isVerifying) Res.string.verifying else Res.string.verify_all,
+                            ),
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        showReconcileAllConfirmation = true
+                    },
+                ) {
+                    Text(text = stringResource(Res.string.reconcile_all))
+                }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }

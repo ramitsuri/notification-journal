@@ -166,6 +166,7 @@
     <string name="short_display_text">Short display text</string>
     <string name="not_verified">Not verified</string>
     <string name="verifying">Verifying</string>
+    <string name="verify_all">Verify all</string>
 
     <string name="conflict_this_device">This device</string>
     <string name="will_reconcile">Will reconcile</string>
