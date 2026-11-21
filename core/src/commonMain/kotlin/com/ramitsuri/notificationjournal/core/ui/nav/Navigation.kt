@@ -405,6 +405,7 @@ fun NavGraph(
                     onDecreaseAddEditFontSize = viewModel::decreaseAddEditFontSize,
                     onQrCodeScanned = viewModel::onQrCodeScanned,
                     onAiDiagnosticsClicked = onAiDiagnosticsRequested,
+                    onApplyDummySyncConfig = viewModel::applyDummySyncConfig,
                 )
             }
 

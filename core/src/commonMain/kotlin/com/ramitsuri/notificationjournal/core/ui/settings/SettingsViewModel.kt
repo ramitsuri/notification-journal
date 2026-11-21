@@ -14,6 +14,7 @@ import com.ramitsuri.notificationjournal.core.ui.settings.SettingsViewModel.Comp
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.TestSyncHelper
 import com.ramitsuri.notificationjournal.core.utils.combine
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +33,7 @@ class SettingsViewModel(
     private val enableExport: Boolean,
     private val encryptionHelper: EncryptionHelper,
     getIpAddress: () -> String?,
-    actsAsServer: Boolean,
+    private val actsAsServer: Boolean,
     private val lifecycleCoordinator: com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator? = null,
     private val showJournalImport: Boolean = false,
 ) : ViewModel() {
@@ -207,6 +208,18 @@ class SettingsViewModel(
 
             encryptionHelper.setSalt(encryptionSalt)
             encryptionHelper.setPassword(encryptionPassword)
+            lifecycleCoordinator?.resetReceiveHelper(resetWebsocket = true)
+        }
+    }
+
+    fun applyDummySyncConfig() {
+        viewModelScope.launch {
+            TestSyncHelper.applyDummySyncConfig(
+                encryptionHelper = encryptionHelper,
+                prefManager = prefManager,
+                isDesktop = actsAsServer,
+                overrideHost = true,
+            )
             lifecycleCoordinator?.resetReceiveHelper(resetWebsocket = true)
         }
     }

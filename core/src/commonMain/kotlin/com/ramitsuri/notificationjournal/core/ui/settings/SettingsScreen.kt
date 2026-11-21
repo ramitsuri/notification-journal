@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
@@ -122,6 +123,7 @@ fun SettingsScreen(
     onDecreaseAddEditFontSize: () -> Unit,
     onQrCodeScanned: (String) -> Unit,
     onAiDiagnosticsClicked: (() -> Unit)? = null,
+    onApplyDummySyncConfig: (() -> Unit)? = null,
 ) {
     var showDataSharingPropertiesDialog by rememberSaveable { mutableStateOf(false) }
     var showForceUploadAllDialog by rememberSaveable { mutableStateOf(false) }
@@ -135,6 +137,7 @@ fun SettingsScreen(
             encryptionPassword = state.encryptionPassword,
             qrCodeContent = state.qrCodeContent,
             actsAsServer = state.actsAsServer,
+            onApplyDummySyncConfig = onApplyDummySyncConfig,
             onPositiveClick = { dataHost, deviceName ->
                 showDataSharingPropertiesDialog = !showDataSharingPropertiesDialog
                 onDataSharingPropertiesSet(dataHost, deviceName)
@@ -503,6 +506,7 @@ private fun DataSharingPropertiesDialog(
     onQrCodeScanned: (String) -> Unit,
     onPositiveClick: (DataHost, DeviceName) -> Unit,
     onNegativeClick: () -> Unit,
+    onApplyDummySyncConfig: (() -> Unit)? = null,
 ) {
     var dataHostText by rememberSaveable(dataHostProperties.dataHost) {
         mutableStateOf(dataHostProperties.dataHost)
@@ -581,6 +585,14 @@ private fun DataSharingPropertiesDialog(
                         text = stringResource(Res.string.ip_address, ipAddress),
                         modifier = Modifier.fillMaxWidth(),
                     )
+                }
+                if (BuildKonfig.IS_DEBUG && onApplyDummySyncConfig != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(
+                        onClick = onApplyDummySyncConfig,
+                    ) {
+                        Text("Use Test / Dummy Sync Values")
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 DialogButtonRow(

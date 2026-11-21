@@ -77,8 +77,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.ui.components.DraggableItem
-import com.ramitsuri.notificationjournal.core.ui.components.dragContainer
 import com.ramitsuri.notificationjournal.core.ui.components.TagIcon
+import com.ramitsuri.notificationjournal.core.ui.components.dragContainer
 import com.ramitsuri.notificationjournal.core.ui.components.rememberDragDropState
 import kotlinx.coroutines.delay
 import notificationjournal.core.generated.resources.Res
@@ -515,8 +515,7 @@ private fun AddEditTagDialog(
                                         } else {
                                             MaterialTheme.colorScheme.surfaceContainer
                                         },
-                                    )
-                                    .border(
+                                    ).border(
                                         BorderStroke(
                                             if (isSelected) 2.dp else 1.dp,
                                             if (isSelected) {
@@ -526,8 +525,7 @@ private fun AddEditTagDialog(
                                             },
                                         ),
                                         RoundedCornerShape(8.dp),
-                                    )
-                                    .clickable {
+                                    ).clickable {
                                         if (isSelected) {
                                             onIconUpdated(null)
                                         } else {

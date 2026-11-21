@@ -71,10 +71,22 @@ class WebSocketHelper(
             Logger.withTag(TAG).w { "Cannot start websocket, invalid data host properties" }
             return
         }
+        val cleanHost =
+            dataHostProperties.dataHost
+                .removePrefix("http://")
+                .removePrefix("https://")
+                .removePrefix("ws://")
+                .removePrefix("wss://")
+                .substringBefore(":")
+                .trimEnd('/')
+        if (cleanHost.isBlank()) {
+            Logger.withTag(TAG).w { "Cannot start websocket, invalid data host" }
+            return
+        }
         try {
             httpClient.webSocket(
                 method = HttpMethod.Get,
-                host = dataHostProperties.dataHost,
+                host = cleanHost,
                 port = port,
                 path = "/${Constants.DATA_HOST_EXCHANGE}",
             ) {

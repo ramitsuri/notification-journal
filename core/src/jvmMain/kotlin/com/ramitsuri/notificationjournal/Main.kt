@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.awt.Desktop
 import java.awt.desktop.AppForegroundEvent
@@ -43,16 +42,15 @@ fun main() {
     val graph = createGraph<DesktopGraph>()
     graph.initLogger()
 
+    try {
+        embeddedServer(Netty, port = Constants.DATA_HOST_PORT, module = Application::module).start(wait = false)
+        Logger.withTag("DesktopMain").i { "Netty server started on port ${Constants.DATA_HOST_PORT}" }
+    } catch (e: Exception) {
+        Logger.withTag("DesktopMain").e(e) { "Failed to start Netty server" }
+    }
+
     // This is not called automatically when the app first starts
     graph.lifecycleCoordinator.onAppStart()
-
-    graph.coroutineScope.launch {
-        try {
-            embeddedServer(Netty, port = Constants.DATA_HOST_PORT, module = Application::module).start(wait = true)
-        } catch (e: Exception) {
-            Logger.withTag("DesktopMain").e(e) { "Failed to start Netty server" }
-        }
-    }
 
     application {
         var sizeIncreasedLastTime by remember { mutableStateOf(false) }

@@ -463,9 +463,10 @@ private fun SubHeaderItem(
     ) {
         var showMenu by remember { mutableStateOf(false) }
         Spacer(modifier = Modifier.width(12.dp))
-        val tagIcon = remember(tagGroup.tag, tags) {
-            tags.firstOrNull { it.value == tagGroup.tag }?.icon ?: Tag.DEFAULT_ICON
-        }
+        val tagIcon =
+            remember(tagGroup.tag, tags) {
+                tags.firstOrNull { it.value == tagGroup.tag }?.icon ?: Tag.DEFAULT_ICON
+            }
         TagIcon(
             iconName = tagIcon,
             modifier = Modifier.size(16.dp),
