@@ -14,4 +14,11 @@
     <string name="work_bridge_connected">Connected to Work Mac</string>
     <string name="work_bridge_connecting">Connecting… Attempt %1$d/%2$d</string>
     <string name="work_bridge_action_stop">Stop</string>
+    <string name="work_bridge_action_repair">Re-pair</string>
+    <string name="shortcut_work_capture_short">Work</string>
+    <string name="shortcut_work_capture_long">Work Capture</string>
+    <string name="work_pairing_title">Pair with Work Mac</string>
+    <string name="work_pairing_instruction">Scan the QR code shown in the menu bar on your work Mac</string>
+    <string name="work_pairing_permission_rationale">Camera permission is needed to scan the pairing QR code</string>
+    <string name="work_pairing_grant_permission">Grant permission</string>
 </resources>

@@ -7,6 +7,7 @@ import com.ramitsuri.notificationjournal.ai.ui.VoiceNoteReviewViewModel
 import com.ramitsuri.notificationjournal.core.di.AppScope
 import com.ramitsuri.notificationjournal.core.di.CoreGraph
 import com.ramitsuri.notificationjournal.work.AppWorkerFactory
+import com.ramitsuri.notificationjournal.work.WorkPairingViewModel
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
@@ -21,6 +22,7 @@ interface AppGraph :
     val journalAssistantViewModel: JournalAssistantViewModel
     val voiceNoteReviewViewModel: VoiceNoteReviewViewModel
     val aiDiagnosticsViewModel: AiDiagnosticsViewModel
+    val workPairingViewModel: WorkPairingViewModel
 
     @DependencyGraph.Factory
     fun interface Factory {

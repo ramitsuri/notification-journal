@@ -143,6 +143,23 @@
             android:foregroundServiceType="dataSync" />
 
         <activity
+            android:name=".work.WorkCaptureShortcutActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Journal.Translucent"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="com.ramitsuri.notificationjournal.action.WORK_CAPTURE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".work.WorkPairingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Journal" />
+
+        <activity
             android:name=".ai.ui.VoiceAssistantActivity"
             android:exported="true"
             android:theme="@style/Theme.Journal.Translucent"

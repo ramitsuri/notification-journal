@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
@@ -15,6 +16,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import co.touchlab.kermit.Logger
@@ -25,6 +27,7 @@ import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStoreV2
 import com.ramitsuri.notificationjournal.core.utils.WorkProfileManager
 import com.ramitsuri.notificationjournal.core.work.WorkBridgeController
+import com.ramitsuri.notificationjournal.work.WorkPairingActivity
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
@@ -47,6 +50,7 @@ class WorkBridgeService(
 ) : LifecycleService() {
     private var controller: WorkBridgeController? = null
     private var bridgeJob: Job? = null
+    private var stateJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -68,20 +72,43 @@ class WorkBridgeService(
 
         startForegroundImmediately()
 
-        if (controller == null) {
-            val newController =
-                WorkBridgeController(
-                    repository = repository,
-                    workProfileManager = workProfileManager,
-                    keyValueStore = keyValueStore,
-                    json = json,
-                    ioDispatcher = ioDispatcher,
-                    onStopRequested = {
-                        stopServiceInternal()
-                    },
-                )
-            controller = newController
+        if (intent?.action == ACTION_RECONNECT || controller == null) {
+            startController()
+        } else {
+            Logger.withTag(TAG).d { "Service already running, keeping active connection" }
+        }
 
+        return START_NOT_STICKY
+    }
+
+    override fun onBind(intent: Intent): IBinder? {
+        super.onBind(intent)
+        return null
+    }
+
+    override fun onDestroy() {
+        stopServiceInternal()
+        super.onDestroy()
+    }
+
+    private fun startController() {
+        stateJob?.cancel()
+        bridgeJob?.cancel()
+
+        val newController =
+            WorkBridgeController(
+                repository = repository,
+                workProfileManager = workProfileManager,
+                keyValueStore = keyValueStore,
+                json = json,
+                ioDispatcher = ioDispatcher,
+                onStopRequested = {
+                    stopServiceInternal()
+                },
+            )
+        controller = newController
+
+        stateJob =
             lifecycleScope.launch(ioDispatcher) {
                 newController.state.collect { state ->
                     when (state) {
@@ -110,23 +137,10 @@ class WorkBridgeService(
                 }
             }
 
-            bridgeJob =
-                lifecycleScope.launch {
-                    newController.start()
-                }
-        }
-
-        return START_NOT_STICKY
-    }
-
-    override fun onBind(intent: Intent): IBinder? {
-        super.onBind(intent)
-        return null
-    }
-
-    override fun onDestroy() {
-        stopServiceInternal()
-        super.onDestroy()
+        bridgeJob =
+            lifecycleScope.launch {
+                newController.start()
+            }
     }
 
     private fun startForegroundImmediately() {
@@ -172,6 +186,18 @@ class WorkBridgeService(
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
 
+        val repairIntent =
+            Intent(this, WorkPairingActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
+        val repairPendingIntent =
+            PendingIntent.getActivity(
+                this,
+                REQUEST_CODE_REPAIR,
+                repairIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
@@ -184,6 +210,10 @@ class WorkBridgeService(
                 0,
                 getString(R.string.work_bridge_action_stop),
                 stopPendingIntent,
+            ).addAction(
+                0,
+                getString(R.string.work_bridge_action_repair),
+                repairPendingIntent,
             ).build()
     }
 
@@ -198,6 +228,8 @@ class WorkBridgeService(
     }
 
     private fun stopServiceInternal() {
+        stateJob?.cancel()
+        stateJob = null
         bridgeJob?.cancel()
         bridgeJob = null
         controller = null
@@ -208,9 +240,28 @@ class WorkBridgeService(
     companion object {
         const val CHANNEL_ID = "work_bridge"
         const val ACTION_START = "com.ramitsuri.notificationjournal.action.WORK_BRIDGE_START"
+        const val ACTION_CONNECT = "com.ramitsuri.notificationjournal.action.WORK_BRIDGE_CONNECT"
+        const val ACTION_RECONNECT = "com.ramitsuri.notificationjournal.action.WORK_BRIDGE_RECONNECT"
         const val ACTION_STOP = "com.ramitsuri.notificationjournal.action.WORK_BRIDGE_STOP"
         const val NOTIFICATION_ID = 2001
         const val REQUEST_CODE_STOP = 2002
+        const val REQUEST_CODE_REPAIR = 2003
         private const val TAG = "WorkBridgeService"
+
+        fun start(context: Context) {
+            val intent =
+                Intent(context, WorkBridgeService::class.java).apply {
+                    action = ACTION_START
+                }
+            ContextCompat.startForegroundService(context, intent)
+        }
+
+        fun reconnect(context: Context) {
+            val intent =
+                Intent(context, WorkBridgeService::class.java).apply {
+                    action = ACTION_RECONNECT
+                }
+            ContextCompat.startForegroundService(context, intent)
+        }
     }
 }

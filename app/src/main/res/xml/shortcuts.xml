@@ -9,4 +9,13 @@
         <intent
             android:action="com.ramitsuri.notificationjournal.action.VOICE_ASSISTANT" />
     </shortcut>
+    <shortcut
+        android:shortcutId="work_capture"
+        android:enabled="true"
+        android:icon="@drawable/ic_notification"
+        android:shortcutShortLabel="@string/shortcut_work_capture_short"
+        android:shortcutLongLabel="@string/shortcut_work_capture_long">
+        <intent
+            android:action="com.ramitsuri.notificationjournal.action.WORK_CAPTURE" />
+    </shortcut>
 </shortcuts>

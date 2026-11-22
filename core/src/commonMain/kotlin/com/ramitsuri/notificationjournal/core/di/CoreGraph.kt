@@ -9,6 +9,7 @@ import com.ramitsuri.notificationjournal.core.ui.nav.NavViewModelFactories
 import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.NotificationHandler
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.WorkProfileManager
 import kotlinx.coroutines.CoroutineScope
 
 interface CoreGraph : NavViewModelFactories {
@@ -21,6 +22,7 @@ interface CoreGraph : NavViewModelFactories {
     val isDesktop: Boolean get() = platformConfig.isDesktop
     val logWriter: DatabaseLogWriter
     val encryptionHelper: EncryptionHelper
+    val workProfileManager: WorkProfileManager
 
     fun initLogger() {
         Logger.setLogWriters(logWriter, platformLogWriter())
