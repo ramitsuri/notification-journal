@@ -23,6 +23,7 @@ import com.ramitsuri.notificationjournal.core.spellcheck.SpellChecker
 import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.KeyValueStoreV2
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.WorkProfileManager
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
@@ -121,6 +122,11 @@ object CoreBindings {
                 }
             }
         }
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideWorkProfileManager(keyValueStore: KeyValueStoreV2): WorkProfileManager =
+        WorkProfileManager(keyValueStore = keyValueStore)
 
     @Provides
     @SingleIn(AppScope::class)

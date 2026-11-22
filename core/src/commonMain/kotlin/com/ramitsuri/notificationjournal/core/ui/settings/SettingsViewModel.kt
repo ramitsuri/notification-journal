@@ -14,6 +14,7 @@ import com.ramitsuri.notificationjournal.core.ui.settings.SettingsViewModel.Comp
 import com.ramitsuri.notificationjournal.core.utils.Constants
 import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
+import com.ramitsuri.notificationjournal.core.utils.QrCodeParser
 import com.ramitsuri.notificationjournal.core.utils.TestSyncHelper
 import com.ramitsuri.notificationjournal.core.utils.combine
 import dev.zacsweers.metro.Inject
@@ -194,20 +195,21 @@ class SettingsViewModel(
     }
 
     fun onQrCodeScanned(qrCodeContent: String) {
-        val parts = qrCodeContent.split(";;;")
-        val encryptionSalt = parts[0]
-        val encryptionPassword = parts[1]
-        val ipAddress = parts[2]
+        val homeQr = QrCodeParser.parseHomeQr(qrCodeContent)
+        if (homeQr == null) {
+            Logger.w(TAG) { "QR code invalid or rejected in home settings" }
+            return
+        }
 
         viewModelScope.launch {
             val newDataHostProperties =
                 prefManager.getDataHostProperties().first().copy(
-                    dataHost = ipAddress,
+                    dataHost = homeQr.host,
                 )
             prefManager.setDataHostProperties(newDataHostProperties)
 
-            encryptionHelper.setSalt(encryptionSalt)
-            encryptionHelper.setPassword(encryptionPassword)
+            encryptionHelper.setSalt(homeQr.salt)
+            encryptionHelper.setPassword(homeQr.password)
             lifecycleCoordinator?.resetReceiveHelper(resetWebsocket = true)
         }
     }

@@ -18,6 +18,8 @@ import kotlin.uuid.Uuid
 
 class EncryptionHelper(
     private val keyValueStore: KeyValueStoreV2,
+    private val passwordKey: Key = Key.ENCRYPTION_PASSWORD,
+    private val saltKey: Key = Key.ENCRYPTION_SALT,
 ) {
     private val provider = CryptographyProvider.Default
     private val initMutex = Mutex()
@@ -25,28 +27,28 @@ class EncryptionHelper(
 
     fun getPassword(): Flow<String?> =
         keyValueStore
-            .getStringFlow(Key.ENCRYPTION_PASSWORD, "")
+            .getStringFlow(passwordKey, "")
             .map { value ->
                 value.takeIf { !it.isNullOrEmpty() }
             }
 
     suspend fun setPassword(password: String) {
         initMutex.withLock {
-            keyValueStore.putString(Key.ENCRYPTION_PASSWORD, password)
+            keyValueStore.putString(passwordKey, password)
             cipher = null
         }
     }
 
     fun getSalt(): Flow<String?> =
         keyValueStore
-            .getStringFlow(Key.ENCRYPTION_SALT, "")
+            .getStringFlow(saltKey, "")
             .map { value ->
                 value.takeIf { !it.isNullOrEmpty() }
             }
 
     suspend fun setSalt(salt: String) {
         initMutex.withLock {
-            keyValueStore.putString(Key.ENCRYPTION_SALT, salt)
+            keyValueStore.putString(saltKey, salt)
             cipher = null
         }
     }

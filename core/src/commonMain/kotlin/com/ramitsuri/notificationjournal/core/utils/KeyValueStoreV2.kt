@@ -75,4 +75,7 @@ enum class Key(
     CUSTOM_PROMPT_RULES("custom_prompt_rules"),
     VOICE_CAPSULE_POSITION_IN_APP("voice_capsule_position_in_app"),
     VOICE_CAPSULE_POSITION_ACTIVITY("voice_capsule_position_activity"),
+    WORK_HOST("work_host"),
+    WORK_SALT("work_salt"),
+    WORK_PASSWORD("work_password"),
 }
