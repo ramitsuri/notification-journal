@@ -307,6 +307,68 @@ class JournalRepositoryTest : BaseTest() {
             assertEquals("conflicting", conflictsSecond.first().text)
         }
 
+    @Test
+    fun handleWorkPayload_savesEntriesWithUploadedFalseAndReplacesLocalFalse() =
+        runTest {
+            val payload =
+                workPayload(
+                    journalEntry().copy(
+                        id = "work-1",
+                        text = "Work entry 1",
+                        uploaded = true,
+                        replacesLocal = true,
+                    ),
+                    journalEntry().copy(
+                        id = "work-2",
+                        text = "Work entry 2",
+                        uploaded = true,
+                        replacesLocal = false,
+                    ),
+                )
+
+            repository.handleWorkPayload(payload)
+
+            val entry1 = repository.get("work-1")
+            val entry2 = repository.get("work-2")
+
+            org.junit.Assert.assertNotNull(entry1)
+            org.junit.Assert.assertNotNull(entry2)
+            assertFalse(entry1!!.uploaded)
+            assertFalse(entry1.replacesLocal)
+            assertEquals("Work entry 1", entry1.text)
+            assertFalse(entry2!!.uploaded)
+            assertFalse(entry2.replacesLocal)
+            assertEquals("Work entry 2", entry2.text)
+        }
+
+    @Test
+    fun handleWorkPayload_entriesReturnedByGetForUploadAndScheduledForSync() =
+        runTest {
+            val payload =
+                workPayload(
+                    journalEntry().copy(id = "work-1", text = "Work note"),
+                )
+
+            repository.handleWorkPayload(payload)
+
+            val forUpload = repository.getForUpload()
+            assertEquals(1, forUpload.size)
+            assertEquals("work-1", forUpload.first().id)
+            assertFalse(forUpload.first().uploaded)
+
+            dataSendHelper.sendSuccessful = true
+            repository.uploadAll()
+
+            assertEquals(listOf("work-1"), dataSendHelper.entriesSent.map { it.id })
+            assertTrue(repository.get("work-1")!!.uploaded)
+        }
+
+    private fun workPayload(vararg entries: JournalEntry) =
+        Entity.Entries(
+            sender = Sender(name = "Work Mac", id = "work-mac"),
+            data = entries.toList(),
+        )
+
     private fun journalEntry() =
         JournalEntry(
             id = "id",

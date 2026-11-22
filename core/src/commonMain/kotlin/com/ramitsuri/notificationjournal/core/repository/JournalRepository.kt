@@ -79,6 +79,8 @@ class JournalRepository(
 
     fun getForUploadCountFlow() = dao.getForUploadCountFlow()
 
+    suspend fun getForUpload(): List<JournalEntry> = dao.getForUpload()
+
     suspend fun getAll() = dao.getAll()
 
     suspend fun get(id: String): JournalEntry? = dao.get(id)
@@ -252,6 +254,13 @@ class JournalRepository(
             }
             conflictDao.deleteForEntryId(entryConflict.entryId)
             conflictDao.insert(entryConflict)
+        }
+    }
+
+    suspend fun handleWorkPayload(payload: Entity.Entries) {
+        payload.data.forEach { payloadEntry ->
+            // Force uploaded = false so home sync pushes it later
+            dao.upsert(payloadEntry.copy(uploaded = false, replacesLocal = false))
         }
     }
 
