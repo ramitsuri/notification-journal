@@ -119,6 +119,19 @@ class WebSocketHelperTest {
         }
 
     @Test
+    fun testStartWithExplicitHostAndPort() =
+        runBlocking {
+            val receiver = WebSocketHelper(httpClient, testJson, encryptionHelper, port = 0)
+            val receiverJob = launch(Dispatchers.IO) { receiver.start(host = "localhost", port = port) }
+
+            receiver.isConnected.first { it }
+            assertTrue(receiver.isConnected.value)
+
+            receiver.stop()
+            receiverJob.cancel()
+        }
+
+    @Test
     fun testSendTimeoutWithoutAck() =
         runBlocking {
             val sender = WebSocketHelper(httpClient, testJson, encryptionHelper, port = port)

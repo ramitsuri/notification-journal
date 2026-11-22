@@ -93,8 +93,8 @@ import notificationjournal.core.generated.resources.reconcile_all_upload_on_succ
 import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_up
-import notificationjournal.core.generated.resources.verifying
 import notificationjournal.core.generated.resources.verify_all
+import notificationjournal.core.generated.resources.verifying
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 

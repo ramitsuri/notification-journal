@@ -10,4 +10,8 @@
     <string name="shortcut_voice_assistant_short">Dictate</string>
     <string name="shortcut_voice_assistant_long">Voice Dictation</string>
     <string name="voice_note_saved_toast">Voice note saved</string>
+    <string name="work_bridge_notification_title">Work Capture</string>
+    <string name="work_bridge_connected">Connected to Work Mac</string>
+    <string name="work_bridge_connecting">Connecting… Attempt %1$d/%2$d</string>
+    <string name="work_bridge_action_stop">Stop</string>
 </resources>

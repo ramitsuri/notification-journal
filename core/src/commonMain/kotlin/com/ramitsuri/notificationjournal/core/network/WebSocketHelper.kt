@@ -60,19 +60,17 @@ class WebSocketHelper(
         this.entityHandler = handler
     }
 
-    suspend fun start(getDataHostProperties: suspend () -> DataHostProperties) {
+    suspend fun start(
+        host: String,
+        port: Int = this.port,
+    ) {
         if (session != null) {
             Logger.withTag(TAG).d { "Already connected" }
             return
         }
         Logger.withTag(TAG).d { "Starting" }
-        val dataHostProperties = getDataHostProperties()
-        if (!dataHostProperties.isValid()) {
-            Logger.withTag(TAG).w { "Cannot start websocket, invalid data host properties" }
-            return
-        }
         val cleanHost =
-            dataHostProperties.dataHost
+            host
                 .removePrefix("http://")
                 .removePrefix("https://")
                 .removePrefix("ws://")
@@ -102,6 +100,15 @@ class WebSocketHelper(
             session = null
             failPendingAcks()
         }
+    }
+
+    suspend fun start(getDataHostProperties: suspend () -> DataHostProperties) {
+        val dataHostProperties = getDataHostProperties()
+        if (!dataHostProperties.isValid()) {
+            Logger.withTag(TAG).w { "Cannot start websocket, invalid data host properties" }
+            return
+        }
+        start(dataHostProperties.dataHost, port)
     }
 
     suspend fun stop() {
