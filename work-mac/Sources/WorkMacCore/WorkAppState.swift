@@ -11,8 +11,31 @@ public final class WorkAppState: ObservableObject {
     @Published public var isUsbMode: Bool = false
     @Published public private(set) var availableInterfaces: [NetworkInterface] = []
     @Published public var adbCopied: Bool = false
+    @Published public var isQrCodeRevealed: Bool = false
+
+    public var isQrCodeVisible: Bool {
+        !isClientConnected || isQrCodeRevealed
+    }
+
+    public var statusImageName: String {
+        isClientConnected ? "link.circle.fill" : "link.circle"
+    }
+
+    public func toggleQrCode() {
+        isQrCodeRevealed.toggle()
+    }
+
+    public func setClientConnected(_ isConnected: Bool) {
+        self.isClientConnected = isConnected
+        if isConnected {
+            self.isQrCodeRevealed = false
+        }
+    }
 
     public let server: WorkWebSocketServer
+    public private(set) lazy var hudViewModel: HUDViewModel = {
+        HUDViewModel(appState: self)
+    }()
 
     public init(
         credentials: SessionCredentials = SessionCredentials(),
@@ -56,7 +79,7 @@ public final class WorkAppState: ObservableObject {
         Task { [weak self] in
             await server.setStatusChangeHandler { [weak self] isConnected in
                 Task { @MainActor [weak self] in
-                    self?.isClientConnected = isConnected
+                    self?.setClientConnected(isConnected)
                 }
             }
         }
@@ -83,7 +106,7 @@ public final class WorkAppState: ObservableObject {
         do {
             try await server.rotateCredentials(credentials: newCredentials)
             self.credentials = newCredentials
-            self.isClientConnected = false
+            self.setClientConnected(false)
             self.serverError = nil
         } catch {
             self.serverError = error.localizedDescription

@@ -81,4 +81,40 @@ struct WorkAppStateTests {
         #expect(defaults.string(forKey: "work_host") == nil)
         #expect(defaults.string(forKey: "work_entries") == nil)
     }
+
+    @Test func qrCodeVisibilityFollowsConnectionAndIntentionalToggle() {
+        let creds = SessionCredentials(password: "pw-check", salt: "c2FsdDE2Ynl0ZXNhbHQ=")
+        let state = WorkAppState(credentials: creds, startServerImmediately: false)
+
+        // Device never connected
+        #expect(state.isClientConnected == false)
+        #expect(state.isQrCodeVisible == true)
+        #expect(state.isQrCodeRevealed == false)
+
+        // Device connects
+        state.setClientConnected(true)
+        #expect(state.isClientConnected == true)
+        #expect(state.isQrCodeVisible == false)
+
+        // User intentionally toggles QR code while connected
+        state.toggleQrCode()
+        #expect(state.isQrCodeRevealed == true)
+        #expect(state.isQrCodeVisible == true)
+
+        state.toggleQrCode()
+        #expect(state.isQrCodeRevealed == false)
+        #expect(state.isQrCodeVisible == false)
+
+        // User revealed it, then device disconnected
+        state.isQrCodeRevealed = true
+        state.setClientConnected(false)
+        #expect(state.isClientConnected == false)
+        #expect(state.isQrCodeVisible == true)
+
+        // Reconnection hides QR code again
+        state.setClientConnected(true)
+        #expect(state.isClientConnected == true)
+        #expect(state.isQrCodeRevealed == false)
+        #expect(state.isQrCodeVisible == false)
+    }
 }
