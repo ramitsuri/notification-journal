@@ -13,6 +13,7 @@ class WorkBridgeServiceTest {
             WorkBridgeService.ACTION_RECONNECT,
         )
         assertEquals("com.ramitsuri.notificationjournal.action.WORK_BRIDGE_STOP", WorkBridgeService.ACTION_STOP)
+        assertEquals("work_bridge", WorkBridgeService.CHANNEL_ID)
         assertEquals(2001, WorkBridgeService.NOTIFICATION_ID)
         assertEquals(2002, WorkBridgeService.REQUEST_CODE_STOP)
         assertEquals(2003, WorkBridgeService.REQUEST_CODE_REPAIR)
