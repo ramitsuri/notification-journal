@@ -175,7 +175,7 @@ public struct PopoverView: View {
                 } else {
                     Picker("", selection: $appState.selectedInterface) {
                         ForEach(appState.availableInterfaces) { iface in
-                            Text("\(iface.name) (\(iface.ipAddress))")
+                            Text("\(iface.displayName) (\(iface.ipAddress))")
                                 .tag(Optional(iface))
                         }
                     }

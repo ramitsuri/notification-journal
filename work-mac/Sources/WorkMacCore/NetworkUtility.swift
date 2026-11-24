@@ -6,6 +6,20 @@ public struct NetworkInterface: Identifiable, Hashable, Sendable {
     public let ipAddress: String
     public let isLoopback: Bool
 
+    public var isTailscale: Bool {
+        // Tailscale uses CGNAT IPv4 range: 100.64.0.0/10 (100.64.0.0 – 100.127.255.255)
+        let parts = ipAddress.split(separator: ".").compactMap { Int($0) }
+        guard parts.count == 4, parts[0] == 100 else { return false }
+        return parts[1] >= 64 && parts[1] <= 127
+    }
+
+    public var displayName: String {
+        if isTailscale {
+            return "Tailscale"
+        }
+        return name
+    }
+
     public init(name: String, ipAddress: String, isLoopback: Bool) {
         self.name = name
         self.ipAddress = ipAddress
@@ -43,8 +57,8 @@ public enum NetworkUtility {
             if isUp && isRunning, let addr = ifa.ifa_addr, addr.pointee.sa_family == UInt8(AF_INET) {
                 let name = String(cString: ifa.ifa_name)
 
-                // Filter for standard LAN interfaces (en0, en1, etc.) or loopback when requested
-                let isLanInterface = name.hasPrefix("en")
+                // Support standard LAN interfaces (en*) and tunnel/VPN interfaces (utun*, such as Tailscale)
+                let isLanOrTunnel = name.hasPrefix("en") || name.hasPrefix("utun")
 
                 if isLoopback {
                     if includeLoopback {
@@ -62,7 +76,7 @@ public enum NetworkUtility {
                             }
                         }
                     }
-                } else if isLanInterface {
+                } else if isLanOrTunnel {
                     var sinAddr = addr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee.sin_addr }
                     var buffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
                     if inet_ntop(AF_INET, &sinAddr, &buffer, socklen_t(INET_ADDRSTRLEN)) != nil {
@@ -71,7 +85,7 @@ public enum NetworkUtility {
                             return String(cString: base)
                         }
                         let key = "\(name):\(ip)"
-                        if !ip.isEmpty && ip != "0.0.0.0" && !seen.contains(key) {
+                        if !ip.isEmpty && ip != "0.0.0.0" && !ip.hasPrefix("169.254.") && !seen.contains(key) {
                             seen.insert(key)
                             interfaces.append(NetworkInterface(name: name, ipAddress: ip, isLoopback: false))
                         }
@@ -81,12 +95,14 @@ public enum NetworkUtility {
             cursor = ifa.ifa_next
         }
 
-        // Sort: en0 first, then en1, then remaining en*
+        // Sort: en0 first, then en1, then remaining en*, then tunnel interfaces (Tailscale)
         interfaces.sort { lhs, rhs in
             if lhs.name == "en0" { return true }
             if rhs.name == "en0" { return false }
             if lhs.name == "en1" { return true }
             if rhs.name == "en1" { return false }
+            if lhs.name.hasPrefix("en") && !rhs.name.hasPrefix("en") { return true }
+            if !lhs.name.hasPrefix("en") && rhs.name.hasPrefix("en") { return false }
             return lhs.name < rhs.name
         }
 

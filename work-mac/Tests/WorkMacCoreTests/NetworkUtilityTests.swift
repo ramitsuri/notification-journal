@@ -36,4 +36,27 @@ struct NetworkUtilityTests {
             #expect(!iface.ipAddress.hasPrefix("127."))
         }
     }
+
+    @Test func tailscaleInterfaceIdentification() {
+        let tsIface = NetworkInterface(name: "utun4", ipAddress: "100.74.156.101", isLoopback: false)
+        #expect(tsIface.isTailscale == true)
+        #expect(tsIface.displayName == "Tailscale")
+
+        let tsBoundaryMin = NetworkInterface(name: "utun0", ipAddress: "100.64.0.1", isLoopback: false)
+        #expect(tsBoundaryMin.isTailscale == true)
+
+        let tsBoundaryMax = NetworkInterface(name: "utun0", ipAddress: "100.127.255.254", isLoopback: false)
+        #expect(tsBoundaryMax.isTailscale == true)
+
+        let outsideTsBelow = NetworkInterface(name: "utun0", ipAddress: "100.63.255.255", isLoopback: false)
+        #expect(outsideTsBelow.isTailscale == false)
+        #expect(outsideTsBelow.displayName == "utun0")
+
+        let outsideTsAbove = NetworkInterface(name: "utun0", ipAddress: "100.128.0.1", isLoopback: false)
+        #expect(outsideTsAbove.isTailscale == false)
+
+        let standardLan = NetworkInterface(name: "en0", ipAddress: "192.168.1.50", isLoopback: false)
+        #expect(standardLan.isTailscale == false)
+        #expect(standardLan.displayName == "en0")
+    }
 }
