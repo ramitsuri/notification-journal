@@ -206,4 +206,17 @@
     <string name="encryption_password">Encryption password: %1$s</string>
     <string name="encryption_salt">Encryption salt: %1$s</string>
     <string name="ip_address">IP address: %1$s</string>
+
+    <string name="settings_work_mac_title">Work Mac</string>
+    <string name="settings_work_mac_not_paired">Not paired</string>
+    <string name="settings_work_mac_connected">Connected · %1$s</string>
+    <string name="settings_work_mac_connecting">Connecting… · %1$s</string>
+    <string name="settings_work_mac_stopped">Stopped · %1$s</string>
+    <string name="settings_work_mac_start">Start pairing</string>
+    <string name="settings_work_mac_connect">Connect</string>
+    <string name="settings_work_mac_stop">Stop</string>
+    <string name="settings_work_mac_repair">Re-pair</string>
+    <string name="settings_work_mac_unpair">Unpair</string>
+    <string name="settings_work_mac_dialog_desc">Pair with your Work Mac app to quickly capture thoughts via your Mac's menu bar.</string>
+    <string name="close">Close</string>
 </resources>

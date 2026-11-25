@@ -2,7 +2,10 @@ package com.ramitsuri.notificationjournal.core.ui.settings
 
 import app.cash.turbine.test
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
+import com.ramitsuri.notificationjournal.core.model.WorkProfile
 import com.ramitsuri.notificationjournal.core.utils.BaseTest
+import com.ramitsuri.notificationjournal.core.utils.WorkProfileManager
+import com.ramitsuri.notificationjournal.core.utils.getTestDataKeyValueStore
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.first
@@ -12,6 +15,7 @@ import org.junit.Test
 
 class SettingsViewModelTest : BaseTest() {
     private lateinit var viewModel: SettingsViewModel
+    private lateinit var workProfileManager: WorkProfileManager
 
     @Test
     fun `setting new host name adds old to other hosts`() =
@@ -119,8 +123,56 @@ class SettingsViewModelTest : BaseTest() {
             assertEquals("original-password", encryptionHelper.getPassword().first())
         }
 
+    @Test
+    fun `workProfile is reflected in view state`() =
+        runTest {
+            workProfileManager.setProfile(
+                WorkProfile(
+                    host = "10.0.0.50",
+                    port = 8080,
+                    salt = "salt",
+                    password = "pw",
+                ),
+            )
+            viewModel.state.test {
+                var state = awaitItem()
+                if (state.workProfile == null) {
+                    state = awaitItem()
+                }
+                assertEquals("10.0.0.50", state.workProfile?.host)
+                assertEquals(8080, state.workProfile?.port)
+            }
+        }
+
+    @Test
+    fun `unpairWorkMac clears work profile`() =
+        runTest {
+            workProfileManager.setProfile(
+                WorkProfile(
+                    host = "10.0.0.50",
+                    port = 8080,
+                    salt = "salt",
+                    password = "pw",
+                ),
+            )
+            viewModel.state.test {
+                var state = awaitItem()
+                if (state.workProfile == null) {
+                    state = awaitItem()
+                }
+                assertEquals("10.0.0.50", state.workProfile?.host)
+
+                viewModel.unpairWorkMac()
+
+                val clearedState = awaitItem()
+                assertEquals(null, clearedState.workProfile)
+            }
+        }
+
     @Before
     fun setUp() {
+        val keyValueStore = getTestDataKeyValueStore()
+        workProfileManager = WorkProfileManager(keyValueStore)
         viewModel =
             SettingsViewModel(
                 repository = repository,
@@ -132,6 +184,7 @@ class SettingsViewModelTest : BaseTest() {
                 encryptionHelper = encryptionHelper,
                 getIpAddress = { null },
                 actsAsServer = false,
+                workProfileManager = workProfileManager,
             )
     }
 }

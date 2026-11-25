@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ramitsuri.notificationjournal.ai.diagnostics.AiDiagnosticsScreen
 import com.ramitsuri.notificationjournal.ai.ui.VoiceAssistantCapsule
@@ -37,7 +38,10 @@ import com.ramitsuri.notificationjournal.core.ui.nav.viewModelFactory
 import com.ramitsuri.notificationjournal.core.ui.theme.NotificationJournalTheme
 import com.ramitsuri.notificationjournal.core.utils.ReceivedTextProperties
 import com.ramitsuri.notificationjournal.core.utils.hasValues
+import com.ramitsuri.notificationjournal.service.WorkBridgeService
 import com.ramitsuri.notificationjournal.work.VoiceNoteProcessWorker
+import com.ramitsuri.notificationjournal.work.WorkPairingActivity
+import kotlinx.coroutines.launch
 import java.net.URLEncoder
 
 class MainActivity : ComponentActivity() {
@@ -101,6 +105,22 @@ class MainActivity : ComponentActivity() {
                     onAssistantRequested = { showAssistantSheet = true },
                     onAiDiagnosticsRequested = { showAiDiagnostics = true },
                     onReviewVoiceNote = { note -> reviewVoiceNote = note },
+                    onStartWork = {
+                        lifecycleScope.launch {
+                            if (appGraph.workProfileManager.hasProfile()) {
+                                WorkBridgeService.start(this@MainActivity)
+                            } else {
+                                startActivity(Intent(this@MainActivity, WorkPairingActivity::class.java))
+                            }
+                        }
+                    },
+                    onStopWork = {
+                        WorkBridgeService.stop(this@MainActivity)
+                    },
+                    onRepairWork = {
+                        startActivity(Intent(this@MainActivity, WorkPairingActivity::class.java))
+                    },
+                    workBridgeState = WorkBridgeService.serviceState,
                 )
                 if (showAssistantSheet) {
                     VoiceAssistantCapsule(

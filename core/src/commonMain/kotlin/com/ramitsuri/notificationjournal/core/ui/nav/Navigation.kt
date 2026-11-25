@@ -46,6 +46,9 @@ import com.ramitsuri.notificationjournal.core.ui.tags.TagsScreen
 import com.ramitsuri.notificationjournal.core.ui.tags.TagsViewModel
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesScreen
 import com.ramitsuri.notificationjournal.core.ui.templates.TemplatesViewModel
+import com.ramitsuri.notificationjournal.core.work.WorkBridgeController
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun NavGraph(
@@ -56,6 +59,10 @@ fun NavGraph(
     onAssistantRequested: (() -> Unit)? = null,
     onAiDiagnosticsRequested: (() -> Unit)? = null,
     onReviewVoiceNote: ((VoiceNote) -> Unit)? = null,
+    onStartWork: (() -> Unit)? = null,
+    onStopWork: (() -> Unit)? = null,
+    onRepairWork: (() -> Unit)? = null,
+    workBridgeState: StateFlow<WorkBridgeController.State>? = null,
 ) {
     val listDetailStrategy = rememberListDetailSceneStrategy<Route>()
     var showContent by remember { mutableStateOf(false) }
@@ -366,6 +373,9 @@ fun NavGraph(
                 val viewModel: SettingsViewModel =
                     viewModel(factory = viewModelFactory { navFactories.settingsViewModel })
                 val viewState by viewModel.state.collectAsStateWithLifecycle()
+                val currentWorkBridgeState by (workBridgeState ?: remember {
+                    MutableStateFlow(WorkBridgeController.State.Stopped)
+                }).collectAsStateWithLifecycle()
                 SettingsScreen(
                     state = viewState,
                     onBack = { navigator.goBack() },
@@ -396,6 +406,14 @@ fun NavGraph(
                     onQrCodeScanned = viewModel::onQrCodeScanned,
                     onAiDiagnosticsClicked = onAiDiagnosticsRequested,
                     onApplyDummySyncConfig = viewModel::applyDummySyncConfig,
+                    onStartWork = onStartWork,
+                    onStopWork = onStopWork,
+                    onRepairWork = onRepairWork,
+                    onUnpairWork = {
+                        onStopWork?.invoke()
+                        viewModel.unpairWorkMac()
+                    },
+                    workBridgeState = currentWorkBridgeState,
                 )
             }
 

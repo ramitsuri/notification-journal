@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -53,10 +54,13 @@ import androidx.compose.ui.window.Dialog
 import com.ramitsuri.notificationjournal.core.BuildKonfig
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
+import com.ramitsuri.notificationjournal.core.model.WorkProfile
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.ui.components.Toolbar
+import com.ramitsuri.notificationjournal.core.work.WorkBridgeController
 import notificationjournal.core.generated.resources.Res
 import notificationjournal.core.generated.resources.cancel
+import notificationjournal.core.generated.resources.close
 import notificationjournal.core.generated.resources.data_host
 import notificationjournal.core.generated.resources.device_name
 import notificationjournal.core.generated.resources.encryption_password
@@ -93,6 +97,17 @@ import notificationjournal.core.generated.resources.settings_tags_subtitle
 import notificationjournal.core.generated.resources.settings_tags_title
 import notificationjournal.core.generated.resources.settings_templates_subtitle
 import notificationjournal.core.generated.resources.settings_templates_title
+import notificationjournal.core.generated.resources.settings_work_mac_connect
+import notificationjournal.core.generated.resources.settings_work_mac_connected
+import notificationjournal.core.generated.resources.settings_work_mac_connecting
+import notificationjournal.core.generated.resources.settings_work_mac_dialog_desc
+import notificationjournal.core.generated.resources.settings_work_mac_not_paired
+import notificationjournal.core.generated.resources.settings_work_mac_repair
+import notificationjournal.core.generated.resources.settings_work_mac_start
+import notificationjournal.core.generated.resources.settings_work_mac_stop
+import notificationjournal.core.generated.resources.settings_work_mac_stopped
+import notificationjournal.core.generated.resources.settings_work_mac_title
+import notificationjournal.core.generated.resources.settings_work_mac_unpair
 import notificationjournal.core.generated.resources.stats_column_days
 import notificationjournal.core.generated.resources.stats_column_entries
 import notificationjournal.core.generated.resources.stats_row_all
@@ -124,10 +139,36 @@ fun SettingsScreen(
     onQrCodeScanned: (String) -> Unit,
     onAiDiagnosticsClicked: (() -> Unit)? = null,
     onApplyDummySyncConfig: (() -> Unit)? = null,
+    onStartWork: (() -> Unit)? = null,
+    onStopWork: (() -> Unit)? = null,
+    onRepairWork: (() -> Unit)? = null,
+    onUnpairWork: (() -> Unit)? = null,
+    workBridgeState: WorkBridgeController.State = WorkBridgeController.State.Stopped,
 ) {
     var showDataSharingPropertiesDialog by rememberSaveable { mutableStateOf(false) }
+    var showWorkMacDialog by rememberSaveable { mutableStateOf(false) }
     var showForceUploadAllDialog by rememberSaveable { mutableStateOf(false) }
     var showExportDirectoryDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showWorkMacDialog) {
+        WorkMacDialog(
+            workProfile = state.workProfile,
+            workBridgeState = workBridgeState,
+            onStartWork = {
+                onStartWork?.invoke()
+            },
+            onStopWork = {
+                onStopWork?.invoke()
+            },
+            onRepairWork = {
+                onRepairWork?.invoke()
+            },
+            onUnpairWork = {
+                onUnpairWork?.invoke()
+            },
+            onDismissRequest = { showWorkMacDialog = false },
+        )
+    }
 
     if (showDataSharingPropertiesDialog) {
         DataSharingPropertiesDialog(
@@ -207,6 +248,35 @@ fun SettingsScreen(
                         },
                         showProgress = false,
                     )
+                }
+                if (onStartWork != null) {
+                    item {
+                        val subtitle =
+                            if (state.workProfile == null) {
+                                stringResource(Res.string.settings_work_mac_not_paired)
+                            } else {
+                                val endpoint = "${state.workProfile.host}:${state.workProfile.port}"
+                                when (workBridgeState) {
+                                    is WorkBridgeController.State.Connected ->
+                                        stringResource(Res.string.settings_work_mac_connected, endpoint)
+
+                                    is WorkBridgeController.State.Connecting ->
+                                        stringResource(Res.string.settings_work_mac_connecting, endpoint)
+
+                                    is WorkBridgeController.State.Stopped,
+                                    is WorkBridgeController.State.Idle ->
+                                        stringResource(Res.string.settings_work_mac_stopped, endpoint)
+                                }
+                            }
+                        SettingsItem(
+                            title = stringResource(Res.string.settings_work_mac_title),
+                            subtitle = subtitle,
+                            onClick = {
+                                showWorkMacDialog = true
+                            },
+                            showProgress = false,
+                        )
+                    }
                 }
                 item {
                     SettingsItem(
@@ -815,3 +885,136 @@ private fun ExportDirectoryDialog(
         },
     )
 }
+
+@Composable
+private fun WorkMacDialog(
+    workProfile: WorkProfile?,
+    workBridgeState: WorkBridgeController.State,
+    onStartWork: () -> Unit,
+    onStopWork: () -> Unit,
+    onRepairWork: () -> Unit,
+    onUnpairWork: () -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Card {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(
+                    text = stringResource(Res.string.settings_work_mac_title),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                if (workProfile == null) {
+                    Text(
+                        text = stringResource(Res.string.settings_work_mac_dialog_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = onDismissRequest) {
+                            Text(stringResource(Res.string.cancel))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                onDismissRequest()
+                                onStartWork()
+                            },
+                        ) {
+                            Text(stringResource(Res.string.settings_work_mac_start))
+                        }
+                    }
+                } else {
+                    val statusText =
+                        when (workBridgeState) {
+                            is WorkBridgeController.State.Connected ->
+                                stringResource(
+                                    Res.string.settings_work_mac_connected,
+                                    "${workProfile.host}:${workProfile.port}",
+                                )
+
+                            is WorkBridgeController.State.Connecting ->
+                                "Connecting… (${workBridgeState.attempt}/${workBridgeState.maxAttempts})"
+
+                            is WorkBridgeController.State.Stopped,
+                            is WorkBridgeController.State.Idle ->
+                                stringResource(
+                                    Res.string.settings_work_mac_stopped,
+                                    "${workProfile.host}:${workProfile.port}",
+                                )
+                        }
+                    Text(
+                        text = "Host: ${workProfile.host}:${workProfile.port}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Status: $statusText",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        val isRunning =
+                            workBridgeState is WorkBridgeController.State.Connected ||
+                                workBridgeState is WorkBridgeController.State.Connecting
+                        if (isRunning) {
+                            OutlinedButton(
+                                onClick = onStopWork,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(Res.string.settings_work_mac_stop))
+                            }
+                        } else {
+                            Button(
+                                onClick = onStartWork,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(Res.string.settings_work_mac_connect))
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                onDismissRequest()
+                                onRepairWork()
+                            },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(Res.string.settings_work_mac_repair))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextButton(
+                            onClick = {
+                                onDismissRequest()
+                                onUnpairWork()
+                            },
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.settings_work_mac_unpair),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        TextButton(onClick = onDismissRequest) {
+                            Text(stringResource(Res.string.close))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

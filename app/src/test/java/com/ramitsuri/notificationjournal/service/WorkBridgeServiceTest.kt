@@ -1,5 +1,6 @@
 package com.ramitsuri.notificationjournal.service
 
+import com.ramitsuri.notificationjournal.core.work.WorkBridgeController
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -17,5 +18,10 @@ class WorkBridgeServiceTest {
         assertEquals(2001, WorkBridgeService.NOTIFICATION_ID)
         assertEquals(2002, WorkBridgeService.REQUEST_CODE_STOP)
         assertEquals(2003, WorkBridgeService.REQUEST_CODE_REPAIR)
+    }
+
+    @Test
+    fun testInitialServiceStateIsStopped() {
+        assertEquals(WorkBridgeController.State.Stopped, WorkBridgeService.serviceState.value)
     }
 }

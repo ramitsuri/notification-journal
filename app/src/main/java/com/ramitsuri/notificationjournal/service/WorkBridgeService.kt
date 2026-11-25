@@ -35,6 +35,9 @@ import dev.zacsweers.metrox.android.ServiceKey
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -111,6 +114,7 @@ class WorkBridgeService(
         stateJob =
             lifecycleScope.launch(ioDispatcher) {
                 newController.state.collect { state ->
+                    _serviceState.value = state
                     when (state) {
                         is WorkBridgeController.State.Connecting -> {
                             updateNotification(
@@ -233,6 +237,7 @@ class WorkBridgeService(
         bridgeJob?.cancel()
         bridgeJob = null
         controller = null
+        _serviceState.value = WorkBridgeController.State.Stopped
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -248,7 +253,12 @@ class WorkBridgeService(
         const val REQUEST_CODE_REPAIR = 2003
         private const val TAG = "WorkBridgeService"
 
+        private val _serviceState =
+            MutableStateFlow<WorkBridgeController.State>(WorkBridgeController.State.Stopped)
+        val serviceState: StateFlow<WorkBridgeController.State> = _serviceState.asStateFlow()
+
         fun start(context: Context) {
+            _serviceState.value = WorkBridgeController.State.Connecting(1, 3)
             val intent =
                 Intent(context, WorkBridgeService::class.java).apply {
                     action = ACTION_START
@@ -257,11 +267,25 @@ class WorkBridgeService(
         }
 
         fun reconnect(context: Context) {
+            _serviceState.value = WorkBridgeController.State.Connecting(1, 3)
             val intent =
                 Intent(context, WorkBridgeService::class.java).apply {
                     action = ACTION_RECONNECT
                 }
             ContextCompat.startForegroundService(context, intent)
+        }
+
+        fun stop(context: Context) {
+            _serviceState.value = WorkBridgeController.State.Stopped
+            val intent =
+                Intent(context, WorkBridgeService::class.java).apply {
+                    action = ACTION_STOP
+                }
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Logger.withTag(TAG).e(e) { "Failed to send stop intent" }
+            }
         }
     }
 }

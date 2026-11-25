@@ -8,6 +8,7 @@ import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.model.DataHostProperties
 import com.ramitsuri.notificationjournal.core.model.ForceUploadAllStatus
+import com.ramitsuri.notificationjournal.core.model.WorkProfile
 import com.ramitsuri.notificationjournal.core.model.stats.EntryStats
 import com.ramitsuri.notificationjournal.core.repository.JournalRepository
 import com.ramitsuri.notificationjournal.core.ui.settings.SettingsViewModel.Companion.TAG
@@ -16,11 +17,13 @@ import com.ramitsuri.notificationjournal.core.utils.EncryptionHelper
 import com.ramitsuri.notificationjournal.core.utils.PrefManager
 import com.ramitsuri.notificationjournal.core.utils.QrCodeParser
 import com.ramitsuri.notificationjournal.core.utils.TestSyncHelper
+import com.ramitsuri.notificationjournal.core.utils.WorkProfileManager
 import com.ramitsuri.notificationjournal.core.utils.combine
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -37,6 +40,7 @@ class SettingsViewModel(
     private val actsAsServer: Boolean,
     private val lifecycleCoordinator: com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator? = null,
     private val showJournalImport: Boolean = false,
+    private val workProfileManager: WorkProfileManager? = null,
 ) : ViewModel() {
     @Inject
     constructor(
@@ -48,6 +52,7 @@ class SettingsViewModel(
         platformConfig: com.ramitsuri.notificationjournal.core.di.PlatformConfig,
         lifecycleCoordinator: com.ramitsuri.notificationjournal.core.sync.AppLifecycleCoordinator,
         exportRepository: com.ramitsuri.notificationjournal.core.repository.ExportRepository?,
+        workProfileManager: WorkProfileManager,
     ) : this(
         repository = repository,
         getAppVersion = { "${BuildKonfig.APP_VERSION}${if (BuildKonfig.IS_DEBUG) "_debug" else ""}" },
@@ -60,6 +65,7 @@ class SettingsViewModel(
         actsAsServer = platformConfig.actsAsServer,
         lifecycleCoordinator = lifecycleCoordinator,
         showJournalImport = platformConfig.allowJournalImport,
+        workProfileManager = workProfileManager,
     )
 
     private val forceUploadStatus: MutableStateFlow<ForceUploadAllStatus> =
@@ -78,6 +84,7 @@ class SettingsViewModel(
             prefManager.getAddEditFontSize(),
             encryptionHelper.getSalt(),
             encryptionHelper.getPassword(),
+            workProfileManager?.getProfileFlow() ?: flowOf(null),
         ) {
             forceUploadStatus,
             showEmptyTags,
@@ -89,6 +96,7 @@ class SettingsViewModel(
             addEditFontSize,
             encryptionSalt,
             encryptionPassword,
+            workProfile,
             ->
             SettingsViewState(
                 forceUploadStatus = forceUploadStatus,
@@ -106,6 +114,7 @@ class SettingsViewModel(
                 encryptionPassword = encryptionPassword,
                 encryptionSalt = encryptionSalt,
                 showJournalImportButton = showJournalImport,
+                workProfile = workProfile,
             )
         }.stateIn(
             viewModelScope,
@@ -226,6 +235,12 @@ class SettingsViewModel(
         }
     }
 
+    fun unpairWorkMac() {
+        viewModelScope.launch {
+            workProfileManager?.clearProfile()
+        }
+    }
+
     companion object {
         internal const val TAG = "SettingsVM"
     }
@@ -248,6 +263,7 @@ data class SettingsViewState(
     val encryptionPassword: String? = null,
     val encryptionSalt: String? = null,
     val actsAsServer: Boolean = false,
+    val workProfile: WorkProfile? = null,
 ) {
     val qrCodeContent: String?
         get() =
