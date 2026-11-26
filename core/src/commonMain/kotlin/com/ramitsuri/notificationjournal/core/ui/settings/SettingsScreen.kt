@@ -90,6 +90,8 @@ import notificationjournal.core.generated.resources.settings_journal_export_titl
 import notificationjournal.core.generated.resources.settings_journal_import_subtitle
 import notificationjournal.core.generated.resources.settings_journal_import_title
 import notificationjournal.core.generated.resources.settings_logs
+import notificationjournal.core.generated.resources.settings_reconcile_checks_subtitle
+import notificationjournal.core.generated.resources.settings_reconcile_checks_title
 import notificationjournal.core.generated.resources.settings_showConflictDiffInline
 import notificationjournal.core.generated.resources.settings_show_empty_tags
 import notificationjournal.core.generated.resources.settings_show_stats_title
@@ -126,6 +128,7 @@ fun SettingsScreen(
     onDataSharingPropertiesSet: (DataHost, DeviceName) -> Unit,
     onTagsClicked: () -> Unit,
     onTemplatesClicked: () -> Unit,
+    onReconcileChecksClicked: () -> Unit,
     onToggleShowConflictDiffInline: () -> Unit,
     onToggleShowEmptyTags: () -> Unit,
     onToggleCopyWithEmptyTags: () -> Unit,
@@ -292,6 +295,14 @@ fun SettingsScreen(
                         title = stringResource(Res.string.settings_templates_title),
                         subtitle = stringResource(Res.string.settings_templates_subtitle),
                         onClick = onTemplatesClicked,
+                        showProgress = false,
+                    )
+                }
+                item {
+                    SettingsItem(
+                        title = stringResource(Res.string.settings_reconcile_checks_title),
+                        subtitle = stringResource(Res.string.settings_reconcile_checks_subtitle),
+                        onClick = onReconcileChecksClicked,
                         showProgress = false,
                     )
                 }

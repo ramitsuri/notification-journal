@@ -10,6 +10,7 @@ import com.ramitsuri.notificationjournal.core.ui.journalentry.JournalEntryViewMo
 import com.ramitsuri.notificationjournal.core.ui.journalentryday.ViewJournalEntryDayViewModel
 import com.ramitsuri.notificationjournal.core.ui.journalentrylist.JournalEntryDaysViewModel
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreenViewModel
+import com.ramitsuri.notificationjournal.core.ui.reconcilechecks.ReconcileChecksViewModel
 import com.ramitsuri.notificationjournal.core.ui.search.SearchViewModel
 import com.ramitsuri.notificationjournal.core.ui.settings.SettingsViewModel
 import com.ramitsuri.notificationjournal.core.ui.tags.TagsViewModel
@@ -24,6 +25,7 @@ interface NavViewModelFactories {
     val journalEntryDaysViewModel: JournalEntryDaysViewModel
     val tagsViewModel: TagsViewModel
     val templatesViewModel: TemplatesViewModel
+    val reconcileChecksViewModel: ReconcileChecksViewModel
     val logScreenViewModel: LogScreenViewModel
     val searchViewModel: SearchViewModel
     val importViewModel: ImportViewModel

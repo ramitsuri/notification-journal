@@ -91,6 +91,8 @@ import com.ramitsuri.notificationjournal.core.ui.components.DayGroupAction
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDay
 import com.ramitsuri.notificationjournal.core.ui.components.JournalEntryDayConfig
 import com.ramitsuri.notificationjournal.core.ui.components.JournalFab
+import com.ramitsuri.notificationjournal.core.ui.components.ReconcileBlockerDialog
+import com.ramitsuri.notificationjournal.core.ui.components.ReconcileChecksWarningDialog
 import com.ramitsuri.notificationjournal.core.ui.components.rememberShortcutsFocusRequester
 import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -104,6 +106,7 @@ import notificationjournal.core.generated.resources.cancel
 import notificationjournal.core.generated.resources.delete_warning_message
 import notificationjournal.core.generated.resources.no_items
 import notificationjournal.core.generated.resources.ok
+import notificationjournal.core.generated.resources.reconcile_anyway
 import notificationjournal.core.generated.resources.search
 import notificationjournal.core.generated.resources.settings
 import notificationjournal.core.generated.resources.sync_up
@@ -157,6 +160,30 @@ fun JournalEntryScreen(
             onDismiss = { journalEntryForDelete = null },
             onDayGroupAction = onDayGroupAction,
         )
+    }
+
+    when (val reconcileDialog = state.reconcileDialogState) {
+        is ReconcileDialogState.HardBlocker -> {
+            ReconcileBlockerDialog(
+                untaggedCount = reconcileDialog.untaggedCount,
+                conflictCount = reconcileDialog.conflictCount,
+                onDismiss = { onEntryScreenAction(EntryScreenAction.DismissReconcileDialog) },
+            )
+        }
+
+        is ReconcileDialogState.FailedChecks -> {
+            ReconcileChecksWarningDialog(
+                confirmButtonText = stringResource(Res.string.reconcile_anyway),
+                onConfirm = { onEntryScreenAction(EntryScreenAction.ConfirmReconcileAnyway) },
+                onDismiss = { onEntryScreenAction(EntryScreenAction.DismissReconcileDialog) },
+            ) {
+                reconcileDialog.failedCheckSummaries.forEach { summary ->
+                    Text(text = "• $summary")
+                }
+            }
+        }
+
+        null -> Unit
     }
 
     Scaffold(

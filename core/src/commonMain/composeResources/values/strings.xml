@@ -83,6 +83,46 @@
     <string name="settings_templates_title">Templates</string>
     <string name="settings_templates_subtitle">Add or edit templates</string>
 
+    <string name="settings_reconcile_checks_title">Reconcile checks</string>
+    <string name="settings_reconcile_checks_subtitle">Add or edit reconcile checks</string>
+
+    <string name="reconcile_check_add_title">Add Reconcile Check</string>
+    <string name="reconcile_check_edit_title">Edit Reconcile Check</string>
+    <string name="reconcile_check_tag_label">Tag</string>
+    <string name="reconcile_check_days_label">Days</string>
+    <string name="reconcile_check_match_type_label">Match type</string>
+    <string name="reconcile_check_match_any_entry">At least 1 entry</string>
+    <string name="reconcile_check_match_starts_with">Starts with phrase</string>
+    <string name="reconcile_check_match_contains_all_words">Contains all words</string>
+    <string name="reconcile_check_query_phrase_label">Phrase</string>
+    <string name="reconcile_check_query_words_label">Words (space or comma-separated)</string>
+    <string name="reconcile_check_missing_tag">Tag \"%1$s\" no longer exists</string>
+    <string name="reconcile_check_no_tags_message">Create a Tag before adding a Reconcile Check</string>
+    <string name="reconcile_check_select_at_least_one_day">Select at least 1 day</string>
+    <string name="reconcile_blocker_title">Cannot reconcile</string>
+    <string name="reconcile_blocker_intro">Resolve the following before reconciling:</string>
+    <plurals name="reconcile_blocker_untagged_entries">
+        <item quantity="one">• %1$d untagged entry</item>
+        <item quantity="other">• %1$d untagged entries</item>
+    </plurals>
+    <plurals name="reconcile_blocker_conflicts">
+        <item quantity="one">• %1$d unresolved conflict</item>
+        <item quantity="other">• %1$d unresolved conflicts</item>
+    </plurals>
+    <string name="reconcile_checks_failed_title">Reconcile checks failed</string>
+    <string name="reconcile_checks_failed_intro">The following Reconcile Checks did not pass:</string>
+    <string name="reconcile_anyway">Reconcile anyway</string>
+    <string name="reconcile_all_anyway">Reconcile all anyway</string>
+    <string-array name="day_of_week_short_names">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+
     <string name="settings_logs">Logs</string>
 
     <string name="settings_app_version">App version</string>

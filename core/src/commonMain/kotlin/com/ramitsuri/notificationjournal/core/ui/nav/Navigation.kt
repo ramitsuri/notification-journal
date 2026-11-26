@@ -38,6 +38,8 @@ import com.ramitsuri.notificationjournal.core.ui.journalentrylist.JournalEntryDa
 import com.ramitsuri.notificationjournal.core.ui.journalentrylist.JournalEntryDaysViewModel
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreen
 import com.ramitsuri.notificationjournal.core.ui.log.LogScreenViewModel
+import com.ramitsuri.notificationjournal.core.ui.reconcilechecks.ReconcileChecksScreen
+import com.ramitsuri.notificationjournal.core.ui.reconcilechecks.ReconcileChecksViewModel
 import com.ramitsuri.notificationjournal.core.ui.search.SearchScreen
 import com.ramitsuri.notificationjournal.core.ui.search.SearchViewModel
 import com.ramitsuri.notificationjournal.core.ui.settings.SettingsScreen
@@ -106,6 +108,8 @@ fun NavGraph(
                         navigator.navigate(Route.ViewJournalEntryDay())
                     },
                     onReconcileAll = viewModel::onReconcileAll,
+                    onConfirmReconcileAllAnyway = viewModel::confirmReconcileAllAnyway,
+                    onDismissReconcileAllDialog = viewModel::dismissReconcileAllDialog,
                     onSettingsClicked = {
                         navigator.navigate(Route.Settings)
                     },
@@ -192,6 +196,14 @@ fun NavGraph(
 
                             is EntryScreenAction.NavBack -> {
                                 navigator.selectDate(null)
+                            }
+
+                            is EntryScreenAction.ConfirmReconcileAnyway -> {
+                                viewModel.confirmReconcileAnyway()
+                            }
+
+                            is EntryScreenAction.DismissReconcileDialog -> {
+                                viewModel.dismissReconcileDialog()
                             }
                         }
                     },
@@ -387,6 +399,9 @@ fun NavGraph(
                     onTemplatesClicked = {
                         navigator.navigate(Route.Templates)
                     },
+                    onReconcileChecksClicked = {
+                        navigator.navigate(Route.ReconcileChecks)
+                    },
                     onToggleShowConflictDiffInline = viewModel::toggleShowConflictDiffInline,
                     onToggleCopyWithEmptyTags = viewModel::toggleCopyWithEmptyTags,
                     onToggleShowEmptyTags = viewModel::toggleShowEmptyTags,
@@ -452,6 +467,26 @@ fun NavGraph(
                     onDeleteRequested = viewModel::delete,
                     onAddRequested = viewModel::addClicked,
                     onSyncRequested = viewModel::sync,
+                    onAddOrEditApproved = viewModel::save,
+                    onAddOrEditCanceled = viewModel::onAddOrEditCanceled,
+                    onBack = { navigator.goBack() },
+                )
+            }
+
+            entry<Route.ReconcileChecks> {
+                val viewModel: ReconcileChecksViewModel =
+                    viewModel(factory = viewModelFactory { navFactories.reconcileChecksViewModel })
+                val viewState by viewModel.state.collectAsStateWithLifecycle()
+                ReconcileChecksScreen(
+                    state = viewState,
+                    onAddRequested = viewModel::addClicked,
+                    onEditRequested = viewModel::editClicked,
+                    onDeleteRequested = viewModel::delete,
+                    onEnabledChanged = viewModel::toggleEnabled,
+                    onTagSelected = viewModel::tagSelected,
+                    onDayToggled = viewModel::dayToggled,
+                    onMatchTypeSelected = viewModel::matchTypeSelected,
+                    onQueryUpdated = viewModel::queryUpdated,
                     onAddOrEditApproved = viewModel::save,
                     onAddOrEditCanceled = viewModel::onAddOrEditCanceled,
                     onBack = { navigator.goBack() },

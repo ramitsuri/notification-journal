@@ -26,6 +26,9 @@ sealed interface Route : NavKey {
     data object Templates : Route
 
     @Serializable
+    data object ReconcileChecks : Route
+
+    @Serializable
     data object Settings : Route
 
     @ConsistentCopyVisibility

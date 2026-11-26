@@ -76,9 +76,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.ramitsuri.notificationjournal.core.model.DateWithCount
 import com.ramitsuri.notificationjournal.core.ui.components.JournalFab
+import com.ramitsuri.notificationjournal.core.ui.components.ReconcileBlockerDialog
+import com.ramitsuri.notificationjournal.core.ui.components.ReconcileChecksWarningDialog
 import com.ramitsuri.notificationjournal.core.ui.components.rememberShortcutsFocusRequester
 import com.ramitsuri.notificationjournal.core.ui.theme.greenColor
 import com.ramitsuri.notificationjournal.core.ui.theme.redColor
+import com.ramitsuri.notificationjournal.core.utils.dayMonthDate
 import com.ramitsuri.notificationjournal.core.utils.dayOfWeek
 import com.ramitsuri.notificationjournal.core.utils.monthDateYear
 import kotlinx.datetime.LocalDate
@@ -88,6 +91,7 @@ import notificationjournal.core.generated.resources.entry_days_empty
 import notificationjournal.core.generated.resources.not_verified
 import notificationjournal.core.generated.resources.proceed
 import notificationjournal.core.generated.resources.reconcile_all
+import notificationjournal.core.generated.resources.reconcile_all_anyway
 import notificationjournal.core.generated.resources.reconcile_all_body
 import notificationjournal.core.generated.resources.reconcile_all_upload_on_success
 import notificationjournal.core.generated.resources.search
@@ -114,6 +118,8 @@ fun JournalEntryDaysScreen(
     onViewByDate: () -> Unit,
     onSyncClicked: () -> Unit,
     onReconcileAll: (uploadOnSuccess: Boolean) -> Unit,
+    onConfirmReconcileAllAnyway: () -> Unit,
+    onDismissReconcileAllDialog: () -> Unit,
     onVerifyClicked: () -> Unit,
 ) {
     var showReconcileAllConfirmation by remember { mutableStateOf(false) }
@@ -248,6 +254,37 @@ fun JournalEntryDaysScreen(
                 onReconcileAll(it)
             },
         )
+        when (val reconcileAllDialog = state.reconcileAllDialogState) {
+            is ReconcileAllDialogState.HardBlocker -> {
+                ReconcileBlockerDialog(
+                    untaggedCount = reconcileAllDialog.untaggedCount,
+                    conflictCount = reconcileAllDialog.conflictCount,
+                    onDismiss = onDismissReconcileAllDialog,
+                )
+            }
+
+            is ReconcileAllDialogState.FailedChecks -> {
+                ReconcileChecksWarningDialog(
+                    confirmButtonText = stringResource(Res.string.reconcile_all_anyway),
+                    onConfirm = onConfirmReconcileAllAnyway,
+                    onDismiss = onDismissReconcileAllDialog,
+                ) {
+                    reconcileAllDialog.failedDays.forEach { failedDay ->
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = dayMonthDate(toFormat = failedDay.date),
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                            failedDay.failedCheckSummaries.forEach { summary ->
+                                Text(text = "• $summary")
+                            }
+                        }
+                    }
+                }
+            }
+
+            null -> Unit
+        }
     }
 }
 

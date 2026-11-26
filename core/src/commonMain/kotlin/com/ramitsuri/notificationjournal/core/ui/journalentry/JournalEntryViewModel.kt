@@ -3,11 +3,13 @@ package com.ramitsuri.notificationjournal.core.ui.journalentry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.ramitsuri.notificationjournal.core.data.ReconcileCheckDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
 import com.ramitsuri.notificationjournal.core.di.PlatformConfig
 import com.ramitsuri.notificationjournal.core.model.DayGroup
 import com.ramitsuri.notificationjournal.core.model.EntryConflict
+import com.ramitsuri.notificationjournal.core.model.ReconcileCheckEvaluator
 import com.ramitsuri.notificationjournal.core.model.Tag
 import com.ramitsuri.notificationjournal.core.model.TagGroup
 import com.ramitsuri.notificationjournal.core.model.entry.JournalEntry
@@ -27,7 +29,6 @@ import com.ramitsuri.notificationjournal.core.utils.plus
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,6 +53,7 @@ class JournalEntryViewModel
         private val repository: JournalRepository,
         private val exportRepository: ExportRepository?,
         private val tagsDao: TagsDao,
+        private val reconcileCheckDao: ReconcileCheckDao,
         private val prefManager: PrefManager,
         webSocketHelper: WebSocketHelper,
         voiceNoteDao: VoiceNoteDao,
@@ -68,6 +70,7 @@ class JournalEntryViewModel
 
         private val contentForCopy: MutableStateFlow<String> = MutableStateFlow("")
         private val selectedDate: MutableStateFlow<LocalDate> = MutableStateFlow(initialDate)
+        private val reconcileDialogState: MutableStateFlow<ReconcileDialogState?> = MutableStateFlow(null)
 
         val state: StateFlow<ViewState> =
             combine(
@@ -81,6 +84,7 @@ class JournalEntryViewModel
                 prefManager.showConflictDiffInline(),
                 webSocketHelper.isConnected,
                 voiceNoteDao.getPendingOrFailedFlow(),
+                reconcileDialogState,
             ) {
                 contentForCopy,
                 (date, entries),
@@ -90,6 +94,7 @@ class JournalEntryViewModel
                 showConflictDiffInline,
                 isConnected,
                 voiceNotes,
+                reconcileDialogState,
                 ->
                 val tags = tagsDao.getAll()
                 val entryIds = entries.map { it.id }
@@ -108,6 +113,7 @@ class JournalEntryViewModel
                     allowNotify = allowNotify,
                     isConnected = isConnected,
                     voiceNotes = voiceNotes,
+                    reconcileDialogState = reconcileDialogState,
                 )
             }.stateIn(
                 scope = viewModelScope,
@@ -116,6 +122,9 @@ class JournalEntryViewModel
             )
 
         fun onDateSelected(date: LocalDate) {
+            if (selectedDate.value != date) {
+                reconcileDialogState.value = null
+            }
             selectedDate.value = date
         }
 
@@ -286,22 +295,73 @@ class JournalEntryViewModel
         }
 
         fun onReconcile() {
-            viewModelScope.launch(Dispatchers.Default) {
+            viewModelScope.launch {
                 val dayGroup = currentDayGroup ?: return@launch
-                if (dayGroup.untaggedCount > 0) {
-                    Logger.withTag(TAG).w { "Cannot export day group with untagged entries" }
-                    return@launch
-                }
-                val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }
-                if (dayGroupEntryIds.isEmpty()) {
+                if (dayGroup.tagGroups.all { it.entries.isEmpty() }) {
                     Logger.withTag(TAG).w { "Cannot export empty day group" }
                     return@launch
                 }
-                if (state.value.entryConflicts.any { dayGroupEntryIds.contains(it.id) }) {
-                    Logger.withTag(TAG).w { "Cannot export day group with conflicting entries" }
+                val blocker = hardBlockerOrNull(dayGroup)
+                if (blocker != null) {
+                    Logger.withTag(TAG).w {
+                        "Cannot reconcile day group: untagged=${blocker.untaggedCount}, conflicts=${blocker.conflictCount}"
+                    }
+                    reconcileDialogState.value = blocker
+                    return@launch
+                }
+                val failedChecks =
+                    ReconcileCheckEvaluator.evaluate(
+                        dayGroup = dayGroup,
+                        checks = reconcileCheckDao.getEnabled(),
+                    )
+                if (failedChecks.isNotEmpty()) {
+                    reconcileDialogState.value =
+                        ReconcileDialogState.FailedChecks(
+                            date = dayGroup.date,
+                            failedCheckSummaries = failedChecks.map { it.summary() },
+                        )
                     return@launch
                 }
                 reconcile(dayGroup)
+            }
+        }
+
+        /** Proceeds with reconciling the day after the user overrides failed Reconcile Checks. */
+        fun confirmReconcileAnyway() {
+            val failedDialog = reconcileDialogState.value as? ReconcileDialogState.FailedChecks ?: return
+            reconcileDialogState.value = null
+            val dayGroup = currentDayGroup ?: return
+            if (dayGroup.date != failedDialog.date || dayGroup.tagGroups.all { it.entries.isEmpty() }) {
+                return
+            }
+            val blocker = hardBlockerOrNull(dayGroup)
+            if (blocker != null) {
+                reconcileDialogState.value = blocker
+                return
+            }
+            reconcile(dayGroup)
+        }
+
+        /** Dismisses any active single-day reconcile blocker or warning dialog. */
+        fun dismissReconcileDialog() {
+            reconcileDialogState.value = null
+        }
+
+        private fun hardBlockerOrNull(dayGroup: DayGroup): ReconcileDialogState.HardBlocker? {
+            val dayGroupEntryIds = dayGroup.tagGroups.flatMap { it.entries }.map { it.id }.toSet()
+            val untaggedCount = dayGroup.untaggedCount
+            val conflictCount =
+                state.value.entryConflicts
+                    .filter { it.entryId in dayGroupEntryIds }
+                    .distinctBy { it.entryId }
+                    .size
+            return if (untaggedCount > 0 || conflictCount > 0) {
+                ReconcileDialogState.HardBlocker(
+                    untaggedCount = untaggedCount,
+                    conflictCount = conflictCount,
+                )
+            } else {
+                null
             }
         }
 
@@ -379,6 +439,7 @@ data class ViewState(
     val allowNotify: Boolean = false,
     val isConnected: Boolean = false,
     val voiceNotes: List<VoiceNote> = listOf(),
+    val reconcileDialogState: ReconcileDialogState? = null,
 ) {
     val pendingVoiceNotesCount: Int
         get() = voiceNotes.count { it.status == VoiceNoteStatus.PROCESSING }
@@ -394,6 +455,20 @@ data class ViewState(
             } ?: emptyList()
     val dayGroupConflictCount: Int =
         entryConflicts
-            .distinctBy { it.id }
-            .count { it.id in entryIdsForDayGroup }
+            .distinctBy { it.entryId }
+            .count { it.entryId in entryIdsForDayGroup }
+}
+
+sealed interface ReconcileDialogState {
+    /** Built-in blockers (untagged entries and/or unresolved conflicts) that cannot be overridden. */
+    data class HardBlocker(
+        val untaggedCount: Int,
+        val conflictCount: Int,
+    ) : ReconcileDialogState
+
+    /** Soft warnings for active [com.ramitsuri.notificationjournal.core.model.ReconcileCheck]s that failed. */
+    data class FailedChecks(
+        val date: LocalDate,
+        val failedCheckSummaries: List<String>,
+    ) : ReconcileDialogState
 }

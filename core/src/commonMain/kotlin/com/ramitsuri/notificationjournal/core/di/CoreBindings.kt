@@ -8,6 +8,7 @@ import com.ramitsuri.notificationjournal.core.data.EntryConflictDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryDao
 import com.ramitsuri.notificationjournal.core.data.JournalEntryTemplateDao
 import com.ramitsuri.notificationjournal.core.data.LogDao
+import com.ramitsuri.notificationjournal.core.data.ReconcileCheckDao
 import com.ramitsuri.notificationjournal.core.data.TagsDao
 import com.ramitsuri.notificationjournal.core.data.VoiceNoteDao
 import com.ramitsuri.notificationjournal.core.data.dictionary.DictionaryDao
@@ -63,6 +64,9 @@ object CoreBindings {
 
     @Provides
     fun provideDictionaryDao(db: AppDatabase): DictionaryDao = db.dictionaryDao()
+
+    @Provides
+    fun provideReconcileCheckDao(db: AppDatabase): ReconcileCheckDao = db.reconcileCheckDao()
 
     @Provides
     @SingleIn(AppScope::class)

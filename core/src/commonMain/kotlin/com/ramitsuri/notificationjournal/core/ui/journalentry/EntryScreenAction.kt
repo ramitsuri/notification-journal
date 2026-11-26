@@ -20,4 +20,8 @@ sealed interface EntryScreenAction {
     data object NavToViewJournalEntryDay : EntryScreenAction
 
     data object NavBack : EntryScreenAction
+
+    data object ConfirmReconcileAnyway : EntryScreenAction
+
+    data object DismissReconcileDialog : EntryScreenAction
 }

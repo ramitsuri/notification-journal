@@ -58,6 +58,7 @@ class DesktopGraphTest {
             assertNotNull(graph.journalEntryDaysViewModel)
             assertNotNull(graph.tagsViewModel)
             assertNotNull(graph.templatesViewModel)
+            assertNotNull(graph.reconcileChecksViewModel)
             assertNotNull(graph.logScreenViewModel)
             assertNotNull(graph.logWriter)
             assertNotNull(graph.encryptionHelper)
