@@ -189,7 +189,16 @@ compose.desktop {
 buildkonfig {
     packageName = "com.ramitsuri.notificationjournal.core"
 
-    val isDebug = getLocalProperty("isDebug", "false") ?: "false"
+    val isDebug =
+        providers
+            .gradleProperty("isDebug")
+            .orNull
+            ?.takeUnless { it.isBlank() }
+            ?: getLocalProperty("isDebug", "false")?.takeUnless { it.isBlank() }
+            ?: "false"
+    require(isDebug == "true" || isDebug == "false") {
+        "Invalid isDebug value '$isDebug'; expected 'true' or 'false'."
+    }
     val appVersion = libs.versions.appVersion.get()
 
     defaultConfigs {
